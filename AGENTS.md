@@ -12,6 +12,33 @@ Traceability: `docs/requirements/traceability.md`.
 - Branch prefixes follow the SRS (REQ-VERSION-02): `major/`, `minor/`, `fix/`, `docs/`, `chore/`.
 - Do not invent requirements the SRS does not state. Mark unverified claims "not verified".
 - No commit, push, or GitHub write without explicit user approval.
+- Never commit to `main`. Work on a feature branch and commit there.
+
+## Commits
+
+Each commit message follows [Conventional Commits](https://www.conventionalcommits.org/). The style mirrors the sibling repo `nest-base`.
+
+```text
+<type>: Title
+
+Short description.
+
+- Concrete action 1.
+- Concrete action n.
+```
+
+| Type | When to use |
+|---|---|
+| `feat` | New features or capabilities |
+| `fix` | Bug fixes |
+| `docs` | Documentation only |
+| `chore` | Tooling, configuration, dependencies, CI |
+| `task` | Changes to existing functionality |
+| `spike` | Research or exploration |
+
+- Subject line: imperative mood, lowercase, no final period, 72 characters at most.
+- Body: a short description, then bullets that list each concrete change.
+- No `Co-Authored-By` lines and no AI attribution, in commits or in PR descriptions.
 
 ## Query the docs
 
