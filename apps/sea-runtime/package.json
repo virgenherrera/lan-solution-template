@@ -41,5 +41,27 @@
     "typescript": "6.0.3",
     "vite": "8.3.5",
     "vitest": "4.1.12"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "dependsOn": [
+          "^build"
+        ]
+      },
+      "package": {
+        "dependsOn": [
+          "build"
+        ],
+        "executor": "nx:run-commands",
+        "outputs": [
+          "{workspaceRoot}/artifacts/sea-runtime"
+        ],
+        "options": {
+          "command": "node tools/scripts/compile-sea.ts sea-runtime",
+          "cwd": "{workspaceRoot}"
+        }
+      }
+    }
   }
 }

@@ -1,25 +1,34 @@
-// Packages every registered service into one self-contained Node SEA executable.
-// A service registers by declaring in its own package.json: "sea": { "service": "<name>", "entry": "<built entry, relative to the project>" }.
-// Run from the repository root: `node tools/scripts/compile-sea.ts`, or through Nx (`nx package sea-build`).
-// The generated entry file and the SEA config are written under dist/ at build time and are never committed.
+// Packages a supervisor app and its workspace service dependencies into ONE Node SEA executable.
+// Run from the repository root: `node tools/scripts/compile-sea.ts <supervisor-project>`.
+// Services are the workspace dependencies of the supervisor (`workspace:` ranges); each service's entry is its built dist/main.js.
+// The generated role-map entry and the SEA config are written under dist/ at build time and are never committed.
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { build } from 'esbuild';
+import * as rspackNamespace from '@rspack/core';
+import sharedNestConfig from '../rspack/nest.config.ts';
 
 const root = resolve(import.meta.dirname, '..', '..');
-const workDir = join(root, 'dist', 'sea-build');
-const outDir = join(root, 'dist', 'sea');
+const workDir = join(root, 'dist', 'sea-package');
 const entryPath = join(workDir, 'entry.mjs');
 const bundlePath = join(workDir, 'sea-app.mjs');
+const servicesPath = join(workDir, 'services.json');
 const configPath = join(workDir, 'sea-config.json');
-const binaryPath = join(outDir, 'sea-app');
+
+// Keys are "<process.platform> <process.arch>"; values are Rust target triples (the Tauri sidecar naming).
+const TARGET_TRIPLES: Record<string, string> = {
+  'darwin arm64': 'aarch64-apple-darwin',
+  'darwin x64': 'x86_64-apple-darwin',
+  'linux x64': 'x86_64-unknown-linux-gnu',
+  'linux arm64': 'aarch64-unknown-linux-gnu',
+  'win32 x64': 'x86_64-pc-windows-msvc',
+  'win32 arm64': 'aarch64-pc-windows-msvc',
+};
 
 type Version = [number, number, number];
 
-interface Registration {
+interface ServiceEntry {
   service: string;
-  projectName: string;
   entryPath: string;
 }
 
@@ -66,97 +75,113 @@ function assertBuildNodeMatchesEngine(): void {
   console.log(`node ${process.version} satisfies engines.node "${range}"`);
 }
 
-// Asks Nx for every project and its root, then reads each project's package.json "sea" registration.
-function discoverRegistrations(): Registration[] {
-  const names = JSON.parse(
-    execFileSync('pnpm', ['exec', 'nx', 'show', 'projects', '--json'], { cwd: root, encoding: 'utf8' }),
-  ) as string[];
-
-  const registrations: Registration[] = [];
-  for (const projectName of names) {
-    const project = JSON.parse(
-      execFileSync('pnpm', ['exec', 'nx', 'show', 'project', projectName, '--json'], { cwd: root, encoding: 'utf8' }),
-    ) as { root: string };
-    const manifestPath = join(root, project.root, 'package.json');
-    if (!existsSync(manifestPath)) continue;
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
-      sea?: { service?: unknown; entry?: unknown };
-    };
-    if (manifest.sea === undefined) continue;
-    const { service, entry } = manifest.sea;
-    if (typeof service !== 'string' || service === '' || typeof entry !== 'string' || entry === '') {
-      throw new Error(`${projectName}: "sea" needs non-empty string fields "service" and "entry"`);
-    }
-    const builtEntry = join(root, project.root, entry);
-    if (!existsSync(builtEntry)) {
-      throw new Error(`${projectName}: missing ${builtEntry}; run the ${projectName} build target first`);
-    }
-    registrations.push({ service, projectName, entryPath: builtEntry });
+function targetTriple(): string {
+  const triple = TARGET_TRIPLES[`${process.platform} ${process.arch}`];
+  if (triple === undefined) {
+    throw new Error(`unsupported platform ${process.platform} ${process.arch}: no Rust target triple`);
   }
-
-  if (registrations.length === 0) {
-    throw new Error('no service is registered: add "sea": { "service", "entry" } to a project package.json');
-  }
-  const seen = new Set<string>();
-  for (const registration of registrations) {
-    if (seen.has(registration.service)) {
-      throw new Error(`service "${registration.service}" is registered more than once`);
-    }
-    seen.add(registration.service);
-  }
-  return registrations.sort((a, b) => a.service.localeCompare(b.service));
+  return triple;
 }
 
-// Each service is a lazy import, so only the role selected at run time starts. The default role is the first service in alphabetical order.
-function writeEntry(registrations: Registration[]): void {
-  const table = registrations
-    .map((r) => `  [${JSON.stringify(r.service)}, () => import(${JSON.stringify(r.entryPath)})],`)
+// Asks Nx where a project lives; the project name is the package name.
+function projectRoot(name: string): string {
+  const project = JSON.parse(
+    execFileSync('pnpm', ['exec', 'nx', 'show', 'project', name, '--json'], { cwd: root, encoding: 'utf8' }),
+  ) as { root: string };
+  return join(root, project.root);
+}
+
+function builtEntry(name: string, projectDir: string): string {
+  const entry = join(projectDir, 'dist', 'main.js');
+  if (!existsSync(entry)) {
+    throw new Error(`${name}: missing ${entry}; run the ${name} build target first`);
+  }
+  return entry;
+}
+
+// Services are the supervisor's workspace dependencies, read from its own package.json.
+function discoverServices(supervisor: string, supervisorDir: string): ServiceEntry[] {
+  const manifest = JSON.parse(readFileSync(join(supervisorDir, 'package.json'), 'utf8')) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  };
+  const dependencies = { ...manifest.dependencies, ...manifest.devDependencies };
+  const names = Object.keys(dependencies)
+    .filter((name) => dependencies[name]?.startsWith('workspace:'))
+    .sort();
+  if (names.length === 0) {
+    throw new Error(`${supervisor} has no workspace dependency to package as a service`);
+  }
+  return names.map((name) => ({
+    service: name,
+    entryPath: builtEntry(name, projectRoot(name)),
+  }));
+}
+
+// The generated entry picks the role: no --service argument starts the supervisor; --service <id> starts that service.
+function writeEntry(supervisorEntry: string, services: ServiceEntry[]): void {
+  const table = services
+    .map((s) => `  [${JSON.stringify(s.service)}, () => import(${JSON.stringify(s.entryPath)})],`)
     .join('\n');
-  const defaultService = registrations[0].service;
   const source = `// Generated by tools/scripts/compile-sea.ts. Do not edit.
-// Role selection: \`--service <name>\` on the command line; default "${defaultService}".
+// No --service argument starts the supervisor; --service <id> starts that one service.
 const services = new Map([
 ${table}
 ]);
-const args = process.argv.slice(1);
-const flag = args.indexOf('--service');
-const name = flag === -1 ? ${JSON.stringify(defaultService)} : args[flag + 1];
-const start = services.get(name);
-if (start === undefined) {
-  console.error(\`unknown service "\${name}"; registered: \${[...services.keys()].join(', ')}\`);
-  process.exit(2);
+const flag = process.argv.indexOf('--service');
+if (flag === -1) {
+  await import(${JSON.stringify(supervisorEntry)});
+} else {
+  const id = process.argv[flag + 1];
+  const start = services.get(id);
+  if (start === undefined) {
+    console.error(\`unknown service "\${id}"; registered: \${[...services.keys()].join(', ')}\`);
+    process.exit(2);
+  }
+  await start();
 }
-await start();
 `;
   writeFileSync(entryPath, source);
 }
 
+function runRspack(options: rspackNamespace.RspackOptions): Promise<void> {
+  return new Promise((resolvePromise, reject) => {
+    rspackNamespace.rspack(options, (error, stats) => {
+      if (error) return reject(error);
+      if (stats?.hasErrors()) return reject(new Error(stats.toString({ all: false, errors: true })));
+      resolvePromise();
+    });
+  });
+}
+
+// One ESM file. Externals and ignore rules come from the shared Nest config; the banner gives CommonJS dependencies a real require.
 async function bundle(): Promise<void> {
-  await build({
-    entryPoints: [entryPath],
-    outfile: bundlePath,
-    bundle: true,
-    platform: 'node',
-    format: 'esm',
-    target: 'node26',
-    logLevel: 'warning',
-    // CJS dependencies in the ESM bundle call require(); give them a real require (built-ins only, no file system).
-    banner: {
-      js: "import { createRequire as __seaCreateRequire } from 'node:module'; const require = __seaCreateRequire(import.meta.url);",
+  const shared = sharedNestConfig({ plugins: [] }, rspackNamespace);
+  await runRspack({
+    mode: 'production',
+    devtool: false,
+    target: 'node',
+    entry: entryPath,
+    output: {
+      path: workDir,
+      filename: 'sea-app.mjs',
+      module: true,
+      library: { type: 'module' },
+      chunkFormat: 'module',
     },
-    // Nest loads these optional peers only for features this app does not use (microservices, websockets, validation pipes).
-    external: [
-      '@nestjs/microservices',
-      '@nestjs/microservices/*',
-      '@nestjs/websockets',
-      '@nestjs/websockets/*',
-      'class-validator',
-      'class-transformer',
+    experiments: { outputModule: true },
+    externals: shared.externals,
+    plugins: [
+      ...shared.plugins,
+      new rspackNamespace.BannerPlugin({
+        raw: true,
+        banner: "import { createRequire as __seaCreateRequire } from 'node:module'; const require = __seaCreateRequire(import.meta.url);",
+      }),
     ],
   });
 }
 
-function writeSeaConfig(): void {
+function writeSeaConfig(binaryPath: string): void {
   const config = {
     main: bundlePath,
     mainFormat: 'module',
@@ -165,11 +190,12 @@ function writeSeaConfig(): void {
     useSnapshot: false,
     useCodeCache: true,
     execArgvExtension: 'none',
+    assets: { 'services.json': servicesPath },
   };
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 }
 
-function buildSea(): void {
+function buildSea(binaryPath: string): void {
   execFileSync(process.execPath, ['--build-sea', configPath], { stdio: 'inherit' });
   // The Node SEA doc requires an ad-hoc signature on macOS; an unsigned arm64 binary is killed at start.
   if (process.platform === 'darwin') {
@@ -178,22 +204,34 @@ function buildSea(): void {
 }
 
 async function main(): Promise<void> {
+  const supervisor = process.argv[2];
+  if (!supervisor) throw new Error('usage: node tools/scripts/compile-sea.ts <supervisor-project>');
   assertBuildNodeMatchesEngine();
-  const registrations = discoverRegistrations();
-  console.log(`registered services: ${registrations.map((r) => r.service).join(', ')}`);
+
+  const supervisorDir = projectRoot(supervisor);
+  const supervisorEntry = builtEntry(supervisor, supervisorDir);
+  const services = discoverServices(supervisor, supervisorDir);
+  console.log(`supervisor ${supervisor}; services: ${services.map((s) => s.service).join(', ')}`);
+
+  const artifactDir = join(root, 'artifacts', supervisor);
+  const binaryName = `${supervisor}-${targetTriple()}${process.platform === 'win32' ? '.exe' : ''}`;
+  const binaryPath = join(artifactDir, binaryName);
 
   rmSync(workDir, { recursive: true, force: true });
-  rmSync(outDir, { recursive: true, force: true });
+  rmSync(artifactDir, { recursive: true, force: true });
   mkdirSync(workDir, { recursive: true });
-  mkdirSync(outDir, { recursive: true });
+  mkdirSync(artifactDir, { recursive: true });
 
-  writeEntry(registrations);
+  writeEntry(supervisorEntry, services);
+  writeFileSync(
+    servicesPath,
+    `${JSON.stringify({ services: services.map((s) => s.service) }, null, 2)}\n`,
+  );
   await bundle();
-  writeSeaConfig();
-  buildSea();
+  writeSeaConfig(binaryPath);
+  buildSea(binaryPath);
 
-  const size = statSync(binaryPath).size;
-  console.log(`sea executable: ${binaryPath} (${size} bytes)`);
+  console.log(`sea executable: ${binaryPath} (${statSync(binaryPath).size} bytes)`);
 }
 
 main().catch((error: unknown) => {
