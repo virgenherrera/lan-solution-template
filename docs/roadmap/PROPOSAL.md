@@ -618,7 +618,7 @@ Acceptance criteria coverage:
 | AC-07 | POC-3 | AC-25 | POC-8 |
 | AC-08 | POC-3 | AC-26 | POC-9 |
 | AC-09 | Backlog (POC-6) | AC-27 | POC-9 |
-| AC-10 | POC-3 | AC-28 | POC-1b |
+| AC-10 | POC-3 | AC-28 | POC-2 |
 | AC-11 | POC-2 | AC-29 | POC-2 |
 | AC-12 | POC-4 | AC-30 | POC-2, POC-5 |
 | AC-13 | POC-1 | AC-31 | POC-2 (registry design only) |
