@@ -24,6 +24,7 @@
     "node": ">=26.13.0 <27"
   },
   "devDependencies": {
+    "esbuild": "catalog:",
     "nx": "24.0.2",
     "typescript": "catalog:"
   },
