@@ -34,7 +34,7 @@ docs[36]:
     related[3]: docs/backlog/README.md,docs/backlog/poc-1a-monorepo-init.md,docs/backlog/poc-1c-sea-build.md
     status: current
     updated: 2026-10-31
-    refs[4]: AC-13,REQ-REP-01,REQ-REP-02,REQ-REP-03
+    refs[5]: AC-13,REQ-REP-01,REQ-REP-02,REQ-REP-03,REQ-RUNTIME-02
   - doc: docs/backlog/poc-1c-sea-build.md
     title: POC-1c SEA build
     type: backlog
@@ -286,7 +286,7 @@ docs[36]:
     related[2]: docs/backlog/poc-1b-nest-apps.md,docs/results/POC-01a-Result.md
     status: current
     updated: 2026-10-31
-    refs[7]: REQ-ECO-02,REQ-RUNTIME-02,REQ-STACK-01,REQ-STACK-02,REQ-STACK-04,REQ-STACK-06,REQ-STACK-08
+    refs[10]: REQ-ECO-02,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-06,REQ-STACK-01,REQ-STACK-02,REQ-STACK-04,REQ-STACK-06,REQ-STACK-08
   - doc: docs/roadmap/PROPOSAL.md
     title: "Roadmap Proposal: lan-solution-template (SRS v1.6)"
     type: roadmap
