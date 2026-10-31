@@ -1,0 +1,280 @@
+docs[31]:
+  - doc: docs/architecture/overview.md
+    title: Architecture overview
+    type: architecture
+    summary: Mermaid architecture diagrams citing SRS sections for runtime and desktop topology.
+    ids: []
+    related[1]: README.md
+    status: current
+    updated: 2026-10-30
+    refs[10]: REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-05,REQ-DESK-06,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-05,REQ-RUNTIME-06
+  - doc: docs/backlog/README.md
+    title: Backlog index
+    type: backlog
+    summary: Backlog index of POC epics mapped to acceptance criteria and cycles.
+    ids: []
+    related[2]: docs/roadmap/PROPOSAL.md,docs/backlog/poc-0-repo-bootstrap.md
+    status: current
+    updated: 2026-10-30
+    refs[36]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36
+  - doc: docs/backlog/poc-0-repo-bootstrap.md
+    title: POC-0 Repo bootstrap
+    type: backlog
+    summary: Backlog item for bootstrapping the repository with docs and main branch.
+    ids: []
+    related[2]: docs/backlog/README.md,docs/backlog/poc-1-toolchain-workspace-skeleton.md
+    status: current
+    updated: 2026-10-30
+    refs[1]: REQ-REP-05
+  - doc: docs/backlog/poc-1-toolchain-workspace-skeleton.md
+    title: POC-1 Toolchain viability and workspace skeleton
+    type: backlog
+    summary: Backlog item for toolchain viability and the workspace skeleton.
+    ids: []
+    related[3]: docs/backlog/README.md,docs/backlog/poc-0-repo-bootstrap.md,docs/backlog/poc-2-single-sea-runtime-supervisor.md
+    status: current
+    updated: 2026-10-30
+    refs[31]: AC-01,AC-02,AC-13,AC-19,AC-22,AC-23,AC-24,AC-32,AC-33,AC-34,REQ-BUILD-01,REQ-BUILD-02,REQ-BUILD-03,REQ-BUILD-04,REQ-BUILD-05,REQ-DEPS-01,REQ-ECO-01,REQ-ECO-02,REQ-ECO-04,REQ-ECO-05,REQ-REF-01,REQ-REP-01,REQ-REP-02,REQ-REP-03,REQ-SEC-CI-01,REQ-SEC-CI-02,REQ-SEC-CI-03,REQ-STACK-01,REQ-SUPPLY-01,REQ-TEST-02,REQ-TEST-03
+  - doc: docs/backlog/poc-2-single-sea-runtime-supervisor.md
+    title: POC-2 Single SEA and runtime supervisor
+    type: backlog
+    summary: Backlog item for a single SEA build and the runtime supervisor.
+    ids: []
+    related[3]: docs/backlog/README.md,docs/backlog/poc-1-toolchain-workspace-skeleton.md,docs/backlog/poc-3-config-sqlite-vector.md
+    status: current
+    updated: 2026-10-30
+    refs[18]: AC-11,AC-28,AC-29,AC-30,AC-31,REQ-NET-01,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-TEST-07
+  - doc: docs/backlog/poc-3-config-sqlite-vector.md
+    title: POC-3 Config and SQLite vector persistence inside the SEA
+    type: backlog
+    summary: Backlog item for config and SQLite vector persistence inside the SEA.
+    ids: []
+    related[3]: docs/backlog/README.md,docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-4-https-gateway-angular-pwa.md
+    status: current
+    updated: 2026-10-30
+    refs[22]: AC-07,AC-08,AC-10,REQ-CFG-01,REQ-CFG-02,REQ-CFG-03,REQ-CFG-04,REQ-CFG-05,REQ-CFG-06,REQ-DB-01,REQ-DB-02,REQ-DB-03,REQ-DB-04,REQ-DB-05,REQ-DB-06,REQ-DB-07,REQ-DB-08,REQ-DB-09,REQ-SEA-05,REQ-SEC-06,REQ-STACK-07,REQ-TEST-06
+  - doc: docs/backlog/poc-4-https-gateway-angular-pwa.md
+    title: POC-4 HTTPS gateway serving the Angular PWA
+    type: backlog
+    summary: Backlog item for the HTTPS gateway serving the Angular PWA.
+    ids: []
+    related[3]: docs/backlog/README.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md
+    status: current
+    updated: 2026-10-30
+    refs[33]: AC-04,AC-05,AC-12,AC-14,AC-15,AC-16,AC-17,REQ-DB-01,REQ-DB-02,REQ-DEV-01,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-DEV-05,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA-01,REQ-PWA-02,REQ-PWA-03,REQ-SEA-04,REQ-SUPPLY-01,REQ-TEST-05,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-WEB-01
+  - doc: docs/backlog/poc-5-tauri-sidecar-desktop-shell.md
+    title: POC-5 Tauri desktop shell with SEA sidecar
+    type: backlog
+    summary: Backlog item for the Tauri desktop shell with SEA sidecar.
+    ids: []
+    related[3]: docs/backlog/README.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/backlog/poc-6-postgresql-adapter-parity.md
+    status: current
+    updated: 2026-10-30
+    refs[15]: AC-03,AC-18,AC-20,AC-30,REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-04,REQ-DESK-05,REQ-DESK-06,REQ-ECO-06,REQ-SEC-05,REQ-TEST-08,REQ-TEST-09,REQ-TLS-02
+  - doc: docs/backlog/poc-6-postgresql-adapter-parity.md
+    title: POC-6 PostgreSQL adapter parity (BACKLOG)
+    type: backlog
+    summary: "Backlog item for PostgreSQL adapter parity, parked in backlog."
+    ids: []
+    related[3]: docs/backlog/README.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/backlog/poc-7-auth-roles.md
+    status: current
+    updated: 2026-10-30
+    refs[7]: AC-09,REQ-DB-01,REQ-DB-02,REQ-DB-03,REQ-DB-05,REQ-DB-08,REQ-TEST-06
+  - doc: docs/backlog/poc-7-auth-roles.md
+    title: POC-7 Auth and roles
+    type: backlog
+    summary: Backlog item for authentication and roles.
+    ids: []
+    related[3]: docs/backlog/README.md,docs/backlog/poc-6-postgresql-adapter-parity.md,docs/backlog/poc-8-msi-matrix-versioning.md
+    status: current
+    updated: 2026-10-30
+    refs[12]: AC-06,REQ-CFG-03,REQ-DB-06,REQ-SEC-01,REQ-SEC-02,REQ-SEC-03,REQ-SEC-04,REQ-SEC-06,REQ-TEST-05,REQ-WEB-02,REQ-WEB-03,REQ-WEB-04
+  - doc: docs/backlog/poc-8-msi-matrix-versioning.md
+    title: "POC-8 MSI credential dialog, platform matrix and lockstep versioning"
+    type: backlog
+    summary: Backlog item for MSI credential dialog platform matrix and lockstep versioning.
+    ids: []
+    related[3]: docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md
+    status: current
+    updated: 2026-10-30
+    refs[10]: AC-21,AC-25,AC-33,REQ-CFG-05,REQ-SEA-05,REQ-TEST-09,REQ-TEST-10,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03
+  - doc: docs/backlog/poc-9-ci-cd-releases.md
+    title: POC-9 GitHub Actions CI/CD and releases (HOLD)
+    type: backlog
+    summary: "Backlog item for GitHub Actions CI/CD and releases, on hold."
+    ids: []
+    related[2]: docs/backlog/README.md,docs/backlog/poc-8-msi-matrix-versioning.md
+    status: current
+    updated: 2026-10-30
+    refs[22]: AC-02,AC-26,AC-27,AC-32,AC-35,AC-36,REQ-CI-01,REQ-CI-02,REQ-CI-03,REQ-CI-04,REQ-CI-05,REQ-CI-06,REQ-CI-07,REQ-CI-08,REQ-CI-09,REQ-CI-10,REQ-DEPS-02,REQ-ECO-07,REQ-SEC-CI-01,REQ-SEC-CI-02,REQ-SEC-CI-03,REQ-SEC-CI-04
+  - doc: docs/requirements/01-purpose-and-scope.md
+    title: Purpose and Scope
+    type: requirement
+    summary: "Defines the template purpose, scope, installed topology and out-of-scope items."
+    ids: []
+    related[2]: docs/requirements/README.md,docs/requirements/02-technology-baseline.md
+    status: current
+    updated: 2026-10-30
+    refs: []
+  - doc: docs/requirements/02-technology-baseline.md
+    title: Technology Baseline
+    type: requirement
+    summary: Fixes technology versions and supply-chain rules for reproducible installs.
+    ids[12]: REQ-STACK-01,REQ-STACK-02,REQ-STACK-03,REQ-STACK-04,REQ-STACK-05,REQ-STACK-06,REQ-STACK-07,REQ-STACK-08,REQ-STACK-09,REQ-STACK-10,REQ-SUPPLY-01,REQ-SUPPLY-02
+    related[3]: docs/requirements/README.md,docs/requirements/01-purpose-and-scope.md,docs/requirements/03-file-structure.md
+    status: current
+    updated: 2026-10-30
+    refs: []
+  - doc: docs/requirements/03-file-structure.md
+    title: File Structure
+    type: requirement
+    summary: Defines the expected repository layout and allowed code dependencies.
+    ids[5]: REQ-REP-01,REQ-REP-02,REQ-REP-03,REQ-REP-04,REQ-REP-05
+    related[3]: docs/requirements/README.md,docs/requirements/02-technology-baseline.md,docs/requirements/04-configuration.md
+    status: current
+    updated: 2026-10-30
+    refs: []
+  - doc: docs/requirements/04-configuration.md
+    title: Configuration
+    type: requirement
+    summary: "Describes how configuration is validated, injected and gates persistence initialization."
+    ids[6]: REQ-CFG-01,REQ-CFG-02,REQ-CFG-03,REQ-CFG-04,REQ-CFG-05,REQ-CFG-06
+    related[3]: docs/requirements/README.md,docs/requirements/03-file-structure.md,docs/requirements/05-persistence.md
+    status: current
+    updated: 2026-10-30
+    refs: []
+  - doc: docs/requirements/05-persistence.md
+    title: Persistence
+    type: requirement
+    summary: Defines persistence requirements for SQLite and PostgreSQL adapters and migrations.
+    ids[9]: REQ-DB-01,REQ-DB-02,REQ-DB-03,REQ-DB-04,REQ-DB-05,REQ-DB-06,REQ-DB-07,REQ-DB-08,REQ-DB-09
+    related[3]: docs/requirements/README.md,docs/requirements/04-configuration.md,docs/requirements/06-web-gateway-https-pwa.md
+    status: current
+    updated: 2026-10-30
+    refs: []
+  - doc: docs/requirements/06-web-gateway-https-pwa.md
+    title: "Web Gateway, HTTPS and PWA"
+    type: requirement
+    summary: "Defines dev proxy, SEA static serving, LAN TLS and PWA caching requirements."
+    ids[20]: REQ-DEV-01,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-DEV-05,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-PWA-01,REQ-PWA-02,REQ-PWA-03
+    related[3]: docs/requirements/README.md,docs/requirements/05-persistence.md,docs/requirements/07-security.md
+    status: current
+    updated: 2026-10-30
+    refs: []
+  - doc: docs/requirements/07-security.md
+    title: Security
+    type: requirement
+    summary: "Defines default security posture for authorization, privileges and secret handling."
+    ids[6]: REQ-SEC-01,REQ-SEC-02,REQ-SEC-03,REQ-SEC-04,REQ-SEC-05,REQ-SEC-06
+    related[3]: docs/requirements/README.md,docs/requirements/06-web-gateway-https-pwa.md,docs/requirements/08-web-angular.md
+    status: current
+    updated: 2026-10-30
+    refs: []
+  - doc: docs/requirements/08-web-angular.md
+    title: Web Angular
+    type: requirement
+    summary: "Defines Angular web app baseline, lazy protected routes and minimal UI requirements."
+    ids[4]: REQ-WEB-01,REQ-WEB-02,REQ-WEB-03,REQ-WEB-04
+    related[3]: docs/requirements/README.md,docs/requirements/07-security.md,docs/requirements/09-desktop-tauri.md
+    status: current
+    updated: 2026-10-30
+    refs: []
+  - doc: docs/requirements/09-desktop-tauri.md
+    title: Desktop Tauri and processes
+    type: requirement
+    summary: Tauri desktop shell and multiprocess runtime rules for the SEA supervisor.
+    ids[14]: REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-04,REQ-DESK-05,REQ-DESK-06,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08
+    related[3]: docs/requirements/README.md,docs/requirements/08-web-angular.md,docs/requirements/10-node-sea-distribution.md
+    status: current
+    updated: 2026-10-30
+    refs: []
+  - doc: docs/requirements/10-node-sea-distribution.md
+    title: Node SEA and distribution
+    type: requirement
+    summary: Node SEA build rules and per-platform distribution validation requirements.
+    ids[6]: REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-SEA-04,REQ-SEA-05,REQ-SEA-06
+    related[3]: docs/requirements/README.md,docs/requirements/09-desktop-tauri.md,docs/requirements/11-nx-quality-testing.md
+    status: current
+    updated: 2026-10-30
+    refs[1]: REQ-CFG-05
+  - doc: docs/requirements/11-nx-quality-testing.md
+    title: "Nx, quality and testing"
+    type: requirement
+    summary: "Nx, quality and testing requirements: scripts, CI gates, test scopes and release versioning."
+    ids[78]: REQ-SEC-CI-01,REQ-SEC-CI-02,REQ-SEC-CI-03,REQ-SEC-CI-04,REQ-BUILD-01,REQ-BUILD-02,REQ-BUILD-03,REQ-BUILD-04,REQ-BUILD-05,REQ-TEST-01,REQ-TEST-02,REQ-TEST-03,REQ-TEST-04,REQ-TEST-05,REQ-TEST-06,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09,REQ-TEST-10,REQ-ECO-01,REQ-ECO-02,REQ-ECO-03,REQ-ECO-04,REQ-ECO-05,REQ-ECO-06,REQ-ECO-07,REQ-REF-01,REQ-DEPS-01,REQ-DEPS-02,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03,REQ-CI-01,REQ-CI-02,REQ-CI-03,REQ-CI-04,REQ-CI-05,REQ-CI-06,REQ-CI-07,REQ-CI-08,REQ-CI-09,REQ-CI-10,AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36
+    related[3]: docs/requirements/README.md,docs/requirements/10-node-sea-distribution.md,docs/requirements/12-agent-delivery.md
+    status: current
+    updated: 2026-10-30
+    refs: []
+  - doc: docs/requirements/12-agent-delivery.md
+    title: Delivery instructions for the agent
+    type: requirement
+    summary: Mandatory agent steps to build the template from an empty repository and report results.
+    ids: []
+    related[3]: docs/requirements/README.md,docs/requirements/11-nx-quality-testing.md,docs/requirements/amendments-2026-10-30.md
+    status: current
+    updated: 2026-10-30
+    refs: []
+  - doc: docs/requirements/README.md
+    title: Requirements
+    type: index
+    summary: Index of the SRS split into requirement pages with REQ and AC counts.
+    ids: []
+    related: []
+    status: current
+    updated: 2026-10-30
+    refs: []
+  - doc: docs/requirements/amendments-2026-10-30.md
+    title: Amendments 2026-10-30
+    type: requirement
+    summary: Records agent-applied amendments to SRS v1.6 pending human approval of open questions.
+    ids: []
+    related[3]: docs/requirements/README.md,docs/requirements/12-agent-delivery.md,docs/requirements/traceability.md
+    status: current
+    updated: 2026-10-30
+    refs[5]: REQ-CFG-05,REQ-NET-01,REQ-SEA-05,REQ-SEC-02,REQ-STACK-07
+  - doc: docs/requirements/traceability.md
+    title: Traceability
+    type: traceability
+    summary: Maps each REQ and AC id to its POC and acceptance criterion.
+    ids: []
+    related[2]: docs/requirements/README.md,docs/requirements/amendments-2026-10-30.md
+    status: current
+    updated: 2026-10-30
+    refs[160]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36,REQ-BUILD-01,REQ-BUILD-02,REQ-BUILD-03,REQ-BUILD-04,REQ-BUILD-05,REQ-CFG-01,REQ-CFG-02,REQ-CFG-03,REQ-CFG-04,REQ-CFG-05,REQ-CFG-06,REQ-CI-01,REQ-CI-02,REQ-CI-03,REQ-CI-04,REQ-CI-05,REQ-CI-06,REQ-CI-07,REQ-CI-08,REQ-CI-09,REQ-CI-10,REQ-DB-01,REQ-DB-02,REQ-DB-03,REQ-DB-04,REQ-DB-05,REQ-DB-06,REQ-DB-07,REQ-DB-08,REQ-DB-09,REQ-DEPS-01,REQ-DEPS-02,REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-04,REQ-DESK-05,REQ-DESK-06,REQ-DEV-01,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-DEV-05,REQ-ECO-01,REQ-ECO-02,REQ-ECO-03,REQ-ECO-04,REQ-ECO-05,REQ-ECO-06,REQ-ECO-07,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA-01,REQ-PWA-02,REQ-PWA-03,REQ-REF-01,REQ-REP-01,REQ-REP-02,REQ-REP-03,REQ-REP-04,REQ-REP-05,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-SEA-04,REQ-SEA-05,REQ-SEA-06,REQ-SEC-01,REQ-SEC-02,REQ-SEC-03,REQ-SEC-04,REQ-SEC-05,REQ-SEC-06,REQ-SEC-CI-01,REQ-SEC-CI-02,REQ-SEC-CI-03,REQ-SEC-CI-04,REQ-STACK-01,REQ-STACK-02,REQ-STACK-03,REQ-STACK-04,REQ-STACK-05,REQ-STACK-06,REQ-STACK-07,REQ-STACK-08,REQ-STACK-09,REQ-STACK-10,REQ-SUPPLY-01,REQ-SUPPLY-02,REQ-TEST-01,REQ-TEST-02,REQ-TEST-03,REQ-TEST-04,REQ-TEST-05,REQ-TEST-06,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09,REQ-TEST-10,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03,REQ-WEB-01,REQ-WEB-02,REQ-WEB-03,REQ-WEB-04
+  - doc: docs/roadmap/PROPOSAL.md
+    title: "Roadmap Proposal: lan-solution-template (SRS v1.6)"
+    type: roadmap
+    summary: "Roadmap proposal with cycles, POC pitches, coverage matrix and open questions."
+    ids: []
+    related[2]: README.md,docs/backlog/README.md
+    status: proposed
+    updated: 2026-10-30
+    refs[146]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36,REQ-BUILD-01,REQ-BUILD-02,REQ-CFG-01,REQ-CFG-02,REQ-CFG-03,REQ-CFG-04,REQ-CFG-05,REQ-CFG-06,REQ-CI-01,REQ-CI-02,REQ-CI-03,REQ-CI-04,REQ-CI-05,REQ-CI-06,REQ-CI-07,REQ-CI-09,REQ-CI-10,REQ-DB-01,REQ-DB-02,REQ-DB-04,REQ-DB-05,REQ-DB-06,REQ-DB-07,REQ-DB-08,REQ-DB-09,REQ-DEPS,REQ-DEPS-01,REQ-DEPS-02,REQ-DESK,REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-04,REQ-DESK-05,REQ-DESK-06,REQ-DEV,REQ-DEV-01,REQ-DEV-04,REQ-ECO-01,REQ-ECO-02,REQ-ECO-04,REQ-ECO-05,REQ-ECO-06,REQ-ECO-07,REQ-NET,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA,REQ-PWA-01,REQ-PWA-02,REQ-REF-01,REQ-REP-01,REQ-REP-05,REQ-RUNTIME,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-SEA-04,REQ-SEA-05,REQ-SEA-06,REQ-SEC-01,REQ-SEC-02,REQ-SEC-03,REQ-SEC-04,REQ-SEC-05,REQ-SEC-06,REQ-SEC-CI-01,REQ-SEC-CI-02,REQ-SEC-CI-03,REQ-SEC-CI-04,REQ-STACK-01,REQ-STACK-04,REQ-STACK-07,REQ-SUPPLY-01,REQ-TEST-01,REQ-TEST-02,REQ-TEST-03,REQ-TEST-04,REQ-TEST-05,REQ-TEST-06,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09,REQ-TEST-10,REQ-TLS,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03,REQ-WEB-01,REQ-WEB-02,REQ-WEB-03,REQ-WEB-04
+  - doc: docs/standards/README.md
+    title: Standards and references
+    type: standard
+    summary: "Technical and normative references, standards mapping, and the metadata block convention."
+    ids: []
+    related[2]: README.md,docs/standards/identifier-glossary.md
+    status: current
+    updated: 2026-10-30
+    refs[1]: REQ-SEC-02
+  - doc: docs/standards/identifier-glossary.md
+    title: Identifier glossary
+    type: standard
+    summary: Glossary of identifier families not defined in the SRS; meanings not verified.
+    ids: []
+    related[1]: docs/standards/README.md
+    status: current
+    updated: 2026-10-30
+    refs: []
+  - doc: lan-solution-template-SRS-v1.6.md
+    title: LAN Solution Template SRS v1.6 (historical original)
+    type: requirement
+    summary: "Spanish original of the SRS, kept for reference only."
+    ids: []
+    related[2]: docs/requirements/README.md,docs/requirements/traceability.md
+    status: historical
+    updated: 2026-10-30
+    refs[160]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36,REQ-BUILD-01,REQ-BUILD-02,REQ-BUILD-03,REQ-BUILD-04,REQ-BUILD-05,REQ-CFG-01,REQ-CFG-02,REQ-CFG-03,REQ-CFG-04,REQ-CFG-05,REQ-CFG-06,REQ-CI-01,REQ-CI-02,REQ-CI-03,REQ-CI-04,REQ-CI-05,REQ-CI-06,REQ-CI-07,REQ-CI-08,REQ-CI-09,REQ-CI-10,REQ-DB-01,REQ-DB-02,REQ-DB-03,REQ-DB-04,REQ-DB-05,REQ-DB-06,REQ-DB-07,REQ-DB-08,REQ-DB-09,REQ-DEPS-01,REQ-DEPS-02,REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-04,REQ-DESK-05,REQ-DESK-06,REQ-DEV-01,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-DEV-05,REQ-ECO-01,REQ-ECO-02,REQ-ECO-03,REQ-ECO-04,REQ-ECO-05,REQ-ECO-06,REQ-ECO-07,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA-01,REQ-PWA-02,REQ-PWA-03,REQ-REF-01,REQ-REP-01,REQ-REP-02,REQ-REP-03,REQ-REP-04,REQ-REP-05,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-SEA-04,REQ-SEA-05,REQ-SEA-06,REQ-SEC-01,REQ-SEC-02,REQ-SEC-03,REQ-SEC-04,REQ-SEC-05,REQ-SEC-06,REQ-SEC-CI-01,REQ-SEC-CI-02,REQ-SEC-CI-03,REQ-SEC-CI-04,REQ-STACK-01,REQ-STACK-02,REQ-STACK-03,REQ-STACK-04,REQ-STACK-05,REQ-STACK-06,REQ-STACK-07,REQ-STACK-08,REQ-STACK-09,REQ-STACK-10,REQ-SUPPLY-01,REQ-SUPPLY-02,REQ-TEST-01,REQ-TEST-02,REQ-TEST-03,REQ-TEST-04,REQ-TEST-05,REQ-TEST-06,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09,REQ-TEST-10,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03,REQ-WEB-01,REQ-WEB-02,REQ-WEB-03,REQ-WEB-04
