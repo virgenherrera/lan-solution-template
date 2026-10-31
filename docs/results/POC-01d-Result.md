@@ -151,6 +151,49 @@ Manual edits 1 to 16 come from the generated-app report. Edits 17 to 19 come fro
 - Unknown paths return the index with 200. POC-4 owns the 404 rule.
 - The extracted web cache is under the OS temp directory (`lan-web-tree/<hash>`). It survives SIGTERM. Cleanup and the cache location move are POC-4 and POC-3 work.
 
+## Audit fix
+
+Commit `d68f349` fixes the `pnpm audit` findings on this branch. Before the fix, `pnpm audit` reported 43 advisories. After it, it reports 0 in every severity.
+
+| Severity | Before | After |
+|---|---|---|
+| critical | 0 | 0 |
+| high | 14 | 0 |
+| moderate | 21 | 0 |
+| low | 8 | 0 |
+| total | 43 | 0 |
+
+Mechanism:
+
+- `pnpm audit --fix` wrote the overrides to `pnpm-workspace.yaml`. pnpm 12 updated `pnpm-lock.yaml` during install.
+- The advisory ids in the comments (GHSA) were added by hand.
+- A second pass was needed. A narrower `undici` override left high advisories open. `tmp` needed 0.2.7.
+
+Overrides, copied from `pnpm-workspace.yaml`:
+
+```yaml
+overrides:
+  minimatch@<11.0.1: 11.0.1 # GHSA-g3hv-75wg-m249 (moderate); remove once the parent ships a fix
+  qs@>=6.7.0 <=6.16.0: 6.16.1 # GHSA-6pq8-jhm2-2vcw (moderate); remove once the parent ships a fix
+  tmp@<0.2.7: 0.2.7 # GHSA-ph9p-34f9-6g65, GHSA-7c78-jf6q-g5cm (high), GHSA-52f5-9888-hmc6 (low); remove once the parent ships a fix
+  undici@>=4.0.0 <6.29.1: 6.29.1 # GHSA-2m5v-pch6-74hx, GHSA-qrxm-fqhp-jwvm, GHSA-f269-vfmq-vjvj, GHSA-vrm6-8vpv-qv8q (high) and undici 6.x moderate/low ids; remove once the parent ships a fix
+  undici@>=7.0.0 <7.30.1: 7.30.1 # GHSA-4w7w-5xrc-9h26, GHSA-xjj6-f33q-929c, GHSA-w293-vg96-wgc3 (high) and undici 7.x moderate/low ids; remove once the parent ships a fix
+```
+
+Rule: remove each override once the parent package ships a fix. `auditConfig.ignoreCves` stays empty. No advisory is ignored.
+
+Verification:
+
+- `pnpm install --frozen-lockfile` in the main tree: exit 0.
+- Fresh clone of `d68f349`, then `pnpm install --frozen-lockfile`: exit 0, no `ERR_PNPM_IGNORED_BUILDS`.
+- `NX_DAEMON=false pnpm build` and `NX_DAEMON=false pnpm package`: exit 0.
+- `pnpm audit --audit-level=high`: exit 0.
+- Packaged binary, run under `env -i PATH=/usr/bin:/bin`: `GET /` returns 200 with title `web-angular`. `GET /health` returns 200. SIGTERM left no process. Port 3000 is free.
+
+Not verified:
+
+- A peer-dependency warning printed by the install was not checked for being older than this change.
+
 ## Not verified
 
 - Rendering in a real browser. Only `curl` checks ran.

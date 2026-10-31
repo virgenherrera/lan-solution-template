@@ -134,7 +134,7 @@ Ids with no pitch task (none invented): [REQ-REP-05](../requirements/03-file-str
 
 Sources: [POC-1d result](../results/POC-01d-Result.md), commit `124ebc6`.
 
-- `pnpm audit --audit-level=high` reports 43 vulnerabilities (14 high) in the current tree. Observed. `securityCheck` must decide fail-closed handling and `ignoreCves`.
+- Resolved in 1d. `pnpm audit --audit-level=high` reported 43 advisories (14 high) before commit `d68f349`. It reports 0 after the `overrides` block in `pnpm-workspace.yaml`. See [Audit fix](../results/POC-01d-Result.md#audit-fix). The `securityCheck` of 1e must run `pnpm audit --audit-level=high` and fail closed. It must keep `auditConfig.ignoreCves` empty unless an advisory has no fix. The sibling repos define the check as `pnpm audit --audit-level high` (observed by the previous worker; not verified here). The `securityCheck` script itself is still 1e work.
 - The pnpm trust policy in `pnpm-workspace.yaml` (commit `124ebc6`) declares `allowBuilds: true` for `@parcel/watcher`, `esbuild`, `lmdb`, `msgpackr-extract` and `nx`. It declares `allowBuilds: false` for `@nestjs/core`. `minimumReleaseAgeExclude` and `auditConfig.ignoreCves` are empty.
 - Type-check gap: the rspack builder does no type check, and the build has no `tsc --noEmit` step. Decide whether to add one.
 
