@@ -1,4 +1,4 @@
-docs[37]:
+docs[38]:
   - doc: docs/architecture/overview.md
     title: Architecture overview
     type: architecture
@@ -296,6 +296,15 @@ docs[37]:
     status: current
     updated: 2026-10-31
     refs[2]: REQ-BUILD-04,REQ-TEST-01
+  - doc: docs/results/SPIKE-spa-serving.md
+    title: SPIKE SPA serving in the SEA
+    type: backlog
+    summary: "Spike: serving a static SPA from api-gateway inside the Node SEA, with the gateway unaware of SEA."
+    ids: []
+    related[3]: docs/results/POC-01c-Result.md,docs/standards/README.md,docs/requirements/10-node-sea-distribution.md
+    status: current
+    updated: 2026-10-31
+    refs: []
   - doc: docs/roadmap/PROPOSAL.md
     title: "Roadmap Proposal: lan-solution-template (SRS v1.6)"
     type: roadmap
