@@ -4,16 +4,16 @@ doc: docs/backlog/poc-1-toolchain-workspace-skeleton.md
 title: "POC-1 Toolchain viability and workspace skeleton"
 type: backlog
 summary: "Backlog item for toolchain viability and the workspace skeleton."
-related[3]: docs/backlog/README.md,docs/backlog/poc-0-repo-bootstrap.md,docs/backlog/poc-2-single-sea-runtime-supervisor.md
+related[2]: docs/backlog/README.md,docs/backlog/poc-2-single-sea-runtime-supervisor.md
 status: current
-updated: 2026-10-30
+updated: 2026-10-31
 -->
 
 # POC-1: Toolchain viability and workspace skeleton
 
 [Home](../../README.md) | [Requirements](../requirements/README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](../roadmap/PROPOSAL.md) | [Traceability](../requirements/traceability.md) | [Backlog](README.md)
 
-[Previous](poc-0-repo-bootstrap.md) | [Up](README.md) | [Next](poc-2-single-sea-runtime-supervisor.md)
+[Previous](README.md) | [Up](README.md) | [Next](poc-2-single-sea-runtime-supervisor.md)
 
 ## Navigation
 
@@ -34,9 +34,9 @@ updated: 2026-10-30
 |---|---|
 | Status | Cycle 1 (planned) |
 | Appetite | 1 week, small batch |
-| Depends on | POC-0 (not blocking) |
+| Depends on | none |
 | Branch | `chore/poc-01-toolchain` |
-| Requirements | 21 REQ ids |
+| Requirements | 22 REQ ids |
 | Acceptance criteria | AC-01, AC-02, AC-13, AC-19, AC-22, AC-23, AC-24, AC-32, AC-33, AC-34 |
 
 ---
@@ -86,6 +86,7 @@ Cited elsewhere in the pitch:
 - [REQ-REP-01](../requirements/03-file-structure.md)
 - [REQ-REP-02](../requirements/03-file-structure.md)
 - [REQ-REP-03](../requirements/03-file-structure.md)
+- [REQ-REP-05](../requirements/03-file-structure.md)
 - [REQ-TEST-03](../requirements/11-nx-quality-testing.md)
 - [REQ-ECO-04](../requirements/11-nx-quality-testing.md)
 - [REQ-ECO-05](../requirements/11-nx-quality-testing.md)

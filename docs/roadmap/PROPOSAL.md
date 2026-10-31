@@ -6,7 +6,7 @@ type: roadmap
 summary: "Roadmap proposal with cycles, POC pitches, coverage matrix and open questions."
 related[2]: README.md,docs/backlog/README.md
 status: proposed
-updated: 2026-10-30
+updated: 2026-10-31
 -->
 
 # Roadmap Proposal: lan-solution-template (SRS v1.6)
@@ -24,7 +24,6 @@ Source: `lan-solution-template-SRS-v1.6.md` (sections 1-13). The REQ-* and AC-* 
 - [Method](#method)
 - [Cycles and bets](#cycles-and-bets)
 - [Pitches](#pitches)
-  - [POC-0: Repo bootstrap](#poc-0-repo-bootstrap)
   - [POC-1: Toolchain viability and workspace skeleton](#poc-1-toolchain-viability-and-workspace-skeleton)
   - [POC-2: Single SEA and runtime supervisor](#poc-2-single-sea-and-runtime-supervisor)
   - [POC-3: Config and SQLite vector persistence inside the SEA](#poc-3-config-and-sqlite-vector-persistence-inside-the-sea)
@@ -53,7 +52,7 @@ Why this page exists: it orders the SRS v1.6 POCs and logs 15 human decisions. N
 |---|---|---|
 | Status | Proposal v2. Not approved. No remote action ran. | [Decision Log](#decision-log) |
 | Method | Shape Up. 6 weeks of build, then 2 weeks of cooldown. | [Method](#method) |
-| Bets | 3 cycles. 9 active POCs (POC-9 on hold) and POC-6 in the backlog. | [Cycles and bets](#cycles-and-bets) |
+| Bets | 3 cycles. 8 active POCs (POC-9 on hold) and POC-6 in the backlog. | [Cycles and bets](#cycles-and-bets) |
 | ADR index | 13 rows: 9 approved, 1 proposed, 3 pending spike. | [ADR index](#adr-index) |
 | Open questions | 17 rows. None blocks. | [Open questions](#open-questions) |
 | Coverage | 13 SRS sections and 36 acceptance criteria map to POCs. | [SRS coverage matrix](#srs-coverage-matrix) |
@@ -63,7 +62,7 @@ Why this page exists: it orders the SRS v1.6 POCs and logs 15 human decisions. N
 ```mermaid
 timeline
     title Cycles and bets
-    Cycle 1 - about 5.5 weeks : POC-0 Repo bootstrap - 1-2 days : POC-1 Toolchain - 1 week : POC-2 Single SEA - 2 weeks : POC-3 Config and SQLite vector - 2 weeks
+    Cycle 1 - about 5 weeks : POC-1 Toolchain - 1 week : POC-2 Single SEA - 2 weeks : POC-3 Config and SQLite vector - 2 weeks
     Cooldown - 2 weeks : Betting table
     Cycle 2 - about 4 weeks : POC-4 HTTPS gateway - 2 weeks : POC-5 Tauri shell - 2 weeks
     Cooldown - 2 weeks : Betting table
@@ -76,8 +75,7 @@ timeline
 
 ```mermaid
 flowchart LR
-    P0["POC-0 Repo bootstrap"] -.->|"not blocking"| P1["POC-1 Toolchain"]
-    P1 --> P2["POC-2 Single SEA"]
+    P1["POC-1 Toolchain"] --> P2["POC-2 Single SEA"]
     P2 --> P3["POC-3 Config and SQLite"]
     P2 --> P4["POC-4 HTTPS gateway"]
     P3 -.->|"not blocking"| P4
@@ -130,7 +128,7 @@ Main risks from the SRS:
 - Cross-OS process-tree shutdown (R1, R-04).
 - The native 3-OS CI matrix (R-01 of 11.4.1).
 
-D-07 puts CI/CD last. D-03 asks for the smallest integrated micro-POCs. This proposal turns both into nine active POCs and one backlog item (POC-6, PostgreSQL). POC-9 (CI/CD and releases) is on HOLD.
+D-07 puts CI/CD last. D-03 asks for the smallest integrated micro-POCs. This proposal turns both into eight active POCs and one backlog item (POC-6, PostgreSQL). POC-9 (CI/CD and releases) is on HOLD.
 
 A-01 is not in the SRS.
 
@@ -202,15 +200,14 @@ flowchart LR
 
 | Cycle | POCs | Length | Then |
 |---|---|---|---|
-| 1 | POC-0, POC-1, POC-2, POC-3 | ~5.5 weeks (0.4 + 1 + 2 + 2) | 2-week cooldown, betting table |
+| 1 | POC-1, POC-2, POC-3 | ~5 weeks (1 + 2 + 2) | 2-week cooldown, betting table |
 | 2 | POC-4, POC-5 | ~4 weeks (2 + 2) | 2-week cooldown, betting table |
 | 3 | POC-7, POC-8 | ~3.5 weeks (1-2 + 2) | cooldown |
 | After | POC-9 (only when HOLD is lifted) | ~2 weeks + small | betting table |
 
 | POC | Title | Appetite | Batch | Depends on | Branch |
 |---|---|---|---|---|---|
-| POC-0 | Repo bootstrap: docs in `docs/`, `main` branch | 1-2 days | small | none | `chore/poc-00-repo-bootstrap` |
-| POC-1 | Toolchain viability + OS matrix + workspace skeleton | 1 week | small | POC-0 (not blocking) | `chore/poc-01-toolchain` |
+| POC-1 | Toolchain viability + OS matrix + workspace skeleton | 1 week | small | none | `chore/poc-01-toolchain` |
 | POC-2 | Single SEA + runtime supervisor | 2 weeks | big | POC-1 | `minor/poc-02-sea-supervisor` |
 | POC-3 | Config (`config.json`) + SQLite vector inside SEA | 2 weeks | big | POC-2 | `minor/poc-03-sqlite-vector` |
 | POC-4 | HTTPS gateway (dev-certs-style TLS) serving Angular PWA + dev loop | 2 weeks | big | POC-2 (POC-3 not blocking) | `minor/poc-04-https-spa` |
@@ -233,25 +230,6 @@ Ordering rationale:
 ## Pitches
 
 [Back to navigation](#navigation)
-
-### POC-0: Repo bootstrap
-
-[Back to navigation](#navigation)
-
-- **Scope**: docs in `docs/`, branch `main`.
-- **Problem**: Local branch `main` exists at `84ea56f`. No `master` branch exists. Commit `84ea56f` holds the original SRS, this proposal and `AGENTS.md`. The split docs are on branch `docs/split-srs`. Whether anything is pushed to origin: not verified. The identifier glossary lists NFR-DOC-01, D-05 and D-08. Meanings are not verified.
-- **Appetite**: 1-2 days, small batch.
-- **Solution sketch**:
-  - Create `chore/poc-00-repo-bootstrap` from `docs/split-srs` HEAD.
-  - Verify `main` exists. If `git branch --list master` prints a name, rename it with `git branch -m master main` (local only, no push).
-  - Keep the split docs under `docs/`, including `docs/roadmap/PROPOSAL.md`.
-  - The root SRS file stays as historical reference.
-  - Confirm origin `git@github.com:virgenherrera/lan-solution-template.git` (decision 1). The plan says it was checked with `git remote -v`. Not verified in this document.
-- **Rabbit holes**: none.
-- **No-gos**: no CI, no code.
-- **Circuit breaker**: if the rename or layout causes friction, keep the files where they are. Record it as an open decision.
-- **Acceptance criteria**: `git rev-parse --verify main` exits 0. `git branch --list master` prints nothing. The docs are under `docs/`. REQ-REP-05 requires documentation. NFR-DOC-01, D-05 and D-08 are listed in the identifier glossary. Meanings are not verified.
-- **Deliverable**: branch `chore/poc-00-repo-bootstrap`. PR title: `chore: bootstrap repo with docs and main branch`. Result page: `docs/results/POC-00-Result.md`, same convention as POC-1. Opening the PR is a remote action that needs approval.
 
 ### POC-1: Toolchain viability and workspace skeleton
 
@@ -597,7 +575,7 @@ Global, from the SRS:
 |---|---|---|
 | 1 | Purpose and scope (FR-01..05, FR-45, FR-46) | POC-2, POC-4, POC-5, POC-9 |
 | 2 | Tech baseline and reproducibility (REQ-STACK-01..10, REQ-SUPPLY-01/02, NFR-15) | POC-1, Backlog POC-6 (pgvector), POC-3 (Drizzle, sqlite-vector) |
-| 3 | Expected file structure (REQ-REP-01..05) | POC-1, POC-0 (docs) |
+| 3 | Expected file structure (REQ-REP-01..05) | POC-1 |
 | 4 | Configuration (REQ-CFG-01..06) | POC-3 |
 | 5 | Persistence, vectors, migrations (REQ-DB-01..09) | POC-3 (SQLite); PostgreSQL parts in Backlog POC-6 |
 | 6 | Dev, web packaging, LAN gateway, HTTPS, PWA (REQ-DEV, REQ-NET, REQ-TLS, REQ-PWA) | POC-4 |
@@ -606,8 +584,8 @@ Global, from the SRS:
 | 9 | Desktop Tauri and processes (REQ-DESK, REQ-RUNTIME) | POC-5, POC-2 |
 | 10 | Node SEA and distribution (REQ-SEA-01..06) | POC-2, POC-4, POC-8 (REQ-SEA-06) |
 | 11 | Nx, quality, tests. Sections: 11.0 build/test/security, 11.1 ECO, 11.2 refs/deps, 11.3 versioning, 11.4 CI/CD, 11.5 acceptance, 11.6 portability | POC-1 (ECO, REQ-DEPS, security gate, REQ-BUILD-02..05, REQ-TEST-02, REQ-REF-01). POC-8 (11.3, 11.6, REQ-TEST-09/10). POC-9 (11.4, 11.4.1). POC-2..7 (REQ-TEST-04..08 per feature) |
-| 12 | Delivery instructions (D-01..D-10, NFR-TRUTH-01, NFR-DOC-01, NFR-VER-01) | POC-0, POC-1, every POC result page |
-| 13 | Technical and normative references | POC-1 (version verification), POC-0 (ADR/doc links) |
+| 12 | Delivery instructions (D-01..D-10, NFR-TRUTH-01, NFR-DOC-01, NFR-VER-01) | POC-1, every POC result page |
+| 13 | Technical and normative references | POC-1 (version verification, ADR/doc links) |
 
 Acceptance criteria coverage:
 
@@ -698,7 +676,7 @@ Claims marked "not verified" stay unverified until a spike or a primary source c
 | ASSUMPTION | The appetites are estimates. |
 | ASSUMPTION | Branch prefixes for POC PRs reuse the REQ-VERSION-02 naming (`major/`, `minor/`, `fix/`, `docs/`, `chore/`). |
 | ASSUMPTION | ADR numbering and page slugs are proposals, not SRS requirements. |
-| ASSUMPTION | Mapping SRS sections 3 and 13 to POC-1 and POC-0 is a planning choice. The SRS does not assign them to phases. |
+| ASSUMPTION | Mapping SRS sections 3, 12 and 13 to POC-1 is a planning choice. The SRS does not assign them to phases. |
 
 ---
 
