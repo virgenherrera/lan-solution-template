@@ -14,7 +14,7 @@ Traceability: `docs/requirements/traceability.md`.
 - Run CLIs through `pnpm dlx` and `pnpm` only. Other installs (`brew`, `apt`) stay forbidden.
 - Branch prefixes follow the SRS (REQ-VERSION-02): `major/`, `minor/`, `fix/`, `docs/`, `chore/`.
 - Do not invent requirements the SRS does not state. Mark unverified claims "not verified".
-- No commit, push, or GitHub write without explicit user approval.
+- Commit freely on a feature branch (human decision). Push, pull request, `gh` and any other GitHub write need explicit user approval.
 - Never commit to `main`. Work on a feature branch and commit there.
 
 ## Commits
