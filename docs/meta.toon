@@ -290,7 +290,7 @@ docs[37]:
   - doc: docs/results/POC-01c-Result.md
     title: POC-1c Result
     type: backlog
-    summary: "Result of POC-1c: api-gateway packaged as one native Node SEA through an Nx package target, verified from a binary with no node on PATH."
+    summary: "Result of POC-1c: every registered service packaged as one native Node SEA by the Nx project sea-build, verified from a binary with no node on PATH."
     ids: []
     related[2]: docs/backlog/poc-1c-sea-build.md,docs/results/POC-01b-Result.md
     status: current

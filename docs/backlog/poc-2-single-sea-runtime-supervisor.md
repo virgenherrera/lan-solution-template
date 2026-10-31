@@ -50,6 +50,7 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-sup
 - Prove one SEA per platform. POC-1c already packages a dummy Nest app as a SEA with a minimal `tools/scripts/compile-sea.ts`; this POC extends it.
 - The SEA bundles the dispatcher, sea-runtime and api-gateway.
 - It relaunches itself by role under a supervisor.
+- POC-1c selects the role with a `--service <name>` argument in the generated entry. POC-2 replaces that argument selection with the Zod-validated dispatcher.
 
 | No-gos |
 |---|

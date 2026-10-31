@@ -275,7 +275,7 @@ POC-1 stays the umbrella id. Slices run in order; each depends on the previous o
 |---|---|---|---|---|
 | 1a | Monorepo init: version table, pnpm workspace and catalog, supply-chain settings, Nx local, root no-op scripts, one Node engine pin, reference study | `minor/poc-01a-monorepo` | ~1 day | none |
 | 1b | Nest apps: `api-gateway`, `sea-runtime`, `shared-core` from the Nest CLI; dummy health endpoint; `sea-runtime` as a standalone `createApplicationContext(RuntimeModule)` with no listener (REQ-RUNTIME-02) | `minor/poc-01b-nest` | ~1 day | 1a |
-| 1c | SEA build: minimal native `node --build-sea` script and assembler `package` target; the dummy Nest app runs from the binary | `minor/poc-01c-sea-build` | ~2 days | 1b |
+| 1c | SEA build: minimal native `node --build-sea` script and the assembler Nx project `sea-build` with its `package` target; the dummy Nest app runs from the binary | `minor/poc-01c-sea-build` | ~2 days | 1b |
 | 1d | Angular and link: `web-angular` from the Angular CLI; `api-gateway` serves a dummy page over plain HTTP in dev and from the SEA; Nx build order and post-package check | `minor/poc-01d-angular-link` | ~1 day | 1c |
 | 1e | Hardening and desktop skeleton: `desktop` from the Tauri CLI, `securityCheck`, test filter stub, OS matrix, root sequence, tags, consolidated result | `minor/poc-01e-hardening` | ~1 day | 1d |
 

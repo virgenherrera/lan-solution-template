@@ -42,18 +42,9 @@
     "vite": "8.3.5",
     "vitest": "4.1.12"
   },
-  "nx": {
-    "targets": {
-      "package": {
-        "dependsOn": [
-          "build"
-        ],
-        "executor": "nx:run-commands",
-        "options": {
-          "command": "node tools/scripts/compile-sea.ts",
-          "cwd": "{workspaceRoot}"
-        }
-      }
-    }
+  "nx": {},
+  "sea": {
+    "service": "api-gateway",
+    "entry": "dist/main.js"
   }
 }

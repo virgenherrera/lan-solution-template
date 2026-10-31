@@ -4,6 +4,7 @@ allowBuilds:
 packages:
   - apps/*
   - libs/*
+  - tools
 catalog:
   esbuild: 0.28.2
   nx: 24.0.2
