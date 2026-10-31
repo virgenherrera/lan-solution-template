@@ -15,8 +15,11 @@ export default (defaults: { plugins: unknown[] }, rspack: RspackNamespace) => ({
   externals: [
     ({ request }: ExternalsData, callback: ExternalsCallback) => {
       if (!request) return callback();
+      // Every node: scheme request is a runtime builtin, including ones builtinModules omits (node:sea).
       const bare = request.startsWith('node:') ? request.slice(5) : request;
-      if (nodeBuiltins.has(bare)) return callback(undefined, `node-commonjs ${request}`);
+      if (request.startsWith('node:') || nodeBuiltins.has(bare)) {
+        return callback(undefined, `node-commonjs ${request}`);
+      }
       callback();
     },
   ],
