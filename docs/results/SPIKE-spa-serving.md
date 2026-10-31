@@ -12,7 +12,7 @@ updated: 2026-10-31
 
 # SPIKE SPA serving in the SEA
 
-Branch `chore/spike-spa-serving`. Question: can `api-gateway` serve a static single-page app while staying SEA-agnostic, with the SEA supervisor handing it the files?
+Branch: a spike branch that was renamed to `minor/poc-01d-angular-link` before merge. Question: can `api-gateway` serve a static single-page app while staying SEA-agnostic, with the SEA supervisor handing it the files?
 
 ## Summary
 

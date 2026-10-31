@@ -11,7 +11,7 @@ updated: 2026-10-31
 
 # POC-1d Result
 
-Slice 1d of POC-1, delivered on branch `chore/spike-spa-serving`. This is the same branch and PR as the SPA spike and the decision 17 docs. The branch choice is a human decision; the backlog named `minor/poc-01d-angular-link`. Backlog: [POC-1d](../backlog/poc-1d-angular-link.md). Previous slice: [POC-1c](POC-01c-Result.md).
+Slice 1d of POC-1, delivered on branch `minor/poc-01d-angular-link`. This is the same branch and PR as the SPA spike and the decision 17 docs. The branch choice is a human decision; the backlog named the same branch. Backlog: [POC-1d](../backlog/poc-1d-angular-link.md). Previous slice: [POC-1c](POC-01c-Result.md).
 
 ## Summary
 
@@ -141,7 +141,7 @@ Manual edits 1 to 16 come from the generated-app report. Edits 17 to 19 come fro
 
 ## Deviations
 
-- Branch: `chore/spike-spa-serving`, not `minor/poc-01d-angular-link`. Human decision: one PR with the spike and the decision 17 docs.
+- Deviation: delivered on `minor/poc-01d-angular-link` together with the SPA spike and decision 17 in ONE PR (human decision).
 - `@angular/core` runtime packages are pinned to `22.2.4`. Version `22.2.5` was not in the registry when checked. [REQ-STACK-05](../requirements/02-technology-baseline.md) says `>=22.2.5`. The CLI and the build use `22.2.5`. Decision needed: keep `22.2.4` or wait.
 - Tailwind uses a manual `.postcssrc.json`, as the Tailwind guide describes. `ng add` was not used because it writes version ranges.
 - `pnpm add -D web-angular --workspace` added peer suffixes (`jiti`, `sass`, `sass-embedded`) to the `vite` and `vitest` lockfile entries. About 54 lines removed and 9 added.

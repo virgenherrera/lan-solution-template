@@ -276,7 +276,7 @@ POC-1 stays the umbrella id. Slices run in order; each depends on the previous o
 | 1a | Monorepo init: version table, pnpm workspace and catalog, supply-chain settings, Nx local, root no-op scripts, one Node engine pin, reference study | `minor/poc-01a-monorepo` | ~1 day | none |
 | 1b | Nest apps: `api-gateway`, `sea-runtime`, `shared-core` from the Nest CLI; dummy health endpoint; `sea-runtime` as a standalone `createApplicationContext(RuntimeModule)` with no listener (REQ-RUNTIME-02) | `minor/poc-01b-nest` | ~1 day | 1a |
 | 1c | SEA build: generic assembler `tools/scripts/compile-sea.ts` with native `node --build-sea`; the `package` target lives on `sea-runtime`; one executable runs the minimal supervisor and the dummy Nest app | `minor/poc-01b-nest` (same branch as 1b, human decision; see [POC-1c backlog](../backlog/poc-1c-sea-build.md)) | ~2 days | 1b |
-| 1d | Angular and link: `web-angular` from the Angular CLI; `sea-runtime` embeds its build and passes `--web-root`; `api-gateway` serves it over plain HTTP from the SEA (decision 17); dev uses the Angular dev server; Nx build order and post-package check | `minor/poc-01d-angular-link`: delivered on `chore/spike-spa-serving` (human decision) | ~1 day | 1c |
+| 1d | Angular and link: `web-angular` from the Angular CLI; `sea-runtime` embeds its build and passes `--web-root`; `api-gateway` serves it over plain HTTP from the SEA (decision 17); dev uses the Angular dev server; Nx build order and post-package check | `minor/poc-01d-angular-link`: delivered on that branch (human decision) | ~1 day | 1c |
 | 1e | Hardening and desktop skeleton: `desktop` from the Tauri CLI, `securityCheck`, test filter stub, OS matrix, root sequence, tags, consolidated result | `minor/poc-01e-hardening` | ~1 day | 1d |
 
 Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-nest-apps.md), [1c](../backlog/poc-1c-sea-build.md), [1d](../backlog/poc-1d-angular-link.md), [1e](../backlog/poc-1e-hardening-desktop-skeleton.md).
@@ -797,7 +797,7 @@ Human decisions (source: plan `optimized-wondering-waffle.md`, section "Recorded
     - (d) Tests. No unit or integration tests (REQ-TEST-01). Spec files that generators create are deleted in the same commit.
     - The POC-1 and POC-2 pitch text and slice table follow this decision. The package target lives on `sea-runtime`. The minimal supervisor spawn is built in POC-1c. POC-2 keeps the Zod closed-registry dispatcher, IPC shutdown, readiness, restart with backoff, and process-tree cleanup.
 
-17. (2026-10-31) SPA serving in the SEA. Status: decided (human decision). Evidence: [SPIKE-spa-serving](../results/SPIKE-spa-serving.md), branch `chore/spike-spa-serving`.
+17. (2026-10-31) SPA serving in the SEA. Status: decided (human decision). Evidence: [SPIKE-spa-serving](../results/SPIKE-spa-serving.md), branch `minor/poc-01d-angular-link`.
     - (a) Layering. `api-gateway` stays SEA-agnostic. It never calls `isSea()` and never reads `process.env`. It mounts static serving only when its Zod-validated config has `webRoot`, given as the optional CLI argument `--web-root` (parsed with `node:util`).
     - (b) Supervisor. `sea-runtime` extracts the SEA-embedded web assets to a verified directory and spawns `api-gateway` with `--web-root <dir>`. Other services receive `--service <id>` only.
     - (c) Verified facts from the spike (macOS arm64, Darwin 27.2.0, only platform tested):

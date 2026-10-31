@@ -32,11 +32,11 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Delivered on branch `chore/spike-spa-serving` (human decision). Result: [POC-1d](../results/POC-01d-Result.md) |
+| Status | Delivered on branch `minor/poc-01d-angular-link` (human decision). Result: [POC-1d](../results/POC-01d-Result.md) |
 | Slice | 1d of 1a to 1e; umbrella [POC-1](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton) |
 | Appetite | ~1 day, ASSUMPTION |
 | Depends on | POC-1c |
-| Branch | `minor/poc-01d-angular-link` (planned); delivered on `chore/spike-spa-serving` |
+| Branch | `minor/poc-01d-angular-link`; delivered on that branch |
 | Result page | `docs/results/POC-01d-Result.md` |
 | Requirements | 5 REQ ids |
 | Acceptance criteria | AC-13 |
