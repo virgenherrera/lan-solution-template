@@ -1,12 +1,21 @@
+# Supply-chain trust policy. Declared up front so installs and `pnpm add`
+# never stop on ERR_PNPM_IGNORED_BUILDS. Every entry records a decision.
+
+# Controls whether a package may run install scripts (native build, telemetry, etc.).
+# Each entry is an explicit trust decision: true = needed native build, false = blocked.
+# Only packages listed in the pnpm-lock.yaml that run install scripts appear here.
 allowBuilds:
-  '@parcel/watcher': true
-  esbuild: true
-  lmdb: true
-  msgpackr-extract: true
-  nx: true
+  '@nestjs/core': false # Unneeded: no install script in this lockfile (transitive dependency)
+  '@parcel/watcher': true # Required: install script builds the native file watcher from source
+  esbuild: true # Required: postinstall that provides the native bundler binary
+  lmdb: true # Required: install script for the native store behind the Angular build cache
+  msgpackr-extract: true # Required: install script for the native addon used by lmdb
+  nx: true # Required: postinstall script of the Nx CLI
 packages:
+  # Workspace members: every app and shared library lives under these globs.
   - apps/*
   - libs/*
+# Shared dependency versions. Bump a version here, never in a member package.json.
 catalog:
   '@rspack/core': 2.3.0
   nx: 24.0.2
@@ -14,6 +23,18 @@ catalog:
   typescript: 6.0.3
   webpack-node-externals: 3.0.0
   zod: 4.6.7
+# Supply chain security: blocks packages published less than 24 hours ago (1440 minutes).
+# This window is the most common attack vector for malicious package hijacking.
 minimumReleaseAge: 1440
+# Packages exempted from minimumReleaseAge during a bump cycle.
+# Rule: add an entry only after verifying the package; remove it in the next cycle.
+# An empty list means no exemptions are active.
+minimumReleaseAgeExclude: []
+# Saved dependency ranges are written as exact versions (no ^ or ~ prefix).
 savePrefix: ''
+# Fail the install when a package with build scripts has no explicit allowBuilds decision.
 strictDepBuilds: true
+# Mirrors pnpm.auditConfig in package.json; ignoreCves lists CVEs with no available fix
+# that should not permanently block the security check step. Empty: none ignored.
+auditConfig:
+  ignoreCves: []
