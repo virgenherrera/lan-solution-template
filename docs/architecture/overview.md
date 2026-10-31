@@ -64,7 +64,7 @@ Separate apps behind a dev proxy.
 flowchart LR
     subgraph Repo["Repository: sibling apps in apps/ (SRS 1.1)"]
       A["apps/web-angular: Angular dev-server (SRS 1.1, 8)"]
-      N["apps/gateway-nest: NestJS with watch/HMR (SRS 1.1, 9.1)"]
+      N["apps/api-gateway: NestJS with watch/HMR (SRS 1.1, 9.1)"]
       C["libs/shared-core: contracts + Zod (SRS 1.1)"]
     end
     BR["Browser"] --> A
@@ -90,9 +90,9 @@ One SEA, a supervisor and a gateway process, one HTTPS origin.
 
 ```mermaid
 flowchart TB
-    SEA["Single SEA file per OS/arch: dispatcher + runtime-nest + gateway-nest + SPA assets (SRS 1.1, 9.1 REQ-RUNTIME-01)"]
-    SEA -->|"no args: supervisor mode (SRS 9.1 REQ-RUNTIME-03)"| SUP["Supervisor process: runtime-nest, no listeners (SRS 9.1 REQ-RUNTIME-02)"]
-    SUP -->|"spawn process.execPath --service gateway (SRS 9.1 REQ-RUNTIME-03)"| GW["Gateway process: gateway-nest (SRS 1.2, 9.1)"]
+    SEA["Single SEA file per OS/arch: dispatcher + sea-runtime + api-gateway + SPA assets (SRS 1.1, 9.1 REQ-RUNTIME-01)"]
+    SEA -->|"no args: supervisor mode (SRS 9.1 REQ-RUNTIME-03)"| SUP["Supervisor process: sea-runtime, no listeners (SRS 9.1 REQ-RUNTIME-02)"]
+    SUP -->|"spawn process.execPath --service gateway (SRS 9.1 REQ-RUNTIME-03)"| GW["Gateway process: api-gateway (SRS 1.2, 9.1)"]
     GW --> DB[("SQLite vector (SRS 1.2)")]
     GW --> ORIGIN["HTTPS :8443: /api + Angular PWA, one origin (SRS 1.2, 9.1)"]
     ORIGIN --> M["Mobile PWA (SRS 1.2)"]
@@ -105,7 +105,7 @@ Sources:
 - One physical SEA per platform/architecture. The same file runs several times. Each run has its own Node runtime and DI container. Source: SRS section 1.1 and [REQ-RUNTIME-01](../requirements/09-desktop-tauri.md).
 - The gateway HTTPS is the only public HTTP entry point of the LAN. The supervisor publishes no HTTP. Source: SRS section 1.1 and [REQ-RUNTIME-02](../requirements/09-desktop-tauri.md).
 - Same origin `https://IP-or-hostname:8443/` hosts `/api/**` and the PWA: SRS section 1.2.
-- The baseline starts only `gateway-nest`: SRS section 1.2 and [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
+- The baseline starts only `api-gateway`: SRS section 1.2 and [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
 - SQLite vector persistence: SRS section 1.2 (topology diagram).
 
 ---
@@ -178,6 +178,6 @@ Status: placeholder. Written by POC-9, which is on HOLD ([POC-9](../roadmap/PROP
 The proposal assigns no ADR id to these topics. They stay unnumbered until a human records them.
 
 - Angular, gateway and supervisor as sibling apps, joined only at build/distribution (SRS 1.1).
-- `runtime-nest` as a Nest standalone supervisor without listeners (SRS 9.1, [REQ-RUNTIME-02](../requirements/09-desktop-tauri.md)).
+- `sea-runtime` as a Nest standalone supervisor without listeners (SRS 9.1, [REQ-RUNTIME-02](../requirements/09-desktop-tauri.md)).
 - Re-entry of the same binary through a Zod-validated `--service` dispatcher (SRS 9.1, [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md)).
 - Shutdown through Node IPC over `stdio` instead of relying on `SIGTERM` (SRS 9.1, [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md)).

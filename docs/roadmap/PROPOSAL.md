@@ -112,8 +112,8 @@ stateDiagram-v2
 The SRS v1.6 defines a LAN-first template that works offline. It has these parts:
 
 - Angular 22 PWA (`apps/web-angular`).
-- NestJS gateway (`apps/gateway-nest`).
-- Nest standalone supervisor (`apps/runtime-nest`).
+- NestJS gateway (`apps/api-gateway`).
+- Nest standalone supervisor (`apps/sea-runtime`).
 - Tauri v2 desktop shell (`apps/desktop`).
 - `libs/shared-core`.
 
@@ -249,7 +249,7 @@ Ordering rationale:
   - Create a pnpm workspace with a catalog. `savePrefix` is empty. Versions are exact. `pnpm-lock.yaml` is committed (NFR-11, NFR-12).
   - Set `minimumReleaseAge` 1440, `allowBuilds`, and `strictDepBuilds` true (REQ-SUPPLY-01, REQ-SEC-CI-03). Verify the pnpm 12 semantics (R-08, R6).
   - Use Nx locally. Do not use Nx Cloud.
-  - Create the skeletons: `apps/web-angular`, `apps/gateway-nest`, `apps/runtime-nest`, `apps/desktop`, `libs/shared-core` (REQ-REP-01..03).
+  - Create the skeletons: `apps/web-angular`, `apps/api-gateway`, `apps/sea-runtime`, `apps/desktop`, `libs/shared-core` (REQ-REP-01..03).
   - Add root ECO scripts with explicit no-ops (REQ-ECO-01, REQ-ECO-02).
   - Make `securityCheck` fail closed (REQ-SEC-CI-01, REQ-SEC-CI-02).
   - Add a test filter adapter stub (REQ-TEST-03, REQ-ECO-04).
@@ -274,9 +274,9 @@ POC-1 stays the umbrella id. Slices run in order; each depends on the previous o
 | Slice | Scope | Branch | Appetite (ASSUMPTION) | Depends on |
 |---|---|---|---|---|
 | 1a | Monorepo init: version table, pnpm workspace and catalog, supply-chain settings, Nx local, root no-op scripts, one Node engine pin, reference study | `minor/poc-01a-monorepo` | ~1 day | none |
-| 1b | Nest apps: `gateway-nest`, `runtime-nest`, `shared-core` from the Nest CLI; dummy health endpoint | `minor/poc-01b-nest` | ~1 day | 1a |
+| 1b | Nest apps: `api-gateway`, `sea-runtime`, `shared-core` from the Nest CLI; dummy health endpoint | `minor/poc-01b-nest` | ~1 day | 1a |
 | 1c | SEA build: minimal native `node --build-sea` script and assembler `package` target; the dummy Nest app runs from the binary | `minor/poc-01c-sea-build` | ~2 days | 1b |
-| 1d | Angular and link: `web-angular` from the Angular CLI; `gateway-nest` serves a dummy page over plain HTTP in dev and from the SEA; Nx build order and post-package check | `minor/poc-01d-angular-link` | ~1 day | 1c |
+| 1d | Angular and link: `web-angular` from the Angular CLI; `api-gateway` serves a dummy page over plain HTTP in dev and from the SEA; Nx build order and post-package check | `minor/poc-01d-angular-link` | ~1 day | 1c |
 | 1e | Hardening and desktop skeleton: `desktop` from the Tauri CLI, `securityCheck`, test filter stub, OS matrix, root sequence, tags, consolidated result | `minor/poc-01e-hardening` | ~1 day | 1d |
 
 Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-nest-apps.md), [1c](../backlog/poc-1c-sea-build.md), [1d](../backlog/poc-1d-angular-link.md), [1e](../backlog/poc-1e-hardening-desktop-skeleton.md).
@@ -285,14 +285,14 @@ Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-
 
 [Back to navigation](#navigation)
 
-- **Problem**: The product needs one SEA per platform. The SEA bundles the dispatcher, runtime-nest and gateway-nest. It relaunches itself by role (REQ-RUNTIME-01, REQ-RUNTIME-03, REQ-SEA-01). POC-1c proves the native `node --build-sea` flow with a dummy Nest app (R2, R-04). Nobody has proven it with the dispatcher and the real services bundled. Same-binary re-entry and process-tree shutdown are hard on 3 OSes (R1).
+- **Problem**: The product needs one SEA per platform. The SEA bundles the dispatcher, sea-runtime and api-gateway. It relaunches itself by role (REQ-RUNTIME-01, REQ-RUNTIME-03, REQ-SEA-01). POC-1c proves the native `node --build-sea` flow with a dummy Nest app (R2, R-04). Nobody has proven it with the dispatcher and the real services bundled. Same-binary re-entry and process-tree shutdown are hard on 3 OSes (R1).
 - **Appetite**: 2 weeks, big batch. Highest uncertainty.
 - **Solution sketch**:
-  - Extend `tools/scripts/compile-sea.ts` (the minimal script is written in POC-1c) to bundle the dispatcher, runtime-nest and gateway-nest. Native `node --build-sea`, no postject (REQ-SEA-01, REQ-SEA-02, REQ-SEA-03).
+  - Extend `tools/scripts/compile-sea.ts` (the minimal script is written in POC-1c) to bundle the dispatcher, sea-runtime and api-gateway. Native `node --build-sea`, no postject (REQ-SEA-01, REQ-SEA-02, REQ-SEA-03).
   - Build a Zod-validated dispatcher and a closed service registry (REQ-RUNTIME-03).
-  - `runtime-nest` uses `createApplicationContext(RuntimeModule)` and has no HTTP listener (REQ-RUNTIME-02, FR-45).
-  - The supervisor respawns `process.execPath --service gateway-nest`. It never uses `node` from PATH.
-  - Extend the POC-1b `gateway-nest` (NodeAdapter, dummy health endpoint) to an `/api` health endpoint under the supervisor (REQ-NET-01).
+  - `sea-runtime` uses `createApplicationContext(RuntimeModule)` and has no HTTP listener (REQ-RUNTIME-02, FR-45).
+  - The supervisor respawns `process.execPath --service api-gateway`. It never uses `node` from PATH.
+  - Extend the POC-1b `api-gateway` (NodeAdapter, dummy health endpoint) to an `/api` health endpoint under the supervisor (REQ-NET-01).
   - Shutdown: stdio IPC, then a timeout, then a force-kill of descendants. No orphans (REQ-RUNTIME-06).
   - Add a readiness timeout, per-service logs and a bounded restart (REQ-RUNTIME-05).
   - Add a real-binary smoke test (REQ-RUNTIME-08).
@@ -356,7 +356,7 @@ Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-
 [Back to navigation](#navigation)
 
 - **Scope**: HTTPS gateway that serves the Angular PWA from the SEA, plus the dev loop.
-- **Problem**: POC-1d already proves a dummy Angular page served by `gateway-nest` over plain HTTP, in dev and from the SEA. The gateway must now serve one Angular build over HTTPS (FR-04). The clients are browsers and the Tauri WebView. The SEA must materialize the assets safely (R3, R-07). Developers need a fast loop that does not need the SEA (REQ-DEV-01..05). Local CA trust is a known friction (R-05).
+- **Problem**: POC-1d already proves a dummy Angular page served by `api-gateway` over plain HTTP, in dev and from the SEA. The gateway must now serve one Angular build over HTTPS (FR-04). The clients are browsers and the Tauri WebView. The SEA must materialize the assets safely (R3, R-07). Developers need a fast loop that does not need the SEA (REQ-DEV-01..05). Local CA trust is a known friction (R-05).
 - **Appetite**: 2 weeks, big batch.
 - **Solution sketch**:
   - Configure the `web-angular` app generated in POC-1d as Angular 22, zoneless, strict TypeScript, Signals, Tailwind and PWA (REQ-WEB-01, REQ-PWA-01).
@@ -525,7 +525,7 @@ sequenceDiagram
   - Runner and VM availability (Q-08).
   - Windows x64 against ARM (R4).
   - Keeping an edited `config.json` across upgrades and uninstalls. Decide delete or keep for uninstall.
-  - Release group membership, including runtime-nest (Q-01).
+  - Release group membership, including sea-runtime (Q-01).
   - The exemption mechanism for `docs/*` and `chore/*` (Q-02).
 - **No-gos**: no cross-OS claims without native verification. Docker does not replace native installer validation (REQ-TEST-09). No CI workflow yet.
 - **Circuit breaker**, if only some OSes are reachable:
@@ -660,7 +660,7 @@ Claims marked "not verified" stay unverified until a spike or a primary source c
 | OQ7 | Minimum verified-OS set that closes a micro-POC (Q-08, NFR-PORT-01). | A micro-POC closes as `verified-on-<os>-<arch>` only where its acceptance command ran natively and was logged. macOS arm64 closes macOS checks. Linux x64 in Docker closes gateway smoke tests only (REQ-TEST-09). Windows x64 needs a native VM or runner, which is not available. Installer, tray, WebView and autostart checks stay blocked-by-environment there. | agent:verifier | no | proposed |
 | OQ8 | TLS crypto library and key storage per OS (A-04, Q-07). | Decided by human decision 14: pending spike. Prefer zero dependencies: `node:crypto` plus a minimal own DER builder. It builds the CA and the leaf with SAN, IPs included. Fallback: a pure-JS dependency such as `@peculiar/x509`. Never native modules. The CA private key stays outside the database, encrypted in a `dataDir` file. A NestJS provider contract hides the storage. See Decision Log item 14. Not verified: that `node:crypto` lacks an X.509 build-and-sign API. Not verified: SAN support in `@peculiar/x509`. Not verified: the Windows ACL recipe. | agent:researcher | no | decided (human decision 14): pending spike |
 | OQ9 | Release through a bot commit or a release PR (Q-03). | Use a release PR as the default, in line with REQ-CI-04. Publish after merge by tagging the merged SHA, idempotent per REQ-CI-06. Use a bot commit only if branch protection allows it and the human approves. Branch protection bypass for personal repos is not verified. Nx release support for a PR flow is not verified. | agent:researcher | no (HOLD) | proposed |
-| OQ10 | Nx release group membership, including runtime-nest (Q-01). | Use one fixed group: web-angular, gateway-nest, shared-core, desktop and runtime-nest. REQ-SEA-01 packs runtime-nest into the single SEA, so its version must match. REQ-VERSION-01 does not list runtime-nest, so this is an inference. Exclude test libs and tooling. Run `nx release --dry-run` to verify. | agent:builder | no | proposed |
+| OQ10 | Nx release group membership, including sea-runtime (Q-01). | Use one fixed group: web-angular, api-gateway, shared-core, desktop and sea-runtime. REQ-SEA-01 packs sea-runtime into the single SEA, so its version must match. REQ-VERSION-01 does not list sea-runtime, so this is an inference. Exclude test libs and tooling. Run `nx release --dry-run` to verify. | agent:builder | no | proposed |
 | OQ11 | Restart, backoff and readiness values (A3). | These are design proposals, not sourced. Readiness timeout 30 s. Health poll 500 ms. Backoff 1, 2, 4, 8, 16 s, capped at 30 s, with 20 percent jitter. At most 5 restarts in 300 s. Reset the counter after 60 s stable. Graceful stop 10 s. After exhaustion: state error, stop restarting, surface it to Tauri. Measure in POC-2. | agent:builder | no | proposed |
 | OQ12 | Autostart default: on or opt-in (A7). | Decided by the human: autostart is opt-in and off by default. The user enables it with a checkbox in the tray menu. The MSI checkbox appears unchecked on Windows. The app persists the choice. This matches REQ-DESK-04. The Tauri autostart plugin needs Rust 1.90 or later (not independently verified). | agent:builder | no | decided (human) |
 | OQ13 | Rust audit tool and threshold (A9). | Run `cargo deny check advisories` in CI and before release. Set yanked to deny. Keep the defaults for unmaintained and unsound. Any vulnerability fails: the cargo-deny docs list `severity-threshold` as removed. Each ignore needs a reason and a 90-day expiry. Run weekly and on `Cargo.lock` change. Noise from transitive Tauri deps is not verified. | agent:builder | no (CI on HOLD) | proposed |

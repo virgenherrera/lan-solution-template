@@ -15,10 +15,10 @@ Slice 1b of POC-1, branch `minor/poc-01b-nest`. Backlog: [POC-1b](../backlog/poc
 
 ## Summary
 
-- `apps/gateway-nest` and `apps/runtime-nest` generated with `@nestjs/cli@12.0.11 new`. `libs/shared-core` created with `pnpm init` and `tsc --init`.
+- `apps/api-gateway` and `apps/sea-runtime` generated with `@nestjs/cli@12.0.11 new`. `libs/shared-core` created with `pnpm init` and `tsc --init`.
 - Express removed from both apps. Both use `NodeAdapter` from `@nestjs/platform-node@12.3.2`.
-- `gateway-nest` answers `GET /health` with HTTP 200 and `{"status":"ok"}` in dev. The endpoint came from `nest generate controller`.
-- `runtime-nest` starts in dev. Its standalone bootstrap is deferred to POC-2 (REQ-RUNTIME-02).
+- `api-gateway` answers `GET /health` with HTTP 200 and `{"status":"ok"}` in dev. The endpoint came from `nest generate controller`.
+- `sea-runtime` starts in dev. Its standalone bootstrap is deferred to POC-2 (REQ-RUNTIME-02).
 - `pnpm nx build` exits 0 for all three projects. No app imports the other.
 - Every `^` or `~` range and every `express`/`fastify` package was removed from the manifests checked.
 - Deviations: see Deviations.
@@ -54,8 +54,8 @@ Run from the repository root unless noted. Exit codes come from each command its
 | 4 | `pnpm view @nestjs/platform-node@12.3.2 version`, `pnpm view @nestjs/core@12.3.2 time` | `12.3.2`; core published 2026-10-27T12:03Z |
 | 5 | `pnpm view typescript dist-tags`, `pnpm view typescript time --json` | latest `7.0.2`; `6.0.3` published 2026-04-16 |
 | 6 | `pnpm dlx @nestjs/cli@12.0.11 new --help` | exit 0. Flags confirmed: `--directory`, `-p`, `-g`, `-s`, `-t`, `--no-observe`. No flag disables Express |
-| 7 | `pnpm dlx @nestjs/cli@12.0.11 new gateway-nest --directory=apps/gateway-nest -p pnpm -g -s -t --no-observe` | exit 0; 15 files created (`nest-cli.json`, `tsconfig*.json`, `package.json`, `src/` with three files, `.oxlintrc.json`, `.prettierrc`, `.gitattributes`, `README.md`, `AGENTS.md`, two `vitest.config*.ts`) |
-| 8 | same with `runtime-nest` | exit 0; same layout |
+| 7 | `pnpm dlx @nestjs/cli@12.0.11 new api-gateway --directory=apps/api-gateway -p pnpm -g -s -t --no-observe` | exit 0; 15 files created (`nest-cli.json`, `tsconfig*.json`, `package.json`, `src/` with three files, `.oxlintrc.json`, `.prettierrc`, `.gitattributes`, `README.md`, `AGENTS.md`, two `vitest.config*.ts`) |
+| 8 | same with `sea-runtime` | exit 0; same layout |
 | 9 | `rm` of `apps/*/vitest.config.ts`, `apps/*/vitest.config.e2e.ts`, `apps/*/AGENTS.md` | exit 0 (manual deletion, see Manual edits) |
 | 10 | `mkdir -p libs/shared-core && pnpm init` in `libs/shared-core` | exit 0 |
 | 11 | `pnpm add -w -D -E --save-catalog typescript@6.0.3` | exit 0; `catalog.typescript: 6.0.3` |
@@ -68,16 +68,16 @@ Run from the repository root unless noted. Exit codes come from each command its
 | 18 | `pnpm pkg delete 'scripts["test:watch"]' ...` (4 keys per app) | exit 0 after bracket path. First try with `scripts.test:watch` failed: `ERR_PNPM_PKG_INVALID_PROPERTY_PATH` (exit 1) |
 | 19 | `pnpm pkg set scripts.test="echo 'test: not defined for this package'"` per app | exit 0 |
 | 20 | Manual edit `apps/*/src/main.ts` (see Manual edits) | n/a |
-| 21 | `pnpm exec nest generate controller health --no-spec --flat` in `apps/gateway-nest` | exit 0; `CREATE src/health.controller.ts`, `UPDATE src/app.module.ts` |
-| 22 | Manual edit `apps/gateway-nest/src/health.controller.ts` (see Manual edits) | n/a |
-| 23 | `pnpm nx show projects` | exit 0; `["gateway-nest","runtime-nest","shared-core","lan-solution-template"]` |
-| 24 | `pnpm nx build gateway-nest`, `pnpm nx build runtime-nest`, `pnpm nx build shared-core` | each exit 0; `1 task: 1 succeeded` each |
-| 25 | `PORT=3100 pnpm --filter gateway-nest start:dev` (background) | ready after 3 s; log `Nest application successfully started`, routes `{/health, GET}` mapped |
+| 21 | `pnpm exec nest generate controller health --no-spec --flat` in `apps/api-gateway` | exit 0; `CREATE src/health.controller.ts`, `UPDATE src/app.module.ts` |
+| 22 | Manual edit `apps/api-gateway/src/health.controller.ts` (see Manual edits) | n/a |
+| 23 | `pnpm nx show projects` | exit 0; `["api-gateway","sea-runtime","shared-core","lan-solution-template"]` |
+| 24 | `pnpm nx build api-gateway`, `pnpm nx build sea-runtime`, `pnpm nx build shared-core` | each exit 0; `1 task: 1 succeeded` each |
+| 25 | `PORT=3100 pnpm --filter api-gateway start:dev` (background) | ready after 3 s; log `Nest application successfully started`, routes `{/health, GET}` mapped |
 | 26 | `curl -i http://localhost:3100/health` | `HTTP/1.1 200 OK`, `Content-Type: application/json; charset=utf-8`, body `{"status":"ok"}` |
 | 27 | kill the dev process, `lsof -i :3100` | exit 1, no output: port free |
-| 28 | `PORT=3200 pnpm --filter runtime-nest start:dev` (background) | ready after 3 s; `Nest application successfully started`, no error line |
+| 28 | `PORT=3200 pnpm --filter sea-runtime start:dev` (background) | ready after 3 s; `Nest application successfully started`, no error line |
 | 29 | kill the dev process, `lsof -i :3200` | exit 1, no output: port free |
-| 30 | `rg -n "gateway-nest\|runtime-nest" apps/gateway-nest/src apps/runtime-nest/src libs` | exit 1, no match |
+| 30 | `rg -n "api-gateway\|sea-runtime" apps/api-gateway/src apps/sea-runtime/src libs` | exit 1, no match |
 | 31 | `rg -n 'express\|fastify' apps libs --glob package.json` | exit 1, no match |
 | 32 | `grep -rn '[\^~]' apps/*/package.json libs/shared-core/package.json pnpm-workspace.yaml package.json` | exit 1, no match |
 | 33 | `pnpm build`, `pnpm test`, `pnpm package` (root) | each exit 0; each runs `nx run-many` (3 tasks, `3 succeeded`) and prints `<op>: not defined for this package` |
@@ -93,12 +93,12 @@ Each edit has no CLI route. Every other file was written by a CLI or by `pnpm`.
 |---|---|---|---|
 | 1 | `pnpm-workspace.yaml` | Added `packages:` with `- apps/*` and `- libs/*` | No CLI writes the workspace package list. `pnpm add -w` does not add it |
 | 2 | `.gitignore` | Appended `dist/` and `*.tsbuildinfo` | No CLI writes these. `nest build` writes `dist/` and `tsconfig.build.tsbuildinfo` in each app |
-| 3 | `apps/gateway-nest/src/main.ts` | Import `NodeAdapter` from `@nestjs/platform-node`; `NestFactory.create(AppModule, new NodeAdapter())` | `nest new` has no flag for the adapter. REQ-STACK-04 forbids Express |
-| 4 | `apps/runtime-nest/src/main.ts` | Same as edit 3 | Express was removed from `runtime-nest` too. Without the adapter the app would fail at start. The standalone bootstrap stays deferred |
-| 5 | `apps/gateway-nest/src/health.controller.ts` | Added `Get` to the import; `@Get()` with `check(): { status: string }` returning `{ status: 'ok' }` | `nest generate controller` creates an empty class only. The handler body has no CLI route |
+| 3 | `apps/api-gateway/src/main.ts` | Import `NodeAdapter` from `@nestjs/platform-node`; `NestFactory.create(AppModule, new NodeAdapter())` | `nest new` has no flag for the adapter. REQ-STACK-04 forbids Express |
+| 4 | `apps/sea-runtime/src/main.ts` | Same as edit 3 | Express was removed from `sea-runtime` too. Without the adapter the app would fail at start. The standalone bootstrap stays deferred |
+| 5 | `apps/api-gateway/src/health.controller.ts` | Added `Get` to the import; `@Get()` with `check(): { status: string }` returning `{ status: 'ok' }` | `nest generate controller` creates an empty class only. The handler body has no CLI route |
 | 6 | `libs/shared-core/src/index.ts` | Created with `export const sharedCoreName = 'shared-core';` | `tsc --init` creates no source file. This is the minimum export |
-| 7 | Deleted `apps/gateway-nest/vitest.config.ts`, `apps/gateway-nest/vitest.config.e2e.ts`, `apps/gateway-nest/AGENTS.md`, and the same three in `apps/runtime-nest` | `rm` | Test configs and an app-level AGENTS.md are forbidden in this slice |
-| 8 | Deleted `apps/gateway-nest/README.md` and `apps/runtime-nest/README.md` | `git rm` | Nest boilerplate README. The docs check (`docs/standards/README.md`) requires a `toon-meta` block on every tracked `.md` except root `AGENTS.md` and `README.md`, and the regeneration command would fail on the app READMEs |
+| 7 | Deleted `apps/api-gateway/vitest.config.ts`, `apps/api-gateway/vitest.config.e2e.ts`, `apps/api-gateway/AGENTS.md`, and the same three in `apps/sea-runtime` | `rm` | Test configs and an app-level AGENTS.md are forbidden in this slice |
+| 8 | Deleted `apps/api-gateway/README.md` and `apps/sea-runtime/README.md` | `git rm` | Nest boilerplate README. The docs check (`docs/standards/README.md`) requires a `toon-meta` block on every tracked `.md` except root `AGENTS.md` and `README.md`, and the regeneration command would fail on the app READMEs |
 
 Not manual: the `test` script and the removed `test:*` scripts (`pnpm pkg`), the `build` script and `main`/`types` in `libs/shared-core/package.json` (`pnpm pkg set`), the health controller route file (`nest generate`), and the `app.module.ts` registration (`nest generate`).
 
@@ -119,7 +119,7 @@ Not manual: the `test` script and the removed `test:*` scripts (`pnpm pkg`), the
 
 ## Deferred
 
-- **REQ-RUNTIME-02 standalone bootstrap** (`createApplicationContext`) for `runtime-nest`: deferred to POC-2. Not implemented here. `runtime-nest` keeps the HTTP bootstrap it was generated with, adapted to `NodeAdapter`.
+- **REQ-RUNTIME-02 standalone bootstrap** (`createApplicationContext`) for `sea-runtime`: deferred to POC-2. Not implemented here. `sea-runtime` keeps the HTTP bootstrap it was generated with, adapted to `NodeAdapter`.
 
 ## Not verified
 

@@ -29,7 +29,7 @@ docs[36]:
   - doc: docs/backlog/poc-1b-nest-apps.md
     title: POC-1b Nest apps
     type: backlog
-    summary: "Backlog slice 1b of POC-1: gateway-nest and runtime-nest generated with the Nest CLI, plus shared-core."
+    summary: "Backlog slice 1b of POC-1: api-gateway and sea-runtime generated with the Nest CLI, plus shared-core."
     ids: []
     related[3]: docs/backlog/README.md,docs/backlog/poc-1a-monorepo-init.md,docs/backlog/poc-1c-sea-build.md
     status: current
@@ -47,7 +47,7 @@ docs[36]:
   - doc: docs/backlog/poc-1d-angular-link.md
     title: POC-1d Angular and link
     type: backlog
-    summary: "Backlog slice 1d of POC-1: web-angular generated with the Angular CLI and served by gateway-nest over plain HTTP."
+    summary: "Backlog slice 1d of POC-1: web-angular generated with the Angular CLI and served by api-gateway over plain HTTP."
     ids: []
     related[3]: docs/backlog/README.md,docs/backlog/poc-1c-sea-build.md,docs/backlog/poc-1e-hardening-desktop-skeleton.md
     status: current

@@ -77,15 +77,15 @@ stateDiagram-v2
 
 ### 9.1 Multiprocess runtime — NestJS Standalone Application (normative)
 
-**REQ-RUNTIME-01 — A single SEA file.** Build **exactly one SEA executable per OS/architecture** that embeds the dispatcher, the `runtime-nest` entrypoint, the `gateway-nest` entrypoint and, when they exist, those of other Nest projects. The Tauri installer **MUST** contain **a single physical instance of the SEA**, not a `node.exe` or a SEA per service. Installing Node on the host machine is not required.
+**REQ-RUNTIME-01 — A single SEA file.** Build **exactly one SEA executable per OS/architecture** that embeds the dispatcher, the `sea-runtime` entrypoint, the `api-gateway` entrypoint and, when they exist, those of other Nest projects. The Tauri installer **MUST** contain **a single physical instance of the SEA**, not a `node.exe` or a SEA per service. Installing Node on the host machine is not required.
 
-**REQ-RUNTIME-02 — Supervisor without listeners.** `apps/runtime-nest/` **MUST** use `NestFactory.createApplicationContext(RuntimeModule)` and the native Nest providers (DI and lifecycle) to supervise children. It **MUST NOT** expose its own HTTP/gRPC/port; it is not a second gateway. `runtime-nest` is a real infrastructure app, not a fictitious business microservice.
+**REQ-RUNTIME-02 — Supervisor without listeners.** `apps/sea-runtime/` **MUST** use `NestFactory.createApplicationContext(RuntimeModule)` and the native Nest providers (DI and lifecycle) to supervise children. It **MUST NOT** expose its own HTTP/gRPC/port; it is not a second gateway. `sea-runtime` is a real infrastructure app, not a fictitious business microservice.
 
 **REQ-RUNTIME-03 — Re-entry of the same binary.** Tauri starts the SEA **without a service selector**, and it enters supervisor mode. The supervisor instance calls `child_process.spawn(process.execPath, ['--service', '<id>'], { shell: false, ... })` (or an equivalent API). This starts **the same physical executable** in app mode. A single dispatcher interprets `process.argv`. It validates `id` through Zod against a **closed service registry**. It runs only the corresponding packaged bootstrap. It **MUST NOT** try to use the SEA as an interpreter for foreign `.js` files. It **MUST NOT** depend on `node` from PATH, nor on `fork()`/`cluster.fork()` as a mandatory mechanism. The CLI selector **only identifies which bootstrap to launch**. It **never** grants authentication privileges or permissions to a service.
 
-**REQ-RUNTIME-04 — Bootstrapping contracts.** Each Nest app **MUST** keep its own bootstrap and Nx build target. `gateway-nest` starts `NestFactory.create()` + `NodeAdapter`. A future `auth-ms` may use `createMicroservice()` (gRPC/TCP) or `create()` (HTTP). This does not change how Tauri distributes the product. Business applications **MUST NOT** directly import the source code of `runtime-nest`. Reusable contracts go to `libs/`.
+**REQ-RUNTIME-04 — Bootstrapping contracts.** Each Nest app **MUST** keep its own bootstrap and Nx build target. `api-gateway` starts `NestFactory.create()` + `NodeAdapter`. A future `auth-ms` may use `createMicroservice()` (gRPC/TCP) or `create()` (HTTP). This does not change how Tauri distributes the product. Business applications **MUST NOT** directly import the source code of `sea-runtime`. Reusable contracts go to `libs/`.
 
-**REQ-RUNTIME-05 — Readiness and health.** The supervisor **MUST** have a typed registry of enabled services, startup dependencies/priority when they exist, a readiness timeout, health, logs identified per service, and a bounded restart policy (*backoff* + maximum attempts). `runtime-nest` **MUST** report to Tauri an aggregate state `starting/ready/degraded/error/stopping`; the gateway **MUST NOT** announce readiness if mandatory processes that it depends on are not yet available. For the baseline only `gateway-nest` is enabled; it **MUST NOT** invent a test `auth-ms`.
+**REQ-RUNTIME-05 — Readiness and health.** The supervisor **MUST** have a typed registry of enabled services, startup dependencies/priority when they exist, a readiness timeout, health, logs identified per service, and a bounded restart policy (*backoff* + maximum attempts). `sea-runtime` **MUST** report to Tauri an aggregate state `starting/ready/degraded/error/stopping`; the gateway **MUST NOT** announce readiness if mandatory processes that it depends on are not yet available. For the baseline only `api-gateway` is enabled; it **MUST NOT** invent a test `auth-ms`.
 
 **REQ-RUNTIME-06 — Cross-platform shutdown.** Use an explicit control channel, preferably **Node IPC over `stdio`**. Use it to order the child to run `app.close()` and wait for its termination. Then apply a timeout and forced termination. Also clean up descendants. Do not rely only on `SIGTERM` for a clean shutdown on **Windows**. The signal terminates the subprocess abruptly. The same sequence is triggered when Quit is chosen from Tauri. The system must tolerate an unexpected supervisor shutdown/crash without leaving orphan processes. It **MUST** verify the process tree on Windows, Linux and macOS.
 
@@ -97,8 +97,8 @@ stateDiagram-v2
 flowchart TB
     T["Tauri v2: tray, autostart and window"] -->|spawn sidecar once| L["Single installed SEA — no args"]
     L --> D{"Zod CLI dispatcher"}
-    D -->|default| R["runtime-nest: Nest Standalone"]
-    R -->|spawn process.execPath --service gateway| GW["Same SEA file: gateway-nest process"]
+    D -->|default| R["sea-runtime: Nest Standalone"]
+    R -->|spawn process.execPath --service gateway| GW["Same SEA file: api-gateway process"]
     R -.->|"future: --service auth"| AU["Same SEA file: auth-ms process"]
     R -.->|"future: --service others"| MS["Same SEA file: more MS"]
     GW --> W["HTTPS :8443 /api + Angular PWA"]
@@ -111,7 +111,7 @@ sequenceDiagram
     autonumber
     participant T as Tauri Rust
     participant L as SEA supervisor Nest Standalone
-    participant G as SEA child gateway-nest
+    participant G as SEA child api-gateway
     participant DB as SQLite/PG
     participant C as LAN client/PWA
     T->>L: Start sidecar (no arguments)
@@ -145,4 +145,4 @@ stateDiagram-v2
     Stopping --> [*]: app.close + children EXIT
 ```
 
-**Accepted trade-off:** duplication of executables/installers is reduced and per-process isolation is preserved. In exchange, each process keeps a Node runtime in memory. All embedded microservices share the release version. This is a local topology, not Kubernetes nor a deployment of independent services. **During development** `gateway-nest` **MAY** be started directly with watch/HMR behind the Angular proxy. Building the SEA or starting Tauri/supervisor is not required to iterate on the API.
+**Accepted trade-off:** duplication of executables/installers is reduced and per-process isolation is preserved. In exchange, each process keeps a Node runtime in memory. All embedded microservices share the release version. This is a local topology, not Kubernetes nor a deployment of independent services. **During development** `api-gateway` **MAY** be started directly with watch/HMR behind the Angular proxy. Building the SEA or starting Tauri/supervisor is not required to iterate on the API.

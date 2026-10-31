@@ -39,7 +39,7 @@ updated: 2026-10-30
 
 [Back to navigation](#navigation)
 
-**REQ-SEA-01.** `tools/scripts/compile-sea.ts` **MUST** bundle a **single JavaScript dispatcher**. The bundle holds the entrypoints of the `runtime-nest` supervisor and the `gateway-nest` gateway. It also holds those of all enabled services registered later. The bundle also holds the JavaScript dependencies of all entrypoints. It runs without external `node_modules`. **Role registration is resolved at build time and in the dispatcher. Extracting `.js` files to launch them is not required.**
+**REQ-SEA-01.** `tools/scripts/compile-sea.ts` **MUST** bundle a **single JavaScript dispatcher**. The bundle holds the entrypoints of the `sea-runtime` supervisor and the `api-gateway` gateway. It also holds those of all enabled services registered later. The bundle also holds the JavaScript dependencies of all entrypoints. It runs without external `node_modules`. **Role registration is resolved at build time and in the dispatcher. Extracting `.js` files to launch them is not required.**
 
 **REQ-SEA-02.** Generate the SEA configuration and invoke the native mechanism **`node --build-sea`**. It **MUST NOT** introduce `postject` unless a specific, documented limitation requires it.
 
