@@ -22,6 +22,7 @@ updated: 2026-10-31
 - [Requirements](#requirements)
 - [Acceptance criteria](#acceptance-criteria)
 - [Tasks](#tasks)
+- [Inherited from 1d and the pnpm policy](#inherited-from-1d-and-the-pnpm-policy)
 - [Open questions](#open-questions)
 
 ---
@@ -124,6 +125,18 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-wo
 - [ ] Run and verify. Run `pnpm install --frozen-lockfile && pnpm securityCheck && pnpm build && pnpm test && pnpm package` from the root: expected, exit 0 and the steps run in that order. Run `pnpm securityCheck` with the registry unreachable (offline): expected, non-zero exit. Run `pnpm test -- --filter @int`: expected, exit 0 and the Nx graph is unchanged (compare the graph before and after). Expected in the result page: the Tauri 2 OS list, each entry labelled `verified` or `not verified`. Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
 
 Ids with no pitch task (none invented): [REQ-REP-05](../requirements/03-file-structure.md), [REQ-ECO-05](../requirements/11-nx-quality-testing.md), [REQ-DEPS-01](../requirements/11-nx-quality-testing.md). They stay with the last slice because no task of the old single POC-1 epic cites them.
+
+---
+
+## Inherited from 1d and the pnpm policy
+
+[Back to navigation](#navigation)
+
+Sources: [POC-1d result](../results/POC-01d-Result.md), commit `124ebc6`.
+
+- `pnpm audit --audit-level=high` reports 43 vulnerabilities (14 high) in the current tree. Observed. `securityCheck` must decide fail-closed handling and `ignoreCves`.
+- The pnpm trust policy in `pnpm-workspace.yaml` (commit `124ebc6`) declares `allowBuilds: true` for `@parcel/watcher`, `esbuild`, `lmdb`, `msgpackr-extract` and `nx`. It declares `allowBuilds: false` for `@nestjs/core`. `minimumReleaseAgeExclude` and `auditConfig.ignoreCves` are empty.
+- Type-check gap: the rspack builder does no type check, and the build has no `tsc --noEmit` step. Decide whether to add one.
 
 ---
 

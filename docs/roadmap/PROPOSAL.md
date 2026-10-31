@@ -276,7 +276,7 @@ POC-1 stays the umbrella id. Slices run in order; each depends on the previous o
 | 1a | Monorepo init: version table, pnpm workspace and catalog, supply-chain settings, Nx local, root no-op scripts, one Node engine pin, reference study | `minor/poc-01a-monorepo` | ~1 day | none |
 | 1b | Nest apps: `api-gateway`, `sea-runtime`, `shared-core` from the Nest CLI; dummy health endpoint; `sea-runtime` as a standalone `createApplicationContext(RuntimeModule)` with no listener (REQ-RUNTIME-02) | `minor/poc-01b-nest` | ~1 day | 1a |
 | 1c | SEA build: generic assembler `tools/scripts/compile-sea.ts` with native `node --build-sea`; the `package` target lives on `sea-runtime`; one executable runs the minimal supervisor and the dummy Nest app | `minor/poc-01b-nest` (same branch as 1b, human decision; see [POC-1c backlog](../backlog/poc-1c-sea-build.md)) | ~2 days | 1b |
-| 1d | Angular and link: `web-angular` from the Angular CLI; `sea-runtime` embeds its build and passes `--web-root`; `api-gateway` serves it over plain HTTP from the SEA (decision 17); dev uses the Angular dev server; Nx build order and post-package check | `minor/poc-01d-angular-link` | ~1 day | 1c |
+| 1d | Angular and link: `web-angular` from the Angular CLI; `sea-runtime` embeds its build and passes `--web-root`; `api-gateway` serves it over plain HTTP from the SEA (decision 17); dev uses the Angular dev server; Nx build order and post-package check | `minor/poc-01d-angular-link`: delivered on `chore/spike-spa-serving` (human decision) | ~1 day | 1c |
 | 1e | Hardening and desktop skeleton: `desktop` from the Tauri CLI, `securityCheck`, test filter stub, OS matrix, root sequence, tags, consolidated result | `minor/poc-01e-hardening` | ~1 day | 1d |
 
 Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-nest-apps.md), [1c](../backlog/poc-1c-sea-build.md), [1d](../backlog/poc-1d-angular-link.md), [1e](../backlog/poc-1e-hardening-desktop-skeleton.md).
@@ -811,5 +811,6 @@ Human decisions (source: plan `optimized-wondering-waffle.md`, section "Recorded
       1. Cache location. The spike used the OS temp directory. [REQ-SEA-05](../requirements/10-node-sea-distribution.md) anchors runtime data under the root of `process.execPath`, resolved by the paths library. The cache moves there in POC-3.
       2. How `compile-sea` recognizes `web-angular` as an asset bundle, not a service, in POC-1d.
       3. Cache cleanup and 404 for unknown paths, in POC-4.
+    - (e) Item 2 settled in POC-1d: a workspace dependency with `dist/main.js` is a service; one with Angular browser output and `index.html` is the web bundle (at most one). See [POC-1d result](../results/POC-01d-Result.md#classification-rule).
 
 The design notes for auth, config and TLS are unreviewed research summaries. They appear in POC-7, POC-3, POC-4/5 and POC-8.

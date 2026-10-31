@@ -77,7 +77,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | POC-1a | [Monorepo init](poc-1a-monorepo-init.md) | Cycle 1 (planned) | AC-01, AC-22, AC-23, AC-24 |
 | POC-1b | [Nest apps](poc-1b-nest-apps.md) | Delivered on branch `minor/poc-01b-nest` (PR 3, draft) | AC-13 |
 | POC-1c | [SEA build](poc-1c-sea-build.md) | Delivered on branch `minor/poc-01b-nest` (PR 3, draft) | none cited by its tasks |
-| POC-1d | [Angular and link](poc-1d-angular-link.md) | Cycle 1 (planned) | AC-13 |
+| POC-1d | [Angular and link](poc-1d-angular-link.md) | Delivered on branch `chore/spike-spa-serving` (same PR as the spike and decision 17 docs) | AC-13 |
 | POC-1e | [Hardening and desktop skeleton](poc-1e-hardening-desktop-skeleton.md) | Cycle 1 (planned) | AC-01, AC-02, AC-13, AC-19, AC-22, AC-32, AC-33, AC-34 |
 | POC-2 | [Single SEA and runtime supervisor](poc-2-single-sea-runtime-supervisor.md) | Cycle 1 (planned) | AC-11, AC-28, AC-29, AC-30, AC-31 |
 | POC-3 | [Config and SQLite vector persistence inside the SEA](poc-3-config-sqlite-vector.md) | Cycle 1 (planned) | AC-07, AC-08, AC-10 |

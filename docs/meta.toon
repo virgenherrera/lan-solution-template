@@ -1,4 +1,4 @@
-docs[38]:
+docs[39]:
   - doc: docs/architecture/overview.md
     title: Architecture overview
     type: architecture
@@ -296,6 +296,15 @@ docs[38]:
     status: current
     updated: 2026-10-31
     refs[2]: REQ-BUILD-04,REQ-TEST-01
+  - doc: docs/results/POC-01d-Result.md
+    title: POC-1d Result
+    type: backlog
+    summary: "Result of POC-1d: web-angular generated with the Angular CLI and linked to sea-runtime, so the SEA serves its build over plain HTTP through api-gateway."
+    ids: []
+    related[2]: docs/backlog/poc-1d-angular-link.md,docs/results/POC-01c-Result.md
+    status: current
+    updated: 2026-10-31
+    refs[3]: REQ-BUILD-05,REQ-NET-01,REQ-STACK-05
   - doc: docs/results/SPIKE-spa-serving.md
     title: SPIKE SPA serving in the SEA
     type: backlog

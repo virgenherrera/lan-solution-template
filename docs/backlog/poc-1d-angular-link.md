@@ -32,11 +32,11 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Cycle 1 (planned) |
+| Status | Delivered on branch `chore/spike-spa-serving` (human decision). Result: [POC-1d](../results/POC-01d-Result.md) |
 | Slice | 1d of 1a to 1e; umbrella [POC-1](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton) |
 | Appetite | ~1 day, ASSUMPTION |
 | Depends on | POC-1c |
-| Branch | `minor/poc-01d-angular-link` |
+| Branch | `minor/poc-01d-angular-link` (planned); delivered on `chore/spike-spa-serving` |
 | Result page | `docs/results/POC-01d-Result.md` |
 | Requirements | 5 REQ ids |
 | Acceptance criteria | AC-13 |
@@ -98,12 +98,13 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-wo
 
 [Back to navigation](#navigation)
 
-- [ ] Create skeleton `apps/web-angular` with `pnpm dlx @angular/cli new`. Check that it builds independently and does not import the other apps. Source: [REQ-REP-01](../requirements/03-file-structure.md), [REQ-REP-02](../requirements/03-file-structure.md), [REQ-REP-03](../requirements/03-file-structure.md), [AC-13](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton))
-- [ ] Link `api-gateway` to the Angular build over plain HTTP (no TLS, no PWA). `sea-runtime` embeds the `web-angular` browser output as SEA assets, in place of the spike dummy `tools/spike/web-dummy`. The supervisor extracts the tree and spawns `api-gateway` with `--web-root`. `api-gateway` mounts static serving only when `webRoot` is present (decision 17, [spike](../results/SPIKE-spa-serving.md)). Registering `web-angular` as a workspace dependency of `sea-runtime` is the proposed way; the asset-versus-service distinction is an open design item (see Open questions). POC-4 owns the hardening of this serving. Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)), [decision 17](../roadmap/PROPOSAL.md#decision-log).
-- [ ] Model the Nx order. First, `build` of `web-angular`, `sea-runtime` and `api-gateway`. Then the SEA `package`. Today the `package` target lives on `sea-runtime` and depends on its `build`, which depends on the builds of its workspace dependencies (`^build`). `web-angular` is not a workspace dependency of `sea-runtime`, so it does not build first yet. Whether it joins the service registry is open. (The `desktop` `package` step is added in POC-1e.) Source: [REQ-BUILD-03](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton))
-- [ ] Record the post-`package` check. Changing Angular invalidates the SEA and the Tauri bundle. A backend-only change does not force an Angular rebuild when Nx can reuse it. (The SEA part is checked here; the Tauri bundle part is checked in POC-1e.) Source: [REQ-BUILD-05](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton))
-- [ ] Write `docs/results/POC-01d-Result.md` with the dev and SEA observations, the Nx order evidence and the list of manual edits (files not produced by a CLI). Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
+- [x] Create skeleton `apps/web-angular` with `pnpm dlx @angular/cli new`. Check that it builds independently and does not import the other apps. Source: [REQ-REP-01](../requirements/03-file-structure.md), [REQ-REP-02](../requirements/03-file-structure.md), [REQ-REP-03](../requirements/03-file-structure.md), [AC-13](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton))
+- [x] Link `api-gateway` to the Angular build over plain HTTP (no TLS, no PWA). `sea-runtime` embeds the `web-angular` browser output as SEA assets, in place of the spike dummy `tools/spike/web-dummy`. The supervisor extracts the tree and spawns `api-gateway` with `--web-root`. `api-gateway` mounts static serving only when `webRoot` is present (decision 17, [spike](../results/SPIKE-spa-serving.md)). `web-angular` is a workspace dependency of `sea-runtime` and is classified as the web bundle, not a service (see [result](../results/POC-01d-Result.md#classification-rule)). POC-4 owns the hardening of this serving. Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)), [decision 17](../roadmap/PROPOSAL.md#decision-log).
+- [x] Model the Nx order. First, `build` of `web-angular`, `sea-runtime` and `api-gateway`. Then the SEA `package`. Today the `package` target lives on `sea-runtime` and depends on its `build`, which depends on the builds of its workspace dependencies (`^build`). `web-angular` is a workspace dependency of `sea-runtime`, so it builds first. It is a web bundle, not a service. (The `desktop` `package` step is added in POC-1e.) Source: [REQ-BUILD-03](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton))
+- [x] Record the post-`package` check. Changing Angular invalidates the SEA and the Tauri bundle. A backend-only change does not force an Angular rebuild when Nx can reuse it. (The SEA part is checked here, observed in the [result page](../results/POC-01d-Result.md#nx-cache-experiment-req-build-05-sea-part). The Tauri bundle part stays with POC-1e.) Source: [REQ-BUILD-05](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton))
+- [x] Write `docs/results/POC-01d-Result.md` with the dev and SEA observations, the Nx order evidence and the list of manual edits (files not produced by a CLI). Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
 - [ ] Run and verify. Dev: run the Angular dev server (generated script, name not verified) and open its URL: expected, the `web-angular` page renders. SEA: run the `package` target, start the binary and run `curl -i http://localhost:<port>/`: expected, `HTTP/1.1 200` with the `web-angular` index body; `curl -i` on the health path still returns 200. Order: print the Nx graph or the target `dependsOn` (command not verified): expected, the three builds before `package`. Change one Angular file and run `package` again: expected, the SEA is rebuilt. Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
+  - Partly observed, not ticked: `curl` checks and the Nx cache experiment ran. Browser rendering and the Tauri bundle part are not verified. See the [result page](../results/POC-01d-Result.md#not-verified).
 
 ---
 
@@ -113,4 +114,4 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-wo
 
 Source: `docs/roadmap/PROPOSAL.md`, Decision Log item 17.
 
-- How `compile-sea` recognizes `web-angular` as an asset bundle, not a service. Open. This slice owns it (decision 17, open item 2).
+No open questions remain in this slice. Decision 17, open item 2, is settled by the [classification rule](../results/POC-01d-Result.md#classification-rule).
