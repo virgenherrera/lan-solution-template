@@ -1,280 +1,597 @@
+<!-- toon-meta
+fmt: TOON
+doc: docs/roadmap/PROPOSAL.md
+title: "Roadmap Proposal: lan-solution-template (SRS v1.6)"
+type: roadmap
+summary: "Roadmap proposal with cycles, POC pitches, coverage matrix and open questions."
+related[2]: README.md,docs/backlog/README.md
+status: proposed
+updated: 2026-10-30
+-->
+
 # Roadmap Proposal: lan-solution-template (SRS v1.6)
 
-Status: PROPOSAL v2 — revised with 9 human decisions (see `## Log`). Not approved; no remote action executed (origin configured, nothing pushed).
+[Home](../../README.md) | [Requirements](../requirements/README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](PROPOSAL.md) | [Traceability](../requirements/traceability.md) | [Backlog](../backlog/README.md)
 
-Source: `lan-solution-template-SRS-v1.6.md` (sections 1-13). IDs below (REQ-*, AC-*, FR/NFR, R-*, A-*, Q-*, D-*) come from the SRS extraction files. Anything not found there is tagged `ASSUMPTION`.
+Status: PROPOSAL v2, revised with 15 human decisions (see Decision Log). Not approved. No remote action ran from this work. Origin and push state: not verified.
+Source: `lan-solution-template-SRS-v1.6.md` (sections 1-13). The REQ-* and AC-* IDs come from the SRS. The FR/NFR, R-*, A-*, Q-* and D-* IDs come from extraction files. Those files are outside this repo (see [Context](#context)). Items not found in the SRS carry the tag `ASSUMPTION`.
+
+## Navigation
+
+- [At a glance](#at-a-glance)
+- [Context](#context)
+- [ADR index](#adr-index)
+- [Method](#method)
+- [Cycles and bets](#cycles-and-bets)
+- [Pitches](#pitches)
+  - [POC-0: Repo bootstrap](#poc-0-repo-bootstrap)
+  - [POC-1: Toolchain viability and workspace skeleton](#poc-1-toolchain-viability-and-workspace-skeleton)
+  - [POC-2: Single SEA and runtime supervisor](#poc-2-single-sea-and-runtime-supervisor)
+  - [POC-3: Config and SQLite vector persistence inside the SEA](#poc-3-config-and-sqlite-vector-persistence-inside-the-sea)
+  - [POC-4: HTTPS gateway serving the Angular PWA](#poc-4-https-gateway-serving-the-angular-pwa)
+  - [POC-5: Tauri desktop shell with SEA sidecar](#poc-5-tauri-desktop-shell-with-sea-sidecar)
+  - [POC-6: PostgreSQL adapter parity (BACKLOG)](#poc-6-postgresql-adapter-parity-backlog)
+  - [POC-7: Auth and roles](#poc-7-auth-and-roles)
+  - [POC-8: MSI credential dialog, platform matrix and lockstep versioning](#poc-8-msi-credential-dialog-platform-matrix-and-lockstep-versioning)
+  - [POC-9: GitHub Actions CI/CD and releases (HOLD)](#poc-9-github-actions-cicd-and-releases-hold)
+- [No-gos](#no-gos)
+- [SRS coverage matrix](#srs-coverage-matrix)
+- [Open questions](#open-questions)
+- [Backlog](#backlog)
+- [Assumptions](#assumptions)
+- [Decision Log](#decision-log)
+
+---
+
+## At a glance
+
+[Back to navigation](#navigation)
+
+Why this page exists: it orders the SRS v1.6 POCs and logs 15 human decisions. Next: the betting table picks the bets of cycle 1.
+
+| Topic | Fact | Section |
+|---|---|---|
+| Status | Proposal v2. Not approved. No remote action ran. | [Decision Log](#decision-log) |
+| Method | Shape Up. 6 weeks of build, then 2 weeks of cooldown. | [Method](#method) |
+| Bets | 3 cycles. 9 active POCs (POC-9 on hold) and POC-6 in the backlog. | [Cycles and bets](#cycles-and-bets) |
+| ADR index | 13 rows: 9 approved, 1 proposed, 3 pending spike. | [ADR index](#adr-index) |
+| Open questions | 17 rows. None blocks. | [Open questions](#open-questions) |
+| Coverage | 13 SRS sections and 36 acceptance criteria map to POCs. | [SRS coverage matrix](#srs-coverage-matrix) |
+
+**Cycles and bets** (appetite per POC, from the table in [Cycles and bets](#cycles-and-bets))
+
+```mermaid
+timeline
+    title Cycles and bets
+    Cycle 1 - about 5.5 weeks : POC-0 Repo bootstrap - 1-2 days : POC-1 Toolchain - 1 week : POC-2 Single SEA - 2 weeks : POC-3 Config and SQLite vector - 2 weeks
+    Cooldown - 2 weeks : Betting table
+    Cycle 2 - about 4 weeks : POC-4 HTTPS gateway - 2 weeks : POC-5 Tauri shell - 2 weeks
+    Cooldown - 2 weeks : Betting table
+    Cycle 3 - about 3.5 weeks : POC-7 Auth and roles - 1-2 weeks : POC-8 MSI and matrix - 2 weeks
+    Cooldown : No bet planned
+    After : POC-9 CI/CD - 2 weeks - only when the hold is lifted : Betting table
+```
+
+**Dependencies** (dashed edge = not blocking; dashed box = not in a cycle)
+
+```mermaid
+flowchart LR
+    P0["POC-0 Repo bootstrap"] -.->|"not blocking"| P1["POC-1 Toolchain"]
+    P1 --> P2["POC-2 Single SEA"]
+    P2 --> P3["POC-3 Config and SQLite"]
+    P2 --> P4["POC-4 HTTPS gateway"]
+    P3 -.->|"not blocking"| P4
+    P2 --> P5["POC-5 Tauri shell"]
+    P4 --> P5
+    P4 --> P7["POC-7 Auth and roles"]
+    P5 --> P7
+    P5 --> P8["POC-8 MSI and matrix"]
+    P7 --> P8
+    P8 --> P9["POC-9 CI/CD - on hold"]
+    P6["POC-6 PostgreSQL - backlog"]
+    classDef pause stroke-dasharray:5 5
+    class P9,P6 pause
+```
+
+**States of open questions** (counts from the Open questions table)
+
+```mermaid
+stateDiagram-v2
+    state "proposed (10 rows)" as proposed
+    state "decided by human (5 rows)" as human_decision
+    state "decided by human - pending spike (2 rows)" as pending_spike
+    proposed --> human_decision : human decision
+    proposed --> pending_spike : human decision, spike first
+    pending_spike --> human_decision : spike result in ADR
+```
+
+---
 
 ## Context
 
-The SRS v1.6 defines a LAN-first, offline-capable template: Angular 22 PWA (`apps/web-angular`), NestJS gateway (`apps/gateway-nest`), Nest standalone supervisor (`apps/runtime-nest`), a Tauri v2 desktop shell (`apps/desktop`) and `libs/shared-core`. Everything ships as one Node SEA per OS/arch (REQ-RUNTIME-01, FR-02). Persistence is SQLite (default) or PostgreSQL, both with vector search (REQ-DB-01).
+[Back to navigation](#navigation)
 
-Main risks (from the SRS): many very new versions whose existence is unverified (R-02, R11), the single-SEA design (R-04, R2), the sqlite-vector native extension (R-03), Drizzle `1.0.0-rc.5` (R-01, R-07), cross-OS process-tree shutdown (R1, R-04), and the native 3-OS CI matrix (R-01 of 11.4.1).
+The SRS v1.6 defines a LAN-first template that works offline. It has these parts:
 
-D-07 puts CI/CD last. D-03 asks for the smallest integrated micro-POCs. This proposal turns both into nine active POCs plus one backlog item (POC-6, PostgreSQL). POC-9 (CI/CD and releases) is on HOLD.
+- Angular 22 PWA (`apps/web-angular`).
+- NestJS gateway (`apps/gateway-nest`).
+- Nest standalone supervisor (`apps/runtime-nest`).
+- Tauri v2 desktop shell (`apps/desktop`).
+- `libs/shared-core`.
+
+One Node SEA per OS/arch ships everything (REQ-RUNTIME-01, FR-02). Persistence uses SQLite (default) or PostgreSQL. Both support vector search (REQ-DB-01).
+
+Main risks from the SRS:
+
+- Many very new versions. Their existence is not verified (R-02, R11).
+- The single-SEA design (R-04, R2).
+- The sqlite-vector native extension (R-03).
+- Drizzle `1.0.0-rc.5` (R-01, R-07). A stable Drizzle tag is preferred. The POC uses `1.0.0-rc.5` only as a fallback (decision 10).
+- Cross-OS process-tree shutdown (R1, R-04).
+- The native 3-OS CI matrix (R-01 of 11.4.1).
+
+D-07 puts CI/CD last. D-03 asks for the smallest integrated micro-POCs. This proposal turns both into nine active POCs and one backlog item (POC-6, PostgreSQL). POC-9 (CI/CD and releases) is on HOLD.
+
+A-01 is not in the SRS.
+
+---
+
+## ADR index
+
+[Back to navigation](#navigation)
+
+Each row summarizes one architecture decision record (ADR, Nygard format). ADRs 001-007 are the per-POC results; later ones continue the numbering.
+
+| Topic | Decision | Source | State |
+|---|---|---|---|
+| Repo and branch | Origin is the GitHub repo, docs live only in `docs/`, and the branch is `main`. | 1, 2, 3 | approved |
+| Targets | We target the operating systems and versions that Tauri 2 supports. Node follows the pin in REQ-STACK-01. | 4, 15 | approved |
+| Autostart | Autostart is opt-in and off by default. The user enables it with a checkbox in the tray menu (OQ12). | OQ12 | approved |
+| MSI scope | The MSI is a per-machine draft. A spike on WiX and Tauri capabilities decides the scope (OQ16). | OQ16 | proposed |
+| HOLD scope | The HOLD covers only CI/CD and releases in POC-9; local work continues (OQ6). | 9, human | approved |
+| Auth and first admin | The user creates the first real admin in a setup wizard. The database is the only identity source. | 12, 13 | pending spike |
+| Auth and first admin | Development seeds a self-destructing `dev-admin` data row, and production never seeds. POC-7 implements the seeding. The design is approved; ASVS citations stay `not verified`. | 12 | approved |
+| Auth and first admin | The database is the source of truth. The user creates the first admin in the setup wizard. The POC-5 spike defines the wizard path. The MSI credential dialog is the fallback. | 5, 13 | pending spike |
+| Config and paths | A paths library resolves one root. The code uses paths relative to that root. This holds in the SEA and the dev server. | 11 | approved |
+| TLS and keys | TLS follows the `dotnet dev-certs` style. The CA key stays outside the database, encrypted in `dataDir`. | 7, 14 | pending spike |
+| Database | SQLite plus vector is the engine for now; PostgreSQL waits in the backlog. | 8 | approved |
+| Database | We install the current stable Drizzle tag first and use `1.0.0-rc.5` only if it fails. | 10 | approved |
+| Release | Release automation is on HOLD until all POCs are ready. | 9 | approved |
+
+The [Decision Log](#decision-log) keeps each decision as recorded.
+
+---
 
 ## Method
 
-Shape Up.
+[Back to navigation](#navigation)
 
-- Cycle: 6 weeks of build plus 2 weeks of cooldown.
-- Batches: small batch = 1-2 weeks, big batch = a full cycle.
-- Appetite is a fixed time budget. Scope flexes, the date does not.
-- Circuit breaker: a POC that is not shippable at the end of its appetite is NOT extended by default. It is stopped, its findings are published under `docs/`, and it is reshaped as a new pitch for the next betting table.
-- Ordering: uncertainty first. The riskiest unknown is proven earliest, within dependency limits.
-- Betting table before each cycle re-decides the bets. Nothing carries over automatically.
-- Deliverable per POC: a PR from a branch whose prefix follows REQ-VERSION-02 (`major/`, `minor/`, `fix/`, plus exempt `docs/`, `chore/` per REQ-VERSION-02a), and a POC result page under `docs/` (migrated to the wiki at the end, see Backlog). The page labels each item implemented / verified / blocked-by-environment / out-of-scope (SRS 12.4, D-04, NFR-TRUTH-01) and declares the verified OS.
-- Declared targets (decision 4): Windows (ideally 10+; see open questions), Linux, macOS, current Node LTS (tension with the SRS pin, see open questions).
-- Before the CI POC exists, PR evidence = logs of root ECO commands run locally (REQ-TEST-10, D-02).
-- Test policy everywhere: only APP-level and real E2E tests, no unit/integration suites (REQ-TEST-01, AC-19).
-- Every remote action (push, open PR, `gh`, enable wiki) needs explicit human approval. Local rename `master` to `main` is a local action (decision 3).
+Method: Shape Up.
+
+- Cycle: 6 weeks of build, then 2 weeks of cooldown.
+- Batch: small = 1-2 weeks. Big = one full cycle.
+- Appetite is a fixed time budget. Scope changes. The date does not.
+- Circuit breaker: the team does NOT extend a POC past its appetite.
+  - A POC that is not shippable stops. The team publishes its findings under `docs/`.
+  - The team then reshapes it as a new pitch for the next betting table.
+- Ordering: uncertainty first. Prove the riskiest unknown earliest, within dependency limits.
+- The betting table before each cycle decides the bets again. Nothing carries over automatically.
+- Deliverable per POC: a PR. Its branch prefix follows REQ-VERSION-02 (`major/`, `minor/`, `fix/`). The prefixes `docs/` and `chore/` are exempt. A POC result page under `docs/` is also a deliverable. The page labels each item implemented, verified, blocked-by-environment or out-of-scope (SRS 12.4, D-04, NFR-TRUTH-01). It names the verified OS.
+- Before the CI POC exists, PR evidence is a log. The log lists the root ECO commands run locally (REQ-TEST-10, D-02).
+- Test policy for all POCs: APP-level and real E2E tests only. No unit or integration suites (REQ-TEST-01, AC-19).
+- Every remote action needs explicit human approval: push, open PR, `gh`. Renaming `master` to `main` is a local action (decision 3).
 - POC-9 is on HOLD until all other POCs are ready (decision 9).
 
+**Circuit breaker flow**
+
+```mermaid
+flowchart LR
+    A["POC reaches the end of its appetite"] --> B{"Shippable?"}
+    B -->|"yes"| C["Ship the PR and the result page"]
+    B -->|"no"| D["Stop. No extension"]
+    D --> E["Publish findings under docs/"]
+    E --> F["Reshape as a new pitch"]
+    F --> G["Next betting table"]
+```
+
+---
+
 ## Cycles and bets
+
+[Back to navigation](#navigation)
 
 | Cycle | POCs | Length | Then |
 |---|---|---|---|
 | 1 | POC-0, POC-1, POC-2, POC-3 | ~5.5 weeks (0.4 + 1 + 2 + 2) | 2-week cooldown, betting table |
 | 2 | POC-4, POC-5 | ~4 weeks (2 + 2) | 2-week cooldown, betting table |
 | 3 | POC-7, POC-8 | ~3.5 weeks (1-2 + 2) | cooldown |
-| After | POC-9 (only when HOLD is lifted), then docs migration to wiki | ~2 weeks + small | betting table |
+| After | POC-9 (only when HOLD is lifted) | ~2 weeks + small | betting table |
 
 | POC | Title | Appetite | Batch | Depends on | Branch |
 |---|---|---|---|---|---|
 | POC-0 | Repo bootstrap: docs in `docs/`, `main` branch | 1-2 days | small | none | `chore/poc-00-repo-bootstrap` |
 | POC-1 | Toolchain viability + OS matrix + workspace skeleton | 1 week | small | POC-0 (not blocking) | `chore/poc-01-toolchain` |
 | POC-2 | Single SEA + runtime supervisor | 2 weeks | big | POC-1 | `minor/poc-02-sea-supervisor` |
-| POC-3 | Config (`config.json` + schema) + SQLite vector inside SEA | 2 weeks | big | POC-2 | `minor/poc-03-sqlite-vector` |
+| POC-3 | Config (`config.json`) + SQLite vector inside SEA | 2 weeks | big | POC-2 | `minor/poc-03-sqlite-vector` |
 | POC-4 | HTTPS gateway (dev-certs-style TLS) serving Angular PWA + dev loop | 2 weeks | big | POC-2 (POC-3 not blocking) | `minor/poc-04-https-spa` |
 | POC-5 | Tauri desktop shell with SEA sidecar + CA install + first-run setup | 2 weeks | big | POC-2, POC-4 | `minor/poc-05-tauri-sidecar` |
-| POC-6 | PostgreSQL adapter parity | n/a | n/a | n/a | BACKLOG (see `## Backlog`) |
+| POC-6 | PostgreSQL adapter parity | n/a | n/a | n/a | BACKLOG (see [Backlog](#backlog)) |
 | POC-7 | Auth (user:password) + roles + protected UI | 1-2 weeks | small | POC-4, POC-5 | `minor/poc-07-auth-roles` |
 | POC-8 | MSI credential dialog + native platform matrix + lockstep versioning | 2 weeks | big | POC-5, POC-7 | `chore/poc-08-matrix-versioning` |
 | POC-9 | CI/CD GitHub Actions + Releases | 2 weeks | big | POC-8 | HOLD: `chore/poc-09-ci-cd` |
 
-ASSUMPTION: appetites are estimates for one developer plus AI agents. The betting table may change them.
+ASSUMPTION: the appetites are estimates for one developer plus AI agents. The betting table may change them.
 
-Ordering rationale: POC-2 (single SEA, same-binary re-entry, process shutdown) carries the highest uncertainty (R2, R1, R-04), so it comes right after the toolchain check. POC-3 follows because the native extension inside the SEA is the next unknown (R-03, R-06 of 11.5). CI/CD is last per D-07.
+Ordering rationale:
+
+- POC-2 (single SEA, same-binary re-entry, process shutdown) has the highest uncertainty (R2, R1, R-04). It follows the toolchain check.
+- POC-3 follows. The native extension inside the SEA is the next unknown (R-03, R-06 of 11.5).
+- CI/CD is last.
+
+---
 
 ## Pitches
 
-### POC-0: Repo bootstrap (docs in `docs/`, branch `main`)
+[Back to navigation](#navigation)
 
-- **Problem**: The repo has no commits, the local branch is `master` while the SRS refers to `main` (REQ-CI-04), and docs live only as local files. Decisions 2 and 3 say docs stay in `docs/` for now and the wiki is a final migration (Backlog). NFR-DOC-01 and D-05 require documented decisions; D-08 requires sync.
+### POC-0: Repo bootstrap
+
+[Back to navigation](#navigation)
+
+- **Scope**: docs in `docs/`, branch `main`.
+- **Problem**: Local branch `main` exists at `84ea56f`. No `master` branch exists. Commit `84ea56f` holds the original SRS, this proposal and `AGENTS.md`. The split docs are on branch `docs/split-srs`. Whether anything is pushed to origin: not verified. The identifier glossary lists NFR-DOC-01, D-05 and D-08. Meanings are not verified.
 - **Appetite**: 1-2 days, small batch.
 - **Solution sketch**:
-  - Rename local branch: `git branch -m master main` (local only, no push).
-  - Place SRS and roadmap under `docs/` (`docs/roadmap/PROPOSAL.md`; SRS location is a choice, ASSUMPTION).
-  - Confirm origin `git@github.com:virgenherrera/lan-solution-template.git` (decision 1; per the plan it was checked with `git remote -v`, no verificado en este documento).
-  - Define the page structure to ease the later wiki migration (see Wiki documentation plan).
-- **Rabbit holes**: where the SRS file lives; README must stay in repo (NFR-DOC-01, D-08).
-- **No-gos**: no wiki, no CI, no code, no push or `gh` without approval.
-- **Circuit breaker**: if the rename or layout causes friction, keep files where they are and record it as an open decision.
-- **Acceptance criteria**: branch is `main` (`git branch --show-current`), docs under `docs/`, NFR-DOC-01, D-05, D-08, REQ-REP-05 (documentation requirement).
-- **Deliverable**: branch `chore/poc-00-repo-bootstrap`; PR title `chore: bootstrap repo with docs and main branch`. Result page `docs/results/POC-00-Result.md` (ASSUMPTION path). Opening the PR is a remote action needing approval.
+  - Create `chore/poc-00-repo-bootstrap` from `docs/split-srs` HEAD.
+  - Verify `main` exists. If `git branch --list master` prints a name, rename it with `git branch -m master main` (local only, no push).
+  - Keep the split docs under `docs/`, including `docs/roadmap/PROPOSAL.md`.
+  - The root SRS file stays as historical reference.
+  - Confirm origin `git@github.com:virgenherrera/lan-solution-template.git` (decision 1). The plan says it was checked with `git remote -v`. Not verified in this document.
+- **Rabbit holes**: none.
+- **No-gos**: no CI, no code.
+- **Circuit breaker**: if the rename or layout causes friction, keep the files where they are. Record it as an open decision.
+- **Acceptance criteria**: `git rev-parse --verify main` exits 0. `git branch --list master` prints nothing. The docs are under `docs/`. REQ-REP-05 requires documentation. NFR-DOC-01, D-05 and D-08 are listed in the identifier glossary. Meanings are not verified.
+- **Deliverable**: branch `chore/poc-00-repo-bootstrap`. PR title: `chore: bootstrap repo with docs and main branch`. Result page: `docs/results/POC-00-Result.md`, same convention as POC-1. Opening the PR is a remote action that needs approval.
 
-### POC-1: Toolchain viability + workspace skeleton
+### POC-1: Toolchain viability and workspace skeleton
 
-- **Problem**: The SRS pins very new versions (Node >=26.13 <27, pnpm >=12.16.1, NestJS 12.3.2, Angular >=22.2.5, Zod >=4.6.7, drizzle-orm 1.0.0-rc.5, Tauri >=2.12.5, sqlite-vector 1.1.2). Their existence and compatibility are unverified (R-02, R11, R-08). Nothing else can start before this is known.
+[Back to navigation](#navigation)
+
+- **Problem**: The SRS pins very new versions (table below). Their existence and compatibility are not verified (R-02, R11, R-08). The `drizzle-orm 1.0.0-rc.5` pin is a risk (R-01, R-07). POC-3 tests the stable tag first (decision 10). This POC does not change the SRS pin.
+
+| Node | pnpm | NestJS | Angular | Zod | drizzle-orm | Tauri | sqlite-vector |
+|---|---|---|---|---|---|---|---|
+| >=26.13 <27 | >=12.16.1 | 12.3.2 | >=22.2.5 | >=4.6.7 | 1.0.0-rc.5 | >=2.12.5 | 1.1.2 |
 - **Appetite**: 1 week, small batch.
 - **Solution sketch**:
-  - Verify every pinned version exists and works together (NFR-15, NFR-VER-01). Pin Nx after discovery (NFR-08, REQ-BUILD-01).
-  - pnpm workspace plus catalog: `savePrefix` empty, exact versions, `pnpm-lock.yaml` committed (NFR-11, NFR-12).
-  - `minimumReleaseAge` 1440, `allowBuilds`, `strictDepBuilds` true (REQ-SUPPLY-01, REQ-SEC-CI-03). Verify pnpm 12 semantics (R-08, R6).
-  - Nx local, no Nx Cloud.
-  - Skeletons: `apps/web-angular`, `apps/gateway-nest`, `apps/runtime-nest`, `apps/desktop`, `libs/shared-core` (REQ-REP-01..03).
-  - Root ECO scripts with explicit no-ops (REQ-ECO-01, REQ-ECO-02).
-  - `securityCheck` fail-closed (REQ-SEC-CI-01, REQ-SEC-CI-02).
-  - Test filter adapter stub (REQ-TEST-03, REQ-ECO-04).
-  - OS matrix (decision 4): Windows (ideally 10+), Linux, macOS, current Node LTS. Reconcile with the SRS pin `>=26.13.0 <27` (REQ-STACK-01): record whether the pin is an LTS line or needs an SRS change. No verificado: whether Node 26 is LTS; verify in this POC.
-- **Rabbit holes**: pnpm 12 option semantics; Oxlint/angular-eslint/Clippy coverage of Angular templates (REQ-ECO-05); Rust audit tool undefined (A9); Windows 10 support vs Node/Tauri/WebView2 minimums (no verificado).
-- **No-gos**: no Nx Cloud, no drizzle-kit, no `bumpDependencies` or `test:doctor` (REQ-DEPS-01), no unit/integration suites, no `^` or `~` ranges.
-- **Circuit breaker**: a missing version is documented with a technical link and a minimal substitution (NFR-15, NFR-VER-01, D-06). Do not invent APIs. If the toolchain cannot install, stop and report.
-- **Acceptance criteria**: AC-01, AC-02 (host-checkable part), AC-13, AC-19, AC-23, AC-24, AC-32, AC-33 (host OS only), AC-34. Also NFR-01..15, REQ-ECO-01, REQ-ECO-02.
-- **Deliverable**: branch `chore/poc-01-toolchain`; PR title `chore: verify toolchain versions and add workspace skeleton`. Result page `docs/results/POC-01-Result.md` with a version-verification table, the OS/Node matrix, and `ADR-001` if a substitution happens.
+  - Verify that every pinned version exists and works with the others (NFR-15, NFR-VER-01). Pin Nx after discovery (NFR-08, REQ-BUILD-01).
+  - Create a pnpm workspace with a catalog. `savePrefix` is empty. Versions are exact. `pnpm-lock.yaml` is committed (NFR-11, NFR-12).
+  - Set `minimumReleaseAge` 1440, `allowBuilds`, and `strictDepBuilds` true (REQ-SUPPLY-01, REQ-SEC-CI-03). Verify the pnpm 12 semantics (R-08, R6).
+  - Use Nx locally. Do not use Nx Cloud.
+  - Create the skeletons: `apps/web-angular`, `apps/gateway-nest`, `apps/runtime-nest`, `apps/desktop`, `libs/shared-core` (REQ-REP-01..03).
+  - Add root ECO scripts with explicit no-ops (REQ-ECO-01, REQ-ECO-02).
+  - Make `securityCheck` fail closed (REQ-SEC-CI-01, REQ-SEC-CI-02).
+  - Add a test filter adapter stub (REQ-TEST-03, REQ-ECO-04).
+  - OS matrix (decision 4): the supported OS is what the Tauri 2 prerequisites page lists. POC-1 reads that page and records the list in its result. Node follows the pin in REQ-STACK-01.
+  - Reconcile it with the SRS pin `>=26.13.0 <27` (REQ-STACK-01). Record whether the pin is an LTS line or needs an SRS change.
+  - Node 26 has been LTS since 2026-10-28 (nodejs/Release `schedule.json`). A QC agent checked it on 2026-10-30.
+  - Compatibility of the rest of the stack with Node 26 remains not verified. Re-check the schedule at POC-1 start.
+- **Rabbit holes**:
+  - pnpm 12 option semantics.
+  - Oxlint, angular-eslint and Clippy coverage of Angular templates (REQ-ECO-05).
+  - The Rust audit tool is undefined (A9).
+  - The Tauri 2 OS list against the Node pin and the WebView2 minimums. Not verified.
+- **No-gos**: no Nx Cloud, no drizzle-kit, no `bumpDependencies` or `test:doctor` (REQ-DEPS-01). Also no unit or integration suites, no `^` or `~` ranges.
+- **Circuit breaker**: document a missing version. Add a technical link and a minimal substitution (NFR-15, NFR-VER-01, D-06). Do not invent APIs. If the toolchain cannot install, stop and report.
+- **Acceptance criteria**: AC-01, AC-02 (host-checkable part), AC-13, AC-19, AC-22. Also AC-23, AC-24, AC-32, AC-33 (host OS only), AC-34. Also NFR-01..15, REQ-ECO-01, REQ-ECO-02, REQ-BUILD-02..05, REQ-TEST-02, REQ-REF-01.
+- **Deliverable**: branch `chore/poc-01-toolchain`. PR title: `chore: verify toolchain versions and add workspace skeleton`. Result page: `docs/results/POC-01-Result.md`. It holds a version-verification table and the OS/Node matrix. It also holds `ADR-001` if a substitution happens.
 
-### POC-2: Single SEA + runtime supervisor
+### POC-2: Single SEA and runtime supervisor
 
-- **Problem**: The product depends on one SEA per platform that bundles dispatcher, runtime-nest and gateway-nest and relaunches itself by role (REQ-RUNTIME-01, REQ-RUNTIME-03, REQ-SEA-01). Viability of the native `node --build-sea` flow with bundled Nest is unproven (R2, R-04). Same-binary re-entry and process-tree shutdown on 3 OSes are hard (R1).
+[Back to navigation](#navigation)
+
+- **Problem**: The product needs one SEA per platform. The SEA bundles the dispatcher, runtime-nest and gateway-nest. It relaunches itself by role (REQ-RUNTIME-01, REQ-RUNTIME-03, REQ-SEA-01). Nobody has proven that the native `node --build-sea` flow works with bundled Nest (R2, R-04). Same-binary re-entry and process-tree shutdown are hard on 3 OSes (R1).
 - **Appetite**: 2 weeks, big batch. Highest uncertainty.
 - **Solution sketch**:
-  - `tools/scripts/compile-sea.ts` using native `node --build-sea`, no postject (REQ-SEA-01, REQ-SEA-02, REQ-SEA-03).
-  - Zod-validated dispatcher and closed service registry (REQ-RUNTIME-03).
-  - `runtime-nest` uses `createApplicationContext(RuntimeModule)`, no HTTP listener (REQ-RUNTIME-02, FR-45).
-  - Supervisor respawns `process.execPath --service gateway-nest`; no `node` from PATH.
-  - Minimal `gateway-nest` with NodeAdapter and `/api` health endpoint (REQ-NET-01).
-  - Stdio IPC shutdown, timeout, then force-kill of descendants, no orphans (REQ-RUNTIME-06).
-  - Readiness timeout, per-service logs, bounded restart (REQ-RUNTIME-05).
-  - Real-binary smoke test (REQ-RUNTIME-08).
-- **Rabbit holes**: bundling Nest dependencies into one bundle; Windows process tree; `node:sea` asset limits (R-04); restart/backoff values undefined (A3).
-- **No-gos**: no fake `auth-ms` (REQ-RUNTIME-05-GATE, D-03), no postject without documented need, no second executable, no Express/Fastify, no SPA yet.
-- **Circuit breaker**: if the SEA cannot bundle Nest within the appetite, stop. Publish findings (what failed, which Node limits) and reshape: split bundling from supervision, or evaluate a documented postject need.
-- **Acceptance criteria**: AC-11 (partial: no Node install on host), AC-28, AC-29, AC-30 (host OS only, others pending), REQ-RUNTIME-01..08, REQ-SEA-01..03, REQ-TEST-07 (supervisor subset).
-- **Deliverable**: branch `minor/poc-02-sea-supervisor`; PR title `feat: single SEA with runtime supervisor and gateway health`. Results under `docs/`: `POC-02-Result`, `ADR-002` (single-SEA portability decision).
+  - Write `tools/scripts/compile-sea.ts` with native `node --build-sea`, no postject (REQ-SEA-01, REQ-SEA-02, REQ-SEA-03).
+  - Build a Zod-validated dispatcher and a closed service registry (REQ-RUNTIME-03).
+  - `runtime-nest` uses `createApplicationContext(RuntimeModule)` and has no HTTP listener (REQ-RUNTIME-02, FR-45).
+  - The supervisor respawns `process.execPath --service gateway-nest`. It never uses `node` from PATH.
+  - Build a minimal `gateway-nest` with NodeAdapter and an `/api` health endpoint (REQ-NET-01).
+  - Shutdown: stdio IPC, then a timeout, then a force-kill of descendants. No orphans (REQ-RUNTIME-06).
+  - Add a readiness timeout, per-service logs and a bounded restart (REQ-RUNTIME-05).
+  - Add a real-binary smoke test (REQ-RUNTIME-08).
+- **Rabbit holes**:
+  - Bundling Nest dependencies into one bundle.
+  - The Windows process tree.
+  - `node:sea` asset limits (R-04).
+  - Restart and backoff values are undefined (A3).
+  - Root resolution without the cwd (decision 11). The cwd of the supervisor under systemd and launchd: not verified. Verify here.
+- **No-gos**: no fake `auth-ms` (REQ-RUNTIME-04, SRS L943, D-03). No postject without a documented need. No second executable. Also no Express or Fastify, no SPA yet.
+- **Circuit breaker**: if the SEA cannot bundle Nest within the appetite, stop. Publish the findings: what failed and which Node limits apply. Then reshape. Either split bundling from supervision, or evaluate a documented postject need.
+- **Acceptance criteria**: AC-11 (partial: no Node install on the host), AC-28, AC-29. AC-30 (host OS only, others pending) and AC-31 (registry design only) apply too. Also REQ-RUNTIME-01..08, REQ-SEA-01..03, REQ-TEST-07 (supervisor subset).
+- **Deliverable**: branch `minor/poc-02-sea-supervisor`. PR title: `feat: single SEA with runtime supervisor and gateway health`. Results under `docs/`: `POC-02-Result` and `ADR-002` (single-SEA portability decision).
 
-### POC-3: Config (`config.json` + schema) + SQLite vector persistence inside SEA
+### POC-3: Config and SQLite vector persistence inside the SEA
 
-- **Problem**: Persistence must work from inside the SEA with a native vector extension extracted from an asset (R-03, REQ-DB-09). The custom migrator replaces drizzle-kit (R-06), and Drizzle is a release candidate (R-01, R-07).
+[Back to navigation](#navigation)
+
+- **Scope**: config (`config.json`) and SQLite vector persistence.
+- **Problem**: Persistence must work from inside the SEA. The native vector extension comes from an asset (R-03, REQ-DB-09). The custom migrator replaces drizzle-kit (R-06). The SRS pins Drizzle to a release candidate (R-01, R-07).
 - **Appetite**: 2 weeks, big batch.
 - **Solution sketch**:
-  - Zod 4 persisted, namespaced config as immutable DI singleton (REQ-CFG-01, REQ-CFG-02, REQ-CFG-04, REQ-CFG-06).
-  - Config design (decision 6; summary of research, sin QC): `z.toJSONSchema()` (Zod 4) generates a versioned `config.schema.json`; the installer places the schema in the install path; the real `config.json` lives in the OS config dir (REQ-CFG-05 L165, REQ-SEA-05 L502) with an absolute `$schema`; `$schema` is optional in Zod. A tag-pinned GitHub URL is a secondary schema source. Open: decision 6 says `config.json` in the install path, which conflicts with REQ-CFG-05 (see open questions).
-  - Strategy port for DB adapters (REQ-DB-01, REQ-DB-02).
-  - Engine for now: SQLite + vector only (decision 8). PostgreSQL is Backlog.
-  - SQLite via `node:sqlite` plus Drizzle `1.0.0-rc.5` plus sqlite-vector 1.1.2. The native library is extracted from a SEA asset with an integrity check per OS/arch (REQ-DB-09).
-  - Custom migrator with version/checksum/applied_at, tamper detection, locking, transaction per engine (REQ-DB-04, REQ-DB-05).
+  - Zod 4 persisted, namespaced config as an immutable DI singleton (REQ-CFG-01, REQ-CFG-02, REQ-CFG-04, REQ-CFG-06).
+  - Config design (decision 6; unreviewed research summary):
+    - The install path holds `config.default.json`, read-only, no secrets.
+    - The real `config.json` lives under the resolved root. The code uses paths relative to that root (REQ-CFG-05 L165, REQ-SEA-05 L502).
+    - Resolved: human decision 11 decides [OQ1](#open-questions) (see [Decision Log](#decision-log)). The config location follows decision 11, not the install-path reading of decision 6.
+  - Paths library (decision 11; design in [Decision Log](#decision-log) item 11): it resolves one root, once. It never uses the cwd as the anchor. Code uses paths relative to that root, in the SEA and the dev server.
+  - Tests cover each launch shape: dev server, SEA from another cwd, `--root`, `APP_HOME` and marker.
+  - First start creates `config.json` under the resolved root from `config.default.json` if it is missing. Dev: `./config/config.json`.
+  - Add a strategy port for DB adapters (REQ-DB-01, REQ-DB-02).
+  - Engine for now: SQLite + vector only (decision 8). PostgreSQL is in the Backlog.
+  - Drizzle tag order (decision 10). Do not assume the tag:
+    - First install the current stable `drizzle-orm` tag (npm `latest`). Its exact version is not verified until the POC.
+    - Verify vector support on SQLite.
+    - If it fails, bump to `1.0.0-rc.5`.
+    - Record the result and the reason in `ADR-003`.
+  - Use SQLite through `node:sqlite`, the Drizzle tag chosen above and sqlite-vector 1.1.2. Extract the native library from a SEA asset. Check its integrity per OS/arch (REQ-DB-09).
+  - Build a custom migrator. It records version, checksum and applied_at. It detects tampering, locks, and uses a transaction per engine (REQ-DB-04, REQ-DB-05).
   - Startup order: config, adapter, connection, vector check, migrations, ready (REQ-DB-06).
-  - `foreign_keys` on, evaluate WAL, explicit durability, DB outside the SEA (REQ-DB-07, REQ-SEA-05).
-  - Offline vector insert and similarity query (REQ-DB-08).
-- **Rabbit holes**: Drizzle RC API drift; native extension per OS/arch; where persisted config lives before the DB exists (A-01); migration owner and locking (R9, REQ-RUNTIME-07).
-- **No-gos**: no drizzle-kit, no silent non-vector fallback (REQ-DB-08), no client-supplied extensions, no secrets in CLI args (REQ-CFG-06), no mocks of persistence (REQ-TEST-04-ISO).
-- **Circuit breaker**: if the vector extension cannot load from the SEA on the host OS, stop. Publish the findings and reshape the extraction approach. Document the Drizzle RC decision either way (D-05).
-- **Acceptance criteria**: AC-07, AC-08, AC-10 (persistence/vector part), REQ-CFG-01..06, REQ-DB-01..09, REQ-TEST-06 (SQLite part), REQ-SEC-06.
-- **Deliverable**: branch `minor/poc-03-sqlite-vector`; PR title `feat: config singleton and SQLite vector persistence in SEA`. Results under `docs/`: `POC-03-Result`, `ADR-003` (Drizzle RC compatibility).
+  - Set `foreign_keys` on. Evaluate WAL. Set explicit durability. Keep the DB outside the SEA (REQ-DB-07, REQ-SEA-05).
+  - Test an offline vector insert and a similarity query (REQ-DB-08).
+- **Rabbit holes**:
+  - Drizzle RC API drift, if the fallback to `1.0.0-rc.5` is needed.
+  - The stable tag may lack vector support on SQLite or PostgreSQL. Not verified.
+  - The native extension per OS/arch.
+  - Where the persisted config lives before the DB exists (A-01).
+  - The cwd differs per launcher. Its value per launch shape is not verified, except a Windows service (secondary source only).
+  - How the dev anchor finds the repo root without the cwd: not verified.
+  - Migration owner and locking (R9, REQ-RUNTIME-07).
+- **No-gos**: no drizzle-kit, no silent non-vector fallback (REQ-DB-08), no client-supplied extensions. Also no secrets in CLI args (REQ-CFG-06), no mocks of persistence (REQ-TEST-04).
+- **Circuit breaker** when the vector extension cannot load from the SEA on the host OS:
+  - Stop. Publish the findings and reshape the extraction approach.
+  - Document the Drizzle tag decision in both cases (D-05).
+  - Stable tag fails the SQLite vector check: bump to `1.0.0-rc.5` and retry once before stopping.
+- **Acceptance criteria**: AC-07, AC-08, AC-10 (persistence and vector part), REQ-CFG-01..06, REQ-DB-01..09, REQ-TEST-06 (SQLite part), REQ-SEC-06.
+- **Deliverable**: branch `minor/poc-03-sqlite-vector`. PR title: `feat: config singleton and SQLite vector persistence in SEA`. Results under `docs/`: `POC-03-Result` and `ADR-003` (Drizzle tag choice and compatibility).
 
-### POC-4: HTTPS gateway serving the Angular PWA from the SEA + dev loop
+### POC-4: HTTPS gateway serving the Angular PWA
 
-- **Problem**: One Angular build must be served over HTTPS by the gateway to browsers and the Tauri WebView (FR-04). Assets must be materialized safely from the SEA (R3, R-07). Developers need a fast loop that does not need the SEA (REQ-DEV-01..05). Local CA trust is a known friction (R-05).
+[Back to navigation](#navigation)
+
+- **Scope**: HTTPS gateway that serves the Angular PWA from the SEA, plus the dev loop.
+- **Problem**: The gateway must serve one Angular build over HTTPS (FR-04). The clients are browsers and the Tauri WebView. The SEA must materialize the assets safely (R3, R-07). Developers need a fast loop that does not need the SEA (REQ-DEV-01..05). Local CA trust is a known friction (R-05).
 - **Appetite**: 2 weeks, big batch.
 - **Solution sketch**:
-  - Angular 22, zoneless, strict TypeScript, Signals, Tailwind, PWA (REQ-WEB-01, REQ-PWA-01).
-  - `ng serve` on 4200 with `proxyConfig` `/api/**` to 8443 using a trusted dev CA, no `secure:false` (REQ-DEV-01..04).
-  - TLS identity generation with SAN handling (REQ-TLS-01, REQ-TLS-04).
-  - TLS design (decision 7, `dotnet dev-certs` style; sin QC): local CA per installation plus a renewable leaf reissued on SAN/IP change (Node, `@peculiar/x509`; a spike comes first, library choice open per A-04); separate dev CA with `NODE_EXTRA_CA_CERTS`; mobile clients install the CA by hand (REQ-TLS-02).
-  - HTTPS 8443 plus HTTP 8080 308 redirect without Host-based open redirect (REQ-NET-06, REQ-NET-08).
-  - SPA materialization to a per-version hashed cache: manifest, checksums, atomic publish, concurrency-safe, stale cleanup (REQ-NET-03, REQ-NET-04, REQ-SEA-04).
-  - `ServeStaticModule` only when `isSea()`, configured before `NestFactory.create` (REQ-NET-02, REQ-NET-05).
-  - `/api/**` never falls back to `index.html`; missing assets give 404 (REQ-NET-07).
-  - Revalidatable cache headers for `index.html` and the service worker; hashed files immutable (REQ-PWA-02).
-- **Rabbit holes**: x509 library spike result (first task of the POC); device CA trust on iOS/Android (document only, no auto-trust; REQ-TLS-02); TLS crypto library choice (A-04); SPA fallback rule for dotted routes (A-11); cache header values.
-- **No-gos**: no `secure:false` shipped, no `rejectUnauthorized=false` (REQ-TLS-03), no automatic CA trust on client devices, no private-key distribution, no offline browser sync, no fake Module Federation remotes (REQ-WEB-04).
-- **Circuit breaker**: if the full PWA install flow on mobile is not reachable, ship HTTPS serving plus desktop-browser load only and publish the mobile trust findings. Reshape the PWA install part as a new pitch.
-- **Acceptance criteria**: AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17, REQ-NET-01..08, REQ-TLS-01..04, REQ-PWA-01..03, REQ-DEV-01..05, REQ-WEB-01, REQ-TEST-05 (dev :4200 and :8443 smoke subset).
-- **Deliverable**: branch `minor/poc-04-https-spa`; PR title `feat: HTTPS gateway serving Angular PWA from SEA`. Results under `docs/`: `POC-04-Result`, `ADR-004` (TLS trust model), device-trust guide.
+  - Use Angular 22, zoneless, strict TypeScript, Signals, Tailwind and PWA (REQ-WEB-01, REQ-PWA-01).
+  - `ng serve` on 4200 with `proxyConfig` `/api/**` to 8443. It uses a trusted dev CA and never `secure:false` (REQ-DEV-01..04).
+  - First task, a spike (decision 14, [OQ8](#open-questions)). Budget: 2 days at most, inside the appetite.
+    - Inputs: a hand-built DER writer on `node:crypto`, against a pure-JS dependency.
+    - Checks and circuit breaker: see [Decision Log](#decision-log) item 14.
+    - Output: the POC result page and `ADR-004` (TLS trust model).
+  - Generate the TLS identity with SAN handling (REQ-TLS-01, REQ-TLS-04).
+  - TLS design (decisions 7 and 14, `dotnet dev-certs` style; unreviewed research summary):
+    - One local CA per installation. A renewable leaf is reissued when the SAN or IP changes. The spike picks the library (decision 14).
+    - Key storage sits behind a NestJS provider contract (decision 14). The exact name belongs to the POC. One initial implementation: an encrypted file in `dataDir`. It reuses the POC-3 port and strategy wording (REQ-DB-01, REQ-DB-02).
+    - The CA private key never goes in the database.
+    - A separate dev CA with `NODE_EXTRA_CA_CERTS`.
+    - Mobile clients install the CA by hand (REQ-TLS-02).
+  - Serve HTTPS on 8443 and an HTTP 308 redirect on 8080. The redirect has no Host-based open redirect (REQ-NET-06, REQ-NET-08).
+  - Materialize the SPA into a per-version hashed cache (REQ-NET-03, REQ-NET-04, REQ-SEA-04). The cache needs a manifest, checksums, atomic publish, concurrency safety and stale cleanup.
+  - Load `ServeStaticModule` only when `isSea()`. Configure it before `NestFactory.create` (REQ-NET-02, REQ-NET-05).
+  - `/api/**` never falls back to `index.html`. A missing asset returns 404 (REQ-NET-07).
+  - Send revalidatable cache headers for `index.html` and the service worker. Hashed files are immutable (REQ-PWA-02).
+- **Rabbit holes**:
+  - Device CA trust on iOS and Android. Document only, no auto-trust (REQ-TLS-02).
+  - The TLS crypto library choice (A-04, [OQ8](#open-questions)): the first-task spike decides it.
+  - The SPA fallback rule for dotted routes (A-11).
+  - Cache header values.
+- **No-gos**: no shipped `secure:false`, no `rejectUnauthorized=false` (REQ-TLS-03), no automatic CA trust on client devices. Also no private-key distribution, no offline browser sync, no fake Module Federation remotes (REQ-WEB-04).
+- **Circuit breaker**, if the full PWA install flow on mobile is out of reach:
+  - Ship HTTPS serving only. Test the load in a desktop browser.
+  - Publish the mobile trust findings.
+  - Reshape the PWA install part as a new pitch.
+- **Acceptance criteria**: AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17. Also REQ-NET-01..08, REQ-TLS-01..04, REQ-PWA-01..03, REQ-DEV-01..05, REQ-WEB-01, REQ-TEST-05 (dev :4200 and :8443 smoke subset).
+- **Deliverable**: branch `minor/poc-04-https-spa`. PR title: `feat: HTTPS gateway serving Angular PWA from SEA`. Results under `docs/`: `POC-04-Result`, `ADR-004` (TLS trust model) and a device-trust guide.
 
-### POC-5: Tauri desktop shell with SEA sidecar + CA install + first-run setup
+### POC-5: Tauri desktop shell with SEA sidecar
 
-- **Problem**: The desktop host must start, monitor and stop the SEA supervisor, show state in the tray and keep the gateway reachable from the LAN while the window is hidden (REQ-DESK-02, REQ-DESK-06). Tray, autostart and single-instance behavior differ per OS (R5, R-10).
+[Back to navigation](#navigation)
+
+- **Scope**: Tauri desktop shell, SEA sidecar, CA install and first-run setup.
+- **Problem**: The desktop host must start, monitor and stop the SEA supervisor. It must show the state in the tray. It must keep the gateway reachable from the LAN. This applies while the window is hidden (REQ-DESK-02, REQ-DESK-06). Tray, autostart and single-instance behavior differ per OS (R5, R-10).
 - **Appetite**: 2 weeks, big batch.
 - **Solution sketch**:
-  - SEA as `externalBin` sidecar, one per target triple (REQ-DESK-01).
+  - Pending spike (decision 13, [OQ5](#open-questions)). POC-5 owns it, as its first task. Budget: 2 days at most, inside the appetite.
+    - Scope: define the first-run setup wizard path. The user creates the first real admin at install time. The seeded dev super user stays out of that path.
+    - Inputs: the list in Decision Log item 13. None is a decision. Security claims about the wizard are not verified.
+    - Output: one chosen path with trade-offs, in `POC-05-Result` and ADR-006 (auth mechanism). POC-7 and POC-8 depend on it.
+    - Circuit breaker: no clear path after 2 days. Keep the MSI credential dialog on Windows. Keep the CLI `setup` command on Linux and macOS.
+  - Ship the SEA as an `externalBin` sidecar, one per target triple (REQ-DESK-01).
   - Tauri only starts, monitors and stops the supervisor (REQ-DESK-02).
-  - Tray: starting/ready/error, Open UI, Quit; window close hides to tray; Quit cleans the tree (REQ-DESK-03).
-  - Autostart at OS login (REQ-DESK-04), single instance, port-busy handling, orphan handling, crash recovery (REQ-DESK-05).
-  - Restricted IPC capabilities (REQ-SEC-05); no shell/sidecar privileges for LAN-served frontend.
-  - WebView loads the gateway origin (AC-18).
+  - Tray: starting, ready and error states, Open UI, Quit. Closing the window hides it to the tray. Quit cleans the process tree (REQ-DESK-03).
+  - POC-5 designs the tray UI. Until then, the docs list common options only: start, stop, open UI, quit, autostart.
+  - Autostart at OS login (REQ-DESK-04). Single instance, port-busy handling, orphan handling and crash recovery (REQ-DESK-05).
+  - The host may hand the sidecar the resolved root as an absolute path (decision 11). Design, not verified as a Tauri pattern.
+  - Restrict IPC capabilities (REQ-SEC-05). Give the LAN-served frontend no shell or sidecar privileges.
+  - The WebView loads the gateway origin (AC-18).
   - Tauri installs `ca.crt` into the OS trust store with explicit consent (REQ-TLS-02).
-  - First-run setup common to Linux/macOS (loopback-only flow to set the initial credential); on Windows the MSI sets it (POC-8). Exact flow is an ASSUMPTION, see open questions.
-  - Native E2E via `@wdio/tauri-service` on an instrumented build, excluded from the commercial installer (REQ-TEST-08, AC-20).
-- **Rabbit holes**: per-OS WebDriver support (R4); drift between instrumented and shipped build (R-09 of 11.4.1); autostart default (A7); whether the tray shows a degraded state (A5).
-- **No-gos**: Tauri does not host a second SPA or a public port, no pre-login native service claim (REQ-DESK-04), no WDIO plugin in the product, no cross-OS claims without native runs (REQ-TEST-09).
-- **Circuit breaker**: if native WebDriver E2E is not workable on the host OS, ship the black-box installer smoke only, label E2E blocked-by-environment, and reshape E2E as a new pitch.
+  - First-run setup is the wizard that the spike defines (decision 13). It applies to every target OS. The MSI credential dialog (POC-8) stays only as the fallback of decision 13.
+  - Run native E2E with `@wdio/tauri-service` on an instrumented build. The commercial installer excludes it (REQ-TEST-08, AC-20).
+
+First-run flow, pending spike (decision 13):
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant I as Installer
+    participant S as First-run setup
+    participant D as Database
+    U->>I: install
+    alt Windows
+        I->>D: "wizard creates the first admin (fallback: MSI credential dialog, POC-8)"
+    else Linux and macOS
+        U->>S: "set the credential"
+    end
+    Note over I,S: "pending spike (decision 13). The spike decides whether the wizard replaces the MSI dialog."
+    U->>S: "create the first real admin"
+    Note over D: "DB is the only source of identity. Production never seeds."
+```
+
+- **Rabbit holes**:
+  - Per-OS WebDriver support (R4).
+  - Drift between the instrumented build and the shipped build (R-09 of 11.4.1).
+  - The autostart default (A7).
+  - Whether the tray shows a degraded state (A5).
+  - The cwd of the sidecar child is not verified. The Tauri sidecar page does not state it. Verify here.
+- **No-gos**: Tauri hosts no second SPA and no public port. No pre-login native service claim (REQ-DESK-04). No WDIO plugin in the product. No cross-OS claims without native runs (REQ-TEST-09).
+- **Circuit breaker**, if native WebDriver E2E fails on the host OS:
+  - Ship only the black-box installer smoke test.
+  - Label E2E blocked-by-environment.
+  - Reshape E2E as a new pitch.
 - **Acceptance criteria**: AC-03, AC-18, AC-20, AC-30 (host OS), REQ-DESK-01..06, REQ-SEC-05, REQ-TEST-08, REQ-ECO-06 (Tauri after SEA).
-- **Deliverable**: branch `minor/poc-05-tauri-sidecar`; PR title `feat: Tauri shell supervising SEA sidecar with tray`. Results under `docs/`: `POC-05-Result`, `ADR-005` (desktop process model).
+- **Deliverable**: branch `minor/poc-05-tauri-sidecar`. PR title: `feat: Tauri shell supervising SEA sidecar with tray`. Results under `docs/`: `POC-05-Result` and `ADR-005` (desktop process model).
 
-### POC-7: Auth (user:password) + roles + protected UI
+### POC-6: PostgreSQL adapter parity (BACKLOG)
 
-- **Problem**: LAN is untrusted (REQ-SEC-01). Roles public/employee/admin must be enforced in NestJS, not only in Angular (REQ-SEC-02). Decision 5: vanilla user:password auth; the credential is set by the user in the MSI; a dev override exists for admin/root.
-- **Appetite**: 1-2 weeks, small batch. Depends on POC-5 (first-run setup / CA install).
+[Back to navigation](#navigation)
+
+- **Status**: BACKLOG stub. Decision 8 deferred it. Full details are in [Backlog](#backlog).
+- **Appetite**: none assigned.
+- **Acceptance criteria**: AC-09 and the PostgreSQL part of REQ-TEST-06.
+- **Gap**: the SRS marks REQ-TEST-06 as MUST. REQ-TEST-06 and AC-09 stay unmet until this item runs.
+
+### POC-7: Auth and roles
+
+[Back to navigation](#navigation)
+
+- **Scope**: user:password auth, roles and protected UI.
+- **Problem**: The LAN is untrusted (REQ-SEC-01). NestJS must enforce the roles public, employee and admin, not only Angular (REQ-SEC-02). Decision 5: plain user:password auth. The database is the source of truth. The user creates the first admin in the setup wizard (decisions 12 and 13). Under decision 12, the dev account is a seeded, self-destructing super user, only in development.
+- **Appetite**: 1-2 weeks, small batch. Depends on POC-5 (first-run setup and CA install).
 - **Solution sketch**:
-  - Auth design (decision 5; sin QC): scrypt via Node native (argon2id only if Node ships it, no verificado); NIST 800-63B-style policy (15+ chars, blocklist, no composition rules); exponential throttle per account/IP; server-side sessions in SQLite with cookie `__Host-sid`; CSRF via SameSite plus Origin check.
-  - Initial credential: set by the user at install (MSI, POC-8) or first-run setup on Linux/macOS (POC-5). No permanent default credentials (REQ-SEC-02).
-  - Dev override for admin/root: explicit flag plus `NODE_ENV=development` plus bind 127.0.0.1, stripped from release builds, with a smoke test proving absence. Conflicts with REQ-SEC-02 (L349) and L947 (D-07: no insecure demo credentials; the plan's "password from local `.env`" is no verificado in the SRS); needs human reconciliation (open questions).
-  - Roles public/employee/admin; Nest guards returning 401/403 (REQ-SEC-01).
-  - Retro ARPANET terminal public page, logon, minimal protected employee and admin routes (REQ-WEB-02).
-  - Lazy-loaded role routes; unauthorized views not rendered in the DOM; API still blocks (REQ-WEB-03, REQ-SEC-03).
-  - Strict payload validation and size limits, auth-abuse defenses (REQ-SEC-04, REQ-CFG-03).
-  - Playwright on dev :4200 and distributed :8443 (REQ-TEST-05).
-- **Rabbit holes**: dev override vs REQ-SEC-02; session store location; scope of the dev-mode proxy test (A10).
-- **No-gos**: no insecure demo credentials (D-07), no fake `auth-ms`, no secrets in browser bundles (REQ-SEC-03), no security via hidden JS only, no dev override in release builds.
-- **Circuit breaker**: if the dev override cannot be proven absent from the release build, ship without it and reshape.
+  - Dependency task, first (decision 13, [OQ5](#open-questions)): wait for the POC-5 spike. Security claims about the wizard are not verified.
+    - Scope: take the chosen wizard path as input. It feeds the initial-credential flow and the dev super user hand-off.
+    - Output: the path in ADR-006 (auth mechanism) and in `POC-07-Result`.
+    - Budget: no own spike time. If the POC-5 spike hit its 2-day breaker, use the MSI dialog on Windows. Use the CLI `setup` command on Linux and macOS.
+  - Auth design (decision 5; unreviewed research summary):
+    - scrypt through Node native. Use argon2id only if Node ships it (not verified).
+    - NIST 800-63B-style policy: 15+ characters, blocklist, no composition rules.
+    - Exponential throttle per account and IP.
+    - Server-side sessions in SQLite with the cookie `__Host-sid`.
+    - CSRF protection through SameSite plus an Origin check.
+  - First admin: the user creates it in the setup wizard (decision 13, POC-5). The MSI credential dialog (POC-8) is only the fallback. No permanent default credentials (REQ-SEC-02).
+  - Dev super user (decision 12): the design is in [Decision Log](#decision-log) item 12. It is a data row made by the production user-creation path. No code path skips authentication.
+  - Seed at startup, after migrations (REQ-DB-06 order). Seed only in development. Seed only if no real admin exists. Account `dev-admin`, never admin or root. Random password of 15+ characters, shown once.
+  - The server enforces self-destruction through `expires_at` and a bootstrap mark. Auth rejects an expired account. A startup purge deletes it.
+  - Production never seeds. The setup wizard (decision 13, [OQ5](#open-questions)) creates the first admin. A smoke test proves a release DB has no bootstrap account.
+  - The DB is the only source of truth. `config.json` never stores credentials (REQ-SEC-06, REQ-CFG-06).
+  - Roles public, employee and admin. Nest guards return 401 or 403 (REQ-SEC-01).
+  - Build a retro ARPANET terminal public page and a logon page. Build minimal protected employee and admin routes (REQ-WEB-02).
+  - Lazy-load the role routes. Do not render unauthorized views in the DOM. The API still blocks them (REQ-WEB-03, REQ-SEC-03).
+  - Add strict payload validation, size limits and auth-abuse defenses (REQ-SEC-04, REQ-CFG-03).
+  - Run Playwright on dev :4200 and distributed :8443 (REQ-TEST-05).
+- **Rabbit holes**:
+  - The expiry and purge rules of the dev super user (decision 12).
+  - The session store location.
+  - The scope of the dev-mode proxy test (A10).
+- **No-gos**: no insecure demo credentials (D-07), no fake `auth-ms`, no secrets in browser bundles (REQ-SEC-03). Also no security through hidden JS only, no bootstrap account in release builds.
+- **Circuit breaker**, if either proof is missing:
+  - A smoke test proves the release DB has no bootstrap account.
+  - A test proves auth rejects an expired account.
+  - Then ship without the dev super user and reshape.
 - **Acceptance criteria**: AC-06, REQ-SEC-01..04, REQ-SEC-06, REQ-WEB-02..04, REQ-TEST-05.
-- **Deliverable**: branch `minor/poc-07-auth-roles`; PR title `feat: user:password auth with roles and protected API and UI`. Results under `docs/`: `POC-07-Result`, `ADR-006` (auth mechanism).
+- **Deliverable**: branch `minor/poc-07-auth-roles`. PR title: `feat: user:password auth with roles and protected API and UI`. Results under `docs/`: `POC-07-Result` and `ADR-006` (auth mechanism).
 
-### POC-8: MSI credential dialog + native platform matrix + lockstep versioning
+### POC-8: MSI credential dialog, platform matrix and lockstep versioning
 
-- **Problem**: A macOS pass does not imply Windows/Linux (AC-21, NFR-PORT-01, REQ-TEST-09). Lockstep versioning must also reach `tauri.conf.json` and `Cargo.toml`, which Nx Release does not update by itself (R-02 of 11.3).
+[Back to navigation](#navigation)
+
+- **Problem**: A macOS pass does not imply a Windows or Linux pass (AC-21, NFR-PORT-01, REQ-TEST-09). Lockstep versioning must also reach `tauri.conf.json` and `Cargo.toml`. Nx Release does not update them by itself (R-02 of 11.3).
 - **Appetite**: 2 weeks, big batch.
 - **Solution sketch**:
-  - MSI dialog for the initial credential: hidden property plus `MsiHiddenProperties`, hash computed in a deferred custom action (design, no verificado). Smoke test per OS that the credential works and no default exists.
-  - Run root ECO commands natively on each declared OS/arch; record a result matrix verified/pending/blocked (REQ-TEST-10, D-02).
-  - Nx Release fixed group, `release:version` syncing `tauri.conf.json` and `Cargo.toml`, validating all version refs, reproducible changelog (REQ-VERSION-01, REQ-VERSION-03).
-  - Branch-to-SemVer mapping validation (REQ-VERSION-02, REQ-VERSION-02a, REQ-VERSION-02b).
-- **Rabbit holes**: runner/VM availability (Q-08); Windows x64 vs ARM (R4); release group membership incl. runtime-nest (Q-01); exemption mechanism for `docs/*` and `chore/*` (Q-02).
-- **No-gos**: no cross-OS claims without native verification, Docker does not replace native installer validation (REQ-TEST-09), no CI workflow yet.
-- **Circuit breaker**: if only some OSes are reachable, close with a partial matrix declared as such (NFR-PORT-01), mark the rest pending/blocked, and reshape the remainder as a new pitch.
+  - Dependency task, first (decision 13, [OQ5](#open-questions)): wait for the POC-5 spike. Security claims about the wizard are not verified.
+    - Scope: decide whether the wizard replaces or complements the MSI credential dialog.
+    - Output: the decision in `POC-08-Result` and in ADR-006 (auth mechanism).
+    - Budget: no own spike time. If the POC-5 spike hit its 2-day breaker, keep the MSI credential dialog.
+  - MSI dialog for the initial credential: a hidden property plus `MsiHiddenProperties`. A deferred custom action computes the hash. This is a design. Not verified. Add a smoke test per OS. It proves that the credential works and that no default exists.
+  - Path layout (decision 11; REQ-CFG-05, REQ-SEA-05). The MSI installs read-only files under `<InstallDir>`: the SEA and `config.default.json`.
+  - The MSI ships no managed `config.json`. First start creates it under the resolved root. The POC-1 spike and this POC decide which folder the root resolves to on Windows. Secrets live in `dataDir` with restricted permissions.
+  - The MSI is a per-machine draft. A spike decides the scope ([OQ16](#open-questions)).
+  - Verify here (not verified):
+    - The exact WiX v4 directory and scope names.
+    - The effect of `NeverOverwrite` or `Permanent` on a key file.
+    - The ACLs of the folder that the root resolves to.
+  - Run the root ECO commands natively on each declared OS/arch. Record a result matrix: verified, pending or blocked (REQ-TEST-10, D-02).
+  - Configure an Nx Release fixed group. `release:version` syncs `tauri.conf.json` and `Cargo.toml`. It validates all version references. It builds a reproducible changelog (REQ-VERSION-01, REQ-VERSION-03).
+  - Validate the branch-to-SemVer mapping (REQ-VERSION-02: its branch table and the exemption rule).
+- **Rabbit holes**:
+  - Runner and VM availability (Q-08).
+  - Windows x64 against ARM (R4).
+  - Keeping an edited `config.json` across upgrades and uninstalls. Decide delete or keep for uninstall.
+  - Release group membership, including runtime-nest (Q-01).
+  - The exemption mechanism for `docs/*` and `chore/*` (Q-02).
+- **No-gos**: no cross-OS claims without native verification. Docker does not replace native installer validation (REQ-TEST-09). No CI workflow yet.
+- **Circuit breaker**, if only some OSes are reachable:
+  - Close with a partial matrix and declare it partial (NFR-PORT-01).
+  - Mark the rest pending or blocked.
+  - Reshape the remainder as a new pitch.
 - **Acceptance criteria**: AC-21, AC-25, AC-33, REQ-VERSION-01..03, REQ-TEST-09, REQ-TEST-10, NFR-PORT-01, NFR-TRUTH-01.
-- **Deliverable**: branch `chore/poc-08-matrix-versioning`; PR title `chore: native platform matrix and lockstep versioning`. Results under `docs/`: `Platform-Matrix`, `POC-08-Result`.
+- **Deliverable**: branch `chore/poc-08-matrix-versioning`. PR title: `chore: native platform matrix and lockstep versioning`. Results under `docs/`: `Platform-Matrix` and `POC-08-Result`.
 
-### POC-9: CI/CD GitHub Actions + Releases (final phase, D-07) — HOLD
+### POC-9: GitHub Actions CI/CD and releases (HOLD)
 
-- **Status**: HOLD (decision 9) until all other POCs are ready. Scope of HOLD is an open question (does it also hold PR pushes per POC?).
-- **Problem**: CI/CD is in scope only after local commands are stable (D-07, FR-46). The release flow must work with branch protection, no amend or force-push, serialized releases and idempotent reruns (R-03, R-10 of 11.4).
+[Back to navigation](#navigation)
+
+- **Status**: HOLD (decision 9) until all other POCs are ready. The HOLD covers only CI/CD and releases (human decision, [OQ6](#open-questions)).
+- **Phase**: final phase (D-07).
+- **Problem**: CI/CD is in scope only after the local commands are stable (D-07, FR-46). The release flow must work with branch protection. It allows no amend and no force-push. It serializes releases and makes reruns idempotent (R-03, R-10 of 11.4).
 - **Appetite**: 2 weeks, big batch.
 - **Solution sketch**:
   - `ci-cd.yml` calls only root scripts (REQ-CI-07, REQ-ECO-07, FR-08).
-  - PR CI on Windows/Linux/macOS native runners: install, securityCheck, build, test, package, smoke (REQ-CI-01, REQ-CI-09, D-09).
-  - CD from a versioned SHA: new release commit or release PR, no amend (REQ-CI-04), tag `vX.Y.Z`, SHA-256 hashed installers with OS/arch names, smoke before upload (REQ-CI-05, REQ-CI-10, D-10).
-  - Serialized releases per target branch, idempotent reruns (REQ-CI-06).
-  - Minimal permissions, `contents:write` only on release jobs (REQ-CI-03, REQ-SEC-CI-04).
-  - Signing only if credentials exist; unsigned artifacts never declared signed (R-08).
-- **Rabbit holes**: bot commit vs release PR (Q-03); branch protection; macOS/Windows runner cost and setup (R-01 of 11.4.1); Rust audit tooling (A9, R7).
-- **No-gos**: no cloud deploy, no direct `nx`/`jest`/`ng`/`cargo`/`ncu`/`postject` in the workflow, no `continue-on-error` on audit, no amend/force-push, no untrusted-PR cache, no `securityFix` run silently (REQ-DEPS-02a). Every remote/`gh` action needs human approval.
-- **Circuit breaker**: if a mandatory platform cannot run, the release is blocked, not green (REQ-CI-02, REQ-CI-06). Ship PR CI only, publish findings, and reshape CD as a new pitch.
+  - PR CI runs on native Windows, Linux and macOS runners. The steps are install, securityCheck, build, test, package and smoke (REQ-CI-01, REQ-CI-09, D-09).
+  - CD starts from a versioned SHA. It creates a new release commit or a release PR, never an amend (REQ-CI-04). It tags `vX.Y.Z`. It publishes SHA-256 hashed installers with OS/arch names. The smoke test runs before upload (REQ-CI-05, REQ-CI-10, D-10).
+  - Serialize releases per target branch. Make reruns idempotent (REQ-CI-06).
+  - Use minimal permissions. Grant `contents:write` only to release jobs (REQ-CI-03, REQ-SEC-CI-04).
+  - Sign only if credentials exist. Never declare an unsigned artifact signed (R-08).
+- **Rabbit holes**:
+  - Bot commit or release PR (Q-03).
+  - Branch protection.
+  - macOS and Windows runner cost and setup (R-01 of 11.4.1).
+  - Rust audit tooling (A9, R7).
+- **No-gos**: no cloud deploy. No direct `nx`, `jest`, `ng`, `cargo`, `ncu` or `postject` in the workflow. No `continue-on-error` on audit. No amend or force-push. No untrusted-PR cache. No silent `securityFix` run (REQ-DEPS-02).
+- **Circuit breaker**: if a mandatory platform cannot run, the release is blocked (REQ-CI-02, REQ-CI-06). The release is not green. Ship PR CI only and publish the findings. Reshape CD as a new pitch.
 - **Acceptance criteria**: AC-26, AC-27, AC-35, AC-36, REQ-CI-01..10, REQ-SEC-CI-01..04, AC-02, AC-32.
-- **Deliverable**: branch `chore/poc-09-ci-cd`; PR title `chore: GitHub Actions CI and release pipeline`. Results under `docs/`: `POC-09-Result`, `ADR-007` (release flow).
+- **Deliverable**: branch `chore/poc-09-ci-cd`. PR title: `chore: GitHub Actions CI and release pipeline`. Results under `docs/`: `POC-09-Result` and `ADR-007` (release flow).
+
+---
 
 ## No-gos
 
+[Back to navigation](#navigation)
+
 Global, from the SRS:
 
-- No Nx Cloud (REQ-BUILD-01).
-- No drizzle-kit (REQ-DB-04).
-- No Express/Fastify (REQ-NET-01, REQ-STACK-04).
-- No postject unless a documented need exists (REQ-SEA-02).
-- No fake `auth-ms` (D-03).
-- `bumpDependencies` and `test:doctor` are not implemented, docs only (REQ-DEPS-01).
-- No unit/integration suites (REQ-TEST-01, AC-19).
-- No `secure:false` shipped (REQ-DEV-04).
-- No fake Module Federation remotes (REQ-WEB-04).
-- No cloud deploy (D-07).
-- No fake LLM engine (D-07).
-- No insecure demo credentials (D-07).
-- No offline browser sync (D-07).
-- No cross-OS claims without native verification (REQ-TEST-09, NFR-PORT-01).
-- No automatic CA trust on client devices (REQ-TLS-02).
-
-## Wiki documentation plan
-
-Decision 2: docs live only in `docs/` for now; they migrate to the GitHub Wiki (separate git repo `<repo>.wiki.git`) when consolidated (Backlog). The structure below is the target of that migration.
-
-Page structure (flat, unique names):
-
-- `Home`, `_Sidebar`, `_Footer`
-- `SRS-v1.6`
-- `Roadmap`
-- `Pitch-POC-NN-<slug>`
-- `POC-NN-Result`
-- `ADR-NNN-<slug>` (decisions per SRS 12.5 / D-05: portability, security, Drizzle RC)
-- `Platform-Matrix` (REQ-TEST-10)
-- `Glossary` (optional)
-
-| Source | Wiki page |
+| No-go | Source |
 |---|---|
-| `lan-solution-template-SRS-v1.6.md` | `SRS-v1.6` |
-| `docs/roadmap/PROPOSAL.md` | `Roadmap` |
-| each pitch section of the proposal | `Pitch-POC-NN-<slug>` |
-| POC evidence (logs, labels, verified OS) | `POC-NN-Result` |
-| decisions | `ADR-NNN-<slug>` |
-| native results matrix | `Platform-Matrix` |
+| No Nx Cloud | REQ-BUILD-01 |
+| No drizzle-kit | REQ-DB-04 |
+| No Express or Fastify | REQ-NET-01, REQ-STACK-04 |
+| No postject unless a documented need exists | REQ-SEA-02 |
+| No fake `auth-ms` | D-03 |
+| `bumpDependencies` and `test:doctor` are not implemented. They exist in docs only. | REQ-DEPS-01 |
+| No unit or integration suites | REQ-TEST-01, AC-19 |
+| No shipped `secure:false` | REQ-DEV-04 |
+| No fake Module Federation remotes | REQ-WEB-04 |
+| No cloud deploy, no fake LLM engine, no insecure demo credentials, no offline browser sync | D-07 |
+| No cross-OS claims without native verification | REQ-TEST-09, NFR-PORT-01 |
+| No automatic CA trust on client devices | REQ-TLS-02 |
 
-Tensions and rules:
-
-- NFR-DOC-01 and D-08 require Mermaid diagrams in README/architecture, kept in sync with what is built. The README therefore stays in the repo even if the wiki holds the rest.
-- Wiki edits are not reviewed via PR by default. Proposal: every wiki change references the PR of its POC.
-- ASSUMPTION (verify): `.wiki.git` only exists after the wiki is enabled and a first page is created in the web UI.
-- All wiki setup and pushes are remote actions that need explicit human approval.
+---
 
 ## SRS coverage matrix
+
+[Back to navigation](#navigation)
 
 | SRS section | Topic | Covered by |
 |---|---|---|
@@ -288,7 +605,7 @@ Tensions and rules:
 | 8 | Angular web (REQ-WEB-01..04) | POC-4 (REQ-WEB-01), POC-7 (REQ-WEB-02..04) |
 | 9 | Desktop Tauri and processes (REQ-DESK, REQ-RUNTIME) | POC-5, POC-2 |
 | 10 | Node SEA and distribution (REQ-SEA-01..06) | POC-2, POC-4, POC-8 (REQ-SEA-06) |
-| 11 | Nx, quality, tests (11.0 build/test/security, 11.1 ECO, 11.2 refs/deps, 11.3 versioning, 11.4 CI/CD, 11.5 acceptance, 11.6 portability) | POC-1 (ECO, REQ-DEPS, security gate), POC-8 (11.3, 11.6, REQ-TEST-09/10), POC-9 (11.4, 11.4.1), POC-2..7 (REQ-TEST-04..08 per feature) |
+| 11 | Nx, quality, tests. Sections: 11.0 build/test/security, 11.1 ECO, 11.2 refs/deps, 11.3 versioning, 11.4 CI/CD, 11.5 acceptance, 11.6 portability | POC-1 (ECO, REQ-DEPS, security gate, REQ-BUILD-02..05, REQ-TEST-02, REQ-REF-01). POC-8 (11.3, 11.6, REQ-TEST-09/10). POC-9 (11.4, 11.4.1). POC-2..7 (REQ-TEST-04..08 per feature) |
 | 12 | Delivery instructions (D-01..D-10, NFR-TRUTH-01, NFR-DOC-01, NFR-VER-01) | POC-0, POC-1, every POC result page |
 | 13 | Technical and normative references | POC-1 (version verification), POC-0 (ADR/doc links) |
 
@@ -305,9 +622,9 @@ Acceptance criteria coverage:
 | AC-07 | POC-3 | AC-25 | POC-8 |
 | AC-08 | POC-3 | AC-26 | POC-9 |
 | AC-09 | Backlog (POC-6) | AC-27 | POC-9 |
-| AC-10 | POC-3, POC-4 | AC-28 | POC-2 |
-| AC-11 | POC-2, POC-5 | AC-29 | POC-2 |
-| AC-12 | POC-4 | AC-30 | POC-2, POC-5, POC-8 |
+| AC-10 | POC-3 | AC-28 | POC-2 |
+| AC-11 | POC-2 | AC-29 | POC-2 |
+| AC-12 | POC-4 | AC-30 | POC-2, POC-5 |
 | AC-13 | POC-1 | AC-31 | POC-2 (registry design only) |
 | AC-14 | POC-4 | AC-32 | POC-1, POC-9 |
 | AC-15 | POC-4 | AC-33 | POC-1 (host), POC-8 |
@@ -315,52 +632,164 @@ Acceptance criteria coverage:
 | AC-17 | POC-4 | AC-35 | POC-9 |
 | AC-18 | POC-5 | AC-36 | POC-9 |
 
+---
+
 ## Open questions
 
-Answered by the human (items 1-9 of `## Log`) were removed from this list: remote URL, wiki as final migration, `main`, targets, auth, config, TLS, DB engine, release HOLD. Remaining, each needs a human decision (SRS id in parentheses):
+[Back to navigation](#navigation)
 
-1. `config.json` in the install path (decision 6) vs REQ-CFG-05 (L165) and REQ-SEA-05 (L502) requiring config outside the executable in OS config dirs. Proposal: schema in install path, real config in OS config dir.
-2. Dev override for admin/root (decision 5) vs REQ-SEC-02 (L349) and L947 (D-07, no insecure demo credentials). Needs SRS amendment or constrained design.
-3. "Current Node LTS" (decision 4) vs pin `>=26.13.0 <27` (REQ-STACK-01). Is Node 26 LTS? No verificado.
-4. Windows 10 support: "idealmente 10+". Hard requirement or best effort? Tauri/WebView2/Node minimums not verified.
-5. First-run setup for Linux/macOS (no MSI): loopback setup flow acceptable?
-6. Scope of POC-9 HOLD: does it also hold pushes and PRs per POC, or only CI/CD?
-7. Minimum verified-OS set to close a micro-POC (Q-08, NFR-PORT-01).
-8. TLS crypto library and key storage per OS (A-04, Q-07); spike pending.
-9. Release via bot commit vs release PR (Q-03), relevant when HOLD lifts.
-10. Nx release group membership, including runtime-nest (Q-01).
-11. Restart, backoff and readiness values (A3).
-12. Autostart default on or opt-in (A7).
-13. Rust audit tool and threshold (A9).
-14. Persisted config bootstrap before the DB exists (A-01), with decision 6 in mind.
+The human answered items 1-10 of the [Decision Log](#decision-log). The table omits them. They cover: remote URL, docs location, `main`, targets, auth, config, TLS, DB engine, release HOLD, Drizzle tag.
 
-## Log
+Decision Log items 11-15 settle OQ1, OQ2, OQ4, OQ5 and OQ8. Each row stays in the table.
 
-Human decisions (source: plan `optimized-wondering-waffle.md`, "Decisiones registradas"):
+Items 11-15, OQ6 and OQ12 are human decisions. The other resolutions are agent proposals.
 
-1. origin = `git@github.com:virgenherrera/lan-solution-template.git`.
-2. Docs only in `docs/`; migrate to the wiki when consolidating (final backlog item).
-3. Branch `main` (rename local with `git branch -m master main`; no push).
-4. Targets: Windows (ideally 10+), Linux, macOS, current Node LTS.
-5. Auth: vanilla user:password; credential set by the user in the MSI; dev override for admin/root.
-6. `config.json` in the install path with `$schema`; sibling versioned schema.
-7. TLS in the style of `dotnet dev-certs`.
-8. DB: SQLite + vector for now.
-9. Release automation on HOLD until all POCs are ready.
+**Ownership summary** (the command in [Checks](../standards/README.md#checks) prints these counts)
 
-Design notes for auth, config and TLS are research summaries without QC (sin QC); they are embedded in POC-7, POC-3, POC-4/5 and POC-8.
+- Rows: 17.
+- Owner: 2 human, 9 agent:builder, 5 agent:researcher, 1 agent:verifier.
+- Status: 2 `decided (human)`. 1 `decided (human decision 11)`. 1 `decided (human decision 12)`. 1 `decided (human decision 13): pending spike`. 1 `decided (human decision 14): pending spike`. 1 `decided (human decision 15)`. 10 `proposed`.
+- Blocking: 17 `no`. No open question blocks. No row has status `needs human decision`.
+
+Claims marked "not verified" stay unverified until a spike or a primary source confirms them.
+
+| ID | Question | Proposed resolution | Owner | Blocking | Status |
+|---|---|---|---|---|---|
+| OQ1 | Where does `config.json` live? REQ-CFG-05 and REQ-SEA-05 constrain it. Resolved by decision 11. | Decided by human decision 11, option A. Install where each OS expects it. A paths library resolves one root (see Decision Log). The code uses paths relative to that root, in the SEA and the dev server. `config.json` lives under that root. `config.default.json` holds defaults, no secrets. The POC-1 and installer POC spikes pick the root folder per OS. Create dirs 0700 and secret files 0600. Secrets never go in `config.json`. Per-OS keystore bindings and folder ACLs are not verified. The Windows MSI scope is OQ16. | agent:builder | no | decided (human decision 11) |
+| OQ2 | The first text of decision 5 had a development account override. It conflicts with REQ-SEC-02 and L947 (D-07). Resolved by decision 12. | Decided by human decision 12: a seeded, self-destructing super user, only in development. The override flag is gone. The account `dev-admin` is a data row, created through the production user-creation path. Production never seeds. The DB is the only source of truth for identity and permissions. See Decision Log item 12 for the design. ASVS 6.3.2 and 6.4.1 are not verified. They came from a search summary, not the primary file. OQ5 is a candidate to reuse the same one-time initial-credential mechanism. It is not decided. | agent:builder | no | decided (human decision 12) |
+| OQ3 | The first text of decision 4 named a Node line. It differs from the pin `>=26.13.0 <27` (REQ-STACK-01). | Keep the pin. Decision 4 now says Node follows the pin. Node 26 became LTS on 2026-10-28 per the nodejs/Release `schedule.json`. A QC agent checked this on 2026-10-30. Compatibility with the rest of the stack is not verified. Re-check the schedule at POC-1 start. The release date of 26.13.0 is not verified. | agent:researcher | no | proposed |
+| OQ4 | Which operating systems do we support? Resolved by decision 15. | Decided by human decision 15: targets follow Tauri 2. We keep no OS list of our own. The source is a search summary, so the support claim is not verified. POC-1 reads the Tauri 2 prerequisites page, checks the WebView2 minimums, and records the OS list in its result. | human | no | decided (human decision 15) |
+| OQ5 | First-run setup on Linux and macOS without MSI: is a loopback setup flow acceptable? | Decided by human decision 13: pending spike. The first-run flow for Linux and macOS is the setup wizard. The POC-5 spike defines it. The mechanism stays open. The spike decides the wizard role. It either replaces the MSI credential dialog or complements it. The candidate design is a spike input. Its parts are loopback only, a single-use token, and Host and Origin checks. It also has an attempt limit and a headless CLI `setup` alternative. It also sets a 15-character minimum with a blocklist. It is practice, not verified against primary sources. Circuit breaker: after 2 days without a clear path, keep the MSI dialog on Windows. Keep the CLI `setup` command on Linux and macOS. | agent:researcher | no | decided (human decision 13): pending spike |
+| OQ6 | Does the POC-9 HOLD also hold pushes and PRs of each POC? | Decided by the human, option A: the hold covers only CI/CD and release publishing (POC-9): release workflow, tags, binary publish and release bot. Local work, branches and commits continue. Push, PR and `gh` writes still need explicit human approval per AGENTS.md. | agent:researcher | no | decided (human) |
+| OQ7 | Minimum verified-OS set that closes a micro-POC (Q-08, NFR-PORT-01). | A micro-POC closes as `verified-on-<os>-<arch>` only where its acceptance command ran natively and was logged. macOS arm64 closes macOS checks. Linux x64 in Docker closes gateway smoke tests only (REQ-TEST-09). Windows x64 needs a native VM or runner, which is not available. Installer, tray, WebView and autostart checks stay blocked-by-environment there. | agent:verifier | no | proposed |
+| OQ8 | TLS crypto library and key storage per OS (A-04, Q-07). | Decided by human decision 14: pending spike. Prefer zero dependencies: `node:crypto` plus a minimal own DER builder. It builds the CA and the leaf with SAN, IPs included. Fallback: a pure-JS dependency such as `@peculiar/x509`. Never native modules. The CA private key stays outside the database, encrypted in a `dataDir` file. A NestJS provider contract hides the storage. See Decision Log item 14. Not verified: that `node:crypto` lacks an X.509 build-and-sign API. Not verified: SAN support in `@peculiar/x509`. Not verified: the Windows ACL recipe. | agent:researcher | no | decided (human decision 14): pending spike |
+| OQ9 | Release through a bot commit or a release PR (Q-03). | Use a release PR as the default, in line with REQ-CI-04. Publish after merge by tagging the merged SHA, idempotent per REQ-CI-06. Use a bot commit only if branch protection allows it and the human approves. Branch protection bypass for personal repos is not verified. Nx release support for a PR flow is not verified. | agent:researcher | no (HOLD) | proposed |
+| OQ10 | Nx release group membership, including runtime-nest (Q-01). | Use one fixed group: web-angular, gateway-nest, shared-core, desktop and runtime-nest. REQ-SEA-01 packs runtime-nest into the single SEA, so its version must match. REQ-VERSION-01 does not list runtime-nest, so this is an inference. Exclude test libs and tooling. Run `nx release --dry-run` to verify. | agent:builder | no | proposed |
+| OQ11 | Restart, backoff and readiness values (A3). | These are design proposals, not sourced. Readiness timeout 30 s. Health poll 500 ms. Backoff 1, 2, 4, 8, 16 s, capped at 30 s, with 20 percent jitter. At most 5 restarts in 300 s. Reset the counter after 60 s stable. Graceful stop 10 s. After exhaustion: state error, stop restarting, surface it to Tauri. Measure in POC-2. | agent:builder | no | proposed |
+| OQ12 | Autostart default: on or opt-in (A7). | Decided by the human: autostart is opt-in and off by default. The user enables it with a checkbox in the tray menu. The MSI checkbox appears unchecked on Windows. The app persists the choice. This matches REQ-DESK-04. The Tauri autostart plugin needs Rust 1.90 or later (not independently verified). | agent:builder | no | decided (human) |
+| OQ13 | Rust audit tool and threshold (A9). | Run `cargo deny check advisories` in CI and before release. Set yanked to deny. Keep the defaults for unmaintained and unsound. Any vulnerability fails: the cargo-deny docs list `severity-threshold` as removed. Each ignore needs a reason and a 90-day expiry. Run weekly and on `Cargo.lock` change. Noise from transitive Tauri deps is not verified. | agent:builder | no (CI on HOLD) | proposed |
+| OQ14 | Persisted config bootstrap before the DB exists (A-01), with decision 11 in mind. | Use a file-based bootstrap config under the root, resolved by the paths library (decision 11). It has Zod validation, atomic write (tmp then rename) and restricted permissions. It holds only ports, data path, DB engine and TLS key location. The DB stores the rest. Start order: resolve root, read or create defaults, open DB, migrate. No secrets. OQ1 is decided, so this does not wait on it. A-01 is not present in the SRS. | agent:builder | no | proposed |
+| OQ15 | Does the fallback to `1.0.0-rc.5` need an SRS amendment (REQ-STACK-07)? | Yes, as a text fix. Rewrite REQ-STACK-07 to match decision 10. Use the latest stable Drizzle first, `1.0.0-rc.5` as fallback. Record the chosen tag. It matters only if the stable tag fails. The Decision Log source check lists no stable 1.0.x tag on 2026-10-30. | agent:builder | no | proposed; text applied in REQ-STACK-07; approval pending |
+| OQ16 | Windows MSI scope: per-machine or per-user? | Draft: a per-machine MSI. The installer POC (POC-8) starts with a blocking spike on WiX and Tauri capabilities. It compares per-machine, dual and per-user installs, then decides. The gateway serves the LAN. The spikes decide the root folder (decision 11). Per-machine installs to Program Files, and writing there needs an administrator. Source: Microsoft Learn, MSI installation context (read 2026-10-30). WiX v4 scope names and folder ACLs are not verified. | agent:builder | no | proposed |
+| OQ17 | Install-time choice. Server mode installs gateway and app. Client mode installs app only and connects to an existing LAN server. | Proposed. It touches the installer (POC-8) and the Tauri shell (POC-5). It also touches TLS trust of the server certificate (POC-4). Not designed yet. No part is verified. | human | no | proposed |
+
+---
 
 ## Backlog
 
-- POC-6: PostgreSQL adapter parity (`pg` + pgvector >=0.8.7 behind the same port; REQ-DB-01..03, REQ-DB-05, REQ-DB-08, AC-09, REQ-TEST-06 PG part). Deferred by decision 8. Original appetite 1 week, small batch; original branch name `minor/poc-06-postgres-pgvector`. Circuit breaker unchanged: pgvector not installable means blocked-by-environment.
-- Docs migration to GitHub Wiki (decision 2): enable wiki (needs approval), create first page in the web UI (ASSUMPTION, verify), clone `.wiki.git`, publish pages per the Wiki documentation plan. Last item, after POC-9 is unblocked or earlier at the human's call.
+[Back to navigation](#navigation)
+
+- POC-6: PostgreSQL adapter parity (`pg` + pgvector >=0.8.7 behind the same port). Requirements: REQ-DB-01..03, REQ-DB-05, REQ-DB-08, AC-09, REQ-TEST-06 PG part. Decision 8 deferred it. Original appetite: 1 week, small batch. Original branch name: `minor/poc-06-postgres-pgvector`. The circuit breaker is unchanged: if pgvector is not installable, the status is blocked-by-environment. The same stable-first Drizzle rule applies (decision 10). Test the stable tag for PostgreSQL vector support. Then fall back to `1.0.0-rc.5`.
+- Future extensions of the key-storage contract (decision 14). They are only noted, not planned. They have no tasks and no appetite:
+  - Implementations that use OS stores: DPAPI, Keychain and Secret Service.
+  - A remote store, a KMS or a vault.
+  - Another storage that is not files in `dataDir`.
+
+---
 
 ## Assumptions
 
-- ASSUMPTION: one developer plus AI agents.
-- ASSUMPTION: first POCs are verified on a macOS host only and declared as such (NFR-TRUTH-01).
-- ASSUMPTION: appetites are estimates.
-- ASSUMPTION: branch prefixes for POC PRs reuse the REQ-VERSION-02 naming (`major/`, `minor/`, `fix/`, `docs/`, `chore/`).
-- ASSUMPTION: the wiki `.wiki.git` repo requires a first page created in the web UI (verify).
-- ASSUMPTION: ADR numbering and page slugs are proposals, not SRS requirements.
-- ASSUMPTION: the mapping of SRS sections 3 and 13 to POC-1 and POC-0 is a planning choice; the SRS does not assign them to phases.
+[Back to navigation](#navigation)
+
+| Tag | Statement |
+|---|---|
+| ASSUMPTION | One developer plus AI agents. |
+| ASSUMPTION | A macOS host alone verifies the first POCs. The POCs declare it (NFR-TRUTH-01). |
+| ASSUMPTION | The appetites are estimates. |
+| ASSUMPTION | Branch prefixes for POC PRs reuse the REQ-VERSION-02 naming (`major/`, `minor/`, `fix/`, `docs/`, `chore/`). |
+| ASSUMPTION | ADR numbering and page slugs are proposals, not SRS requirements. |
+| ASSUMPTION | Mapping SRS sections 3 and 13 to POC-1 and POC-0 is a planning choice. The SRS does not assign them to phases. |
+
+---
+
+## Decision Log
+
+[Back to navigation](#navigation)
+
+Human decisions (source: plan `optimized-wondering-waffle.md`, section "Recorded decisions"):
+
+1. origin = `git@github.com:virgenherrera/lan-solution-template.git`.
+2. Docs only in `docs/`.
+3. Branch `main` (rename local with `git branch -m master main`; no push).
+4. Targets: the operating systems and versions that Tauri 2 supports; Node as pinned by REQ-STACK-01.
+5. Auth: vanilla user:password. The database is the source of truth. The first admin is created by the user in the setup wizard (decisions 12 and 13).
+6. `config.json` lives under the resolved root, not in the install path. The install path holds only `config.default.json`, read-only, with no secrets. Decision 11 defines the root.
+7. TLS in the style of `dotnet dev-certs`.
+8. DB: SQLite + vector for now.
+9. Release automation on HOLD until all POCs are ready.
+10. (2026-10-30) Drizzle tag. The template is "prod ready". A production-ready (stable) Drizzle tag is preferred over `1.0.0-rc.5`. Do not assume the stable tag now. At POC time, install the current stable tag. If it does not work, bump to `1.0.0-rc.5`. Reason: vector DB compatibility for both SQLite and PostgreSQL.
+    - Source check (read-only): `npm view drizzle-orm dist-tags --json` on 2026-10-30 lists `latest` as `0.45.4`, `rc` as `1.0.0-rc.5`, and no stable `1.0.x` tag. Its compatibility with the SRS API is not verified. The POC decides.
+11. (2026-10-30) Config and data paths. Resolves OQ1. Human answer, option A: "A: install where each OS expects it, so the code always uses paths relative to a resolved root (`./`), both for the built SEA and for the dev server."
+    - Agreed design. It is an unreviewed research summary:
+      - A paths library resolves one root, once. It never uses the cwd as the anchor.
+      - Precedence: `--root` flag, `APP_HOME` variable, marker next to the executable, dev anchor, OS default.
+      - In a SEA the anchor is the directory of `process.execPath`.
+      - Derived constants are paths relative to the root: `installDir` (read-only), `configDir`, `dataDir`, `logDir`, `certDir`.
+      - Dev: `./config/config.json` and `./data` under the repo.
+      - `config.default.json` is read-only. The real `config.json` is created at first start under the root. Secrets live in `dataDir` with restricted permissions.
+      - The POC-1 and installer POC spikes decide which folder the root resolves to on each OS.
+      - The Tauri host may pass the root to the sidecar.
+    - The scope of the Windows MSI is open: [OQ16](#open-questions).
+    - Not verified. Check each item in POC-2, POC-5 or POC-8:
+      - Exact WiX v4 names for directories and install scope (POC-8).
+      - The effect of `NeverOverwrite` or `Permanent` on a key file (POC-8).
+      - The ACLs of the folder that the root resolves to (POC-8).
+      - The cwd of the Tauri sidecar child (POC-5).
+      - The cwd under systemd and launchd (POC-2).
+
+12. (2026-10-30) Dev super user. Resolves OQ2. Human answer: "Seed the database with a self-destructing super user, only in development, when the time comes. The database is always the source of truth: no sudo, no environment-flag bypass, no credentials in config."
+    - Agreed design. It is an unreviewed research summary:
+      - The super user is a data row. The production user-creation path creates it. No code path skips authentication.
+      - It is seeded at startup, after migrations (REQ-DB-06 order), only in development, and only if no real admin exists.
+      - The account is `dev-admin`, never admin or root. The password is random, 15 characters or more, shown once, never fixed.
+      - The server enforces self-destruction. The row carries `expires_at` and a bootstrap mark. Auth rejects the expired account. A purge at startup deletes it.
+      - It is also deleted when the first real admin is created, or after the first login with a forced password change. A command seeds it again.
+      - Production never seeds. The user creates the first admin in the setup wizard (decision 13, [OQ5](#open-questions)). A smoke test checks that a release build DB has no bootstrap account.
+      - The DB is the only source of truth for identity and permissions. `config.json` never stores credentials.
+      - Residual risk: anyone who can write the DB file can create an admin. The control is the permission of the file and of `dataDir`. A local machine administrator can always write there.
+    - Not verified: ASVS 5.0.0 6.3.2 and 6.4.1. They came from a search summary, not the primary file.
+    - OQ5 may reuse the same one-time initial-credential mechanism. It stays proposed.
+
+13. (2026-10-30) First-run setup wizard. Resolves OQ5 as intent with a spike first. Human answer: "We want a WordPress-style setup wizard so the first real admin is created by the user at install time and replaces the admin/root (and the seeded dev super user). We do not decide the mechanism now. When the POC starts, its first task is a spike: run research and define the path we will implement." The DB stays the source of truth (decision 12).
+    - The exact mechanism stays open. The spike decides it.
+    - The spike also decides whether the wizard replaces or complements the MSI credential dialog.
+    - POC-5 owns the spike. POC-7 and POC-8 consume its result and depend on it. The result goes into the POC result page and into ADR-006 (auth mechanism).
+    - Budget: 2 days at most. Circuit breaker: if no clear path appears, keep the MSI credential dialog on Windows and the CLI `setup` command on Linux and macOS.
+    - Inputs for the spike. They are not decisions. The general security claims are not verified:
+      - A wizard is a known attack vector. Whoever reaches it first owns the admin account.
+      - Evaluate a setup mode bound to loopback only (127.0.0.1 and `::1`).
+      - Evaluate a single-use token, delivered by Tauri over IPC or shown in the terminal.
+      - Evaluate Host and Origin checks against DNS rebinding.
+      - Evaluate an attempt limit.
+      - Evaluate permanent deactivation once the DB holds an admin.
+      - Evaluate a password policy of 15 or more characters with a blocklist (NIST 800-63B-4).
+      - Evaluate a CLI alternative for headless environments.
+    - ASVS stays not verified.
+
+14. (2026-10-30) TLS crypto library and CA key storage. Resolves OQ8 as intent with a spike first. Human answer: "Prefer zero dependencies: node:crypto is enough if possible; if it is not, install the dependency, but avoid native modules. Store the CA private key outside the database and do not depend on OS specifics. Since we are in NestJS, declare a service behind a contract (an abstraction), so that in the future anyone who needs a more powerful or remote abstraction, or another storage that is not the VFS, can implement it. Just leave that noted."
+    - Agreed design. It is an unreviewed research summary:
+      - (a) Prefer zero dependencies. Use `node:crypto` for keys and signatures, plus a minimal own DER builder for the CA and the leaf with SAN, IPs included.
+      - Alternative: a pure-JS dependency (`@peculiar/x509`) if the own path fails. Never native modules.
+      - That `node:crypto` has no API to build and sign X.509: not verified.
+      - (b) The CA private key stays outside the database. It is encrypted (PKCS#8 with AES-GCM, not verified) in a file in `dataDir`.
+      - The encryption key lives in a separate file. No OS store dependency.
+      - Reason: keep keys apart from the data they protect (OWASP guidance): not verified.
+      - (c) NestJS declares a provider behind a contract. It may be an injection token or an abstract class. The POC fixes the exact name.
+      - The contract has one initial implementation: the encrypted file in `dataDir`.
+      - It reuses the port and strategy wording of POC-3 (REQ-DB-01, REQ-DB-02). Those requirements do not change.
+      - (d) Residual risk: whoever reads all of `dataDir` gets the key and the encryption key.
+      - On Windows, 0600 permissions do not apply (not verified). The ACL recipe is not verified.
+    - POC-4 owns the spike, as its first task. Budget: 2 days at most, inside the appetite.
+    - Spike inputs: the own DER build with `node:crypto`, against the pure-JS dependency.
+    - Spike checks: `openssl verify` accepts the chain. Chrome, Firefox and Safari accept the installed CA and a leaf with an IP SAN. The leaf is reissued when the IP or SAN changes, with the same CA. A Windows ACL recipe. A read of the OWASP guidance.
+    - Spike output: the POC result page and `ADR-004` (TLS trust model).
+    - Circuit breaker: if the own path fails the checks in 2 days, adopt the pure-JS dependency that passes the supply-chain policy (REQ-SUPPLY-01).
+    - ASVS stays not verified.
+
+15. (2026-10-30) Windows targets. Resolves OQ4. Human answer, translated: "Tauri already solved it: Tauri 2 supports Windows 10 and Windows 11 (64-bit) with the WebView2 engine. Windows 10 and Windows 11 x64 are declared targets."
+    - Decision 4 follows this answer: targets follow Tauri 2. We keep no OS list of our own.
+    - The source the human gave is a search-engine summary. It is not the primary Tauri documentation.
+    - Not verified: a search-engine overview says Tauri 2 needs Windows 10 or later, macOS 10.13 or later, and a Linux distribution with webkit2gtk 4.1.
+    - POC-1 reads the Tauri 2 prerequisites page, checks the WebView2 minimums, and records the OS list in its result.
+
+The design notes for auth, config and TLS are unreviewed research summaries. They appear in POC-7, POC-3, POC-4/5 and POC-8.

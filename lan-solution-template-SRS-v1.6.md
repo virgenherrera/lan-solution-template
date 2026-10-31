@@ -1,4 +1,17 @@
+<!-- toon-meta
+fmt: TOON
+doc: lan-solution-template-SRS-v1.6.md
+title: "LAN Solution Template SRS v1.6 (historical original)"
+type: requirement
+summary: "Spanish original of the SRS, kept for reference only."
+related[2]: docs/requirements/README.md,docs/requirements/traceability.md
+status: historical
+updated: 2026-10-30
+-->
+
 # LAN Solution Template — Especificación de requisitos del sistema (SRS)
+
+> **HISTORICAL ORIGINAL (Spanish).** The canonical source is docs/requirements/. ADR index: docs/roadmap/PROPOSAL.md#adr-index.
 
 **Proyecto:** `lan-solution-template`  
 **Tipo:** GitHub Template Repository comercial, multiplataforma, LAN-first y offline-capable  
@@ -92,7 +105,7 @@ Aplicaciones de negocio, multi-tenant, sincronización entre clientes desconecta
 | REQ-STACK-04 | NestJS | `12.3.2`; `@nestjs/platform-node` / `NodeAdapter`; sin Express ni Fastify |
 | REQ-STACK-05 | Angular | `>=22.2.5`, major 22; instalar versión exacta compatible y demostrar zoneless |
 | REQ-STACK-06 | Zod | `>=4.6.7`, major 4; declarar versión exacta en catálogo |
-| REQ-STACK-07 | Drizzle ORM | `1.0.0-rc.5` **RC fijada**, para `drizzle-orm/node-sqlite` |
+| REQ-STACK-07 | Drizzle ORM | Tag estable preferido; `1.0.0-rc.5` es el fallback si el tag estable carece de soporte vectorial en SQLite o PostgreSQL (decisión humana 10, 2026-10-30), para `drizzle-orm/node-sqlite`. Registrar el tag elegido |
 | REQ-STACK-08 | pnpm Workspaces + Nx | Nx local, sin Nx Cloud; versión compatible fijada tras discovery |
 | REQ-STACK-09 | Vector SQLite | `sqlite-vector` extensión nativa `1.1.2`, por plataforma/arquitectura |
 | REQ-STACK-10 | Vector PostgreSQL | `pgvector >=0.8.7`, verificando versión en la instancia |
@@ -102,7 +115,7 @@ Aplicaciones de negocio, multi-tenant, sincronización entre clientes desconecta
 - **Protección de instalación (REQ-SUPPLY-01).** Adoptar, tras verificar compatibilidad con pnpm 12, el patrón real de [`fullstack-base/pnpm-workspace.yaml`](https://github.com/virgenherrera/fullstack-base/blob/50afc753617d628e0d8c5bd7ed2521ceae9a4298/pnpm-workspace.yaml): `minimumReleaseAge: 1440` (24 h) y `allowBuilds` explícito para scripts de instalación. Las excepciones necesarias para una actualización de seguridad se revisan y documentan; las entradas del repo hermano **no** deben copiarse automáticamente. No confundir esas medidas con detección de zero-days desconocidos.
 - **Integridad (REQ-SUPPLY-02).** Usar el gestor fijado, `pnpm-lock.yaml` versionado, `pnpm install --frozen-lockfile` en CI y auditoría de **todas** las dependencias (incluidas dev/build). No instalar código arbitrario ni ejecutar `pnpm dlx` no fijado durante el CI. Validar dependencias Rust del sidecar con herramienta auditora verificada (p. ej. `cargo-audit`) cuando esté fijada, sin excluirlas del gate general.
 - Cada versión y nombre de paquete **MUST** comprobarse antes de instalar; si una combinación resulta incompatible, el agente **MUST** documentar el bloqueo y elegir la variación mínima que conserve los requisitos, sin inventar APIs.
-- La versión RC de Drizzle **MUST** quedar señalada como riesgo explícito, no como release estable.
+- Si se usa la RC `1.0.0-rc.5` de Drizzle como fallback, **MUST** quedar señalada como riesgo explícito, no como release estable.
 
 ## 3. Estructura de archivos esperada (normativa)
 
@@ -162,7 +175,7 @@ flowchart LR
 
 **REQ-CFG-04.** La inicialización de persistencia **MUST** depender explícitamente de la configuración validada, utilizando el grafo normal de DI y una inicialización asíncrona (`DrizzleModule.forRootAsync` o composición equivalente soportada). **No** se exige un orquestador adicional de configuración/migraciones. **El supervisor de procesos es un caso distinto**, encargado de iniciar y vigilar apps Nest, no de sustituir la DI y el lifecycle propio de cada app.
 
-**REQ-CFG-05.** Datos, logs, certificados, secretos y configuración **MUST** almacenarse fuera del ejecutable y en directorios apropiados de Windows/macOS/Linux; **MUST NOT** depender de `~/.lan-template/` como ruta universal. Los secretos **SHOULD** usar mecanismos seguros del sistema cuando estén disponibles.
+**REQ-CFG-05.** Datos, logs, certificados, secretos y configuración **MUST** almacenarse fuera del ejecutable y en directorios apropiados de Windows/macOS/Linux; **MUST NOT** depender de `~/.lan-template/` como ruta universal. La ruta de instalación solo contiene el esquema y los valores por defecto sin secretos; el `config.json` real **MUST** residir en el directorio de configuración del SO (macOS `~/Library/Application Support/<bundleId>/`; Windows `%LOCALAPPDATA%\<bundleId>\`, por usuario; Linux `$XDG_CONFIG_HOME` o `~/.config/<bundleId>/`). Los directorios **MUST** crearse con permisos `0700` y los archivos de secretos con `0600` en POSIX (ACL solo del propietario en Windows: receta not verified). Los secretos **SHOULD** usar mecanismos seguros del sistema cuando estén disponibles.
 
 **REQ-CFG-06.** El singleton de configuración inmutable se crea **por proceso/contenedor DI** (supervisor, gateway o microservicio). **MUST NOT** suponer memoria o singleton compartidos entre procesos; los procesos validan su namespace desde la configuración persistida y coordinan estado exclusivamente por contratos explícitos. El supervisor puede validar los metadatos de arranque, pero **no** debe transportar secretos por argumentos CLI.
 
@@ -266,7 +279,7 @@ sequenceDiagram
 
 ### 6.2 Producción: un SEA sirve ambos artefactos compilados
 
-- **REQ-NET-01.** NestJS **MUST** usar `NodeAdapter` de `@nestjs/platform-node`, sin Express ni Fastify. El API y la SPA **MUST** compartir proceso y origen HTTPS en producción.
+- **REQ-NET-01.** NestJS **MUST** usar `NodeAdapter` de `@nestjs/platform-node`, sin Express ni Fastify. El API y la SPA **MUST** compartir proceso y origen HTTPS en producción. *(Premisa `NodeAdapter` + `ServeStaticModule` sin Express/Fastify: not verified.)*
 - **REQ-NET-02.** **Solo cuando `node:sea.isSea()` sea `true`**, el Gateway **MUST** habilitar `ServeStaticModule` de `@nestjs/serve-static` **(>=12.1.1, versión fijada compatible)** con soporte para `@nestjs/platform-node >=12.3.1`. En ejecución de desarrollo, no se habilita.
 - **REQ-NET-03.** `@nestjs/serve-static` necesita **`rootPath` como directorio real**; `node:sea.getAsset()` no genera por sí mismo un filesystem navegable. Por tanto, antes de crear el contexto de Nest, el bootstrap **MUST** materializar el árbol Angular empaquetado desde assets SEA a una **caché por versión/build ID fuera del ejecutable**.
 - **REQ-NET-04.** La materialización **MUST** ser segura: validar manifest + checksums, prevenir `../` traversal, impedir sobrescritura de rutas no administradas, escritura temporal + publicación atómica, manejo de extracción concurrente, permisos mínimos y limpieza de versiones obsoletas. Si el árbol ya coincide con el manifest, reutilizarlo sin reextraer.
@@ -346,7 +359,7 @@ flowchart TD
 
 **REQ-SEC-01.** Tratar la LAN como no confiable. **MUST** autenticar y autorizar cada operación protegida en NestJS; los guards Angular y la ocultación de UI **MUST NOT** constituir el único control de autorización.
 
-**REQ-SEC-02.** Proveer micro-POC mínimo de roles `public`, `employee` y `admin` (sin crear credenciales predeterminadas permanentes). Las pruebas **MUST** demostrar `401/403` cuando corresponde y acceso autorizado cuando corresponde.
+**REQ-SEC-02.** Proveer micro-POC mínimo de roles `public`, `employee` y `admin` (sin crear credenciales predeterminadas permanentes). Solo en desarrollo, el arranque **MAY** sembrar en la base de datos un superusuario autodestructivo `dev-admin` (nunca `admin` ni `root`), con contraseña aleatoria de al menos 15 caracteres mostrada una sola vez, creado por la misma ruta de creación de usuarios que producción, con `expires_at` y purga forzada por el servidor. Producción **MUST NOT** sembrar ninguna cuenta. La base de datos es la única fuente de verdad de identidad y permisos (ASVS 5.0.0 6.3.2 y 6.4.1; cita not verified). Las pruebas **MUST** demostrar `401/403` cuando corresponde y acceso autorizado cuando corresponde.
 
 **REQ-SEC-03.** Los chunks de Angular **SHOULD** cargarse de forma diferida por funcionalidad/rol. **MUST NOT** suponer que ocultar o impedir descargar un `.js` protege datos o secretos. **MUST NOT** incrustar secretos en bundles de navegador.
 
@@ -499,7 +512,7 @@ stateDiagram-v2
 
 **REQ-SEA-04.** Migraciones SQL y **la salida compilada `dist/web-angular`**, nunca sus fuentes, **MUST** incorporarse como assets SEA mediante `node:sea` y manifest de rutas/hashes. El backend **MUST** extraer de forma segura el árbol web a caché física versionada antes de montar `ServeStaticModule`. **MUST NOT** tratar `getAsset()` como una ruta/directorio.
 
-**REQ-SEA-05.** Bases de datos, configuraciones, logs, certificados, extensiones nativas extraídas y modelos **MUST** residir fuera del ejecutable de solo lectura. La distribución **MUST** funcionar sin conexión durante la ejecución.
+**REQ-SEA-05.** Bases de datos, configuraciones, logs, certificados, extensiones nativas extraídas y modelos **MUST** residir fuera del ejecutable de solo lectura. La ruta de instalación solo contiene esquema y valores por defecto sin secretos; el `config.json` real **MUST** residir en el directorio de configuración del SO (rutas en REQ-CFG-05), con directorios `0700` y secretos `0600`. La distribución **MUST** funcionar sin conexión durante la ejecución.
 
 **REQ-SEA-06.** **MUST** validar por plataforma/arquitectura tanto el binario SEA independiente como el paquete Tauri que lo contiene; build exitoso **no equivale** a runtime verificado. El builder **MUST** preservar `index.html`, chunks con hash, CSS, fuentes, manifest, iconos y service worker como assets separados dentro del manifiesto SEA, con tipos MIME correctos.
 
@@ -942,7 +955,7 @@ flowchart TD
 2. **MUST** ejecutar los comandos ECO en el orden normativo de CI: instalación con lockfile congelado, `securityCheck`, `build`, `test` sin filtros y `package` con verificación nativa; registrar resultados y corregir problemas reproducibles. `test` **MUST** propagar `test` a todos los paquetes y cada uno ejecutar estático → dinámico. Para E2E nativo **MUST** informar por sistema operativo si se ejecutó en host, VM, runner o quedó pendiente. No presentar configuraciones no ejecutadas como verificadas.
 3. **MUST** implementar los micro-POCs integrados más pequeños que satisfagan los criterios de aceptación: `runtime-nest` standalone **real** supervisa exclusivamente `gateway-nest` por ahora; evitar inventar `auth-ms` u otros servicios de negocio ficticios. **MUST** preservar el aislamiento de Angular y Nest y probar el proxy de desarrollo.
 4. **MUST** distinguir explícitamente: **implementado**, **verificado**, **bloqueado por entorno** y **fuera de alcance**.
-5. **MUST** documentar decisiones que afecten portabilidad, seguridad o compatibilidad con la versión RC de Drizzle.
+5. **MUST** documentar decisiones que afecten portabilidad, seguridad o compatibilidad con la versión de Drizzle elegida (incluida la RC fallback, si aplica).
 6. **MUST** usar las versiones requeridas cuando existan y sean compatibles; cualquier sustitución necesaria **MUST** justificarse con un enlace técnico y quedar identificada en el resultado.
 7. **MUST** implementar CI/CD como fase final del template, una vez estables los comandos locales; **MUST NOT** implementar despliegue cloud, motor LLM ficticio, credenciales inseguras de demostración ni sincronización offline entre navegadores.
 8. **MUST** incluir diagramas Mermaid en README o arquitectura explicativa y mantenerlos sincronizados con lo realmente construido; este SRS es la referencia de alcance y comportamiento. **MUST** declarar qué OS se comprobó realmente, en lugar de inferir que probar en macOS certifica Windows y Linux.
@@ -1006,3 +1019,13 @@ flowchart TD
 - GitHub workflow artifacts — https://docs.github.com/en/actions/concepts/workflows-and-actions/workflow-artifacts
 - GitHub protected branches — https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches
 - GitHub Actions workflow permissions — https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax
+
+## Amendments 2026-10-30
+
+Enmiendas aplicadas sin cambiar el nombre de archivo ni el título v1.6. Los números de línea son los del archivo antes de las enmiendas (las ediciones no alteran el conteo de líneas hasta esta sección).
+
+- L95 (REQ-STACK-07): Drizzle pasa de RC fijada a tag estable preferido con `1.0.0-rc.5` como fallback si falta soporte vectorial; ref. decisión humana 10 (2026-10-30).
+- L105 y L945 (nota Drizzle y entrega 5): el texto de riesgo RC pasa a condicional (solo si se usa el fallback), para coherencia con L95.
+- L269 (REQ-NET-01): premisa `NodeAdapter` + `ServeStaticModule` marcada `not verified`; el requisito no cambia.
+- L165 (REQ-CFG-05) y L502 (REQ-SEA-05): schema y defaults sin secretos en la ruta de instalación; `config.json` real en el directorio de configuración del SO; permisos `0700`/`0600` (OQ1).
+- L349 (REQ-SEC-02, ref. sección 12 punto 7): la base de datos es la fuente de verdad; solo en desarrollo se siembra el superusuario autodestructivo `dev-admin` (decisión humana 12); producción no siembra cuentas; citas ASVS marcadas `not verified` (OQ2).
