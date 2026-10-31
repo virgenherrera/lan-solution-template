@@ -1,4 +1,4 @@
-docs[35]:
+docs[36]:
   - doc: docs/architecture/overview.md
     title: Architecture overview
     type: architecture
@@ -278,6 +278,15 @@ docs[35]:
     status: current
     updated: 2026-10-31
     refs[10]: REQ-DEPS-01,REQ-REF-01,REQ-STACK-01,REQ-STACK-02,REQ-STACK-03,REQ-STACK-04,REQ-STACK-05,REQ-STACK-06,REQ-STACK-08,REQ-SUPPLY-01
+  - doc: docs/results/POC-01b-Result.md
+    title: POC-1b Result
+    type: backlog
+    summary: "Result of POC-1b: Nest CLI generation, NodeAdapter, health endpoint, dev and build checks, manual edits."
+    ids: []
+    related[2]: docs/backlog/poc-1b-nest-apps.md,docs/results/POC-01a-Result.md
+    status: current
+    updated: 2026-10-31
+    refs[7]: REQ-ECO-02,REQ-RUNTIME-02,REQ-STACK-01,REQ-STACK-02,REQ-STACK-04,REQ-STACK-06,REQ-STACK-08
   - doc: docs/roadmap/PROPOSAL.md
     title: "Roadmap Proposal: lan-solution-template (SRS v1.6)"
     type: roadmap
