@@ -1,13 +1,13 @@
-import { Module } from '@nestjs/common';
-import { SERVER_CONFIG, parseServerConfig } from './server-config.js';
+import { Module, type DynamicModule } from '@nestjs/common';
+import { SERVER_CONFIG, type ServerConfig } from './server-config.js';
 
-@Module({
-  providers: [
-    {
-      provide: SERVER_CONFIG,
-      useFactory: () => parseServerConfig({}),
-    },
-  ],
-  exports: [SERVER_CONFIG],
-})
-export class ConfigModule {}
+@Module({})
+export class ConfigModule {
+  static register(config: ServerConfig): DynamicModule {
+    return {
+      module: ConfigModule,
+      providers: [{ provide: SERVER_CONFIG, useValue: config }],
+      exports: [SERVER_CONFIG],
+    };
+  }
+}
