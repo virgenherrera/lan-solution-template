@@ -3,7 +3,8 @@
 // Services are the workspace dependencies of the supervisor (`workspace:` ranges); each service's entry is its built dist/main.js.
 // The generated role-map entry and the SEA config are written under dist/ at build time and are never committed.
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import * as rspackNamespace from '@rspack/core';
 import sharedNestConfig from '../rspack/nest.config.ts';
@@ -14,6 +15,9 @@ const entryPath = join(workDir, 'entry.mjs');
 const bundlePath = join(workDir, 'sea-app.mjs');
 const servicesPath = join(workDir, 'services.json');
 const configPath = join(workDir, 'sea-config.json');
+const manifestPath = join(workDir, 'web-manifest.json');
+// Spike: a dummy static SPA tree. A real build would pass the SPA output directory here.
+const webDir = join(root, 'tools', 'spike', 'web-dummy');
 
 // Keys are "<process.platform> <process.arch>"; values are Rust target triples (the Tauri sidecar naming).
 const TARGET_TRIPLES: Record<string, string> = {
@@ -181,6 +185,23 @@ async function bundle(): Promise<void> {
   });
 }
 
+// Every file of the web tree becomes SEA asset "web/<relative path>"; the manifest (path to sha256) is written next to the bundle and embedded as "web-manifest.json".
+function webAssets(): Record<string, string> {
+  const walk = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+      entry.isDirectory() ? walk(join(dir, entry.name)) : [join(dir, entry.name)],
+    );
+  const files = walk(webDir).map((file) => file.slice(webDir.length + 1).split('\\').join('/')).sort();
+  const hashes = Object.fromEntries(
+    files.map((rel) => [rel, createHash('sha256').update(readFileSync(join(webDir, rel))).digest('hex')]),
+  );
+  writeFileSync(manifestPath, `${JSON.stringify({ files: hashes }, null, 2)}\n`);
+  const assets: Record<string, string> = { 'web-manifest.json': manifestPath };
+  for (const rel of files) assets[`web/${rel}`] = join(webDir, rel);
+  console.log(`web tree: ${files.length} files from ${webDir}`);
+  return assets;
+}
+
 function writeSeaConfig(binaryPath: string): void {
   const config = {
     main: bundlePath,
@@ -190,7 +211,7 @@ function writeSeaConfig(binaryPath: string): void {
     useSnapshot: false,
     useCodeCache: true,
     execArgvExtension: 'none',
-    assets: { 'services.json': servicesPath },
+    assets: { 'services.json': servicesPath, ...webAssets() },
   };
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 }

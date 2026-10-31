@@ -7,6 +7,7 @@ import {
 import { spawn, type ChildProcess } from 'node:child_process';
 import { getAsset, isSea } from 'node:sea';
 import { z } from 'zod';
+import { extractWebTree } from '../web/web-tree.js';
 
 // Asset written by the assembler: the ids of every service that is not the supervisor itself.
 const SERVICES_ASSET = 'services.json';
@@ -35,11 +36,16 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     }
     const { services } = servicesAssetSchema.parse(JSON.parse(raw));
 
+    // The web tree is extracted once per build; only the api-gateway child serves it.
+    const webRoot = extractWebTree();
+    this.logger.log(`web tree extracted to ${webRoot}`);
+
     process.once('SIGINT', this.onSignal);
     process.once('SIGTERM', this.onSignal);
 
     for (const id of services) {
-      const child = spawn(process.execPath, ['--service', id], {
+      const args = id === 'api-gateway' ? ['--service', id, '--web-root', webRoot] : ['--service', id];
+      const child = spawn(process.execPath, args, {
         shell: false,
         stdio: 'inherit',
       });
