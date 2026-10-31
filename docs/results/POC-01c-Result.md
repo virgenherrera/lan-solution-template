@@ -3,7 +3,7 @@ fmt: TOON
 doc: docs/results/POC-01c-Result.md
 title: "POC-1c Result"
 type: backlog
-summary: "Result of POC-1c: every registered service packaged as one native Node SEA by the Nx project sea-build, verified from a binary with no node on PATH."
+summary: "Result of POC-1c: sea-runtime packaged as one native Node SEA with the api-gateway service, built by the rspack builder, run from a binary with no node on PATH."
 related[2]: docs/backlog/poc-1c-sea-build.md,docs/results/POC-01b-Result.md
 status: current
 updated: 2026-10-31
@@ -11,102 +11,144 @@ updated: 2026-10-31
 
 # POC-1c Result
 
-Slice 1c of POC-1, delivered on branch `minor/poc-01b-nest` by human decision (same branch and PR as POC-1b). Backlog: [POC-1c](../backlog/poc-1c-sea-build.md). Previous slice: [POC-1b](POC-01b-Result.md).
+Slice 1c of POC-1, delivered on branch `minor/poc-01b-nest` (same branch and PR as POC-1b, human decision). Backlog: [POC-1c](../backlog/poc-1c-sea-build.md). Previous slice: [POC-1b](POC-01b-Result.md).
+
+This page describes the final state of the branch. The first version of this slice used esbuild and the Nx project `sea-build`. Both were removed. See [Replaced design](#replaced-design).
 
 ## Summary
 
-- `tools/scripts/compile-sea.ts` bundles `apps/api-gateway/dist/main.js` with esbuild, generates the SEA config at build time, and runs the native `node --build-sea`. No postject.
-- The `package` target lives in the Nx project `sea-build` (`tools/package.json`). `api-gateway` has no package target; it only builds. A service registers with a `sea` field in its own `package.json`. The root `package` script runs the target.
-- The output executable is `dist/sea/sea-app`, about 143 MiB, one executable for all registered services. The role is chosen by `--service <name>`, default the first registered service in alphabetical order. It is git-ignored through the existing `dist/` rule.
-- The executable started with `PATH=/usr/bin:/bin` (no node on that PATH) and answered `GET /health` with `HTTP/1.1 200 OK`.
-- Deviations: see Deviations.
+- `sea-runtime` is the single sidecar entry and supervisor. Its `package` target runs `tools/scripts/compile-sea.ts` and writes one executable.
+- The script bundles a generated role-map entry and the `dist/main.js` of each service into one ESM file. It runs native `node --build-sea` and, on macOS, `codesign --sign -`.
+- Services are the workspace dependencies of `sea-runtime`. Today that is `api-gateway` only.
+- Each Nest app builds to one self-contained ESM `dist/main.js` through the Nest CLI rspack builder, with one shared config in `tools/rspack/nest.config.ts`.
+- With no argument the binary runs the supervisor. The supervisor spawns `process.execPath --service <id>` for each service listed in the SEA asset `services.json`. The asset is validated with Zod.
+- Observed on macOS arm64: the binary runs with no `node` on PATH, its child answers `GET /health` with `HTTP/1.1 200 OK`, and SIGTERM to the supervisor leaves no process and frees port 3000.
+- Not built or observed: Linux and Windows binaries, SIGINT, supervisor restart. See [Not verified](#not-verified).
 
-## Build command
+## Layout
 
-```sh
-NX_DAEMON=false pnpm nx package sea-build
-```
-
-Exit 0. The run output shows `nx run api-gateway:build`, `nx run shared-core:build` and `nx run sea-runtime:build` before `nx run sea-build:package`. The root scripts `pnpm build`, `pnpm test` and `pnpm package` each exit 0 with no false no-op message. `pnpm package` produces the binary through `sea-build`.
-
-## Binary
-
-| Item | Value |
+| Item | Final state |
 |---|---|
-| Path | `dist/sea/sea-app` (git-ignored, `dist/` rule in `.gitignore`) |
-| Size | 150276896 bytes (about 143 MiB) |
-| Architecture | arm64 Mach-O |
-| Signature | ad-hoc, applied by the script (`codesign --sign -`), `codesign --verify` valid |
-| Node | v26.13.0 (satisfies root `engines.node` `>=26.13.0 <27`, checked by the script) |
+| Build command | `pnpm nx package sea-runtime` |
+| Target owner | `apps/sea-runtime/package.json`, `nx.targets.package`; `dependsOn: ["build"]`. `nx.targets.build` has `dependsOn: ["^build"]` |
+| Output folder | `artifacts/sea-runtime/` (git-ignored, `/artifacts` in `.gitignore`). The script removes and recreates it on each run, so one executable remains per host |
+| Executable name | `sea-runtime-<target-triple>[.exe]` (Tauri sidecar naming, see [Naming](#naming)) |
+| Verified binary | `artifacts/sea-runtime/sea-runtime-aarch64-apple-darwin`, 147863776 bytes, macOS arm64 |
+| Triples in the script | `darwin arm64`, `darwin x64`, `linux x64`, `linux arm64`, `win32 x64`, `win32 arm64`. Only `darwin arm64` was built |
+| Node | v26.13.0 (the script checks root `engines.node` `>=26.13.0 <27`) |
+| SEA config | Generated in `dist/sea-package/sea-config.json` on each build. Never committed |
+| SEA asset | `services.json`: `{ "services": ["api-gateway"] }` |
 
-The SEA config is generated into `dist/sea-build/sea-config.json` on each build. It is never committed.
+The `dist/sea-package/` working folder is git-ignored through the `dist/` rule.
 
-## Observed run
+## How it works
+
+1. `nx show project <name> --json` finds each service folder. Services are read from `sea-runtime/package.json` entries with a `workspace:` range.
+2. Each service must have a built `dist/main.js`. If it is missing, the script stops and names the build target to run.
+3. The generated entry (`dist/sea-package/entry.mjs`) maps each service id to `import()` of its `dist/main.js`. No argument imports the supervisor. `--service <id>` imports that one service. An unknown id exits 2.
+4. `@rspack/core` (Node API) bundles the entry into `sea-app.mjs`. Externals and ignore rules come from the shared config. A banner gives CommonJS dependencies a `require` for built-ins.
+5. `node --build-sea` writes the executable. Assets: `services.json`.
+6. The supervisor (`apps/sea-runtime/src/supervisor/supervisor.service.ts`) reads `services.json` with `isSea()` and `getAsset()`. It validates the content with `z.object({ services: z.array(z.string().min(1)) })`. It spawns `process.execPath` with `['--service', id]`, `shell: false`, `stdio: 'inherit'`. Outside a SEA it logs and spawns nothing.
+7. On SIGINT or SIGTERM the supervisor sends the same signal to each child and waits for each exit, then exits 0.
+
+## Build and run
 
 ```sh
-env -i PATH=/usr/bin:/bin which node    # prints nothing, exit 1
-env -i PATH=/usr/bin:/bin dist/sea/sea-app
+NX_DAEMON=false pnpm nx package sea-runtime
+env -i PATH=/usr/bin:/bin artifacts/sea-runtime/sea-runtime-aarch64-apple-darwin
 curl -i http://127.0.0.1:3000/health
 ```
 
-Observed:
+Observed in the final QC run (fresh clone, `pnpm install --frozen-lockfile` exit 0):
 
-- `which node` with `PATH=/usr/bin:/bin` printed nothing and exited 1.
-- `curl -i` returned `HTTP/1.1 200 OK`, `Content-Type: application/json; charset=utf-8`, body `{"status":"ok"}`.
-- `dist/sea/sea-app --service nope` exits 2 and prints the registered services (`api-gateway`).
-- The process command was the binary path (`.../dist/sea/sea-app`). `lsof` showed it listening on `127.0.0.1:3000`.
-- The app does not print `process.execPath`, so the binary identity is shown by the process command and not by an in-app value.
-- Node printed `ExperimentalWarning: Single executable application is an experimental feature`. This slice does not suppress it.
-- The process was killed with `kill <pid>`. `lsof -nP -iTCP:3000` then returned nothing (port 3000 free).
-- Scratch log directory: `mktemp -d` under the system temp dir (outside the repository).
+| Check | Result |
+|---|---|
+| `nx show projects` | `api-gateway`, `sea-runtime`, `shared-core`, `lan-solution-template`. `sea-build` absent |
+| `api-gateway` targets | `build`, `deploy`, `format`, `lint`, `start`, `test`. No `package` target |
+| `pnpm nx package sea-runtime` | Exit 0. Order: `api-gateway:build` (local cache hit), `sea-runtime:build`, `sea-runtime:package` |
+| `artifacts/sea-runtime` | One file, `sea-runtime-aarch64-apple-darwin`, 147863776 bytes |
+| `which node` with `PATH=/usr/bin:/bin` | No output |
+| Binary, no arguments, then `curl -i http://127.0.0.1:3000/health` | `HTTP/1.1 200 OK`, body `{"status":"ok"}` |
+| Process list | Supervisor with no arguments, parent PID 1. Child with `--service api-gateway`, parent is the supervisor. Both run the same executable path. Neither is named `node`. Log line `[SupervisorService]` |
+| `--service api-gateway` alone | `/health` returns 200 |
+| `--service nope` | Exit 2. Stderr `unknown service "nope"; registered: api-gateway` |
+| SIGTERM to the supervisor | No process left (`pgrep` empty). Port 3000 free |
+| Root `pnpm build`, `pnpm test`, `pnpm package` | Each exit 0 |
 
-## Bundler decision
+The root `package` script still prints `package: not defined for this package` after a successful run. That echo comes from the root script (see [POC-1b](POC-01b-Result.md)). Not fixed here.
 
-`esbuild@0.28.2` (exact, `pnpm add -w -D -E --save-catalog`). Published 2026-08-08, older than the 24 h `minimumReleaseAge`. No requirement or roadmap page names a bundler (`rg -i 'esbuild|rolldown|webpack|rollup' docs/requirements docs/roadmap` found nothing), so the smallest suitable option was chosen. This is a deviation to decide.
+Separate build check (rspack slice, same branch): `apps/api-gateway/dist/main.js` 3144787 bytes and `apps/sea-runtime/dist/main.js` 1709241 bytes, each with a `main.js.map`. Each `main.js` ran alone with `node` from an empty `mktemp -d`. The api-gateway copy answered `/health` with 200. The sea-runtime copy printed the standalone start lines and exited 0.
 
-## Node build-sea findings
+## Naming
 
-- `node --help | rg -i sea` lists `--build-sea=...` and `--experimental-sea-config=...`.
-- Official doc read with curl (`https://nodejs.org/api/single-executable-applications.html`, Node v26.13.0 docs). Top-level config keys: `main`, `mainFormat`, `executable`, `output`, `disableExperimentalSEAWarning`, `useSnapshot`, `useCodeCache`, `useVfs`, `vfsArchive`, `execArgv`, `execArgvExtension`, `assets`.
-- The script uses `main`, `mainFormat: "module"`, `output`, `useVfs: false`, `useSnapshot: false`, `useCodeCache: true`, `execArgvExtension: "none"`. This Node accepted all of them (`node --build-sea` exit 0).
-- The doc requires `codesign --sign - <output>` on macOS after `--build-sea`. Without it the arm64 binary was killed (exit 137).
-- Injected-main `require()` only loads built-in modules. The bundle therefore carries a `createRequire` banner for built-ins.
+The Tauri sidecar documentation (https://v2.tauri.app/develop/sidecar/, read with curl in this slice) gives the naming. The page quotes two lines:
+
+- Line 87: a sidecar executable in `src-tauri/binaries/` named with the target triple for Apple Silicon macOS (`my-sidecar-aarch64-apple-darwin`).
+- Line 96: rename to `sidecar-${targetTriple}`, using the rustc host tuple.
+
+So `<name>-<target-triple>` follows that page. The Tauri consumer side (copying or reading the file in `src-tauri`) is not verified.
+
+## Recipe: add a new service
+
+Not verified beyond `api-gateway`. Only one service is registered.
+
+1. Create the Nest app with the Nest CLI, as in [POC-1b](POC-01b-Result.md): `pnpm dlx @nestjs/cli@12.0.11 new <name> --directory=apps/<name> -p pnpm -g -s -t --no-observe`.
+2. Set the rspack builder in `apps/<name>/nest-cli.json`. No CLI writes this. Use the same block as `apps/api-gateway/nest-cli.json`: `compilerOptions.builder` with `type: "rspack"` and `configPath: "../../tools/rspack/nest.config.ts"`.
+3. Delete the generated spec and test config files (REQ-TEST-01). Keep no unit or integration suites.
+4. Make `src/main.ts` start the service when the module loads. The supervisor path imports `dist/main.js` and does not call a function. Confirmed for `api-gateway` only.
+5. Register it: `pnpm -C apps/sea-runtime add -D <name> --workspace`. The package name is the service id and must match the Nx project name.
+6. Run `pnpm nx package sea-runtime`. Nx builds the new service first (`^build`). The binary then lists it in `services.json`.
+7. Start the binary with no arguments. Check `--service <name>` alone.
+
+## Replaced design
+
+- esbuild bundler (`esbuild@0.28.2`) and `postject`: removed. The final bundler is `@rspack/core` 2.3.0, pinned in the catalog. `esbuild` remains in the lockfile as an optional peer of `vite` and `vitest` (see [Decisions to take](#decisions-to-take)).
+- Nx project `sea-build` (`tools/package.json`) and the `sea` field in service `package.json` files: removed. Nx cannot select services by a field. Services now come from the workspace dependencies of `sea-runtime`.
+- `dist/sea/sea-app` and the `sea-app` name: replaced by `artifacts/sea-runtime/sea-runtime-<triple>`.
+- Argv-only role selection: still the entry shape, now inside the supervisor model. Respawn, readiness and dispatcher validation remain for [POC-2](../backlog/poc-2-single-sea-runtime-supervisor.md).
 
 ## Manual edits (no CLI generated them)
 
-- `tools/scripts/compile-sea.ts`: new file. No CLI generates a SEA build script.
-- `tools/package.json`: created with `pnpm init`, then `pnpm pkg set` (CLI). Its `nx` block (`package` target and `implicitDependencies`) was written with `pnpm pkg set --json` (CLI).
-- `pnpm-workspace.yaml`: `- tools` added to `packages` by hand (no CLI edits this list). `allowBuilds.esbuild: true` was written with `pnpm approve-builds esbuild` (CLI). `catalog.esbuild` was written by `pnpm add --save-catalog` (CLI).
-- `apps/api-gateway/package.json`: `nx.targets.package` removed with `pnpm pkg delete`. The `sea` registration field was written with `pnpm pkg set --json` (CLI).
-- Root `package.json`: the `&& echo '... not defined for this package'` suffix removed from `build`, `test` and `package` with `pnpm pkg set` (CLI).
-- `.gitignore`: no edit. The existing `dist/` rule covers `dist/sea/` and `dist/sea-build/`.
+| # | File | Edit | Reason |
+|---|---|---|---|
+| 1 | `tools/scripts/compile-sea.ts` | New file. Generic assembler: argv supervisor name, workspace dependency discovery, rspack Node API, SEA asset `services.json` | No CLI generates a SEA build script |
+| 2 | `pnpm-workspace.yaml` | `- tools` removed from `packages` (the `tools` folder no longer holds a project) | No CLI edits this list |
+| 3 | `.gitignore` | `/artifacts` added after `dist/` | No CLI writes it |
+| 4 | `apps/sea-runtime/package.json` | `nx.targets.build.dependsOn: ["^build"]` and `nx.targets.package` (`dependsOn: ["build"]`, `run-commands`, output `artifacts/sea-runtime`). Dependency `api-gateway: workspace:*` added with `pnpm -C apps/sea-runtime add -D api-gateway --workspace` | Written by hand. The dependency line was added by the CLI |
+| 5 | `tools/rspack/nest.config.ts` | Shared Nest rspack config: externals for every `node:` request, ignore rules, one chunk | No CLI creates it |
+| 6 | `apps/*/nest-cli.json` | `compilerOptions.builder` set to `rspack` with the shared config path | No CLI sets it |
+| 7 | `apps/sea-runtime/src/supervisor/supervisor.service.ts` | Body of the supervisor: SEA asset read, Zod parse, spawn of `process.execPath --service <id>`, signal stop | `nest generate service` creates an empty class |
+| 8 | `apps/sea-runtime/src/supervisor/supervisor.service.ts` (commit `fff1df3`) | `Logger` name literal `'SupervisorService'` instead of the class name | The minified bundle mangled the class name in log tags |
+| 9 | `apps/sea-runtime/src/runtime/runtime.module.ts` | `providers: [SupervisorService]` | `nest generate` creates an empty module |
+
+Generated spec `apps/sea-runtime/src/supervisor/supervisor.service.spec.ts` was created by `nest generate` and removed in `fff1df3` (REQ-TEST-01).
 
 ## Deviations
 
-- Bundler is esbuild, not named by any requirement page (see Bundler decision).
-- Nx home of the `package` target is the project `sea-build` (root `tools/`), not `api-gateway`. Reason: the assembler must not belong to one service; it packages every registered service. The project needs a `pnpm-workspace.yaml` entry (`- tools`).
-- Service selection is not by package.json field in Nx. `implicitDependencies` accepts project names and minimatch globs only (Nx project configuration docs; not tags, not fields). `sea-build` uses `["*", "!lan-solution-template"]`, so Nx builds every project except the root before packaging. The root is excluded because its `build` script runs `nx run-many` and recurses. Effect: `sea-runtime` and `shared-core` also build before packaging, and a new project builds first even without a `sea` field. Only the `sea` field selects a service for the binary.
-- Discovery is at build time: `pnpm exec nx show projects --json`, then `pnpm exec nx show project <name> --json` for each root, then the project `package.json` `sea` field. Each `entry` must exist, or the script fails with the build target to run. No registered service fails with a clear error.
-- Role selection is the generated `--service <name>` argument, default the first registered service in alphabetical order. The entry lazy-imports each service, so only the selected role starts. This is argv only: no dispatcher validation, no supervisor, no respawn. POC-2 replaces it.
-- Binary name `sea-app` is a naming choice. No requirement names it.
-- `mainFormat: "module"` instead of the default CommonJS. `apps/api-gateway/src/main.ts` uses top-level await and esbuild rejects top-level await in CJS output. `mainFormat: "module"` works without `useVfs`.
-- Optional Nest peers are external and not bundled: `@nestjs/microservices`, `@nestjs/websockets`, `class-validator`, `class-transformer`. The bundle builds and the app starts without them. Nest loads them only for microservices, websockets, and validation pipes, which the app does not use. Each is a bundle-time external, not a runtime proof.
-- Banner `createRequire(import.meta.url)` gives CJS dependencies a `require` for built-ins. Node prints a warning that the injected `require()` supports only built-in modules. No file-system module is loaded.
-- macOS ad-hoc `codesign --sign -` step, as the SEA doc requires.
-- `ExperimentalWarning` is printed on each start. Not suppressed (`disableExperimentalSEAWarning` left at its default).
-- The "invalidated when a registered service changes" clause of the backlog task is not implemented. The target declares no `inputs`/`outputs`. Not verified.
-- Root `pnpm package` prints `package: not defined for this package` after a successful run. That echo comes from the existing root script, not from this slice.
+- Node `--build-sea` needs `codesign --sign -` on macOS, as the SEA page of the Node docs requires. Without it the arm64 binary was killed at start.
+- The shared rspack externals now treat every `node:` request as a builtin, so `node:sea` resolves at build time. This change also affects the `api-gateway` build. Existing builtins are unchanged.
+- `apps/sea-runtime` build depends on `^build`, set in the project `package.json`. `nx.json` was not changed.
+- Stale output from the old tool (`dist/sea`, `dist/sea-build`) was removed. The empty `tools/node_modules` folder (git-ignored) remains.
+- `nest build` with the rspack builder does no type check. A separate `tsc --noEmit` run passed for `sea-runtime`. No type-check step was added to the build.
+- Node prints `ExperimentalWarning: Single executable application is an experimental feature` on start. Observed in an earlier run of this slice. Not checked in the final QC. Not suppressed.
+- The generated spec file was deleted in `fff1df3`. No unit or integration suite exists in the repository.
 
-## Checks not met as written
+## Not verified
 
-- Brief check `rg -n -i postject . --glob '!node_modules' --glob '!docs' --glob '!pnpm-lock.yaml'` prints two lines from `lan-solution-template-SRS-v1.6.md` (requirement text that says `postject` MUST NOT be used). No code, config, or script in the repository mentions postject. The SRS is not edited.
-- The commit is not made. The brief asks for a commit, but `AGENTS.md` requires explicit user approval for commits, and an agent brief is not that approval. The changes are uncommitted on `minor/poc-01b-nest`.
+- Linux and Windows binaries. The host is macOS arm64 only.
+- SIGINT. Only SIGTERM was exercised.
+- Supervisor restart, readiness, backoff, and child exit cascade. Out of scope for this slice ([POC-2](../backlog/poc-2-single-sea-runtime-supervisor.md)).
+- The REQ-BUILD-04 invalidation clause: a build is invalidated when a registered service is added or changed. Not implemented. Moved to POC-2.
+- A second registered service. Recipe steps above are not run.
+- Tauri consumer side (`src-tauri` sidecar). Only the naming in the doc was read.
+- `api-gateway` `lint` was not run.
+- Behavior of the rspack builder from a clean `dist` (the Nx cache was not cleared).
+- The `.ts` config and build script depend on Node 26 native type stripping. Only Node 26.13.0 was tested.
 
 ## Decisions to take
 
-- Approve the commit on `minor/poc-01b-nest` (Conventional Commit, no Co-Authored-By, no push).
-- Choose the build selection for `sea-build`: keep `*` (builds every non-root project, including `sea-runtime`), or a generated list from an Nx sync generator, or a tag or name convention. Nx cannot select by the `sea` field.
-- Confirm esbuild as the bundler, or name another.
-- Confirm the Nx home of `package` (app target versus a tools project).
-- `AGENTS.md` says "documentation only: no application code, no installs". POC-1b already added apps and installs on this branch. Decide whether that rule still applies.
-- Decide whether to suppress the SEA experimental warning (`disableExperimentalSEAWarning`).
+- Confirm the rspack builder and the shared config (Decision Log item 16, see [PROPOSAL](../roadmap/PROPOSAL.md#decision-log)).
+- Decide whether `esbuild` leaves the lockfile. It is still there as an optional peer of `vite` and `vitest`. Removing it needs a change in `vite` or `vitest`.
+- Decide whether app `package.json` files need catalog `devDependencies` refs. The build passes without them.
+- Keep the project-level `dependsOn` in `apps/sea-runtime/package.json`, or move it to `nx.json` `targetDefaults`.
+- Decide whether to add a type-check step (`tsc --noEmit`) to the build, since the rspack builder does not check types.

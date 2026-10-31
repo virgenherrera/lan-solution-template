@@ -7,7 +7,7 @@ summary: Defines the expected repository layout and allowed code dependencies.
 ids[5]: REQ-REP-01,REQ-REP-02,REQ-REP-03,REQ-REP-04,REQ-REP-05
 related[3]: docs/requirements/README.md,docs/requirements/02-technology-baseline.md,docs/requirements/04-configuration.md
 status: current
-updated: 2026-10-30
+updated: 2026-10-31
 -->
 
 # File Structure (SRS §3)
@@ -55,7 +55,12 @@ lan-solution-template/
 │       └── src/
 │           ├── validation/
 │           └── index.ts
+├── artifacts/                      # Git-ignored build output (see note below)
+│   └── sea-runtime/
+│       └── sea-runtime-<target-triple>[.exe]
 ├── tools/
+│   ├── rspack/
+│   │   └── nest.config.ts          # One shared Nest rspack config
 │   └── scripts/
 │       └── compile-sea.ts
 ├── nx.json
@@ -65,6 +70,8 @@ lan-solution-template/
 ├── tsconfig.base.json
 └── README.md
 ```
+
+Note (not a requirement; no REQ id added; human decision, Decision Log item 16). `apps/sea-runtime` owns SEA packaging. It holds the `package` target and is the only sidecar entry and supervisor. `artifacts/<app>/` holds one built executable per target triple, for example `artifacts/sea-runtime/sea-runtime-aarch64-apple-darwin`. The folder is git-ignored (`/artifacts` in `.gitignore`).
 
 - **REQ-REP-01.** The four projects in `apps/` **MUST** exist at the same level (`desktop`, `api-gateway`, `sea-runtime`, `web-angular`). Angular source code **MUST NOT** live inside `api-gateway/`. Compiled assets are likewise not committed under its source tree. Future Nest microservices **MUST** be sibling projects, not executable subfolders of the gateway.
 - **REQ-REP-02.** `shared-core` may export Zod/TypeScript contracts. It **MUST NOT** import `@angular/*` or `@nestjs/*`. It **MUST NOT** contain Nest-specific server logic.

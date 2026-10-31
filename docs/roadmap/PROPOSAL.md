@@ -13,7 +13,7 @@ updated: 2026-10-31
 
 [Home](../../README.md) | [Requirements](../requirements/README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](PROPOSAL.md) | [Traceability](../requirements/traceability.md) | [Backlog](../backlog/README.md)
 
-Status: PROPOSAL v2, revised with 15 human decisions (see Decision Log). Not approved. No remote action ran from this work. Origin and push state: not verified.
+Status: PROPOSAL v2, revised with 15 human decisions and one proposed item, 16 (see Decision Log). Not approved. No remote action ran from this work. Origin and push state: not verified.
 Source: `lan-solution-template-SRS-v1.6.md` (sections 1-13). The REQ-* and AC-* IDs come from the SRS. The FR/NFR, R-*, A-*, Q-* and D-* IDs come from extraction files. Those files are outside this repo (see [Context](#context)). Items not found in the SRS carry the tag `ASSUMPTION`.
 
 ## Navigation
@@ -207,7 +207,7 @@ flowchart LR
 
 | POC | Title | Appetite | Batch | Depends on | Branch |
 |---|---|---|---|---|---|
-| POC-1 | Toolchain viability + OS matrix + workspace skeleton, delivered as slices 1a to 1e (see [POC-1 Slices](#poc-1-slices)) | 1 week (slice appetites are ASSUMPTION) | small | none | `minor/poc-01a-monorepo`, `minor/poc-01b-nest`, `minor/poc-01c-sea-build`, `minor/poc-01d-angular-link`, `minor/poc-01e-hardening` |
+| POC-1 | Toolchain viability + OS matrix + workspace skeleton, delivered as slices 1a to 1e (see [POC-1 Slices](#poc-1-slices)) | 1 week (slice appetites are ASSUMPTION) | small | none | `minor/poc-01a-monorepo`, `minor/poc-01b-nest` (carries 1b and 1c), `minor/poc-01d-angular-link`, `minor/poc-01e-hardening` |
 | POC-2 | Single SEA + runtime supervisor | 2 weeks | big | POC-1 | `minor/poc-02-sea-supervisor` |
 | POC-3 | Config (`config.json`) + SQLite vector inside SEA | 2 weeks | big | POC-2 | `minor/poc-03-sqlite-vector` |
 | POC-4 | HTTPS gateway (dev-certs-style TLS) serving Angular PWA + dev loop | 2 weeks | big | POC-2 (POC-3 not blocking) | `minor/poc-04-https-spa` |
@@ -275,7 +275,7 @@ POC-1 stays the umbrella id. Slices run in order; each depends on the previous o
 |---|---|---|---|---|
 | 1a | Monorepo init: version table, pnpm workspace and catalog, supply-chain settings, Nx local, root no-op scripts, one Node engine pin, reference study | `minor/poc-01a-monorepo` | ~1 day | none |
 | 1b | Nest apps: `api-gateway`, `sea-runtime`, `shared-core` from the Nest CLI; dummy health endpoint; `sea-runtime` as a standalone `createApplicationContext(RuntimeModule)` with no listener (REQ-RUNTIME-02) | `minor/poc-01b-nest` | ~1 day | 1a |
-| 1c | SEA build: minimal native `node --build-sea` script and the assembler Nx project `sea-build` with its `package` target; the dummy Nest app runs from the binary | `minor/poc-01c-sea-build` | ~2 days | 1b |
+| 1c | SEA build: generic assembler `tools/scripts/compile-sea.ts` with native `node --build-sea`; the `package` target lives on `sea-runtime`; one executable runs the minimal supervisor and the dummy Nest app | `minor/poc-01b-nest` (same branch as 1b, human decision; see [POC-1c backlog](../backlog/poc-1c-sea-build.md)) | ~2 days | 1b |
 | 1d | Angular and link: `web-angular` from the Angular CLI; `api-gateway` serves a dummy page over plain HTTP in dev and from the SEA; Nx build order and post-package check | `minor/poc-01d-angular-link` | ~1 day | 1c |
 | 1e | Hardening and desktop skeleton: `desktop` from the Tauri CLI, `securityCheck`, test filter stub, OS matrix, root sequence, tags, consolidated result | `minor/poc-01e-hardening` | ~1 day | 1d |
 
@@ -288,12 +288,13 @@ Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-
 - **Problem**: The product needs one SEA per platform. The SEA bundles the dispatcher, sea-runtime and api-gateway. It relaunches itself by role (REQ-RUNTIME-01, REQ-RUNTIME-03, REQ-SEA-01). POC-1c proves the native `node --build-sea` flow with a dummy Nest app (R2, R-04). Nobody has proven it with the dispatcher and the real services bundled. Same-binary re-entry and process-tree shutdown are hard on 3 OSes (R1).
 - **Appetite**: 2 weeks, big batch. Highest uncertainty.
 - **Solution sketch**:
-  - Extend `tools/scripts/compile-sea.ts` (the minimal script is written in POC-1c) to bundle the dispatcher, sea-runtime and api-gateway. Native `node --build-sea`, no postject (REQ-SEA-01, REQ-SEA-02, REQ-SEA-03).
+  - Extend the assembler `tools/scripts/compile-sea.ts` written in POC-1c. It takes its services from the workspace dependencies of `sea-runtime` (today `api-gateway`) and bundles the dispatcher with them. Native `node --build-sea`, no postject (REQ-SEA-01, REQ-SEA-02, REQ-SEA-03).
+  - Invalidate the build when a registered service is added or changed (REQ-BUILD-04). Not built in POC-1c; the clause moves here.
   - Build a Zod-validated dispatcher and a closed service registry (REQ-RUNTIME-03).
   - `sea-runtime` uses `createApplicationContext(RuntimeModule)` and has no HTTP listener: built in POC-1b (REQ-RUNTIME-02, FR-45).
-  - The supervisor respawns `process.execPath --service api-gateway`. It never uses `node` from PATH.
+  - The supervisor spawns `process.execPath --service <id>` for each service in the SEA asset. The minimal spawn is built in POC-1c. POC-2 adds respawn, readiness and backoff. It never uses `node` from PATH.
   - Extend the POC-1b `api-gateway` (NodeAdapter, dummy health endpoint) to an `/api` health endpoint under the supervisor (REQ-NET-01).
-  - Shutdown: stdio IPC, then a timeout, then a force-kill of descendants. No orphans (REQ-RUNTIME-06).
+  - Shutdown: stdio IPC, then a timeout, then a force-kill of descendants. No orphans (REQ-RUNTIME-06). POC-1c already stops the children on SIGINT and SIGTERM; only SIGTERM was observed.
   - Add a readiness timeout, per-service logs and a bounded restart (REQ-RUNTIME-05).
   - Add a real-binary smoke test (REQ-RUNTIME-08).
 - **Rabbit holes**:
@@ -787,5 +788,12 @@ Human decisions (source: plan `optimized-wondering-waffle.md`, section "Recorded
     - The source the human gave is a search-engine summary. It is not the primary Tauri documentation.
     - Not verified: a search-engine overview says Tauri 2 needs Windows 10 or later, macOS 10.13 or later, and a Linux distribution with webkit2gtk 4.1.
     - POC-1 reads the Tauri 2 prerequisites page, checks the WebView2 minimums, and records the OS list in its result.
+
+16. (2026-10-31) Artifacts, SEA layering and build. Recorded from the code on `minor/poc-01b-nest`. Status: proposed; the human confirms it. Not approved.
+    - (a) Artifacts. Built executables go to `artifacts/<app>/` (git-ignored). The name is `<app>-<target-triple>[.exe]`, the Tauri sidecar naming. Source: https://v2.tauri.app/develop/sidecar/. Verified: the [POC-1c result](../results/POC-01c-Result.md) quotes that page for this naming.
+    - (b) Layering. `api-gateway` is a plain SEA-agnostic Nest app with its own single-file `dist/main.js`. `sea-runtime` owns SEA packaging and is the single sidecar entry and supervisor. Tauri sees only the binary.
+    - (c) Build. Every Nest app builds to one self-contained ESM `dist/main.js` (plus a source map) through the Nest CLI rspack builder, with one shared config in `tools/rspack/`. Services register by workspace dependency of `sea-runtime`.
+    - (d) Tests. No unit or integration tests (REQ-TEST-01). Spec files that generators create are deleted in the same commit.
+    - The POC-1 and POC-2 pitch text and slice table follow this decision. The package target lives on `sea-runtime`. The minimal supervisor spawn is built in POC-1c. POC-2 keeps the Zod closed-registry dispatcher, IPC shutdown, readiness, restart with backoff, and process-tree cleanup.
 
 The design notes for auth, config and TLS are unreviewed research summaries. They appear in POC-7, POC-3, POC-4/5 and POC-8.

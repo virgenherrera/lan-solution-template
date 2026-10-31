@@ -10,6 +10,7 @@ Traceability: `docs/requirements/traceability.md`.
 
 - Current phase is documentation plus incremental POC-1 slices (see `docs/backlog/README.md`). Start a slice only when the human says so, and only on that slice's branch.
 - Generate every project file with its official CLI via `pnpm dlx` (`nx`, `@nestjs/cli`, `@angular/cli`, `@tauri-apps/cli`). Never hardcode what a CLI generates. If a CLI is unknown, run `--help` first. Hand-edit a file only where no CLI exists, and list that edit in the slice result page.
+- Generators such as `nest generate` may create `*.spec.ts` files. Delete them in the same commit (REQ-TEST-01: no unit or integration suites).
 - Run CLIs through `pnpm dlx` and `pnpm` only. Other installs (`brew`, `apt`) stay forbidden.
 - Branch prefixes follow the SRS (REQ-VERSION-02): `major/`, `minor/`, `fix/`, `docs/`, `chore/`.
 - Do not invent requirements the SRS does not state. Mark unverified claims "not verified".
