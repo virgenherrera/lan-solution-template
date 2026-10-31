@@ -89,8 +89,8 @@ Build a **verifiable and reusable base template** for commercial applications.
 flowchart TB
     subgraph workspace["PNPM workspace and Nx"]
       angular["web-angular"]
-      nest["gateway-nest"]
-      runtime["runtime-nest standalone"]
+      nest["api-gateway"]
+      runtime["sea-runtime standalone"]
       core["shared-core"]
       tauri["desktop Tauri"]
       angular --- core
@@ -105,7 +105,7 @@ flowchart TB
 
 - Angular → gateway means HTTP use in development and compiled assets at build time.
 - It does not mean source imports.
-- The single assembled SEA ships to Tauri. `runtime-nest` is its default entry.
+- The single assembled SEA ships to Tauri. `sea-runtime` is its default entry.
 - `auth-ms` in later diagrams shows extensibility.
 - Today it does not require a fictitious authentication service.
 
@@ -113,8 +113,8 @@ flowchart TB
 flowchart TD
     subgraph Source[Repository — separate applications]
       A["apps/web-angular: Angular SPA/PWA"]
-      N["apps/gateway-nest: NestJS API + DB"]
-      R["apps/runtime-nest: Nest standalone supervisor"]
+      N["apps/api-gateway: NestJS API + DB"]
+      R["apps/sea-runtime: Nest standalone supervisor"]
       T["apps/desktop: Tauri v2 Rust"]
       C["libs/shared-core: Contracts + Zod"]
       A --> C
@@ -155,7 +155,7 @@ flowchart TB
 - No second local SPA exists in Tauri.
 - **A single physical SEA.** Tauri starts it in supervisor mode.
 - The supervisor relaunches that same file with a validated application identity.
-- The baseline starts only `gateway-nest`.
+- The baseline starts only `api-gateway`.
 - **Same origin in production.** `https://IP-or-hostname:8443/` hosts `/api/**` and the PWA.
 - The PWA covers manifest, assets, service worker and Angular routes.
 - **LAN-first:** without Internet the gateway, the SPA and local persistence MUST keep working. PWA clients without a connection to the gateway do **not** guarantee offline business operations.

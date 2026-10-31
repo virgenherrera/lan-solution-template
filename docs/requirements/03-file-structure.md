@@ -7,7 +7,7 @@ summary: Defines the expected repository layout and allowed code dependencies.
 ids[5]: REQ-REP-01,REQ-REP-02,REQ-REP-03,REQ-REP-04,REQ-REP-05
 related[3]: docs/requirements/README.md,docs/requirements/02-technology-baseline.md,docs/requirements/04-configuration.md
 status: current
-updated: 2026-10-30
+updated: 2026-10-31
 -->
 
 # File Structure (SRS §3)
@@ -32,7 +32,7 @@ Repository layout and code dependencies. Next: [configuration](04-configuration.
 
 | Topic | Point |
 |---|---|
-| Apps | `desktop`, `gateway-nest`, `runtime-nest`, `web-angular` under `apps/` |
+| Apps | `desktop`, `api-gateway`, `sea-runtime`, `web-angular` under `apps/` |
 | Shared | Contracts in `libs/shared-core`; no Angular or Nest imports |
 | CI | Workflow comes last; calls root scripts only |
 
@@ -47,15 +47,20 @@ lan-solution-template/
 ├── .github/workflows/ci-cd.yml    # Final phase: CI + release
 ├── apps/
 │   ├── desktop/                    # Tauri v2: src-tauri, supervision, tray
-│   ├── gateway-nest/               # Nest: API, persistence, TLS, SEA serving
-│   ├── runtime-nest/               # Nest Standalone: SEA process supervisor
+│   ├── api-gateway/               # Nest: API, persistence, TLS, SEA serving
+│   ├── sea-runtime/               # Nest Standalone: SEA process supervisor
 │   └── web-angular/                # Angular standalone: SPA/PWA, dev proxy
 ├── libs/
 │   └── shared-core/
 │       └── src/
 │           ├── validation/
 │           └── index.ts
+├── artifacts/                      # Git-ignored build output (see note below)
+│   └── sea-runtime/
+│       └── sea-runtime-<target-triple>[.exe]
 ├── tools/
+│   ├── rspack/
+│   │   └── nest.config.ts          # One shared Nest rspack config
 │   └── scripts/
 │       └── compile-sea.ts
 ├── nx.json
@@ -66,7 +71,9 @@ lan-solution-template/
 └── README.md
 ```
 
-- **REQ-REP-01.** The four projects in `apps/` **MUST** exist at the same level (`desktop`, `gateway-nest`, `runtime-nest`, `web-angular`). Angular source code **MUST NOT** live inside `gateway-nest/`. Compiled assets are likewise not committed under its source tree. Future Nest microservices **MUST** be sibling projects, not executable subfolders of the gateway.
+Note (not a requirement; no REQ id added; human decision, Decision Log item 16). `apps/sea-runtime` owns SEA packaging. It holds the `package` target and is the only sidecar entry and supervisor. `artifacts/<app>/` holds one built executable per target triple, for example `artifacts/sea-runtime/sea-runtime-aarch64-apple-darwin`. The folder is git-ignored (`/artifacts` in `.gitignore`).
+
+- **REQ-REP-01.** The four projects in `apps/` **MUST** exist at the same level (`desktop`, `api-gateway`, `sea-runtime`, `web-angular`). Angular source code **MUST NOT** live inside `api-gateway/`. Compiled assets are likewise not committed under its source tree. Future Nest microservices **MUST** be sibling projects, not executable subfolders of the gateway.
 - **REQ-REP-02.** `shared-core` may export Zod/TypeScript contracts. It **MUST NOT** import `@angular/*` or `@nestjs/*`. It **MUST NOT** contain Nest-specific server logic.
 - **REQ-REP-03.** Internal folders (`src/`, `src-tauri/`, `public/`, `proxy.conf.*`, `project.json`, etc.) **MAY** be added according to official tooling. Do not read the tree above as a prohibition on generated files that are needed.
 - **REQ-REP-04.** `.github/workflows/ci-cd.yml` **MUST** be implemented as the last phase. Do it after the local scripts and the reproducible build are complete. Its content **MUST NOT** duplicate internal Nx, Jest, Playwright or Tauri commands. Every project operation is invoked through scripts in the root `package.json`.
@@ -78,8 +85,8 @@ lan-solution-template/
 flowchart LR
     SC["libs/shared-core"]
     WEB["apps/web-angular"] --> SC
-    API["apps/gateway-nest"] --> SC
-    RT["apps/runtime-nest"] --> SC
+    API["apps/api-gateway"] --> SC
+    RT["apps/sea-runtime"] --> SC
     DESK["apps/desktop"]
     WEB -.->|"HTTP /api in development"| API
     DESK -.->|"runs SEA, runtime supervises"| RT

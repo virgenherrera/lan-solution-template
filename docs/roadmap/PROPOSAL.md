@@ -6,14 +6,14 @@ type: roadmap
 summary: "Roadmap proposal with cycles, POC pitches, coverage matrix and open questions."
 related[2]: README.md,docs/backlog/README.md
 status: proposed
-updated: 2026-10-30
+updated: 2026-10-31
 -->
 
 # Roadmap Proposal: lan-solution-template (SRS v1.6)
 
 [Home](../../README.md) | [Requirements](../requirements/README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](PROPOSAL.md) | [Traceability](../requirements/traceability.md) | [Backlog](../backlog/README.md)
 
-Status: PROPOSAL v2, revised with 15 human decisions (see Decision Log). Not approved. No remote action ran from this work. Origin and push state: not verified.
+Status: PROPOSAL v2, revised with 16 human decisions (see Decision Log). Not approved. No remote action ran from this work. Origin and push state: not verified.
 Source: `lan-solution-template-SRS-v1.6.md` (sections 1-13). The REQ-* and AC-* IDs come from the SRS. The FR/NFR, R-*, A-*, Q-* and D-* IDs come from extraction files. Those files are outside this repo (see [Context](#context)). Items not found in the SRS carry the tag `ASSUMPTION`.
 
 ## Navigation
@@ -24,7 +24,6 @@ Source: `lan-solution-template-SRS-v1.6.md` (sections 1-13). The REQ-* and AC-* 
 - [Method](#method)
 - [Cycles and bets](#cycles-and-bets)
 - [Pitches](#pitches)
-  - [POC-0: Repo bootstrap](#poc-0-repo-bootstrap)
   - [POC-1: Toolchain viability and workspace skeleton](#poc-1-toolchain-viability-and-workspace-skeleton)
   - [POC-2: Single SEA and runtime supervisor](#poc-2-single-sea-and-runtime-supervisor)
   - [POC-3: Config and SQLite vector persistence inside the SEA](#poc-3-config-and-sqlite-vector-persistence-inside-the-sea)
@@ -47,13 +46,13 @@ Source: `lan-solution-template-SRS-v1.6.md` (sections 1-13). The REQ-* and AC-* 
 
 [Back to navigation](#navigation)
 
-Why this page exists: it orders the SRS v1.6 POCs and logs 15 human decisions. Next: the betting table picks the bets of cycle 1.
+Why this page exists: it orders the SRS v1.6 POCs and logs 16 human decisions. Next: the betting table picks the bets of cycle 1.
 
 | Topic | Fact | Section |
 |---|---|---|
 | Status | Proposal v2. Not approved. No remote action ran. | [Decision Log](#decision-log) |
 | Method | Shape Up. 6 weeks of build, then 2 weeks of cooldown. | [Method](#method) |
-| Bets | 3 cycles. 9 active POCs (POC-9 on hold) and POC-6 in the backlog. | [Cycles and bets](#cycles-and-bets) |
+| Bets | 3 cycles. 8 active POCs (POC-9 on hold) and POC-6 in the backlog. | [Cycles and bets](#cycles-and-bets) |
 | ADR index | 13 rows: 9 approved, 1 proposed, 3 pending spike. | [ADR index](#adr-index) |
 | Open questions | 17 rows. None blocks. | [Open questions](#open-questions) |
 | Coverage | 13 SRS sections and 36 acceptance criteria map to POCs. | [SRS coverage matrix](#srs-coverage-matrix) |
@@ -63,7 +62,7 @@ Why this page exists: it orders the SRS v1.6 POCs and logs 15 human decisions. N
 ```mermaid
 timeline
     title Cycles and bets
-    Cycle 1 - about 5.5 weeks : POC-0 Repo bootstrap - 1-2 days : POC-1 Toolchain - 1 week : POC-2 Single SEA - 2 weeks : POC-3 Config and SQLite vector - 2 weeks
+    Cycle 1 - about 5 weeks : POC-1 Toolchain - 1 week : POC-2 Single SEA - 2 weeks : POC-3 Config and SQLite vector - 2 weeks
     Cooldown - 2 weeks : Betting table
     Cycle 2 - about 4 weeks : POC-4 HTTPS gateway - 2 weeks : POC-5 Tauri shell - 2 weeks
     Cooldown - 2 weeks : Betting table
@@ -76,8 +75,7 @@ timeline
 
 ```mermaid
 flowchart LR
-    P0["POC-0 Repo bootstrap"] -.->|"not blocking"| P1["POC-1 Toolchain"]
-    P1 --> P2["POC-2 Single SEA"]
+    P1["POC-1 Toolchain"] --> P2["POC-2 Single SEA"]
     P2 --> P3["POC-3 Config and SQLite"]
     P2 --> P4["POC-4 HTTPS gateway"]
     P3 -.->|"not blocking"| P4
@@ -114,8 +112,8 @@ stateDiagram-v2
 The SRS v1.6 defines a LAN-first template that works offline. It has these parts:
 
 - Angular 22 PWA (`apps/web-angular`).
-- NestJS gateway (`apps/gateway-nest`).
-- Nest standalone supervisor (`apps/runtime-nest`).
+- NestJS gateway (`apps/api-gateway`).
+- Nest standalone supervisor (`apps/sea-runtime`).
 - Tauri v2 desktop shell (`apps/desktop`).
 - `libs/shared-core`.
 
@@ -130,7 +128,7 @@ Main risks from the SRS:
 - Cross-OS process-tree shutdown (R1, R-04).
 - The native 3-OS CI matrix (R-01 of 11.4.1).
 
-D-07 puts CI/CD last. D-03 asks for the smallest integrated micro-POCs. This proposal turns both into nine active POCs and one backlog item (POC-6, PostgreSQL). POC-9 (CI/CD and releases) is on HOLD.
+D-07 puts CI/CD last. D-03 asks for the smallest integrated micro-POCs. This proposal turns both into eight active POCs and one backlog item (POC-6, PostgreSQL). POC-9 (CI/CD and releases) is on HOLD.
 
 A-01 is not in the SRS.
 
@@ -202,15 +200,14 @@ flowchart LR
 
 | Cycle | POCs | Length | Then |
 |---|---|---|---|
-| 1 | POC-0, POC-1, POC-2, POC-3 | ~5.5 weeks (0.4 + 1 + 2 + 2) | 2-week cooldown, betting table |
+| 1 | POC-1, POC-2, POC-3 | ~5 weeks (1 + 2 + 2) | 2-week cooldown, betting table |
 | 2 | POC-4, POC-5 | ~4 weeks (2 + 2) | 2-week cooldown, betting table |
 | 3 | POC-7, POC-8 | ~3.5 weeks (1-2 + 2) | cooldown |
 | After | POC-9 (only when HOLD is lifted) | ~2 weeks + small | betting table |
 
 | POC | Title | Appetite | Batch | Depends on | Branch |
 |---|---|---|---|---|---|
-| POC-0 | Repo bootstrap: docs in `docs/`, `main` branch | 1-2 days | small | none | `chore/poc-00-repo-bootstrap` |
-| POC-1 | Toolchain viability + OS matrix + workspace skeleton | 1 week | small | POC-0 (not blocking) | `chore/poc-01-toolchain` |
+| POC-1 | Toolchain viability + OS matrix + workspace skeleton, delivered as slices 1a to 1e (see [POC-1 Slices](#poc-1-slices)) | 1 week (slice appetites are ASSUMPTION) | small | none | `minor/poc-01a-monorepo`, `minor/poc-01b-nest` (carries 1b and 1c), `minor/poc-01d-angular-link`, `minor/poc-01e-hardening` |
 | POC-2 | Single SEA + runtime supervisor | 2 weeks | big | POC-1 | `minor/poc-02-sea-supervisor` |
 | POC-3 | Config (`config.json`) + SQLite vector inside SEA | 2 weeks | big | POC-2 | `minor/poc-03-sqlite-vector` |
 | POC-4 | HTTPS gateway (dev-certs-style TLS) serving Angular PWA + dev loop | 2 weeks | big | POC-2 (POC-3 not blocking) | `minor/poc-04-https-spa` |
@@ -221,6 +218,8 @@ flowchart LR
 | POC-9 | CI/CD GitHub Actions + Releases | 2 weeks | big | POC-8 | HOLD: `chore/poc-09-ci-cd` |
 
 ASSUMPTION: the appetites are estimates for one developer plus AI agents. The betting table may change them.
+
+POC-1 stays one bet of 1 week. It is delivered as five sequential slices, each with its own branch and result page (see [POC-1 Slices](#poc-1-slices)). The slice appetites are ASSUMPTION and sum to about 6 working days (1 + 1 + 2 + 1 + 1), roughly one day over the 1-week bet if a week is 5 working days. The 1-week total is not changed here; the betting table decides.
 
 Ordering rationale:
 
@@ -234,25 +233,6 @@ Ordering rationale:
 
 [Back to navigation](#navigation)
 
-### POC-0: Repo bootstrap
-
-[Back to navigation](#navigation)
-
-- **Scope**: docs in `docs/`, branch `main`.
-- **Problem**: Local branch `main` exists at `84ea56f`. No `master` branch exists. Commit `84ea56f` holds the original SRS, this proposal and `AGENTS.md`. The split docs are on branch `docs/split-srs`. Whether anything is pushed to origin: not verified. The identifier glossary lists NFR-DOC-01, D-05 and D-08. Meanings are not verified.
-- **Appetite**: 1-2 days, small batch.
-- **Solution sketch**:
-  - Create `chore/poc-00-repo-bootstrap` from `docs/split-srs` HEAD.
-  - Verify `main` exists. If `git branch --list master` prints a name, rename it with `git branch -m master main` (local only, no push).
-  - Keep the split docs under `docs/`, including `docs/roadmap/PROPOSAL.md`.
-  - The root SRS file stays as historical reference.
-  - Confirm origin `git@github.com:virgenherrera/lan-solution-template.git` (decision 1). The plan says it was checked with `git remote -v`. Not verified in this document.
-- **Rabbit holes**: none.
-- **No-gos**: no CI, no code.
-- **Circuit breaker**: if the rename or layout causes friction, keep the files where they are. Record it as an open decision.
-- **Acceptance criteria**: `git rev-parse --verify main` exits 0. `git branch --list master` prints nothing. The docs are under `docs/`. REQ-REP-05 requires documentation. NFR-DOC-01, D-05 and D-08 are listed in the identifier glossary. Meanings are not verified.
-- **Deliverable**: branch `chore/poc-00-repo-bootstrap`. PR title: `chore: bootstrap repo with docs and main branch`. Result page: `docs/results/POC-00-Result.md`, same convention as POC-1. Opening the PR is a remote action that needs approval.
-
 ### POC-1: Toolchain viability and workspace skeleton
 
 [Back to navigation](#navigation)
@@ -262,13 +242,14 @@ Ordering rationale:
 | Node | pnpm | NestJS | Angular | Zod | drizzle-orm | Tauri | sqlite-vector |
 |---|---|---|---|---|---|---|---|
 | >=26.13 <27 | >=12.16.1 | 12.3.2 | >=22.2.5 | >=4.6.7 | 1.0.0-rc.5 | >=2.12.5 | 1.1.2 |
-- **Appetite**: 1 week, small batch.
+- **Appetite**: 1 week, small batch. Delivered as five slices (see [POC-1 Slices](#poc-1-slices)).
 - **Solution sketch**:
+  - Every project file is produced by its official CLI through `pnpm dlx` (`nx`, `@nestjs/cli`, `@angular/cli`, `@tauri-apps/cli`), never hand-written. A manual edit is allowed only where no CLI exists and is listed in the result page.
   - Verify that every pinned version exists and works with the others (NFR-15, NFR-VER-01). Pin Nx after discovery (NFR-08, REQ-BUILD-01).
   - Create a pnpm workspace with a catalog. `savePrefix` is empty. Versions are exact. `pnpm-lock.yaml` is committed (NFR-11, NFR-12).
   - Set `minimumReleaseAge` 1440, `allowBuilds`, and `strictDepBuilds` true (REQ-SUPPLY-01, REQ-SEC-CI-03). Verify the pnpm 12 semantics (R-08, R6).
   - Use Nx locally. Do not use Nx Cloud.
-  - Create the skeletons: `apps/web-angular`, `apps/gateway-nest`, `apps/runtime-nest`, `apps/desktop`, `libs/shared-core` (REQ-REP-01..03).
+  - Create the skeletons: `apps/web-angular`, `apps/api-gateway`, `apps/sea-runtime`, `apps/desktop`, `libs/shared-core` (REQ-REP-01..03).
   - Add root ECO scripts with explicit no-ops (REQ-ECO-01, REQ-ECO-02).
   - Make `securityCheck` fail closed (REQ-SEC-CI-01, REQ-SEC-CI-02).
   - Add a test filter adapter stub (REQ-TEST-03, REQ-ECO-04).
@@ -284,21 +265,36 @@ Ordering rationale:
 - **No-gos**: no Nx Cloud, no drizzle-kit, no `bumpDependencies` or `test:doctor` (REQ-DEPS-01). Also no unit or integration suites, no `^` or `~` ranges.
 - **Circuit breaker**: document a missing version. Add a technical link and a minimal substitution (NFR-15, NFR-VER-01, D-06). Do not invent APIs. If the toolchain cannot install, stop and report.
 - **Acceptance criteria**: AC-01, AC-02 (host-checkable part), AC-13, AC-19, AC-22. Also AC-23, AC-24, AC-32, AC-33 (host OS only), AC-34. Also NFR-01..15, REQ-ECO-01, REQ-ECO-02, REQ-BUILD-02..05, REQ-TEST-02, REQ-REF-01.
-- **Deliverable**: branch `chore/poc-01-toolchain`. PR title: `chore: verify toolchain versions and add workspace skeleton`. Result page: `docs/results/POC-01-Result.md`. It holds a version-verification table and the OS/Node matrix. It also holds `ADR-001` if a substitution happens.
+- **Deliverable**: one branch and one PR per slice (table below). Each slice writes its own result page, `POC-01a-Result.md` to `POC-01d-Result.md`. The last slice writes `docs/results/POC-01-Result.md`. That page consolidates them and holds a version-verification table and the OS/Node matrix. It also holds `ADR-001` if a substitution happens. PR titles are not fixed yet (not verified).
+
+#### POC-1 Slices
+
+POC-1 stays the umbrella id. Slices run in order; each depends on the previous one and can be delivered and verified alone. Appetites are ASSUMPTION and sum to about 6 working days, about one day over the 1-week bet.
+
+| Slice | Scope | Branch | Appetite (ASSUMPTION) | Depends on |
+|---|---|---|---|---|
+| 1a | Monorepo init: version table, pnpm workspace and catalog, supply-chain settings, Nx local, root no-op scripts, one Node engine pin, reference study | `minor/poc-01a-monorepo` | ~1 day | none |
+| 1b | Nest apps: `api-gateway`, `sea-runtime`, `shared-core` from the Nest CLI; dummy health endpoint; `sea-runtime` as a standalone `createApplicationContext(RuntimeModule)` with no listener (REQ-RUNTIME-02) | `minor/poc-01b-nest` | ~1 day | 1a |
+| 1c | SEA build: generic assembler `tools/scripts/compile-sea.ts` with native `node --build-sea`; the `package` target lives on `sea-runtime`; one executable runs the minimal supervisor and the dummy Nest app | `minor/poc-01b-nest` (same branch as 1b, human decision; see [POC-1c backlog](../backlog/poc-1c-sea-build.md)) | ~2 days | 1b |
+| 1d | Angular and link: `web-angular` from the Angular CLI; `api-gateway` serves a dummy page over plain HTTP in dev and from the SEA; Nx build order and post-package check | `minor/poc-01d-angular-link` | ~1 day | 1c |
+| 1e | Hardening and desktop skeleton: `desktop` from the Tauri CLI, `securityCheck`, test filter stub, OS matrix, root sequence, tags, consolidated result | `minor/poc-01e-hardening` | ~1 day | 1d |
+
+Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-nest-apps.md), [1c](../backlog/poc-1c-sea-build.md), [1d](../backlog/poc-1d-angular-link.md), [1e](../backlog/poc-1e-hardening-desktop-skeleton.md).
 
 ### POC-2: Single SEA and runtime supervisor
 
 [Back to navigation](#navigation)
 
-- **Problem**: The product needs one SEA per platform. The SEA bundles the dispatcher, runtime-nest and gateway-nest. It relaunches itself by role (REQ-RUNTIME-01, REQ-RUNTIME-03, REQ-SEA-01). Nobody has proven that the native `node --build-sea` flow works with bundled Nest (R2, R-04). Same-binary re-entry and process-tree shutdown are hard on 3 OSes (R1).
+- **Problem**: The product needs one SEA per platform. The SEA bundles the dispatcher, sea-runtime and api-gateway. It relaunches itself by role (REQ-RUNTIME-01, REQ-RUNTIME-03, REQ-SEA-01). POC-1c proves the native `node --build-sea` flow with a dummy Nest app (R2, R-04). Nobody has proven it with the dispatcher and the real services bundled. Same-binary re-entry and process-tree shutdown are hard on 3 OSes (R1).
 - **Appetite**: 2 weeks, big batch. Highest uncertainty.
 - **Solution sketch**:
-  - Write `tools/scripts/compile-sea.ts` with native `node --build-sea`, no postject (REQ-SEA-01, REQ-SEA-02, REQ-SEA-03).
+  - Extend the assembler `tools/scripts/compile-sea.ts` written in POC-1c. It takes its services from the workspace dependencies of `sea-runtime` (today `api-gateway`) and bundles the dispatcher with them. Native `node --build-sea`, no postject (REQ-SEA-01, REQ-SEA-02, REQ-SEA-03).
+  - Invalidate the build when a registered service is added or changed (REQ-BUILD-04). Not built in POC-1c; the clause moves here.
   - Build a Zod-validated dispatcher and a closed service registry (REQ-RUNTIME-03).
-  - `runtime-nest` uses `createApplicationContext(RuntimeModule)` and has no HTTP listener (REQ-RUNTIME-02, FR-45).
-  - The supervisor respawns `process.execPath --service gateway-nest`. It never uses `node` from PATH.
-  - Build a minimal `gateway-nest` with NodeAdapter and an `/api` health endpoint (REQ-NET-01).
-  - Shutdown: stdio IPC, then a timeout, then a force-kill of descendants. No orphans (REQ-RUNTIME-06).
+  - `sea-runtime` uses `createApplicationContext(RuntimeModule)` and has no HTTP listener: built in POC-1b (REQ-RUNTIME-02, FR-45).
+  - The supervisor spawns `process.execPath --service <id>` for each service in the SEA asset. The minimal spawn is built in POC-1c. POC-2 adds respawn, readiness and backoff. It never uses `node` from PATH.
+  - Extend the POC-1b `api-gateway` (NodeAdapter, dummy health endpoint) to an `/api` health endpoint under the supervisor (REQ-NET-01).
+  - Shutdown: stdio IPC, then a timeout, then a force-kill of descendants. No orphans (REQ-RUNTIME-06). POC-1c already stops the children on SIGINT and SIGTERM; only SIGTERM was observed.
   - Add a readiness timeout, per-service logs and a bounded restart (REQ-RUNTIME-05).
   - Add a real-binary smoke test (REQ-RUNTIME-08).
 - **Rabbit holes**:
@@ -308,7 +304,7 @@ Ordering rationale:
   - Restart and backoff values are undefined (A3).
   - Root resolution without the cwd (decision 11). The cwd of the supervisor under systemd and launchd: not verified. Verify here.
 - **No-gos**: no fake `auth-ms` (REQ-RUNTIME-04, SRS L943, D-03). No postject without a documented need. No second executable. Also no Express or Fastify, no SPA yet.
-- **Circuit breaker**: if the SEA cannot bundle Nest within the appetite, stop. Publish the findings: what failed and which Node limits apply. Then reshape. Either split bundling from supervision, or evaluate a documented postject need.
+- **Circuit breaker**: if the SEA cannot bundle the dispatcher and the real services within the appetite, stop. Publish the findings: what failed and which Node limits apply. Then reshape. Either split bundling from supervision, or evaluate a documented postject need.
 - **Acceptance criteria**: AC-11 (partial: no Node install on the host), AC-28, AC-29. AC-30 (host OS only, others pending) and AC-31 (registry design only) apply too. Also REQ-RUNTIME-01..08, REQ-SEA-01..03, REQ-TEST-07 (supervisor subset).
 - **Deliverable**: branch `minor/poc-02-sea-supervisor`. PR title: `feat: single SEA with runtime supervisor and gateway health`. Results under `docs/`: `POC-02-Result` and `ADR-002` (single-SEA portability decision).
 
@@ -361,10 +357,10 @@ Ordering rationale:
 [Back to navigation](#navigation)
 
 - **Scope**: HTTPS gateway that serves the Angular PWA from the SEA, plus the dev loop.
-- **Problem**: The gateway must serve one Angular build over HTTPS (FR-04). The clients are browsers and the Tauri WebView. The SEA must materialize the assets safely (R3, R-07). Developers need a fast loop that does not need the SEA (REQ-DEV-01..05). Local CA trust is a known friction (R-05).
+- **Problem**: POC-1d already proves a dummy Angular page served by `api-gateway` over plain HTTP, in dev and from the SEA. The gateway must now serve one Angular build over HTTPS (FR-04). The clients are browsers and the Tauri WebView. The SEA must materialize the assets safely (R3, R-07). Developers need a fast loop that does not need the SEA (REQ-DEV-01..05). Local CA trust is a known friction (R-05).
 - **Appetite**: 2 weeks, big batch.
 - **Solution sketch**:
-  - Use Angular 22, zoneless, strict TypeScript, Signals, Tailwind and PWA (REQ-WEB-01, REQ-PWA-01).
+  - Configure the `web-angular` app generated in POC-1d as Angular 22, zoneless, strict TypeScript, Signals, Tailwind and PWA (REQ-WEB-01, REQ-PWA-01).
   - `ng serve` on 4200 with `proxyConfig` `/api/**` to 8443. It uses a trusted dev CA and never `secure:false` (REQ-DEV-01..04).
   - First task, a spike (decision 14, [OQ8](#open-questions)). Budget: 2 days at most, inside the appetite.
     - Inputs: a hand-built DER writer on `node:crypto`, against a pure-JS dependency.
@@ -378,6 +374,7 @@ Ordering rationale:
     - A separate dev CA with `NODE_EXTRA_CA_CERTS`.
     - Mobile clients install the CA by hand (REQ-TLS-02).
   - Serve HTTPS on 8443 and an HTTP 308 redirect on 8080. The redirect has no Host-based open redirect (REQ-NET-06, REQ-NET-08).
+  - Plain-HTTP serving of a dummy page is not repeated here (POC-1d). Harden it as follows.
   - Materialize the SPA into a per-version hashed cache (REQ-NET-03, REQ-NET-04, REQ-SEA-04). The cache needs a manifest, checksums, atomic publish, concurrency safety and stale cleanup.
   - Load `ServeStaticModule` only when `isSea()`. Configure it before `NestFactory.create` (REQ-NET-02, REQ-NET-05).
   - `/api/**` never falls back to `index.html`. A missing asset returns 404 (REQ-NET-07).
@@ -529,7 +526,7 @@ sequenceDiagram
   - Runner and VM availability (Q-08).
   - Windows x64 against ARM (R4).
   - Keeping an edited `config.json` across upgrades and uninstalls. Decide delete or keep for uninstall.
-  - Release group membership, including runtime-nest (Q-01).
+  - Release group membership, including sea-runtime (Q-01).
   - The exemption mechanism for `docs/*` and `chore/*` (Q-02).
 - **No-gos**: no cross-OS claims without native verification. Docker does not replace native installer validation (REQ-TEST-09). No CI workflow yet.
 - **Circuit breaker**, if only some OSes are reachable:
@@ -597,17 +594,17 @@ Global, from the SRS:
 |---|---|---|
 | 1 | Purpose and scope (FR-01..05, FR-45, FR-46) | POC-2, POC-4, POC-5, POC-9 |
 | 2 | Tech baseline and reproducibility (REQ-STACK-01..10, REQ-SUPPLY-01/02, NFR-15) | POC-1, Backlog POC-6 (pgvector), POC-3 (Drizzle, sqlite-vector) |
-| 3 | Expected file structure (REQ-REP-01..05) | POC-1, POC-0 (docs) |
+| 3 | Expected file structure (REQ-REP-01..05) | POC-1 |
 | 4 | Configuration (REQ-CFG-01..06) | POC-3 |
 | 5 | Persistence, vectors, migrations (REQ-DB-01..09) | POC-3 (SQLite); PostgreSQL parts in Backlog POC-6 |
 | 6 | Dev, web packaging, LAN gateway, HTTPS, PWA (REQ-DEV, REQ-NET, REQ-TLS, REQ-PWA) | POC-4 |
 | 7 | Default security (REQ-SEC-01..06) | POC-7, POC-5 (REQ-SEC-05), POC-3 (REQ-SEC-06) |
 | 8 | Angular web (REQ-WEB-01..04) | POC-4 (REQ-WEB-01), POC-7 (REQ-WEB-02..04) |
-| 9 | Desktop Tauri and processes (REQ-DESK, REQ-RUNTIME) | POC-5, POC-2 |
+| 9 | Desktop Tauri and processes (REQ-DESK, REQ-RUNTIME) | POC-5, POC-2 (REQ-RUNTIME-02 in POC-1b) |
 | 10 | Node SEA and distribution (REQ-SEA-01..06) | POC-2, POC-4, POC-8 (REQ-SEA-06) |
 | 11 | Nx, quality, tests. Sections: 11.0 build/test/security, 11.1 ECO, 11.2 refs/deps, 11.3 versioning, 11.4 CI/CD, 11.5 acceptance, 11.6 portability | POC-1 (ECO, REQ-DEPS, security gate, REQ-BUILD-02..05, REQ-TEST-02, REQ-REF-01). POC-8 (11.3, 11.6, REQ-TEST-09/10). POC-9 (11.4, 11.4.1). POC-2..7 (REQ-TEST-04..08 per feature) |
-| 12 | Delivery instructions (D-01..D-10, NFR-TRUTH-01, NFR-DOC-01, NFR-VER-01) | POC-0, POC-1, every POC result page |
-| 13 | Technical and normative references | POC-1 (version verification), POC-0 (ADR/doc links) |
+| 12 | Delivery instructions (D-01..D-10, NFR-TRUTH-01, NFR-DOC-01, NFR-VER-01) | POC-1, every POC result page |
+| 13 | Technical and normative references | POC-1 (version verification, ADR/doc links) |
 
 Acceptance criteria coverage:
 
@@ -664,7 +661,7 @@ Claims marked "not verified" stay unverified until a spike or a primary source c
 | OQ7 | Minimum verified-OS set that closes a micro-POC (Q-08, NFR-PORT-01). | A micro-POC closes as `verified-on-<os>-<arch>` only where its acceptance command ran natively and was logged. macOS arm64 closes macOS checks. Linux x64 in Docker closes gateway smoke tests only (REQ-TEST-09). Windows x64 needs a native VM or runner, which is not available. Installer, tray, WebView and autostart checks stay blocked-by-environment there. | agent:verifier | no | proposed |
 | OQ8 | TLS crypto library and key storage per OS (A-04, Q-07). | Decided by human decision 14: pending spike. Prefer zero dependencies: `node:crypto` plus a minimal own DER builder. It builds the CA and the leaf with SAN, IPs included. Fallback: a pure-JS dependency such as `@peculiar/x509`. Never native modules. The CA private key stays outside the database, encrypted in a `dataDir` file. A NestJS provider contract hides the storage. See Decision Log item 14. Not verified: that `node:crypto` lacks an X.509 build-and-sign API. Not verified: SAN support in `@peculiar/x509`. Not verified: the Windows ACL recipe. | agent:researcher | no | decided (human decision 14): pending spike |
 | OQ9 | Release through a bot commit or a release PR (Q-03). | Use a release PR as the default, in line with REQ-CI-04. Publish after merge by tagging the merged SHA, idempotent per REQ-CI-06. Use a bot commit only if branch protection allows it and the human approves. Branch protection bypass for personal repos is not verified. Nx release support for a PR flow is not verified. | agent:researcher | no (HOLD) | proposed |
-| OQ10 | Nx release group membership, including runtime-nest (Q-01). | Use one fixed group: web-angular, gateway-nest, shared-core, desktop and runtime-nest. REQ-SEA-01 packs runtime-nest into the single SEA, so its version must match. REQ-VERSION-01 does not list runtime-nest, so this is an inference. Exclude test libs and tooling. Run `nx release --dry-run` to verify. | agent:builder | no | proposed |
+| OQ10 | Nx release group membership, including sea-runtime (Q-01). | Use one fixed group: web-angular, api-gateway, shared-core, desktop and sea-runtime. REQ-SEA-01 packs sea-runtime into the single SEA, so its version must match. REQ-VERSION-01 does not list sea-runtime, so this is an inference. Exclude test libs and tooling. Run `nx release --dry-run` to verify. | agent:builder | no | proposed |
 | OQ11 | Restart, backoff and readiness values (A3). | These are design proposals, not sourced. Readiness timeout 30 s. Health poll 500 ms. Backoff 1, 2, 4, 8, 16 s, capped at 30 s, with 20 percent jitter. At most 5 restarts in 300 s. Reset the counter after 60 s stable. Graceful stop 10 s. After exhaustion: state error, stop restarting, surface it to Tauri. Measure in POC-2. | agent:builder | no | proposed |
 | OQ12 | Autostart default: on or opt-in (A7). | Decided by the human: autostart is opt-in and off by default. The user enables it with a checkbox in the tray menu. The MSI checkbox appears unchecked on Windows. The app persists the choice. This matches REQ-DESK-04. The Tauri autostart plugin needs Rust 1.90 or later (not independently verified). | agent:builder | no | decided (human) |
 | OQ13 | Rust audit tool and threshold (A9). | Run `cargo deny check advisories` in CI and before release. Set yanked to deny. Keep the defaults for unmaintained and unsound. Any vulnerability fails: the cargo-deny docs list `severity-threshold` as removed. Each ignore needs a reason and a 90-day expiry. Run weekly and on `Cargo.lock` change. Noise from transitive Tauri deps is not verified. | agent:builder | no (CI on HOLD) | proposed |
@@ -698,7 +695,7 @@ Claims marked "not verified" stay unverified until a spike or a primary source c
 | ASSUMPTION | The appetites are estimates. |
 | ASSUMPTION | Branch prefixes for POC PRs reuse the REQ-VERSION-02 naming (`major/`, `minor/`, `fix/`, `docs/`, `chore/`). |
 | ASSUMPTION | ADR numbering and page slugs are proposals, not SRS requirements. |
-| ASSUMPTION | Mapping SRS sections 3 and 13 to POC-1 and POC-0 is a planning choice. The SRS does not assign them to phases. |
+| ASSUMPTION | Mapping SRS sections 3, 12 and 13 to POC-1 is a planning choice. The SRS does not assign them to phases. |
 
 ---
 
@@ -791,5 +788,12 @@ Human decisions (source: plan `optimized-wondering-waffle.md`, section "Recorded
     - The source the human gave is a search-engine summary. It is not the primary Tauri documentation.
     - Not verified: a search-engine overview says Tauri 2 needs Windows 10 or later, macOS 10.13 or later, and a Linux distribution with webkit2gtk 4.1.
     - POC-1 reads the Tauri 2 prerequisites page, checks the WebView2 minimums, and records the OS list in its result.
+
+16. (2026-10-31) Artifacts, SEA layering and build. Status: decided (human decision). Implemented on `minor/poc-01b-nest`.
+    - (a) Artifacts. Built executables go to `artifacts/<app>/` (git-ignored). The name is `<app>-<target-triple>[.exe]`, the Tauri sidecar naming. Source: https://v2.tauri.app/develop/sidecar/. Verified: the [POC-1c result](../results/POC-01c-Result.md) quotes that page for this naming.
+    - (b) Layering. `api-gateway` is a plain SEA-agnostic Nest app with its own single-file `dist/main.js`. `sea-runtime` owns SEA packaging and is the single sidecar entry and supervisor. Tauri sees only the binary.
+    - (c) Build. Every Nest app builds to one self-contained ESM `dist/main.js` (plus a source map) through the Nest CLI rspack builder, with one shared config in `tools/rspack/`. Services register by workspace dependency of `sea-runtime`.
+    - (d) Tests. No unit or integration tests (REQ-TEST-01). Spec files that generators create are deleted in the same commit.
+    - The POC-1 and POC-2 pitch text and slice table follow this decision. The package target lives on `sea-runtime`. The minimal supervisor spawn is built in POC-1c. POC-2 keeps the Zod closed-registry dispatcher, IPC shutdown, readiness, restart with backoff, and process-tree cleanup.
 
 The design notes for auth, config and TLS are unreviewed research summaries. They appear in POC-7, POC-3, POC-4/5 and POC-8.

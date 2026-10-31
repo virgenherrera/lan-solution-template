@@ -1,1 +1,11 @@
 .atl/*
+
+
+
+.nx/cache
+.nx/workspace-data
+.nx/migrate-runs
+node_modules/
+dist/
+/artifacts
+*.tsbuildinfo

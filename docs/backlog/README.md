@@ -4,9 +4,9 @@ doc: docs/backlog/README.md
 title: "Backlog index"
 type: backlog
 summary: "Backlog index of POC epics mapped to acceptance criteria and cycles."
-related[2]: docs/roadmap/PROPOSAL.md,docs/backlog/poc-0-repo-bootstrap.md
+related[1]: docs/roadmap/PROPOSAL.md
 status: current
-updated: 2026-10-30
+updated: 2026-10-31
 -->
 
 # Backlog
@@ -25,13 +25,13 @@ updated: 2026-10-30
 
 [Back to navigation](#navigation)
 
-Local epics from the roadmap pitches. Start at [POC-0](poc-0-repo-bootstrap.md).
+Local epics from the roadmap pitches. Start at [POC-1a](poc-1a-monorepo-init.md). POC-1 is the umbrella id of five sequential slices, 1a to 1e.
 
 ```mermaid
 flowchart LR
   subgraph C1["Cycle 1"]
-    P0["POC-0 Repo bootstrap"] -.->|"not blocking"| P1["POC-1 Toolchain and skeleton"]
-    P1 --> P2["POC-2 Single SEA and supervisor"]
+    P1a["POC-1a Monorepo init"] --> P1b["POC-1b Nest apps"] --> P1c["POC-1c SEA build"] --> P1d["POC-1d Angular and link"] --> P1e["POC-1e Hardening and desktop"]
+    P1e --> P2["POC-2 Single SEA and supervisor"]
     P2 --> P3["POC-3 Config and SQLite vector"]
   end
   subgraph C2["Cycle 2"]
@@ -58,7 +58,7 @@ Edges follow "Depends on" in [PROPOSAL.md](../roadmap/PROPOSAL.md#cycles-and-bet
 
 | Group | Epics | State |
 |---|---|---|
-| Cycle 1 | POC-0 to POC-3 | planned |
+| Cycle 1 | POC-1 (slices 1a to 1e) to POC-3 | planned |
 | Cycle 2 | POC-4, POC-5 | planned |
 | Cycle 3 | POC-7, POC-8 | planned |
 | Outside the cycles | POC-6 | BACKLOG |
@@ -70,12 +70,15 @@ Edges follow "Depends on" in [PROPOSAL.md](../roadmap/PROPOSAL.md#cycles-and-bet
 
 [Back to navigation](#navigation)
 
-Draft backlog derived only from `docs/roadmap/PROPOSAL.md` pitches. Local drafts: no GitHub issues exist for these files. Status values come from PROPOSAL.md (cycle table, `HOLD`, `BACKLOG`).
+Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-22, AC-23, AC-24, AC-32, AC-33, AC-34). Draft backlog derived only from `docs/roadmap/PROPOSAL.md` pitches. Local drafts: no GitHub issues exist for these files. Status values come from PROPOSAL.md (cycle table, `HOLD`, `BACKLOG`).
 
 | POC | Epic file | Status | AC ids (pitch) |
 |---|---|---|---|
-| POC-0 | [Repo bootstrap](poc-0-repo-bootstrap.md) | Cycle 1 (planned) | none (see epic) |
-| POC-1 | [Toolchain viability and workspace skeleton](poc-1-toolchain-workspace-skeleton.md) | Cycle 1 (planned) | AC-01, AC-02, AC-13, AC-19, AC-22, AC-23, AC-24, AC-32, AC-33, AC-34 |
+| POC-1a | [Monorepo init](poc-1a-monorepo-init.md) | Cycle 1 (planned) | AC-01, AC-22, AC-23, AC-24 |
+| POC-1b | [Nest apps](poc-1b-nest-apps.md) | Delivered on branch `minor/poc-01b-nest` (PR 3, draft) | AC-13 |
+| POC-1c | [SEA build](poc-1c-sea-build.md) | Delivered on branch `minor/poc-01b-nest` (PR 3, draft) | none cited by its tasks |
+| POC-1d | [Angular and link](poc-1d-angular-link.md) | Cycle 1 (planned) | AC-13 |
+| POC-1e | [Hardening and desktop skeleton](poc-1e-hardening-desktop-skeleton.md) | Cycle 1 (planned) | AC-01, AC-02, AC-13, AC-19, AC-22, AC-32, AC-33, AC-34 |
 | POC-2 | [Single SEA and runtime supervisor](poc-2-single-sea-runtime-supervisor.md) | Cycle 1 (planned) | AC-11, AC-28, AC-29, AC-30, AC-31 |
 | POC-3 | [Config and SQLite vector persistence inside the SEA](poc-3-config-sqlite-vector.md) | Cycle 1 (planned) | AC-07, AC-08, AC-10 |
 | POC-4 | [HTTPS gateway serving the Angular PWA](poc-4-https-gateway-angular-pwa.md) | Cycle 2 (planned) | AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17 |
