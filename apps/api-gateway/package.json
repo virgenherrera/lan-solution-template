@@ -42,9 +42,5 @@
     "vite": "8.3.5",
     "vitest": "4.1.12"
   },
-  "nx": {},
-  "sea": {
-    "service": "api-gateway",
-    "entry": "dist/main.js"
-  }
+  "nx": {}
 }

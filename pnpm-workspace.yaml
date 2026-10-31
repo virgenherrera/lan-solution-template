@@ -4,7 +4,6 @@ allowBuilds:
 packages:
   - apps/*
   - libs/*
-  - tools
 catalog:
   '@rspack/core': 2.3.0
   nx: 24.0.2
