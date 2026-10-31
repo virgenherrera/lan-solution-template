@@ -147,7 +147,6 @@ Generated spec `apps/sea-runtime/src/supervisor/supervisor.service.spec.ts` was 
 
 ## Decisions to take
 
-- Confirm the rspack builder and the shared config (Decision Log item 16, see [PROPOSAL](../roadmap/PROPOSAL.md#decision-log)).
 - Decide whether `esbuild` leaves the lockfile. It is still there as an optional peer of `vite` and `vitest`. Removing it needs a change in `vite` or `vitest`.
 - Decide whether app `package.json` files need catalog `devDependencies` refs. The build passes without them.
 - Keep the project-level `dependsOn` in `apps/sea-runtime/package.json`, or move it to `nx.json` `targetDefaults`.

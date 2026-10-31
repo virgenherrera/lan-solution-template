@@ -32,7 +32,7 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Cycle 1 (planned) |
+| Status | Delivered on branch `minor/poc-01b-nest` (PR 3, draft) |
 | Slice | 1b of 1a to 1e; umbrella [POC-1](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton) |
 | Appetite | ~1 day, ASSUMPTION |
 | Depends on | POC-1a |

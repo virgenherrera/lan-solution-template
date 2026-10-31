@@ -13,7 +13,7 @@ updated: 2026-10-31
 
 [Home](../../README.md) | [Requirements](../requirements/README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](PROPOSAL.md) | [Traceability](../requirements/traceability.md) | [Backlog](../backlog/README.md)
 
-Status: PROPOSAL v2, revised with 15 human decisions and one proposed item, 16 (see Decision Log). Not approved. No remote action ran from this work. Origin and push state: not verified.
+Status: PROPOSAL v2, revised with 16 human decisions (see Decision Log). Not approved. No remote action ran from this work. Origin and push state: not verified.
 Source: `lan-solution-template-SRS-v1.6.md` (sections 1-13). The REQ-* and AC-* IDs come from the SRS. The FR/NFR, R-*, A-*, Q-* and D-* IDs come from extraction files. Those files are outside this repo (see [Context](#context)). Items not found in the SRS carry the tag `ASSUMPTION`.
 
 ## Navigation
@@ -46,7 +46,7 @@ Source: `lan-solution-template-SRS-v1.6.md` (sections 1-13). The REQ-* and AC-* 
 
 [Back to navigation](#navigation)
 
-Why this page exists: it orders the SRS v1.6 POCs and logs 15 human decisions. Next: the betting table picks the bets of cycle 1.
+Why this page exists: it orders the SRS v1.6 POCs and logs 16 human decisions. Next: the betting table picks the bets of cycle 1.
 
 | Topic | Fact | Section |
 |---|---|---|
@@ -789,7 +789,7 @@ Human decisions (source: plan `optimized-wondering-waffle.md`, section "Recorded
     - Not verified: a search-engine overview says Tauri 2 needs Windows 10 or later, macOS 10.13 or later, and a Linux distribution with webkit2gtk 4.1.
     - POC-1 reads the Tauri 2 prerequisites page, checks the WebView2 minimums, and records the OS list in its result.
 
-16. (2026-10-31) Artifacts, SEA layering and build. Recorded from the code on `minor/poc-01b-nest`. Status: proposed; the human confirms it. Not approved.
+16. (2026-10-31) Artifacts, SEA layering and build. Status: decided (human decision). Implemented on `minor/poc-01b-nest`.
     - (a) Artifacts. Built executables go to `artifacts/<app>/` (git-ignored). The name is `<app>-<target-triple>[.exe]`, the Tauri sidecar naming. Source: https://v2.tauri.app/develop/sidecar/. Verified: the [POC-1c result](../results/POC-01c-Result.md) quotes that page for this naming.
     - (b) Layering. `api-gateway` is a plain SEA-agnostic Nest app with its own single-file `dist/main.js`. `sea-runtime` owns SEA packaging and is the single sidecar entry and supervisor. Tauri sees only the binary.
     - (c) Build. Every Nest app builds to one self-contained ESM `dist/main.js` (plus a source map) through the Nest CLI rspack builder, with one shared config in `tools/rspack/`. Services register by workspace dependency of `sea-runtime`.
