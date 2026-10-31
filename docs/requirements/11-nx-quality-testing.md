@@ -83,7 +83,7 @@ flowchart TD
 
 **REQ-BUILD-02 — CI order and ECOs.** The public sequence of the root **MUST** be `install → securityCheck → build → test → package` (followed by CD only if the PR is merged). `test` **MUST** aggregate `test:static` + `test:dynamic` for each package, in that order per package; it does **NOT** run `package` nor replace `build`. Nx **MUST** model dependencies, outputs and cache without inventing aliases such as `build:sea`, `test:ut` or `pipeline:prebuild`. CI commands **MUST** be reproducible locally. `securityCheck` **MUST** finish successfully before the first build starts; it is a security barrier and not a parallel task. `test` revalidates security so that it also works standalone. `--nxBail` stops new tasks after a failure, but it is not equivalent to cancelling tasks that are already running. The global order does **NOT** imply serializing all workspaces: Nx **MAY** parallelize packages after the gate, respecting dependencies.
 
-**REQ-BUILD-03.** **Mandatory** order modeled in Nx: `build` of `web-angular`, `runtime-nest`, `gateway-nest` (and new declared services); the `package` of the SEA assembler consumes all their outputs, packages SPA + dispatcher + applications, and the `package` of `desktop` consumes the SEA and builds the installer. The `build` of the apps may run in parallel; **The `package` of the SEA MUST NOT start until all builds have finished successfully**. The targets are `build` and `package` in each project, without inventing alias scripts for each technology. Adding a microservice **MUST NOT** duplicate the Node executable.
+**REQ-BUILD-03.** **Mandatory** order modeled in Nx: `build` of `web-angular`, `sea-runtime`, `api-gateway` (and new declared services); the `package` of the SEA assembler consumes all their outputs, packages SPA + dispatcher + applications, and the `package` of `desktop` consumes the SEA and builds the installer. The `build` of the apps may run in parallel; **The `package` of the SEA MUST NOT start until all builds have finished successfully**. The targets are `build` and `package` in each project, without inventing alias scripts for each technology. Adding a microservice **MUST NOT** duplicate the Node executable.
 
 **REQ-BUILD-04.** The `package` target of the assembler invokes `tools/scripts/compile-sea.ts`. That script **MUST** do five things. It locates the real `browser/` folder produced by the Angular builder. It does not assume a fixed path. It recursively enumerates publishable files. It generates a manifest with hashes. It prepares the SEA `assets`. It checks SPA/manifest/service worker. It **MUST** also validate three conditions. The declared Nest entrypoints exist. The role dispatcher includes them in **a single executable bundle**. The build is invalidated when any registered service is added/modified.
 
@@ -92,8 +92,8 @@ flowchart TD
 ```mermaid
 flowchart TD
     Shared["shared-core:build"] --> Web["web-angular:build"]
-    Shared --> Nest["gateway-nest:build"]
-    Shared --> Runtime["runtime-nest:build"]
+    Shared --> Nest["api-gateway:build"]
+    Shared --> Runtime["sea-runtime:build"]
     Web --> SEA["SEA:package — one executable"]
     Nest --> SEA
     Runtime --> SEA
@@ -167,8 +167,8 @@ sequenceDiagram
 ```mermaid
 flowchart LR
     ANG["web-angular:build"] --> ASSETS["SEA assets SPA"]
-    G["gateway-nest:bundle"] --> REG["Dispatcher: entrypoint registry"]
-    R["runtime-nest:bundle"] --> REG
+    G["api-gateway:bundle"] --> REG["Dispatcher: entrypoint registry"]
+    R["sea-runtime:bundle"] --> REG
     F["auth-ms:bundle (future)"] -.-> REG
     REG --> SINGLE["node --build-sea — single binary"]
     ASSETS --> SINGLE
@@ -194,7 +194,7 @@ flowchart LR
 | `start:dev` | Dev Angular HMR + gateway watch, `/api` proxy | Launches sibling apps without Tauri/SEA | Each app implements its dev start if applicable |
 | `start:prod` | Run the single SEA in supervisor mode | Starts executable per OS | Not mandatory in every package |
 
-**REQ-ECO-02 — `test` of each package.** Every project under `apps/*` and `libs/*` **MUST** declare `test`; also `build` and `package` for uniformity. If no operation applies, permit only a no-op. It has the message `not defined for this package` and exit code `0`. The no-op **MUST NOT** hide missing `gateway-nest` or `web-angular` tests nor pass mandatory static checks. A failed test or a validation that cannot run **MUST** end with a non-zero code.
+**REQ-ECO-02 — `test` of each package.** Every project under `apps/*` and `libs/*` **MUST** declare `test`; also `build` and `package` for uniformity. If no operation applies, permit only a no-op. It has the message `not defined for this package` and exit code `0`. The no-op **MUST NOT** hide missing `api-gateway` or `web-angular` tests nor pass mandatory static checks. A failed test or a validation that cannot run **MUST** end with a non-zero code.
 
 **REQ-ECO-03 — Verifiable composition and order.** `pnpm test` at the root **MUST** complete `securityCheck` first. Only then propagate the **`test` target of ALL packages** through Nx. This includes those that declare an explicit no-op. The `test` of each package **MUST** run `test:static` and then `test:dynamic` if applicable. Do not add isolated unit/integration suites. `test:static` covers lint, format and typecheck. The global security controls run at the root before the fan-out. This prevents a package task from bypassing them in CI. The root ECOs `test:static` and `test:dynamic` **MAY** allow invoking those phases directly in all packages. This is for diagnostics. The root `test:static` **MUST** run `securityCheck` first. **Do not claim that all static tests of all packages finish before any dynamic test.** This applies if Nx runs different packages in parallel. The required order is per package. `test` **MUST NOT** launch `package` nor publish releases. The `build` is an independent operation run before `test` in the CI pipeline.
 
@@ -202,7 +202,7 @@ flowchart LR
 
 **REQ-ECO-05 — Native lint per project.** `test:static` requires lint, format and types per technology. However, it **MUST NOT** force a universal ESLint. Nest 12 scaffolds **Oxlint**. Angular uses `angular-eslint` for Angular rules and templates. Rust runs **Clippy + rustfmt**. The final choice must demonstrate coverage of the real code, including Angular templates. Optional repair scripts (`lintFix`, `formatFix`) **MAY** exist, outside the read-only CI tasks. Do not create different names for the same concept per framework.
 
-**REQ-ECO-06 — `build` / `package` by graph.** `build` compiles `libs/shared-core`, `apps/web-angular`, `apps/gateway-nest`, `apps/runtime-nest` and the projects that apply. The `package` of the SEA incorporates Node binaries and Angular assets **only after the builds**. The `package` of Tauri attaches the sidecar/installer **only after the SEA**. Its installer/OS verification runs without another public name for each phase. Do not duplicate arbitrary `build:*`/`package:*` for the same steps. The release takes exclusively verified packages from the versioned SHA.
+**REQ-ECO-06 — `build` / `package` by graph.** `build` compiles `libs/shared-core`, `apps/web-angular`, `apps/api-gateway`, `apps/sea-runtime` and the projects that apply. The `package` of the SEA incorporates Node binaries and Angular assets **only after the builds**. The `package` of Tauri attaches the sidecar/installer **only after the SEA**. Its installer/OS verification runs without another public name for each phase. Do not duplicate arbitrary `build:*`/`package:*` for the same steps. The release takes exclusively verified packages from the versioned SHA.
 
 **REQ-ECO-07 — Faithful external pipeline.** GitHub Actions is limited to setup/installation, `pnpm run securityCheck`, `pnpm run build`, `pnpm run test`, `pnpm run package`, publication and artifact transfer. `securityCheck` runs before `build` and **again inside `test`** because `test` must also be safe when invoked in isolation. This deliberate repetition does not authorize reusing an obsolete audit result nor skipping the gate. The implementation **MUST** show in the README the identical CLI sequence for local and CI, and check exit codes. Versioning/release operations **MUST** be exposed as root scripts, not copy Nx or Git logic into the YAML.
 
@@ -224,8 +224,8 @@ flowchart TD
     Root["root: pnpm test"] --> Guard["global securityCheck, sequential"]
     Guard --> Nx["Nx run-many: test of EACH workspace"]
     Nx --> A["web-angular:test"]
-    Nx --> B["gateway-nest:test"]
-    Nx --> C["runtime-nest:test / other packages"]
+    Nx --> B["api-gateway:test"]
+    Nx --> C["sea-runtime:test / other packages"]
     A --> AS["test:static"] --> AD["test:dynamic - Playwright APP"]
     B --> BS["test:static"] --> BD["test:dynamic - Jest/Supertest APP"]
     C --> CS["test:static"] --> CD["test:dynamic or explicit no-op"]
@@ -283,7 +283,7 @@ flowchart LR
 
 ### 11.3 Synchronized versions and semver from the PR branch
 
-**REQ-VERSION-01.** The template uses a **lockstep product version**, Angular-packages style. Define an Nx release group `projectsRelationship: "fixed"` for the publishable internal projects. Versions of `web-angular`, `gateway-nest`, `shared-core`, `desktop` and Tauri manifests **MUST** agree in the distributed artifact. Do not require the **external dependencies** to have the same semver version. These are `@angular/*`, `@nestjs/*`, Drizzle, Zod and Tauri CLI. Their update will be done manually in the baseline. `bumpDependencies` is a future TBD automation.
+**REQ-VERSION-01.** The template uses a **lockstep product version**, Angular-packages style. Define an Nx release group `projectsRelationship: "fixed"` for the publishable internal projects. Versions of `web-angular`, `api-gateway`, `shared-core`, `desktop` and Tauri manifests **MUST** agree in the distributed artifact. Do not require the **external dependencies** to have the same semver version. These are `@angular/*`, `@nestjs/*`, Drizzle, Zod and Tauri CLI. Their update will be done manually in the baseline. `bumpDependencies` is a future TBD automation.
 
 **REQ-VERSION-02.** PR source branch convention, validated in CI:
 
@@ -457,12 +457,12 @@ flowchart LR
 | AC-10 | Cutting off the Internet does not prevent accessing the gateway, Angular nor performing local persistence/vector operations |
 | AC-11 | The host needs neither `node_modules` nor a Node installation; the installer contains **a single physical SEA** per platform even though it runs several processes |
 | AC-12 | SPA assets are updated without breaking the service worker nor serving a mix of versions |
-| AC-13 | `apps/web-angular` and `apps/gateway-nest` compile independently and do not import source code from each other |
+| AC-13 | `apps/web-angular` and `apps/api-gateway` compile independently and do not import source code from each other |
 | AC-14 | In dev, `localhost:4200` serves the SPA and forwards `/api/**` to Nest through a proxy; Nest does not serve Angular and HMR works |
-| AC-15 | `web-angular:build` and bundles of `runtime-nest`/`gateway-nest` precede **a single** SEA; Angular changes or changes in any registered service invalidate the packaging |
+| AC-15 | `web-angular:build` and bundles of `sea-runtime`/`api-gateway` precede **a single** SEA; Angular changes or changes in any registered service invalidate the packaging |
 | AC-16 | In SEA, `ServeStaticModule` serves from a physical cache materialized with a hash; restarts reuse a valid cache without extraction |
 | AC-17 | `/api/does-not-exist` does not return `index.html`; Angular routes use fallback; a missing `.js` returns 404 |
-| AC-18 | The frontend of the Tauri WebView is identical to the one available on mobile/PC from the gateway; `runtime-nest` does not host a second SPA nor a public port |
+| AC-18 | The frontend of the Tauri WebView is identical to the one available on mobile/PC from the gateway; `sea-runtime` does not host a second SPA nor a public port |
 | AC-19 | There are no isolated unit/integration suites nor `test:ut`/`test:int` scripts: `pnpm test -- --filter @ut` filters the same APP without skipping static checks |
 | AC-20 | Native E2E runs real Tauri + SEA sidecar and verifies lifecycle; WDIO instrumentation does not exist in the commercial installer |
 | AC-21 | Each platform declared supported has native/VM verification and a traceable result; passing macOS does not imply Windows/Linux |
@@ -472,7 +472,7 @@ flowchart LR
 | AC-25 | SemVer lockstep synchronizes Angular, Nest, shared-core, Tauri and the distributed version; branch naming classifies major/minor/fix |
 | AC-26 | PR runs full CI on Windows/Linux/macOS; a valid merge generates a new release commit/PR, not an amend |
 | AC-27 | GitHub Release points to the versioned SHA and attaches verified installers and checksums; safe and idempotent failure |
-| AC-28 | Running SEA without arguments starts `runtime-nest` as Nest Standalone; only `gateway-nest` is initially enabled |
+| AC-28 | Running SEA without arguments starts `sea-runtime` as Nest Standalone; only `api-gateway` is initially enabled |
 | AC-29 | Supervisor invokes the same `process.execPath` in gateway role; unknown roles are rejected; there are no duplicated Node binaries |
 | AC-30 | Closing the product requests `app.close()` via IPC to the children and checks absence of orphans on Windows, macOS and Linux |
 | AC-31 | Future addition of `apps/auth-ms` requires only registering its bootstrap, dependencies and Nx target, without adding a Tauri sidecar |

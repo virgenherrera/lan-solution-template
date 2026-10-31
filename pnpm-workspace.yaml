@@ -1,7 +1,16 @@
 allowBuilds:
+  esbuild: true
   nx: true
+packages:
+  - apps/*
+  - libs/*
 catalog:
+  '@rspack/core': 2.3.0
   nx: 24.0.2
+  tsconfig-paths-webpack-plugin: 4.2.0
+  typescript: 6.0.3
+  webpack-node-externals: 3.0.0
+  zod: 4.6.7
 minimumReleaseAge: 1440
 savePrefix: ''
 strictDepBuilds: true

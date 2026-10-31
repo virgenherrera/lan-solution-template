@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "nx run-many -t test --exclude=lan-solution-template && echo 'test: not defined for this package'",
-    "build": "nx run-many -t build --exclude=lan-solution-template && echo 'build: not defined for this package'",
-    "package": "nx run-many -t package --exclude=lan-solution-template && echo 'package: not defined for this package'"
+    "test": "nx run-many -t test --exclude=lan-solution-template",
+    "build": "nx run-many -t build --exclude=lan-solution-template",
+    "package": "nx run-many -t package --exclude=lan-solution-template"
   },
   "keywords": [],
   "author": "",
@@ -24,7 +24,11 @@
     "node": ">=26.13.0 <27"
   },
   "devDependencies": {
-    "nx": "24.0.2"
+    "@rspack/core": "catalog:",
+    "nx": "24.0.2",
+    "tsconfig-paths-webpack-plugin": "catalog:",
+    "typescript": "catalog:",
+    "webpack-node-externals": "catalog:"
   },
   "nx": {}
 }

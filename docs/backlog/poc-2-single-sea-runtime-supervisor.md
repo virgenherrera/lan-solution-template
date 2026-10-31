@@ -48,8 +48,9 @@ updated: 2026-10-31
 Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor).
 
 - Prove one SEA per platform. POC-1c already packages a dummy Nest app as a SEA with a minimal `tools/scripts/compile-sea.ts`; this POC extends it.
-- The SEA bundles the dispatcher, runtime-nest and gateway-nest.
+- The SEA bundles the dispatcher, sea-runtime and api-gateway.
 - It relaunches itself by role under a supervisor.
+- POC-1c selects the role with a `--service <name>` argument in the generated entry. POC-2 replaces that argument selection with the Zod-validated dispatcher.
 
 | No-gos |
 |---|
@@ -68,7 +69,6 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-sup
 Pitch Acceptance criteria line ([PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor)):
 
 - [REQ-RUNTIME-01](../requirements/09-desktop-tauri.md)
-- [REQ-RUNTIME-02](../requirements/09-desktop-tauri.md)
 - [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md)
 - [REQ-RUNTIME-04](../requirements/09-desktop-tauri.md)
 - [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md)
@@ -104,13 +104,14 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-sup
 
 [Back to navigation](#navigation)
 
-- [ ] Extend `tools/scripts/compile-sea.ts` (the minimal script is written in [POC-1c](poc-1c-sea-build.md)) to bundle the dispatcher, runtime-nest and gateway-nest. Keep native `node --build-sea`, no postject. Source: [REQ-SEA-01](../requirements/10-node-sea-distribution.md), [REQ-SEA-02](../requirements/10-node-sea-distribution.md), [REQ-SEA-03](../requirements/10-node-sea-distribution.md), [AC-11](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
+- [ ] Extend the assembler `tools/scripts/compile-sea.ts` (written in [POC-1c](poc-1c-sea-build.md); it takes its services from the workspace dependencies of `sea-runtime`) to bundle the dispatcher with them. Keep native `node --build-sea`, no postject.
+- [ ] Invalidate the build when a registered service is added or changed. This clause of REQ-BUILD-04 moved here from POC-1c, where it is not built. Source: [REQ-BUILD-04](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor)) Source: [REQ-SEA-01](../requirements/10-node-sea-distribution.md), [REQ-SEA-02](../requirements/10-node-sea-distribution.md), [REQ-SEA-03](../requirements/10-node-sea-distribution.md), [AC-11](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
 - [ ] Build a Zod-validated dispatcher and a closed service registry; unknown roles are rejected. Source: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md), [AC-29](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
-- [ ] `runtime-nest` uses `createApplicationContext(RuntimeModule)` with no HTTP listener; running the SEA without arguments starts it. Source: [REQ-RUNTIME-02](../requirements/09-desktop-tauri.md), [AC-28](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
+- [x] Built in [POC-1b](poc-1b-nest-apps.md): `sea-runtime` uses `createApplicationContext(RuntimeModule)` with no HTTP listener. Source: [REQ-RUNTIME-02](../requirements/09-desktop-tauri.md). The SEA entry without arguments (supervisor mode) stays here: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md)
 - [ ] Design the closed service registry. A future `apps/auth-ms` needs only its bootstrap, dependencies and Nx target. No Tauri sidecar is added. This is registry design only; no `auth-ms` is built. Source: [AC-31](../requirements/11-nx-quality-testing.md), [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
-- [ ] The supervisor respawns `process.execPath --service gateway-nest`, never `node` from PATH. Source: [REQ-RUNTIME-01](../requirements/09-desktop-tauri.md), [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md), [AC-29](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
-- [ ] Extend the `gateway-nest` of [POC-1b](poc-1b-nest-apps.md) (NodeAdapter, dummy health endpoint) to an `/api` health endpoint under the supervisor. Source: [REQ-NET-01](../requirements/06-web-gateway-https-pwa.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
-- [ ] Shutdown: stdio IPC, then a timeout, then a force-kill of descendants. No orphans remain on the host OS. Source: [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md), [AC-30](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
+- [ ] The supervisor respawns `process.execPath --service <id>` for each registered service, never `node` from PATH. POC-1c spawns each child once with `process.execPath --service <id>`; respawn is open here. Source: [REQ-RUNTIME-01](../requirements/09-desktop-tauri.md), [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md), [AC-29](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
+- [ ] Extend the `api-gateway` of [POC-1b](poc-1b-nest-apps.md) (NodeAdapter, dummy health endpoint) to an `/api` health endpoint under the supervisor. Source: [REQ-NET-01](../requirements/06-web-gateway-https-pwa.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
+- [ ] Shutdown: stdio IPC, then a timeout, then a force-kill of descendants. No orphans remain on the host OS. POC-1c stops the children on SIGINT and SIGTERM with a signal only, no IPC and no timeout; SIGTERM observed, SIGINT not. Source: [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md), [AC-30](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
 - [ ] Add a readiness timeout, per-service logs and a bounded restart (values are proposed in [OQ11](../roadmap/PROPOSAL.md#open-questions)). Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md), [OQ11](../roadmap/PROPOSAL.md#open-questions) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
 - [ ] Run the supervisor under systemd and under launchd. Verify the initial cwd of the gateway service process. Today this is not verified. Expected output: the cwd value per launcher, recorded in `POC-02-Result`. Root resolution must not use the cwd as the anchor. Source: [decision 11](../roadmap/PROPOSAL.md#decision-log), [OQ1](../roadmap/PROPOSAL.md#open-questions). No REQ or AC id. ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
 - [ ] Add a real-binary smoke test. Source: [REQ-RUNTIME-08](../requirements/09-desktop-tauri.md), [REQ-TEST-07](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))

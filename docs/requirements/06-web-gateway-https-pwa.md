@@ -51,7 +51,7 @@ This page covers the development proxy, SEA serving, LAN TLS and PWA caching. Ne
 
 ### 6.1 Development: independent apps + proxy (DX with HMR)
 
-- **REQ-DEV-01.** `web-angular` **MUST** start its own `ng serve` (default `127.0.0.1:4200`) with HMR and incremental compilation. `gateway-nest` **MUST** start independently on its API port (default HTTPS `127.0.0.1:8443`).
+- **REQ-DEV-01.** `web-angular` **MUST** start its own `ng serve` (default `127.0.0.1:4200`) with HMR and incremental compilation. `api-gateway` **MUST** start independently on its API port (default HTTPS `127.0.0.1:8443`).
 - **REQ-DEV-02.** Configure the **`proxyConfig` of the Angular dev-server** (`@angular/build:dev-server`, Vite-based). Use it to forward **`/api/**`** to the Nest gateway **without changing origin in the browser**. The proxy **MUST NOT** redirect SPA routes or HMR to Nest.
 - **REQ-DEV-03.** The Angular application **MUST** call relative routes (`/api/...`) in development and production. It **MUST NOT** contain hardcoded LAN IPs/hosts or different API URLs in each component.
 - **REQ-DEV-04.** For TLS development, the local CA/certificate **MUST** be trusted by the proxy process; `secure: false` **MUST NOT** be used as the template's final configuration. If a temporary development unlock exists, it must be explicitly documented as **insecure and not distributable**.
