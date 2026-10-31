@@ -1,4 +1,4 @@
-docs[36]:
+docs[37]:
   - doc: docs/architecture/overview.md
     title: Architecture overview
     type: architecture
@@ -287,6 +287,15 @@ docs[36]:
     status: current
     updated: 2026-10-31
     refs[10]: REQ-ECO-02,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-06,REQ-STACK-01,REQ-STACK-02,REQ-STACK-04,REQ-STACK-06,REQ-STACK-08
+  - doc: docs/results/POC-01c-Result.md
+    title: POC-1c Result
+    type: backlog
+    summary: "Result of POC-1c: api-gateway packaged as one native Node SEA through an Nx package target, verified from a binary with no node on PATH."
+    ids: []
+    related[2]: docs/backlog/poc-1c-sea-build.md,docs/results/POC-01b-Result.md
+    status: current
+    updated: 2026-10-31
+    refs: []
   - doc: docs/roadmap/PROPOSAL.md
     title: "Roadmap Proposal: lan-solution-template (SRS v1.6)"
     type: roadmap

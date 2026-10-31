@@ -36,7 +36,7 @@ updated: 2026-10-31
 | Slice | 1c of 1a to 1e; umbrella [POC-1](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton) |
 | Appetite | ~2 days, ASSUMPTION |
 | Depends on | POC-1b |
-| Branch | `minor/poc-01c-sea-build` |
+| Branch | `minor/poc-01b-nest` (human decision: POC-1c delivered on the POC-1b branch and PR, not `minor/poc-01c-sea-build`) |
 | Result page | `docs/results/POC-01c-Result.md` |
 | Requirements | 1 REQ id |
 | Acceptance criteria | none cited by the tasks of this slice |
@@ -91,10 +91,10 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-wo
 
 [Back to navigation](#navigation)
 
-- [ ] Write the minimal `tools/scripts/compile-sea.ts` with native `node --build-sea`, no postject. It packages the dummy `api-gateway` app. The SEA requirements are in [10-node-sea-distribution](../requirements/10-node-sea-distribution.md); no REQ id is added to this slice because the old single POC-1 epic cites none here. Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
-- [ ] Declare the assembler `package` target. It invokes `tools/scripts/compile-sea.ts`. The target is invalidated when a registered service changes. The minimal script is written in this slice (the old single POC-1 epic left it to POC-2); POC-2 extends it. Source: [REQ-BUILD-04](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton))
-- [ ] Write `docs/results/POC-01c-Result.md` with the build command, the binary size, the observed run and the list of manual edits (files not produced by a CLI). Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
-- [ ] Run and verify. Run the assembler `package` target (name not verified), for example `pnpm nx package <assembler project>`. Expected: exit 0 and one binary in the output folder. Start the binary and run `curl -i http://localhost:<port>/<health path>`: expected, `HTTP/1.1 200` from the binary, not from `node`. Run the binary with a PATH that has no `node`: expected, it still starts (not verified before this check). Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
+- [x] Write the minimal `tools/scripts/compile-sea.ts` with native `node --build-sea`, no postject. It packages the dummy `api-gateway` app. The SEA requirements are in [10-node-sea-distribution](../requirements/10-node-sea-distribution.md); no REQ id is added to this slice because the old single POC-1 epic cites none here. Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
+- [ ] Declare the assembler `package` target. Observed in 1c: the target exists on `api-gateway` and runs `build` first. Not ticked: the invalidation on a registered-service change is not implemented or verified in this slice. It invokes `tools/scripts/compile-sea.ts`. The target is invalidated when a registered service changes. The minimal script is written in this slice (the old single POC-1 epic left it to POC-2); POC-2 extends it. Source: [REQ-BUILD-04](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton))
+- [x] Write `docs/results/POC-01c-Result.md` with the build command, the binary size, the observed run and the list of manual edits (files not produced by a CLI). Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
+- [x] Run and verify. Run the assembler `package` target (name not verified), for example `pnpm nx package <assembler project>`. Expected: exit 0 and one binary in the output folder. Start the binary and run `curl -i http://localhost:<port>/<health path>`: expected, `HTTP/1.1 200` from the binary, not from `node`. Run the binary with a PATH that has no `node`: expected, it still starts (not verified before this check). Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
 
 ---
 
