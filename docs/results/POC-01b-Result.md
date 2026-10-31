@@ -16,9 +16,9 @@ Slice 1b of POC-1, branch `minor/poc-01b-nest`. Backlog: [POC-1b](../backlog/poc
 ## Summary
 
 - `apps/api-gateway` and `apps/sea-runtime` generated with `@nestjs/cli@12.0.11 new`. `libs/shared-core` created with `pnpm init` and `tsc --init`.
-- Express removed from both apps. Both use `NodeAdapter` from `@nestjs/platform-node@12.3.2`.
+- Express removed from both apps. `api-gateway` uses `NodeAdapter` from `@nestjs/platform-node@12.3.2`. `sea-runtime` no longer depends on it (see the standalone change below).
 - `api-gateway` answers `GET /health` with HTTP 200 and `{"status":"ok"}` in dev. The endpoint came from `nest generate controller`.
-- `sea-runtime` starts in dev. Its standalone bootstrap is deferred to POC-2 (REQ-RUNTIME-02).
+- `sea-runtime` is a standalone Nest application context: `NestFactory.createApplicationContext(RuntimeModule)`, no HTTP listener, no port config (REQ-RUNTIME-02, moved here from POC-2). It exits with code 0 by itself after init (see Standalone change).
 - `pnpm nx build` exits 0 for all three projects. No app imports the other.
 - Every `^` or `~` range and every `express`/`fastify` package was removed from the manifests checked.
 - Deviations: see Deviations.
@@ -90,6 +90,18 @@ Run from the repository root unless noted. Exit codes come from each command its
 | 40 | `pnpm --dir apps/api-gateway start:dev` (background), `curl -i http://127.0.0.1:3000/health` | `HTTP/1.1 200 OK`, body `{"status":"ok"}` |
 | 41 | `pnpm --dir apps/sea-runtime start:dev` (background) | `Nest application successfully started` on `127.0.0.1:3001`, no error line |
 | 42 | kill the listening PIDs with `lsof -t`, `lsof -nP -iTCP:3000 -iTCP:3001 -sTCP:LISTEN` | exit 1, no output: both ports free |
+| 43 | `git rm` of `apps/sea-runtime/src/{app.controller,app.service,app.module,config.module,server-config}.ts` | exit 0 (row 14) |
+| 44 | `pnpm exec nest generate module runtime --no-spec` in `apps/sea-runtime` | exit 0: `CREATE src/runtime/runtime.module.ts` (`@Module({})`) |
+| 45 | Manual edit `apps/sea-runtime/src/main.ts` (row 13) | n/a |
+| 46 | `pnpm --filter sea-runtime remove @nestjs/platform-node` (from repo root) | exit 0; `package.json` and `pnpm-lock.yaml` drop that one dependency, no other change |
+| 47 | `pnpm install --frozen-lockfile` | exit 0 |
+| 48 | `rg -n 'NodeAdapter\|NestFactory.create\(\|listen\(\|platform-node\|SERVER_CONFIG\|server-config' apps/sea-runtime` | exit 1, no match |
+| 49 | `NX_DAEMON=false pnpm nx build sea-runtime`, `NX_DAEMON=false pnpm nx build api-gateway` | each exit 0; `build` runs `nest build` |
+| 50 | `pnpm run start:dev` in `apps/sea-runtime` (background; script `nest start --watch`) | `Found 0 errors`, `RuntimeModule dependencies initialized`, then `The application exited with code 0. Waiting for file changes`. `lsof -nP -iTCP -sTCP:LISTEN` shows no listener from this run |
+| 51 | kill the watcher tree (`nest start --watch`, its `sh` wrapper and the `pnpm` parent) | processes gone |
+| 52 | `pnpm run start:dev` in `apps/api-gateway` (background); `curl -i http://127.0.0.1:3000/health` | `Nest application successfully started`; `HTTP/1.1 200 OK`, body `{"status":"ok"}` |
+| 53 | kill the gateway watcher tree; `lsof -nP -iTCP:3000 -sTCP:LISTEN` | exit 1, no output: port 3000 free |
+| 54 | `NX_DAEMON=false pnpm nx reset` | exit 0 |
 
 The root `build`, `test` and `package` scripts now run real `nx run-many` tasks for the three projects. The no-op message prints after success, as predicted in 1a. The message is still printed, so it does not tell the reader whether a task ran. Revisit before POC-2.
 
@@ -102,15 +114,17 @@ Each edit has no CLI route. Every other file was written by a CLI or by `pnpm`.
 | 1 | `pnpm-workspace.yaml` | Added `packages:` with `- apps/*` and `- libs/*` | No CLI writes the workspace package list. `pnpm add -w` does not add it |
 | 2 | `.gitignore` | Appended `dist/` and `*.tsbuildinfo` | No CLI writes these. `nest build` writes `dist/` and `tsconfig.build.tsbuildinfo` in each app |
 | 3 | `apps/api-gateway/src/main.ts` | Import `NodeAdapter` from `@nestjs/platform-node`; `NestFactory.create(AppModule, new NodeAdapter())` | `nest new` has no flag for the adapter. REQ-STACK-04 forbids Express |
-| 4 | `apps/sea-runtime/src/main.ts` | Same as edit 3 | Express was removed from `sea-runtime` too. Without the adapter the app would fail at start. The standalone bootstrap stays deferred |
+| 4 | `apps/sea-runtime/src/main.ts` | Same as edit 3 | Express was removed from `sea-runtime` too. Superseded by row 13 (the file no longer uses `NodeAdapter`) |
 | 5 | `apps/api-gateway/src/health.controller.ts` | Added `Get` to the import; `@Get()` with `check(): { status: string }` returning `{ status: 'ok' }` | `nest generate controller` creates an empty class only. The handler body has no CLI route |
 | 6 | `libs/shared-core/src/index.ts` | Created with `export const sharedCoreName = 'shared-core';` | `tsc --init` creates no source file. This is the minimum export |
 | 7 | Deleted `apps/api-gateway/vitest.config.ts`, `apps/api-gateway/vitest.config.e2e.ts`, `apps/api-gateway/AGENTS.md`, and the same three in `apps/sea-runtime` | `rm` | Test configs and an app-level AGENTS.md are forbidden in this slice |
 | 8 | Deleted `apps/api-gateway/README.md` and `apps/sea-runtime/README.md` | `git rm` | Nest boilerplate README. The docs check (`docs/standards/README.md`) requires a `toon-meta` block on every tracked `.md` except root `AGENTS.md` and `README.md`, and the regeneration command would fail on the app READMEs |
-| 9 | `apps/*/src/server-config.ts` body: `zod` schema `serverConfigSchema` (`port` int 1–65535, default 3000 for `api-gateway`, 3001 for `sea-runtime`; `hostname` `z.literal('127.0.0.1')`, default `127.0.0.1`), `SERVER_CONFIG` symbol token, `ServerConfig` type, `parseServerConfig(input)` returning `Object.freeze(schema.parse(input))` | `nest generate provider` creates an empty `@Injectable()` class named `ServerConfig` | The generator has no schema body. The class was replaced by a schema and a frozen type, so `ServerConfig` is no longer a class |
-| 10 | `apps/*/src/config.module.ts` body: provider `{ provide: SERVER_CONFIG, useFactory: () => parseServerConfig({}) }`, exported | `nest generate module` creates an empty `@Module({})` | The generator has no provider. Zero input for now, see Deviations |
-| 11 | `apps/*/src/main.ts`: `process.env.PORT ?? 3000` replaced by `app.get<ServerConfig>(SERVER_CONFIG)` and `app.listen(config.port, config.hostname)` | Rows 3 and 4 of this table list the bootstrap; the port and hostname now come from the frozen config | No env read in app code |
+| 9 | `apps/*/src/server-config.ts` body (`sea-runtime` copy removed, row 14): `zod` schema `serverConfigSchema` (`port` int 1–65535, default 3000 for `api-gateway`, 3001 for `sea-runtime`; `hostname` `z.literal('127.0.0.1')`, default `127.0.0.1`), `SERVER_CONFIG` symbol token, `ServerConfig` type, `parseServerConfig(input)` returning `Object.freeze(schema.parse(input))` | `nest generate provider` creates an empty `@Injectable()` class named `ServerConfig` | The generator has no schema body. The class was replaced by a schema and a frozen type, so `ServerConfig` is no longer a class |
+| 10 | `apps/*/src/config.module.ts` body (`sea-runtime` copy removed, row 14): provider `{ provide: SERVER_CONFIG, useFactory: () => parseServerConfig({}) }`, exported | `nest generate module` creates an empty `@Module({})` | The generator has no provider. Zero input for now, see Deviations |
+| 11 | `apps/*/src/main.ts` (`api-gateway` only; `sea-runtime` main replaced in row 13): `process.env.PORT ?? 3000` replaced by `app.get<ServerConfig>(SERVER_CONFIG)` and `app.listen(config.port, config.hostname)` | Rows 3 and 4 of this table list the bootstrap; the port and hostname now come from the frozen config | No env read in app code |
 | 12 | `apps/*/src/app.module.ts`: `ServerConfig` removed from `providers`; `ConfigModule` kept in `imports` | The CLI added the provider to `AppModule`, not to `ConfigModule` | The token is provided by `ConfigModule` only |
+| 13 | `apps/sea-runtime/src/main.ts` body: `await NestFactory.createApplicationContext(RuntimeModule);`, `RuntimeModule` imported from `./runtime/runtime.module.js` | `nest generate` has no standalone bootstrap body. `NodeAdapter` and `listen` are removed because `sea-runtime` must expose no port |
+| 14 | `git rm` of `apps/sea-runtime/src/app.controller.ts`, `app.service.ts`, `app.module.ts`, `config.module.ts`, `server-config.ts` | No CLI removes generated files. These files only served the HTTP app and the port config |
 
 Not manual: the `test` script and the removed `test:*` scripts (`pnpm pkg`), the `build` script and `main`/`types` in `libs/shared-core/package.json` (`pnpm pkg set`), the health controller route file (`nest generate`), and the `app.module.ts` registration (`nest generate`).
 
@@ -119,6 +133,8 @@ Not manual: the `test` script and the removed `test:*` scripts (`pnpm pkg`), the
 - **Express removal.** Removed by `pnpm remove` and replaced by `pnpm add -E`. Both changed `package.json` and `pnpm-lock.yaml` in the same first commit as the generated files. The commit split differs from the brief: commit (a) holds generation, manifests and workspace wiring, commit (b) holds the `main.ts` adapter edit and the health endpoint.
 - **TypeScript version.** The baseline gives no TypeScript pin. `6.0.3` was chosen because it is the newest 6.x line already requested by `@nestjs/cli` and its schematics (`^6.0.2`), it is older than 24 h, and it avoids the TypeScript 7 major. Not verified against the baseline; open for a decision.
 - **Test tooling kept.** `vitest`, `vite`, `@vitest/coverage-v8`, `supertest`, `@types/supertest`, `@nestjs/testing` remain as devDependencies. `tsconfig.json` of each app lists `vitest/globals` in `types`, which fails to compile if the package is removed. The configs and spec files are gone; no test was added. No test script runs anything.
+- **Standalone scope.** `sea-runtime` config and listener were removed in the standalone change, which supersedes the Configuration row above for `sea-runtime`. `api-gateway` keeps its config.
+- **Orphan watchers.** Two `nest start --watch` processes with parent PID 1 from this repository were found before the checks (`apps/sea-runtime`, PID 33234; `apps/api-gateway`, PID 33206). Both were killed. Their origin was not verified.
 - **Test scripts.** `test` is now the no-op message (`test: not defined for this package`) with exit 0 (REQ-ECO-02). `test:watch`, `test:cov`, `test:debug`, `test:e2e` were deleted because they called removed configs.
 - **`@nestjs/mau`.** Added by `nest new` as a devDependency. Not reviewed; not removed. Not verified what it does.
 - **Projects list.** `pnpm nx show projects` also lists the root project `lan-solution-template`, as in 1a. The brief expected three names.
@@ -130,12 +146,19 @@ Not manual: the `test` script and the removed `test:*` scripts (`pnpm pkg`), the
 - **Lint.** `lint` script was not run. The generated script runs `oxlint --type-aware src/ test/` and `test/` does not exist.
 - **Nest version pin.** The CLI `12.0.11` and the core `12.3.2` come from different releases of the same line. `@nestjs/schematics` `12.0.12` is what the CLI resolved. Not verified that the CLI generates correctly for core `12.3.2` beyond the dev run.
 
+## Standalone change (REQ-RUNTIME-02)
+
+- `apps/sea-runtime/src/main.ts`: `await NestFactory.createApplicationContext(RuntimeModule);`. `RuntimeModule` is in `src/runtime/runtime.module.ts`, generated by `nest generate module`.
+- Removed from `sea-runtime`: `AppModule`, `AppController`, `AppService`, `ConfigModule`, `server-config.ts` (port and hostname config), and the `@nestjs/platform-node` dependency.
+- Lifecycle: no `OnModuleInit` and no `enableShutdownHooks` were added. Nothing keeps the event loop alive, so the dev process exits with code 0 after init. POC-2 must add a keep-alive or the child-process protocol.
+
 ## Deferred
 
-- **REQ-RUNTIME-02 standalone bootstrap** (`createApplicationContext`) for `sea-runtime`: deferred to POC-2. Not implemented here. `sea-runtime` keeps the HTTP bootstrap it was generated with, adapted to `NodeAdapter`.
+- Supervisor, dispatcher, closed registry, respawn, shutdown and readiness (REQ-RUNTIME-01, REQ-RUNTIME-03 to REQ-RUNTIME-06): POC-2. Not implemented here.
 
 ## Not verified
 
+- Whether `sea-runtime` must stay alive under the supervisor (POC-2).
 - Compatibility of Nest, Oxlint, Vitest and Prettier with Node 26 beyond the dev runs in this slice.
 - Behaviour of `pnpm nx build` cache across machines.
 - Full `lint` and `format` scripts.

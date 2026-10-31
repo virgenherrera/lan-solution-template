@@ -37,7 +37,7 @@ updated: 2026-10-31
 | Depends on | POC-1 (slices 1a to 1e) |
 | Branch | `minor/poc-02-sea-supervisor` |
 | Requirements | 13 REQ ids |
-| Acceptance criteria | AC-11, AC-28, AC-29, AC-30, AC-31 |
+| Acceptance criteria | AC-11, AC-29, AC-30, AC-31 |
 
 ---
 
@@ -68,7 +68,6 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-sup
 Pitch Acceptance criteria line ([PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor)):
 
 - [REQ-RUNTIME-01](../requirements/09-desktop-tauri.md)
-- [REQ-RUNTIME-02](../requirements/09-desktop-tauri.md)
 - [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md)
 - [REQ-RUNTIME-04](../requirements/09-desktop-tauri.md)
 - [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md)
@@ -106,7 +105,7 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-sup
 
 - [ ] Extend `tools/scripts/compile-sea.ts` (the minimal script is written in [POC-1c](poc-1c-sea-build.md)) to bundle the dispatcher, sea-runtime and api-gateway. Keep native `node --build-sea`, no postject. Source: [REQ-SEA-01](../requirements/10-node-sea-distribution.md), [REQ-SEA-02](../requirements/10-node-sea-distribution.md), [REQ-SEA-03](../requirements/10-node-sea-distribution.md), [AC-11](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
 - [ ] Build a Zod-validated dispatcher and a closed service registry; unknown roles are rejected. Source: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md), [AC-29](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
-- [ ] `sea-runtime` uses `createApplicationContext(RuntimeModule)` with no HTTP listener; running the SEA without arguments starts it. Source: [REQ-RUNTIME-02](../requirements/09-desktop-tauri.md), [AC-28](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
+- [x] Built in [POC-1b](poc-1b-nest-apps.md): `sea-runtime` uses `createApplicationContext(RuntimeModule)` with no HTTP listener. Source: [REQ-RUNTIME-02](../requirements/09-desktop-tauri.md), [AC-28](../requirements/11-nx-quality-testing.md). The SEA entry without arguments (supervisor mode) stays here: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md)
 - [ ] Design the closed service registry. A future `apps/auth-ms` needs only its bootstrap, dependencies and Nx target. No Tauri sidecar is added. This is registry design only; no `auth-ms` is built. Source: [AC-31](../requirements/11-nx-quality-testing.md), [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
 - [ ] The supervisor respawns `process.execPath --service api-gateway`, never `node` from PATH. Source: [REQ-RUNTIME-01](../requirements/09-desktop-tauri.md), [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md), [AC-29](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))
 - [ ] Extend the `api-gateway` of [POC-1b](poc-1b-nest-apps.md) (NodeAdapter, dummy health endpoint) to an `/api` health endpoint under the supervisor. Source: [REQ-NET-01](../requirements/06-web-gateway-https-pwa.md) ([pitch](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor))

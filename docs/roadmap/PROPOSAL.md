@@ -274,7 +274,7 @@ POC-1 stays the umbrella id. Slices run in order; each depends on the previous o
 | Slice | Scope | Branch | Appetite (ASSUMPTION) | Depends on |
 |---|---|---|---|---|
 | 1a | Monorepo init: version table, pnpm workspace and catalog, supply-chain settings, Nx local, root no-op scripts, one Node engine pin, reference study | `minor/poc-01a-monorepo` | ~1 day | none |
-| 1b | Nest apps: `api-gateway`, `sea-runtime`, `shared-core` from the Nest CLI; dummy health endpoint | `minor/poc-01b-nest` | ~1 day | 1a |
+| 1b | Nest apps: `api-gateway`, `sea-runtime`, `shared-core` from the Nest CLI; dummy health endpoint; `sea-runtime` as a standalone `createApplicationContext(RuntimeModule)` with no listener (REQ-RUNTIME-02) | `minor/poc-01b-nest` | ~1 day | 1a |
 | 1c | SEA build: minimal native `node --build-sea` script and assembler `package` target; the dummy Nest app runs from the binary | `minor/poc-01c-sea-build` | ~2 days | 1b |
 | 1d | Angular and link: `web-angular` from the Angular CLI; `api-gateway` serves a dummy page over plain HTTP in dev and from the SEA; Nx build order and post-package check | `minor/poc-01d-angular-link` | ~1 day | 1c |
 | 1e | Hardening and desktop skeleton: `desktop` from the Tauri CLI, `securityCheck`, test filter stub, OS matrix, root sequence, tags, consolidated result | `minor/poc-01e-hardening` | ~1 day | 1d |
@@ -290,7 +290,7 @@ Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-
 - **Solution sketch**:
   - Extend `tools/scripts/compile-sea.ts` (the minimal script is written in POC-1c) to bundle the dispatcher, sea-runtime and api-gateway. Native `node --build-sea`, no postject (REQ-SEA-01, REQ-SEA-02, REQ-SEA-03).
   - Build a Zod-validated dispatcher and a closed service registry (REQ-RUNTIME-03).
-  - `sea-runtime` uses `createApplicationContext(RuntimeModule)` and has no HTTP listener (REQ-RUNTIME-02, FR-45).
+  - `sea-runtime` uses `createApplicationContext(RuntimeModule)` and has no HTTP listener: built in POC-1b (REQ-RUNTIME-02, FR-45).
   - The supervisor respawns `process.execPath --service api-gateway`. It never uses `node` from PATH.
   - Extend the POC-1b `api-gateway` (NodeAdapter, dummy health endpoint) to an `/api` health endpoint under the supervisor (REQ-NET-01).
   - Shutdown: stdio IPC, then a timeout, then a force-kill of descendants. No orphans (REQ-RUNTIME-06).
@@ -599,7 +599,7 @@ Global, from the SRS:
 | 6 | Dev, web packaging, LAN gateway, HTTPS, PWA (REQ-DEV, REQ-NET, REQ-TLS, REQ-PWA) | POC-4 |
 | 7 | Default security (REQ-SEC-01..06) | POC-7, POC-5 (REQ-SEC-05), POC-3 (REQ-SEC-06) |
 | 8 | Angular web (REQ-WEB-01..04) | POC-4 (REQ-WEB-01), POC-7 (REQ-WEB-02..04) |
-| 9 | Desktop Tauri and processes (REQ-DESK, REQ-RUNTIME) | POC-5, POC-2 |
+| 9 | Desktop Tauri and processes (REQ-DESK, REQ-RUNTIME) | POC-5, POC-2 (REQ-RUNTIME-02 in POC-1b) |
 | 10 | Node SEA and distribution (REQ-SEA-01..06) | POC-2, POC-4, POC-8 (REQ-SEA-06) |
 | 11 | Nx, quality, tests. Sections: 11.0 build/test/security, 11.1 ECO, 11.2 refs/deps, 11.3 versioning, 11.4 CI/CD, 11.5 acceptance, 11.6 portability | POC-1 (ECO, REQ-DEPS, security gate, REQ-BUILD-02..05, REQ-TEST-02, REQ-REF-01). POC-8 (11.3, 11.6, REQ-TEST-09/10). POC-9 (11.4, 11.4.1). POC-2..7 (REQ-TEST-04..08 per feature) |
 | 12 | Delivery instructions (D-01..D-10, NFR-TRUTH-01, NFR-DOC-01, NFR-VER-01) | POC-1, every POC result page |
@@ -618,7 +618,7 @@ Acceptance criteria coverage:
 | AC-07 | POC-3 | AC-25 | POC-8 |
 | AC-08 | POC-3 | AC-26 | POC-9 |
 | AC-09 | Backlog (POC-6) | AC-27 | POC-9 |
-| AC-10 | POC-3 | AC-28 | POC-2 |
+| AC-10 | POC-3 | AC-28 | POC-1b |
 | AC-11 | POC-2 | AC-29 | POC-2 |
 | AC-12 | POC-4 | AC-30 | POC-2, POC-5 |
 | AC-13 | POC-1 | AC-31 | POC-2 (registry design only) |
