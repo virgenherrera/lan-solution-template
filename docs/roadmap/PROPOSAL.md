@@ -207,7 +207,7 @@ flowchart LR
 
 | POC | Title | Appetite | Batch | Depends on | Branch |
 |---|---|---|---|---|---|
-| POC-1 | Toolchain viability + OS matrix + workspace skeleton | 1 week | small | none | `chore/poc-01-toolchain` |
+| POC-1 | Toolchain viability + OS matrix + workspace skeleton, delivered as slices 1a to 1e (see [POC-1 Slices](#poc-1-slices)) | 1 week (slice appetites are ASSUMPTION) | small | none | `minor/poc-01a-monorepo`, `minor/poc-01b-nest`, `minor/poc-01c-sea-build`, `minor/poc-01d-angular-link`, `minor/poc-01e-hardening` |
 | POC-2 | Single SEA + runtime supervisor | 2 weeks | big | POC-1 | `minor/poc-02-sea-supervisor` |
 | POC-3 | Config (`config.json`) + SQLite vector inside SEA | 2 weeks | big | POC-2 | `minor/poc-03-sqlite-vector` |
 | POC-4 | HTTPS gateway (dev-certs-style TLS) serving Angular PWA + dev loop | 2 weeks | big | POC-2 (POC-3 not blocking) | `minor/poc-04-https-spa` |
@@ -218,6 +218,8 @@ flowchart LR
 | POC-9 | CI/CD GitHub Actions + Releases | 2 weeks | big | POC-8 | HOLD: `chore/poc-09-ci-cd` |
 
 ASSUMPTION: the appetites are estimates for one developer plus AI agents. The betting table may change them.
+
+POC-1 stays one bet of 1 week. It is delivered as five sequential slices, each with its own branch and result page (see [POC-1 Slices](#poc-1-slices)). The slice appetites are ASSUMPTION and sum to about 6 working days (1 + 1 + 2 + 1 + 1), roughly one day over the 1-week bet if a week is 5 working days. The 1-week total is not changed here; the betting table decides.
 
 Ordering rationale:
 
@@ -240,8 +242,9 @@ Ordering rationale:
 | Node | pnpm | NestJS | Angular | Zod | drizzle-orm | Tauri | sqlite-vector |
 |---|---|---|---|---|---|---|---|
 | >=26.13 <27 | >=12.16.1 | 12.3.2 | >=22.2.5 | >=4.6.7 | 1.0.0-rc.5 | >=2.12.5 | 1.1.2 |
-- **Appetite**: 1 week, small batch.
+- **Appetite**: 1 week, small batch. Delivered as five slices (see [POC-1 Slices](#poc-1-slices)).
 - **Solution sketch**:
+  - Every project file is produced by its official CLI through `pnpm dlx` (`nx`, `@nestjs/cli`, `@angular/cli`, `@tauri-apps/cli`), never hand-written. A manual edit is allowed only where no CLI exists and is listed in the result page.
   - Verify that every pinned version exists and works with the others (NFR-15, NFR-VER-01). Pin Nx after discovery (NFR-08, REQ-BUILD-01).
   - Create a pnpm workspace with a catalog. `savePrefix` is empty. Versions are exact. `pnpm-lock.yaml` is committed (NFR-11, NFR-12).
   - Set `minimumReleaseAge` 1440, `allowBuilds`, and `strictDepBuilds` true (REQ-SUPPLY-01, REQ-SEC-CI-03). Verify the pnpm 12 semantics (R-08, R6).
@@ -262,20 +265,34 @@ Ordering rationale:
 - **No-gos**: no Nx Cloud, no drizzle-kit, no `bumpDependencies` or `test:doctor` (REQ-DEPS-01). Also no unit or integration suites, no `^` or `~` ranges.
 - **Circuit breaker**: document a missing version. Add a technical link and a minimal substitution (NFR-15, NFR-VER-01, D-06). Do not invent APIs. If the toolchain cannot install, stop and report.
 - **Acceptance criteria**: AC-01, AC-02 (host-checkable part), AC-13, AC-19, AC-22. Also AC-23, AC-24, AC-32, AC-33 (host OS only), AC-34. Also NFR-01..15, REQ-ECO-01, REQ-ECO-02, REQ-BUILD-02..05, REQ-TEST-02, REQ-REF-01.
-- **Deliverable**: branch `chore/poc-01-toolchain`. PR title: `chore: verify toolchain versions and add workspace skeleton`. Result page: `docs/results/POC-01-Result.md`. It holds a version-verification table and the OS/Node matrix. It also holds `ADR-001` if a substitution happens.
+- **Deliverable**: one branch and one PR per slice (table below). Each slice writes its own result page, `POC-01a-Result.md` to `POC-01d-Result.md`. The last slice writes `docs/results/POC-01-Result.md`. That page consolidates them and holds a version-verification table and the OS/Node matrix. It also holds `ADR-001` if a substitution happens. PR titles are not fixed yet (not verified).
+
+#### POC-1 Slices
+
+POC-1 stays the umbrella id. Slices run in order; each depends on the previous one and can be delivered and verified alone. Appetites are ASSUMPTION and sum to about 6 working days, about one day over the 1-week bet.
+
+| Slice | Scope | Branch | Appetite (ASSUMPTION) | Depends on |
+|---|---|---|---|---|
+| 1a | Monorepo init: version table, pnpm workspace and catalog, supply-chain settings, Nx local, root no-op scripts, one Node engine pin, reference study | `minor/poc-01a-monorepo` | ~1 day | none |
+| 1b | Nest apps: `gateway-nest`, `runtime-nest`, `shared-core` from the Nest CLI; dummy health endpoint | `minor/poc-01b-nest` | ~1 day | 1a |
+| 1c | SEA build: minimal native `node --build-sea` script and assembler `package` target; the dummy Nest app runs from the binary | `minor/poc-01c-sea-build` | ~2 days | 1b |
+| 1d | Angular and link: `web-angular` from the Angular CLI; `gateway-nest` serves a dummy page over plain HTTP in dev and from the SEA; Nx build order and post-package check | `minor/poc-01d-angular-link` | ~1 day | 1c |
+| 1e | Hardening and desktop skeleton: `desktop` from the Tauri CLI, `securityCheck`, test filter stub, OS matrix, root sequence, tags, consolidated result | `minor/poc-01e-hardening` | ~1 day | 1d |
+
+Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-nest-apps.md), [1c](../backlog/poc-1c-sea-build.md), [1d](../backlog/poc-1d-angular-link.md), [1e](../backlog/poc-1e-hardening-desktop-skeleton.md).
 
 ### POC-2: Single SEA and runtime supervisor
 
 [Back to navigation](#navigation)
 
-- **Problem**: The product needs one SEA per platform. The SEA bundles the dispatcher, runtime-nest and gateway-nest. It relaunches itself by role (REQ-RUNTIME-01, REQ-RUNTIME-03, REQ-SEA-01). Nobody has proven that the native `node --build-sea` flow works with bundled Nest (R2, R-04). Same-binary re-entry and process-tree shutdown are hard on 3 OSes (R1).
+- **Problem**: The product needs one SEA per platform. The SEA bundles the dispatcher, runtime-nest and gateway-nest. It relaunches itself by role (REQ-RUNTIME-01, REQ-RUNTIME-03, REQ-SEA-01). POC-1c proves the native `node --build-sea` flow with a dummy Nest app (R2, R-04). Nobody has proven it with the dispatcher and the real services bundled. Same-binary re-entry and process-tree shutdown are hard on 3 OSes (R1).
 - **Appetite**: 2 weeks, big batch. Highest uncertainty.
 - **Solution sketch**:
-  - Write `tools/scripts/compile-sea.ts` with native `node --build-sea`, no postject (REQ-SEA-01, REQ-SEA-02, REQ-SEA-03).
+  - Extend `tools/scripts/compile-sea.ts` (the minimal script is written in POC-1c) to bundle the dispatcher, runtime-nest and gateway-nest. Native `node --build-sea`, no postject (REQ-SEA-01, REQ-SEA-02, REQ-SEA-03).
   - Build a Zod-validated dispatcher and a closed service registry (REQ-RUNTIME-03).
   - `runtime-nest` uses `createApplicationContext(RuntimeModule)` and has no HTTP listener (REQ-RUNTIME-02, FR-45).
   - The supervisor respawns `process.execPath --service gateway-nest`. It never uses `node` from PATH.
-  - Build a minimal `gateway-nest` with NodeAdapter and an `/api` health endpoint (REQ-NET-01).
+  - Extend the POC-1b `gateway-nest` (NodeAdapter, dummy health endpoint) to an `/api` health endpoint under the supervisor (REQ-NET-01).
   - Shutdown: stdio IPC, then a timeout, then a force-kill of descendants. No orphans (REQ-RUNTIME-06).
   - Add a readiness timeout, per-service logs and a bounded restart (REQ-RUNTIME-05).
   - Add a real-binary smoke test (REQ-RUNTIME-08).
@@ -286,7 +303,7 @@ Ordering rationale:
   - Restart and backoff values are undefined (A3).
   - Root resolution without the cwd (decision 11). The cwd of the supervisor under systemd and launchd: not verified. Verify here.
 - **No-gos**: no fake `auth-ms` (REQ-RUNTIME-04, SRS L943, D-03). No postject without a documented need. No second executable. Also no Express or Fastify, no SPA yet.
-- **Circuit breaker**: if the SEA cannot bundle Nest within the appetite, stop. Publish the findings: what failed and which Node limits apply. Then reshape. Either split bundling from supervision, or evaluate a documented postject need.
+- **Circuit breaker**: if the SEA cannot bundle the dispatcher and the real services within the appetite, stop. Publish the findings: what failed and which Node limits apply. Then reshape. Either split bundling from supervision, or evaluate a documented postject need.
 - **Acceptance criteria**: AC-11 (partial: no Node install on the host), AC-28, AC-29. AC-30 (host OS only, others pending) and AC-31 (registry design only) apply too. Also REQ-RUNTIME-01..08, REQ-SEA-01..03, REQ-TEST-07 (supervisor subset).
 - **Deliverable**: branch `minor/poc-02-sea-supervisor`. PR title: `feat: single SEA with runtime supervisor and gateway health`. Results under `docs/`: `POC-02-Result` and `ADR-002` (single-SEA portability decision).
 
@@ -339,10 +356,10 @@ Ordering rationale:
 [Back to navigation](#navigation)
 
 - **Scope**: HTTPS gateway that serves the Angular PWA from the SEA, plus the dev loop.
-- **Problem**: The gateway must serve one Angular build over HTTPS (FR-04). The clients are browsers and the Tauri WebView. The SEA must materialize the assets safely (R3, R-07). Developers need a fast loop that does not need the SEA (REQ-DEV-01..05). Local CA trust is a known friction (R-05).
+- **Problem**: POC-1d already proves a dummy Angular page served by `gateway-nest` over plain HTTP, in dev and from the SEA. The gateway must now serve one Angular build over HTTPS (FR-04). The clients are browsers and the Tauri WebView. The SEA must materialize the assets safely (R3, R-07). Developers need a fast loop that does not need the SEA (REQ-DEV-01..05). Local CA trust is a known friction (R-05).
 - **Appetite**: 2 weeks, big batch.
 - **Solution sketch**:
-  - Use Angular 22, zoneless, strict TypeScript, Signals, Tailwind and PWA (REQ-WEB-01, REQ-PWA-01).
+  - Configure the `web-angular` app generated in POC-1d as Angular 22, zoneless, strict TypeScript, Signals, Tailwind and PWA (REQ-WEB-01, REQ-PWA-01).
   - `ng serve` on 4200 with `proxyConfig` `/api/**` to 8443. It uses a trusted dev CA and never `secure:false` (REQ-DEV-01..04).
   - First task, a spike (decision 14, [OQ8](#open-questions)). Budget: 2 days at most, inside the appetite.
     - Inputs: a hand-built DER writer on `node:crypto`, against a pure-JS dependency.
@@ -356,6 +373,7 @@ Ordering rationale:
     - A separate dev CA with `NODE_EXTRA_CA_CERTS`.
     - Mobile clients install the CA by hand (REQ-TLS-02).
   - Serve HTTPS on 8443 and an HTTP 308 redirect on 8080. The redirect has no Host-based open redirect (REQ-NET-06, REQ-NET-08).
+  - Plain-HTTP serving of a dummy page is not repeated here (POC-1d). Harden it as follows.
   - Materialize the SPA into a per-version hashed cache (REQ-NET-03, REQ-NET-04, REQ-SEA-04). The cache needs a manifest, checksums, atomic publish, concurrency safety and stale cleanup.
   - Load `ServeStaticModule` only when `isSea()`. Configure it before `NestFactory.create` (REQ-NET-02, REQ-NET-05).
   - `/api/**` never falls back to `index.html`. A missing asset returns 404 (REQ-NET-07).

@@ -24,7 +24,7 @@
 | What | A LAN-first, offline-capable GitHub Template Repository. |
 | For whom | Template authors, reviewers and delivering AI agents. |
 | Where we are | Documentation only. No application code. Roadmap is a proposal. |
-| What comes next | The [roadmap](docs/roadmap/PROPOSAL.md) plans POC-1 to POC-9. The [backlog](docs/backlog/README.md) drafts one epic per POC. |
+| What comes next | The [roadmap](docs/roadmap/PROPOSAL.md) plans POC-1 to POC-9. The [backlog](docs/backlog/README.md) drafts one epic per POC; POC-1 is split into five slices (1a to 1e). |
 
 ---
 

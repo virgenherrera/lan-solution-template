@@ -1,4 +1,4 @@
-docs[30]:
+docs[34]:
   - doc: docs/architecture/overview.md
     title: Architecture overview
     type: architecture
@@ -17,23 +17,59 @@ docs[30]:
     status: current
     updated: 2026-10-31
     refs[36]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36
-  - doc: docs/backlog/poc-1-toolchain-workspace-skeleton.md
-    title: POC-1 Toolchain viability and workspace skeleton
+  - doc: docs/backlog/poc-1a-monorepo-init.md
+    title: POC-1a Monorepo init
     type: backlog
-    summary: Backlog item for toolchain viability and the workspace skeleton.
+    summary: "Backlog slice 1a of POC-1: pinned versions, pnpm workspace, Nx local, root scripts and the Node engine pin."
     ids: []
-    related[2]: docs/backlog/README.md,docs/backlog/poc-2-single-sea-runtime-supervisor.md
+    related[2]: docs/backlog/README.md,docs/backlog/poc-1b-nest-apps.md
     status: current
     updated: 2026-10-31
-    refs[32]: AC-01,AC-02,AC-13,AC-19,AC-22,AC-23,AC-24,AC-32,AC-33,AC-34,REQ-BUILD-01,REQ-BUILD-02,REQ-BUILD-03,REQ-BUILD-04,REQ-BUILD-05,REQ-DEPS-01,REQ-ECO-01,REQ-ECO-02,REQ-ECO-04,REQ-ECO-05,REQ-REF-01,REQ-REP-01,REQ-REP-02,REQ-REP-03,REQ-REP-05,REQ-SEC-CI-01,REQ-SEC-CI-02,REQ-SEC-CI-03,REQ-STACK-01,REQ-SUPPLY-01,REQ-TEST-02,REQ-TEST-03
+    refs[11]: AC-01,AC-22,AC-23,AC-24,REQ-BUILD-01,REQ-ECO-01,REQ-ECO-02,REQ-REF-01,REQ-SEC-CI-03,REQ-STACK-01,REQ-SUPPLY-01
+  - doc: docs/backlog/poc-1b-nest-apps.md
+    title: POC-1b Nest apps
+    type: backlog
+    summary: "Backlog slice 1b of POC-1: gateway-nest and runtime-nest generated with the Nest CLI, plus shared-core."
+    ids: []
+    related[3]: docs/backlog/README.md,docs/backlog/poc-1a-monorepo-init.md,docs/backlog/poc-1c-sea-build.md
+    status: current
+    updated: 2026-10-31
+    refs[4]: AC-13,REQ-REP-01,REQ-REP-02,REQ-REP-03
+  - doc: docs/backlog/poc-1c-sea-build.md
+    title: POC-1c SEA build
+    type: backlog
+    summary: "Backlog slice 1c of POC-1: the dummy Nest app packaged as a Node SEA with a minimal native build script."
+    ids: []
+    related[3]: docs/backlog/README.md,docs/backlog/poc-1b-nest-apps.md,docs/backlog/poc-1d-angular-link.md
+    status: current
+    updated: 2026-10-31
+    refs[1]: REQ-BUILD-04
+  - doc: docs/backlog/poc-1d-angular-link.md
+    title: POC-1d Angular and link
+    type: backlog
+    summary: "Backlog slice 1d of POC-1: web-angular generated with the Angular CLI and served by gateway-nest over plain HTTP."
+    ids: []
+    related[3]: docs/backlog/README.md,docs/backlog/poc-1c-sea-build.md,docs/backlog/poc-1e-hardening-desktop-skeleton.md
+    status: current
+    updated: 2026-10-31
+    refs[6]: AC-13,REQ-BUILD-03,REQ-BUILD-05,REQ-REP-01,REQ-REP-02,REQ-REP-03
+  - doc: docs/backlog/poc-1e-hardening-desktop-skeleton.md
+    title: POC-1e Hardening and desktop skeleton
+    type: backlog
+    summary: "Backlog slice 1e of POC-1: Tauri desktop skeleton, security gate, test filter, OS matrix and consolidated result page."
+    ids: []
+    related[3]: docs/backlog/README.md,docs/backlog/poc-1d-angular-link.md,docs/backlog/poc-2-single-sea-runtime-supervisor.md
+    status: current
+    updated: 2026-10-31
+    refs[21]: AC-01,AC-02,AC-13,AC-19,AC-22,AC-32,AC-33,AC-34,REQ-BUILD-02,REQ-DEPS-01,REQ-ECO-04,REQ-ECO-05,REQ-REP-01,REQ-REP-02,REQ-REP-03,REQ-REP-05,REQ-SEC-CI-01,REQ-SEC-CI-02,REQ-STACK-01,REQ-TEST-02,REQ-TEST-03
   - doc: docs/backlog/poc-2-single-sea-runtime-supervisor.md
     title: POC-2 Single SEA and runtime supervisor
     type: backlog
     summary: Backlog item for a single SEA build and the runtime supervisor.
     ids: []
-    related[3]: docs/backlog/README.md,docs/backlog/poc-1-toolchain-workspace-skeleton.md,docs/backlog/poc-3-config-sqlite-vector.md
+    related[3]: docs/backlog/README.md,docs/backlog/poc-1e-hardening-desktop-skeleton.md,docs/backlog/poc-3-config-sqlite-vector.md
     status: current
-    updated: 2026-10-30
+    updated: 2026-10-31
     refs[18]: AC-11,AC-28,AC-29,AC-30,AC-31,REQ-NET-01,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-TEST-07
   - doc: docs/backlog/poc-3-config-sqlite-vector.md
     title: POC-3 Config and SQLite vector persistence inside the SEA
@@ -51,7 +87,7 @@ docs[30]:
     ids: []
     related[3]: docs/backlog/README.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md
     status: current
-    updated: 2026-10-30
+    updated: 2026-10-31
     refs[33]: AC-04,AC-05,AC-12,AC-14,AC-15,AC-16,AC-17,REQ-DB-01,REQ-DB-02,REQ-DEV-01,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-DEV-05,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA-01,REQ-PWA-02,REQ-PWA-03,REQ-SEA-04,REQ-SUPPLY-01,REQ-TEST-05,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-WEB-01
   - doc: docs/backlog/poc-5-tauri-sidecar-desktop-shell.md
     title: POC-5 Tauri desktop shell with SEA sidecar
