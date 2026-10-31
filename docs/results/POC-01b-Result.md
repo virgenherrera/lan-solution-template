@@ -82,6 +82,14 @@ Run from the repository root unless noted. Exit codes come from each command its
 | 32 | `grep -rn '[\^~]' apps/*/package.json libs/shared-core/package.json pnpm-workspace.yaml package.json` | exit 1, no match |
 | 33 | `pnpm build`, `pnpm test`, `pnpm package` (root) | each exit 0; each runs `nx run-many` (3 tasks, `3 succeeded`) and prints `<op>: not defined for this package` |
 | 34 | `pnpm install --frozen-lockfile` | exit 0 |
+| 35 | `pnpm --dir apps/<app> add -E --save-catalog zod@4.6.7` (both apps) | exit 0. `catalog.zod: 4.6.7` in `pnpm-workspace.yaml`; `zod: catalog:` in both apps. 4.6.7 published 2026-10-12, older than 24 h. Matches the REQ-STACK-06 minimum `>=4.6.7` |
+| 36 | `pnpm exec nest generate module config --no-spec --flat` and `pnpm exec nest generate provider server-config --no-spec --flat` in each app | exit 0 each; `CREATE src/config.module.ts`, `CREATE src/server-config.ts`, `UPDATE src/app.module.ts` |
+| 37 | Bodies of `src/server-config.ts` and `src/config.module.ts` (see Manual edits) | n/a |
+| 38 | `pnpm nx build api-gateway`, `pnpm nx build sea-runtime` | each exit 0 |
+| 39 | Zod probe (`node`, scratch file outside the repo) on `serverConfigSchema` | `{}` parses to `{"port":3000,"hostname":"127.0.0.1"}`; `{port:'abc',hostname:'0.0.0.0'}` throws `ZodError` with 2 issues |
+| 40 | `pnpm --dir apps/api-gateway start:dev` (background), `curl -i http://127.0.0.1:3000/health` | `HTTP/1.1 200 OK`, body `{"status":"ok"}` |
+| 41 | `pnpm --dir apps/sea-runtime start:dev` (background) | `Nest application successfully started` on `127.0.0.1:3001`, no error line |
+| 42 | kill the listening PIDs with `lsof -t`, `lsof -nP -iTCP:3000 -iTCP:3001 -sTCP:LISTEN` | exit 1, no output: both ports free |
 
 The root `build`, `test` and `package` scripts now run real `nx run-many` tasks for the three projects. The no-op message prints after success, as predicted in 1a. The message is still printed, so it does not tell the reader whether a task ran. Revisit before POC-2.
 
@@ -99,6 +107,10 @@ Each edit has no CLI route. Every other file was written by a CLI or by `pnpm`.
 | 6 | `libs/shared-core/src/index.ts` | Created with `export const sharedCoreName = 'shared-core';` | `tsc --init` creates no source file. This is the minimum export |
 | 7 | Deleted `apps/api-gateway/vitest.config.ts`, `apps/api-gateway/vitest.config.e2e.ts`, `apps/api-gateway/AGENTS.md`, and the same three in `apps/sea-runtime` | `rm` | Test configs and an app-level AGENTS.md are forbidden in this slice |
 | 8 | Deleted `apps/api-gateway/README.md` and `apps/sea-runtime/README.md` | `git rm` | Nest boilerplate README. The docs check (`docs/standards/README.md`) requires a `toon-meta` block on every tracked `.md` except root `AGENTS.md` and `README.md`, and the regeneration command would fail on the app READMEs |
+| 9 | `apps/*/src/server-config.ts` body: `zod` schema `serverConfigSchema` (`port` int 1–65535, default 3000 for `api-gateway`, 3001 for `sea-runtime`; `hostname` `z.literal('127.0.0.1')`, default `127.0.0.1`), `SERVER_CONFIG` symbol token, `ServerConfig` type, `parseServerConfig(input)` returning `Object.freeze(schema.parse(input))` | `nest generate provider` creates an empty `@Injectable()` class named `ServerConfig` | The generator has no schema body. The class was replaced by a schema and a frozen type, so `ServerConfig` is no longer a class |
+| 10 | `apps/*/src/config.module.ts` body: provider `{ provide: SERVER_CONFIG, useFactory: () => parseServerConfig({}) }`, exported | `nest generate module` creates an empty `@Module({})` | The generator has no provider. Zero input for now, see Deviations |
+| 11 | `apps/*/src/main.ts`: `process.env.PORT ?? 3000` replaced by `app.get<ServerConfig>(SERVER_CONFIG)` and `app.listen(config.port, config.hostname)` | Rows 3 and 4 of this table list the bootstrap; the port and hostname now come from the frozen config | No env read in app code |
+| 12 | `apps/*/src/app.module.ts`: `ServerConfig` removed from `providers`; `ConfigModule` kept in `imports` | The CLI added the provider to `AppModule`, not to `ConfigModule` | The token is provided by `ConfigModule` only |
 
 Not manual: the `test` script and the removed `test:*` scripts (`pnpm pkg`), the `build` script and `main`/`types` in `libs/shared-core/package.json` (`pnpm pkg set`), the health controller route file (`nest generate`), and the `app.module.ts` registration (`nest generate`).
 
@@ -112,7 +124,8 @@ Not manual: the `test` script and the removed `test:*` scripts (`pnpm pkg`), the
 - **Projects list.** `pnpm nx show projects` also lists the root project `lan-solution-template`, as in 1a. The brief expected three names.
 - **Root scripts.** Still print the no-op message after success (see the note under Commands run).
 - **Health path.** The brief used `<health path>`. The generated path is `/health` from `@Controller('health')`. `GET /` (generated `AppController`, `Hello World!`) is kept.
-- **Ports.** Both apps read `PORT`, default 3000. The checks used 3100 and 3200 to avoid a clash.
+- **Configuration (replaces `PORT`).** Apps read no environment variable and no file (`rg 'process\.env|process\.argv|dotenv|@nestjs/config|readFileSync'` over `apps/*/src` prints nothing). Each app validates its settings with a Zod schema once, freezes the result and injects it by the `SERVER_CONFIG` token. `api-gateway` defaults to `127.0.0.1:3000`; `sea-runtime` defaults to `127.0.0.1:3001`. The hostname is limited to `127.0.0.1`, so `0.0.0.0` is rejected. Invalid input throws a `ZodError` at startup (edit 39). For now the input is `{}`, so the defaults apply. Persisted `config.json` is POC-3 scope and is not implemented here.
+- **Config shape.** The brief asked for a Zod "config class". `nest generate` produces only empty classes, so the config is a schema, a frozen type and a parse function. Not verified against the nest-base pattern beyond its file layout.
 - **App `README.md` files** generated by `nest new` were deleted (manual edit 8), not kept: they lack a `toon-meta` block and break the docs regeneration command.
 - **Lint.** `lint` script was not run. The generated script runs `oxlint --type-aware src/ test/` and `test/` does not exist.
 - **Nest version pin.** The CLI `12.0.11` and the core `12.3.2` come from different releases of the same line. `@nestjs/schematics` `12.0.12` is what the CLI resolved. Not verified that the CLI generates correctly for core `12.3.2` beyond the dev run.

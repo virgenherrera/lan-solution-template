@@ -167,6 +167,9 @@ catalogs:
     typescript:
       specifier: 6.0.3
       version: 6.0.3
+    zod:
+      specifier: 4.6.7
+      version: 4.6.7
 
 importers:
 
@@ -196,6 +199,9 @@ importers:
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
     devDependencies:
       '@nestjs/cli':
         specifier: 12.0.11
@@ -260,6 +266,9 @@ importers:
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
     devDependencies:
       '@nestjs/cli':
         specifier: 12.0.11
@@ -2339,6 +2348,9 @@ packages:
     resolution: {integrity: sha512-xYqdZFUK/VYazNl/oCDYN+3WloWQwMfZxBoiNt6qNyk+xfOdi598muWE42rNZFp1kNOiqW936q5RhUdnpqElSg==}
     engines: {node: '>=18'}
 
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
+
 snapshots:
 
   '@angular-devkit/core@22.2.3(chokidar@5.0.0)':
@@ -4281,3 +4293,5 @@ snapshots:
       yargs-parser: 21.1.1
 
   yoctocolors@2.2.0: {}
+
+  zod@4.6.7: {}

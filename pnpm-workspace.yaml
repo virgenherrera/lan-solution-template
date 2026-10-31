@@ -6,6 +6,7 @@ packages:
 catalog:
   nx: 24.0.2
   typescript: 6.0.3
+  zod: 4.6.7
 minimumReleaseAge: 1440
 savePrefix: ''
 strictDepBuilds: true
