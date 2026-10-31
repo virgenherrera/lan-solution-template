@@ -17,7 +17,7 @@ const servicesAssetSchema = z.object({
 
 @Injectable()
 export class SupervisorService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(SupervisorService.name);
+  private readonly logger = new Logger('SupervisorService');
   private readonly children: ChildProcess[] = [];
   private readonly onSignal = (signal: NodeJS.Signals): void => {
     void this.shutdown(signal);
