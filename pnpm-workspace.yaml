@@ -1,7 +1,11 @@
 allowBuilds:
   nx: true
+packages:
+  - apps/*
+  - libs/*
 catalog:
   nx: 24.0.2
+  typescript: 6.0.3
 minimumReleaseAge: 1440
 savePrefix: ''
 strictDepBuilds: true
