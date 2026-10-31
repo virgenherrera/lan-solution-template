@@ -1,0 +1,30 @@
+{
+  "name": "lan-solution-template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "nx run-many -t test --exclude=lan-solution-template && echo 'test: not defined for this package'",
+    "build": "nx run-many -t build --exclude=lan-solution-template && echo 'build: not defined for this package'",
+    "package": "nx run-many -t package --exclude=lan-solution-template && echo 'package: not defined for this package'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.16.1",
+      "onFail": "download"
+    }
+  },
+  "packageManager": "pnpm@12.16.1",
+  "type": "module",
+  "engines": {
+    "node": ">=26.13.0 <27"
+  },
+  "devDependencies": {
+    "nx": "24.0.2"
+  },
+  "nx": {}
+}
