@@ -7,7 +7,7 @@ summary: Node SEA build rules and per-platform distribution validation requireme
 ids[6]: REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-SEA-04,REQ-SEA-05,REQ-SEA-06
 related[3]: docs/requirements/README.md,docs/requirements/09-desktop-tauri.md,docs/requirements/11-nx-quality-testing.md
 status: current
-updated: 2026-10-30
+updated: 2026-10-31
 -->
 
 # 10. Node SEA and distribution
@@ -45,7 +45,8 @@ updated: 2026-10-30
 
 **REQ-SEA-03.** SEA baseline: `useVfs: false`, `useSnapshot: false`, `useCodeCache: true` **only for compatible native builds**. In any cross build with an incompatible code cache, it **MUST** be disabled and documented. The release configuration **SHOULD** set `execArgvExtension: "none"` so that `NODE_OPTIONS` cannot alter runtime flags. If an extension is needed for diagnostics, it must be explicit. It must not ship as an insecure default.
 
-**REQ-SEA-04.** SQL migrations and **the compiled output `dist/web-angular`** **MUST** be embedded as SEA assets. Never embed its sources. The embedding uses `node:sea` and a manifest of paths/hashes. The backend **MUST** safely extract the web tree to a versioned physical cache. Do it before mounting `ServeStaticModule`. It **MUST NOT** treat `getAsset()` as a path/directory.
+**REQ-SEA-04.** SQL migrations and **the compiled output `dist/web-angular`** **MUST** be embedded as SEA assets. Never embed its sources. The embedding uses `node:sea` and a manifest of paths/hashes. The **`sea-runtime` supervisor (not the backend)** **MUST** safely extract the web tree to a versioned physical cache. Do it before it spawns `api-gateway` with `--web-root`. It **MUST NOT** treat `getAsset()` as a path/directory.
+  *Human decision 17: the supervisor extracts the tree and passes its path to the gateway. The spike result is in [SPIKE-spa-serving](../results/SPIKE-spa-serving.md).*
 
 **REQ-SEA-05.** Databases, configurations, logs, certificates, extracted native extensions and models **MUST** reside outside the read-only executable. The install path holds only read-only defaults. The defaults contain no secrets. The paths library resolves the root once (see [REQ-CFG-05](04-configuration.md)). The real `config.json` **MUST** reside under that root, with `0700` directories and `0600` secrets. The code uses paths relative to that root (human decision 11). In a SEA the root anchor is the directory of `process.execPath`. The distribution **MUST** work without a connection at runtime.
 

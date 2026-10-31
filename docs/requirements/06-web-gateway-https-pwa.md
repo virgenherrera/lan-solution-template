@@ -7,7 +7,7 @@ summary: "Defines dev proxy, SEA static serving, LAN TLS and PWA caching require
 ids[20]: REQ-DEV-01,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-DEV-05,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-PWA-01,REQ-PWA-02,REQ-PWA-03
 related[3]: docs/requirements/README.md,docs/requirements/05-persistence.md,docs/requirements/07-security.md
 status: current
-updated: 2026-10-30
+updated: 2026-10-31
 -->
 
 # Web Gateway, HTTPS and PWA (SRS §6)
@@ -97,20 +97,24 @@ sequenceDiagram
 ### 6.2 Production: a single SEA serves both compiled artifacts
 
 - **REQ-NET-01.** NestJS **MUST** use `NodeAdapter` from `@nestjs/platform-node`, without Express or Fastify. The API and the SPA **MUST** share process and HTTPS origin in production. *(Premise `NodeAdapter` + `ServeStaticModule` without Express/Fastify: not verified.)*
-- **REQ-NET-02.** **Only when `node:sea.isSea()` is `true`**, the Gateway **MUST** enable `ServeStaticModule`. Use `@nestjs/serve-static` **(>=12.1.1, a compatible pinned version)** with support for `@nestjs/platform-node >=12.3.1`. In a development run, it is not enabled.
-- **REQ-NET-03.** `@nestjs/serve-static` needs **`rootPath` as a real directory**. `node:sea.getAsset()` does not by itself produce a browsable filesystem. Therefore, before creating the Nest context, the bootstrap **MUST** materialize the packaged Angular tree. The source is the SEA assets. The target is a **per-version/build-ID cache outside the executable**.
+- **REQ-NET-02.** The `api-gateway` **MUST** enable `ServeStaticModule` **only when its validated config has `webRoot`**. It **MUST NOT** check `node:sea.isSea()` or any other runtime mode. `webRoot` is the optional CLI argument `--web-root`, parsed with `node:util` and validated with Zod. It is read without `process.env`. Use `@nestjs/serve-static` **(>=12.1.1, a compatible pinned version)** with support for `@nestjs/platform-node >=12.3.1`. Without `webRoot`, as in a development run, it is not enabled.
+  *Human decision 17: the gateway checks `webRoot`, not `isSea()`. See the [Decision Log](../roadmap/PROPOSAL.md#decision-log).*
+- **REQ-NET-03.** `@nestjs/serve-static` needs **`rootPath` as a real directory**. `node:sea.getAsset()` does not by itself produce a browsable filesystem. Therefore, before the gateway starts, the **`sea-runtime` supervisor** **MUST** materialize the packaged Angular tree from the SEA assets and pass its directory to `api-gateway` as `--web-root`. The target is a **per-version/build-ID cache outside the executable**.
+  *Human decision 17: the supervisor, not the backend, extracts the tree. The spike used the OS temp directory; the cache moves under the [REQ-SEA-05](10-node-sea-distribution.md) root in POC-3.*
 - **REQ-NET-04.** Materialization **MUST** be safe. Validate manifest + checksums. Prevent `../` traversal. Prevent overwriting unmanaged paths. Write to a temporary location and publish atomically. Handle concurrent extraction. Use minimal permissions. Clean up obsolete versions. If the tree already matches the manifest, reuse it without re-extracting.
-- **REQ-NET-05.** After materialization, `ServeStaticModule.forRoot({ rootPath: <verified-directory> })` **MUST** be configured through Nest module composition done before `NestFactory.create()`. Do **not** instantiate the module afterwards as a dynamic step. Do not add a generic hook orchestrator either.
+  *Human decision 17: the supervisor performs this step. The spike staged into a `.tmp-<pid>` directory, checked every hash, renamed into place and wrote a `.complete` marker. Cleanup of obsolete versions is open and belongs to POC-4 ([spike](../results/SPIKE-spa-serving.md)).*
+- **REQ-NET-05.** After the supervisor has materialized the tree, `ServeStaticModule.forRoot({ rootPath: <verified-directory> })` **MUST** be configured through Nest module composition done before `NestFactory.create()`, and only when the validated config has `webRoot`. Do **not** instantiate the module afterwards as a dynamic step. Do not add a generic hook orchestrator either.
+  *Human decision 17: `AppModule.register(config)` composes the module before `NestFactory.create()`.*
 - **REQ-NET-06.** The HTTPS listener **MUST** use `8443` by default, configurable from the singleton; `0.0.0.0` LAN exposure is configured on the installed server and the API is served under `/api/**`. SPA, manifest, service worker and API use the same origin.
 - **REQ-NET-07.** Requests to `/api/**` **MUST NOT** receive `index.html` as the SPA fallback. Valid Angular routes may receive the fallback. Missing files (`.js`, `.css`, `.wasm`, manifests, icons) **MUST** respond `404`, not HTML. Implement correct headers/MIME/cache.
 - **REQ-NET-08.** A minimal HTTP listener on `8080` **MUST** redirect to HTTPS `:8443` using **308**. Do not serve data or authentication over HTTP. Validate the redirect target and avoid open redirects with a malicious `Host`.
 
 ```mermaid
 sequenceDiagram
-    participant SEA as Node SEA bootstrap
+    participant SEA as sea-runtime supervisor
     participant Assets as node:sea getAsset
     participant Cache as SPA cache per version
-    participant Nest as NestJS NodeAdapter
+    participant Gateway as api-gateway process
     participant Static as ServeStaticModule
     SEA->>Assets: Read manifest + Angular files
     SEA->>Cache: Verify version hash
@@ -120,9 +124,9 @@ sequenceDiagram
     else Valid cache
       Cache-->>SEA: Reuse existing tree
     end
-    SEA->>Nest: Compose AppModule with static module
-    Nest->>Static: rootPath = verified directory
-    Nest-->>SEA: Server ready on HTTPS :8443
+    SEA->>Gateway: Spawn with --web-root <verified directory>
+    Gateway->>Static: Mount only when webRoot is present
+    Gateway-->>SEA: Server ready on HTTPS :8443
 ```
 
 ```mermaid

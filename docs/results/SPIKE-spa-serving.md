@@ -88,3 +88,14 @@ curl -i http://127.0.0.1:3000/health
 - Use `ServeStaticModule` with `NodeAdapter` and keep the mount conditional on `webRoot`.
 - Keep the manifest-and-extract mechanism for the SEA. It needs no runtime dependencies. Evaluate `useVfs` separately before choosing it.
 - Before POC-3, decide whether the `/` SPA fallback (`renderPath '*'`) should stay. It serves the index for unknown paths, which hides API 404s under the same origin.
+
+## Outcome
+
+Adopted by [decision 17](../roadmap/PROPOSAL.md#decision-log) in `docs/roadmap/PROPOSAL.md`. `api-gateway` stays SEA-agnostic. `sea-runtime` extracts the assets and passes `--web-root`. POC-4 owns the 404 rule for unknown paths. That replaces the Recommendation above, which asked for the decision before POC-3.
+
+QC notes:
+
+- SIGTERM leaves the extracted cache on disk.
+- With `TMPDIR` unset, the cache falls back to `/tmp`.
+- The second start reuses the directory unchanged.
+- `/nope` returns 200 with the index.

@@ -186,8 +186,8 @@ docs[38]:
     ids[20]: REQ-DEV-01,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-DEV-05,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-PWA-01,REQ-PWA-02,REQ-PWA-03
     related[3]: docs/requirements/README.md,docs/requirements/05-persistence.md,docs/requirements/07-security.md
     status: current
-    updated: 2026-10-30
-    refs: []
+    updated: 2026-10-31
+    refs[1]: REQ-SEA-05
   - doc: docs/requirements/07-security.md
     title: Security
     type: requirement
@@ -222,7 +222,7 @@ docs[38]:
     ids[6]: REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-SEA-04,REQ-SEA-05,REQ-SEA-06
     related[3]: docs/requirements/README.md,docs/requirements/09-desktop-tauri.md,docs/requirements/11-nx-quality-testing.md
     status: current
-    updated: 2026-10-30
+    updated: 2026-10-31
     refs[1]: REQ-CFG-05
   - doc: docs/requirements/11-nx-quality-testing.md
     title: "Nx, quality and testing"
