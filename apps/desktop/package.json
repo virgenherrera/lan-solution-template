@@ -4,9 +4,11 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "test": "echo \"test: not defined for this package\"",
+    "test": "pnpm run test:static && pnpm run test:dynamic",
     "build": "cargo check --manifest-path src-tauri/Cargo.toml",
-    "package": "tauri build --no-bundle"
+    "package": "tauri build --no-bundle",
+    "test:static": "echo \"test:static: not defined for this package\"",
+    "test:dynamic": "echo \"test:dynamic: not defined for this package\""
   },
   "type": "module",
   "devDependencies": {

@@ -6,7 +6,10 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "echo \"test: not defined for this package\""
+    "test": "pnpm run test:static && pnpm run test:dynamic",
+    "test:static": "tsc --noEmit -p tsconfig.app.json",
+    "test:dynamic": "echo \"test:dynamic: not defined for this package\"",
+    "package": "echo \"package: not defined for this package\""
   },
   "private": true,
   "packageManager": "pnpm@12.16.1",
