@@ -55,7 +55,7 @@ class Run {
   private readonly child: ChildProcess;
 
   constructor(binary: string, args: readonly string[]) {
-    this.child = spawn(binary, [...args], { stdio: ['ignore', 'pipe', 'pipe'], env: { PATH: process.env.PATH } });
+    this.child = spawn(binary, [...args], { stdio: ['ignore', 'pipe', 'pipe'], env: {} });
     for (const stream of [this.child.stdout, this.child.stderr]) {
       if (stream) createInterface({ input: stream }).on('line', (line) => this.lines.push(line));
     }
