@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "LAN Solution Desktop",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.example.lansolution.desktop",
   "build": {
     "frontendDist": "../../web-angular/dist/web-angular/browser",
     "devUrl": "http://127.0.0.1:4200"

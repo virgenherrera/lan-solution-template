@@ -4,10 +4,37 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "test": "echo \"test: not defined for this package\""
+    "test": "echo \"test: not defined for this package\"",
+    "build": "cargo check --manifest-path src-tauri/Cargo.toml",
+    "package": "tauri build --no-bundle"
   },
   "type": "module",
   "devDependencies": {
     "@tauri-apps/cli": "2.12.4"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "dependsOn": [
+          {
+            "projects": [
+              "web-angular"
+            ],
+            "target": "build"
+          }
+        ]
+      },
+      "package": {
+        "dependsOn": [
+          {
+            "projects": [
+              "sea-runtime"
+            ],
+            "target": "package"
+          },
+          "build"
+        ]
+      }
+    }
   }
 }
