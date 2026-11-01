@@ -14,7 +14,7 @@ import {
   type AggregateState,
 } from 'service-registry';
 import { hasWebBundle, loadWebBundle, type WebFile } from '../web/web-bundle.js';
-import { forwardLines, prefixed } from './log-lines.js';
+import { forwardLines, prefixed, spawnedMessage, stateMessage } from './log-lines.js';
 import { stopTree, treeSpawnOptions } from './process-tree.js';
 import { ServiceLifecycle } from './service-lifecycle.js';
 
@@ -76,7 +76,7 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     });
     if (child.stdout) forwardLines(id, child.stdout, process.stdout);
     if (child.stderr) forwardLines(id, child.stderr, process.stderr);
-    this.log(`spawned service "${id}" as pid ${child.pid}`);
+    this.log(spawnedMessage(id, child.pid));
     if (web !== undefined) {
       child.send({ kind: 'web-bundle', files: web }, (error) => {
         if (error) this.log(`web bundle handoff failed: ${error.message}`);
@@ -91,7 +91,7 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     if (next === this.state) return;
     this.state = next;
     const message = stateMessageSchema.parse({ kind: CONTROL_KIND.state, state: next });
-    this.log(`state ${next}`);
+    this.log(stateMessage(next));
     // Design for POC-5: one JSON line per change, never prefixed, so the shell can tell it from log lines. Not verified against Tauri.
     process.stdout.write(`${JSON.stringify(message)}\n`);
     for (const { child } of this.services) {

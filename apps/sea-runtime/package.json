@@ -63,13 +63,14 @@
           "{workspaceRoot}/artifacts/sea-runtime"
         ],
         "options": {
-          "command": "node tools/scripts/compile-sea.ts sea-runtime",
+          "command": "node tools/scripts/compile-sea.ts sea-runtime && node tools/scripts/smoke-sea.ts",
           "cwd": "{workspaceRoot}"
         },
         "inputs": [
           "default",
           "^default",
           "{workspaceRoot}/tools/scripts/compile-sea.ts",
+          "{workspaceRoot}/tools/scripts/smoke-sea.ts",
           "{workspaceRoot}/tools/rspack/**/*"
         ]
       }

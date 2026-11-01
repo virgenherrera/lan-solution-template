@@ -1,4 +1,4 @@
-docs[57]:
+docs[58]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -467,6 +467,15 @@ docs[57]:
     status: current
     updated: 2026-10-31
     refs[2]: REQ-DESK-02,REQ-TEST-09
+  - doc: docs/results/POC-02g-real-binary-smoke.md
+    title: POC-2g Real-binary smoke and Linux run
+    type: backlog
+    summary: "Result of slice 2g: @app smoke of the packaged binary as a post-step of package, run on macOS arm64 and in Debian bookworm arm64 and amd64 containers."
+    ids: []
+    related[3]: docs/backlog/poc-2g-real-binary-smoke.md,docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/results/POC-02f-coordinated-shutdown.md
+    status: current
+    updated: 2026-10-31
+    refs[9]: AC-18,AC-20,AC-28,AC-29,AC-34,REQ-RUNTIME-08,REQ-TEST-01,REQ-TEST-03,REQ-TEST-09
   - doc: docs/results/SPIKE-spa-serving.md
     title: SPIKE SPA serving in the SEA
     type: backlog
