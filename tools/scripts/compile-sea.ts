@@ -1,5 +1,6 @@
 // Packages a supervisor app and its workspace service dependencies into ONE Node SEA executable.
-// Run from the repository root: `node tools/scripts/compile-sea.ts <supervisor-project>`.
+// Run from the repository root: `node tools/scripts/compile-sea.ts <supervisor-project> [--target <triple> --executable <node-binary>]`.
+// Without --target the build is native (host triple). A different --target is a cross build: it needs --executable (the Node binary of the target, used as the SEA base) and turns the code cache off (REQ-SEA-03). Cross builds are not verified.
 // Dependencies of the supervisor (`workspace:` ranges) are classified by build output: <root>/dist/main.js is a service; <root>/dist/<name>/browser/index.html (or angular.json outputPath + /browser) is a web bundle; anything else fails.
 // At most one web bundle; zero means no web assets and no --web flag.
 // The generated role-map entry and the SEA config are written under dist/ at build time and are never committed.
@@ -7,6 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { parseArgs } from 'node:util';
 import * as rspackNamespace from '@rspack/core';
 import sharedNestConfig from '../rspack/nest.config.ts';
 
@@ -89,12 +91,41 @@ function assertBuildNodeMatchesEngine(): void {
   console.log(`node ${process.version} satisfies engines.node "${range}"`);
 }
 
-function targetTriple(): string {
+function hostTriple(): string {
   const triple = TARGET_TRIPLES[`${process.platform} ${process.arch}`];
   if (triple === undefined) {
     throw new Error(`unsupported platform ${process.platform} ${process.arch}: no Rust target triple`);
   }
   return triple;
+}
+
+interface BuildTarget {
+  triple: string;
+  // Node binary used as the SEA base; undefined means the running Node (native build).
+  executable: string | undefined;
+}
+
+// Native by default; a target that differs from the host needs the target's own Node binary.
+function resolveTarget(argv: readonly string[]): { supervisor: string; target: BuildTarget } {
+  const { values, positionals } = parseArgs({
+    args: [...argv],
+    allowPositionals: true,
+    options: { target: { type: 'string' }, executable: { type: 'string' } },
+  });
+  const [supervisor, ...extra] = positionals;
+  if (!supervisor || extra.length > 0) {
+    throw new Error('usage: node tools/scripts/compile-sea.ts <supervisor-project> [--target <triple> --executable <node-binary>]');
+  }
+  const host = hostTriple();
+  const triple = values.target ?? host;
+  if (!Object.values(TARGET_TRIPLES).includes(triple)) throw new Error(`unknown --target "${triple}"`);
+  if (triple !== host && values.executable === undefined) {
+    throw new Error(`cross build for ${triple} on ${host} needs --executable <node binary of the target>`);
+  }
+  if (triple === host && values.executable !== undefined) {
+    throw new Error('--executable is only for a cross build; omit it for a native build');
+  }
+  return { supervisor, target: { triple, executable: values.executable } };
 }
 
 // Asks Nx where a project lives; the project name is the package name.
@@ -117,15 +148,29 @@ function webBrowserDir(name: string, projectDir: string): string {
   return join(projectDir, outputPath, 'browser');
 }
 
-// The library that holds the dispatcher contract; the generated entry imports it.
+// The library that holds the dispatcher contract. Its name is the one bootstrap literal: the library cannot supply its own location.
 const REGISTRY_LIB = 'service-registry';
+
+type Registry = typeof import('service-registry');
+
+// Loads the built contract library; every other literal of the assembler comes from its ASSEMBLER_CONFIG.
+async function loadRegistry(): Promise<{ lib: LibEntry; contract: Registry }> {
+  const dir = projectRoot(REGISTRY_LIB);
+  const main = (JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { main?: string }).main;
+  if (main === undefined || !existsSync(join(dir, main))) {
+    throw new Error(`${REGISTRY_LIB}: missing built "main" under ${dir}; run the ${REGISTRY_LIB} build target first`);
+  }
+  const entryPath = join(dir, main);
+  return { lib: { name: REGISTRY_LIB, entryPath }, contract: (await import(entryPath)) as Registry };
+}
 
 // Classifies one workspace dependency by its build output shape; the first matching shape wins.
 function classify(
   name: string,
+  serviceEntry: string,
 ): { kind: 'service'; entry: ServiceEntry } | { kind: 'web'; bundle: WebBundle } | { kind: 'lib'; lib: LibEntry } {
   const dir = projectRoot(name);
-  const entry = join(dir, 'dist', 'main.js');
+  const entry = join(dir, serviceEntry);
   if (existsSync(entry)) return { kind: 'service', entry: { service: name, entryPath: entry } };
   const browser = webBrowserDir(name, dir);
   if (existsSync(join(browser, 'index.html'))) return { kind: 'web', bundle: { name, dir: browser } };
@@ -140,7 +185,8 @@ function classify(
 function discoverDependencies(
   supervisor: string,
   supervisorDir: string,
-): { services: ServiceEntry[]; web: WebBundle | undefined; registry: LibEntry } {
+  serviceEntry: string,
+): { services: ServiceEntry[]; web: WebBundle | undefined } {
   const manifest = JSON.parse(readFileSync(join(supervisorDir, 'package.json'), 'utf8')) as {
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
@@ -152,20 +198,33 @@ function discoverDependencies(
   if (names.length === 0) {
     throw new Error(`${supervisor} has no workspace dependency to package as a service`);
   }
-  const classified = names.map(classify);
+  const classified = names.map((name) => classify(name, serviceEntry));
   const services = classified.flatMap((c) => (c.kind === 'service' ? [c.entry] : []));
   const webs = classified.flatMap((c) => (c.kind === 'web' ? [c.bundle] : []));
-  const registry = classified.flatMap((c) => (c.kind === 'lib' && c.lib.name === REGISTRY_LIB ? [c.lib] : []))[0];
-  if (registry === undefined) {
+  if (!classified.some((c) => c.kind === 'lib' && c.lib.name === REGISTRY_LIB)) {
     throw new Error(`${supervisor} must depend on the ${REGISTRY_LIB} library (workspace:*)`);
   }
   if (webs.length > 1) {
     throw new Error(`exactly one web bundle is allowed; found ${webs.map((w) => w.name).join(', ')}`);
   }
   if (services.length === 0) {
-    throw new Error(`${supervisor} has no service dependency (dist/main.js)`);
+    throw new Error(`${supervisor} has no service dependency (${serviceEntry})`);
   }
-  return { services, web: webs[0], registry };
+  return { services, web: webs[0] };
+}
+
+// Builds the registry from the discovered services and validates it with the 2b contract. Every declared entrypoint must exist; this runs before bundling and before `node --build-sea`.
+function validateRegistry(services: ServiceEntry[], contract: Registry): string[] {
+  const parsed = contract.serviceRegistrySchema.safeParse(
+    services.map((s) => ({ id: s.service, entry: s.entryPath })),
+  );
+  if (!parsed.success) {
+    throw new Error(`invalid service registry: ${parsed.error.issues.map((i) => i.message).join('; ')}`);
+  }
+  for (const service of parsed.data) {
+    if (!existsSync(service.entry)) throw new Error(`service "${service.id}": declared entrypoint missing: ${service.entry}`);
+  }
+  return parsed.data.filter((s) => s.enabled).map((s) => s.id);
 }
 
 // The generated entry only lists the registered services; the dispatcher (libs/service-registry) picks the role: no --service starts the supervisor, --service <id> starts that one service, anything else exits with the reject code.
@@ -248,45 +307,54 @@ function webAssets(web: WebBundle | undefined): Record<string, string> {
   return assets;
 }
 
-function writeSeaConfig(binaryPath: string, web: WebBundle | undefined, servicesAsset: string): void {
+// REQ-SEA-03 baseline from ASSEMBLER_CONFIG; the code cache follows the native/cross rule; a cross build names the target's Node as the SEA base.
+function writeSeaConfig(
+  binaryPath: string,
+  web: WebBundle | undefined,
+  contract: Registry,
+  target: BuildTarget,
+): void {
+  const { ASSEMBLER_CONFIG, DISPATCHER_CONFIG } = contract;
   const config = {
     main: bundlePath,
-    mainFormat: 'module',
+    mainFormat: ASSEMBLER_CONFIG.mainFormat,
     output: binaryPath,
-    useVfs: false,
-    useSnapshot: false,
-    useCodeCache: true,
-    execArgvExtension: 'none',
-    assets: { [servicesAsset]: servicesPath, ...webAssets(web) },
+    ...(target.executable === undefined ? {} : { executable: target.executable }),
+    useVfs: ASSEMBLER_CONFIG.useVfs,
+    useSnapshot: ASSEMBLER_CONFIG.useSnapshot,
+    useCodeCache: contract.useCodeCache(hostTriple(), target.triple),
+    execArgvExtension: ASSEMBLER_CONFIG.execArgvExtension,
+    assets: { [DISPATCHER_CONFIG.servicesAsset]: servicesPath, ...webAssets(web) },
   };
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 }
 
-function buildSea(binaryPath: string): void {
+function buildSea(binaryPath: string, target: BuildTarget): void {
   execFileSync(process.execPath, ['--build-sea', configPath], { stdio: 'inherit' });
-  // The Node SEA doc requires an ad-hoc signature on macOS; an unsigned arm64 binary is killed at start.
-  if (process.platform === 'darwin') {
+  // The Node SEA doc requires an ad-hoc signature on macOS; an unsigned arm64 binary is killed at start. codesign only runs for a macOS target built on macOS.
+  if (process.platform === 'darwin' && target.triple.endsWith('-apple-darwin')) {
     execFileSync('codesign', ['--sign', '-', binaryPath], { stdio: 'inherit' });
   }
 }
 
 async function main(): Promise<void> {
-  const supervisor = process.argv[2];
-  if (!supervisor) throw new Error('usage: node tools/scripts/compile-sea.ts <supervisor-project>');
+  const { supervisor, target } = resolveTarget(process.argv.slice(2));
   assertBuildNodeMatchesEngine();
 
+  const { lib: registry, contract } = await loadRegistry();
   const supervisorDir = projectRoot(supervisor);
-  const supervisorEntry = join(supervisorDir, 'dist', 'main.js');
+  const supervisorEntry = join(supervisorDir, contract.ASSEMBLER_CONFIG.serviceEntry);
   if (!existsSync(supervisorEntry)) {
     throw new Error(`${supervisor}: missing ${supervisorEntry}; run the ${supervisor} build target first`);
   }
-  const { services, web, registry } = discoverDependencies(supervisor, supervisorDir);
+  const { services, web } = discoverDependencies(supervisor, supervisorDir, contract.ASSEMBLER_CONFIG.serviceEntry);
+  const serviceIds = validateRegistry(services, contract);
   console.log(
-    `supervisor ${supervisor}; services: ${services.map((s) => s.service).join(', ')}; web: ${web?.name ?? 'none'}`,
+    `supervisor ${supervisor}; services: ${serviceIds.join(', ')}; web: ${web?.name ?? 'none'}; target ${target.triple}; code cache ${contract.useCodeCache(hostTriple(), target.triple) ? 'on' : 'off'}`,
   );
 
   const artifactDir = join(root, 'artifacts', supervisor);
-  const binaryName = `${supervisor}-${targetTriple()}${process.platform === 'win32' ? '.exe' : ''}`;
+  const binaryName = `${supervisor}-${target.triple}${target.triple.includes('windows') ? '.exe' : ''}`;
   const binaryPath = join(artifactDir, binaryName);
 
   rmSync(workDir, { recursive: true, force: true });
@@ -297,13 +365,11 @@ async function main(): Promise<void> {
   writeEntry(supervisorEntry, services, registry);
   writeFileSync(
     servicesPath,
-    `${JSON.stringify({ services: services.map((s) => s.service) }, null, 2)}\n`,
+    `${JSON.stringify(contract.servicesAssetSchema.parse({ services: serviceIds }), null, 2)}\n`,
   );
   await bundle();
-  // The asset name comes from the built contract library, the same value the supervisor reads at run time.
-  const { DISPATCHER_CONFIG } = (await import(registry.entryPath)) as typeof import('service-registry');
-  writeSeaConfig(binaryPath, web, DISPATCHER_CONFIG.servicesAsset);
-  buildSea(binaryPath);
+  writeSeaConfig(binaryPath, web, contract, target);
+  buildSea(binaryPath, target);
 
   console.log(`sea executable: ${binaryPath} (${statSync(binaryPath).size} bytes)`);
 }

@@ -65,7 +65,13 @@
         "options": {
           "command": "node tools/scripts/compile-sea.ts sea-runtime",
           "cwd": "{workspaceRoot}"
-        }
+        },
+        "inputs": [
+          "default",
+          "^default",
+          "{workspaceRoot}/tools/scripts/compile-sea.ts",
+          "{workspaceRoot}/tools/rspack/**/*"
+        ]
       }
     }
   }
