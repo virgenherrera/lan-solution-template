@@ -1,4 +1,4 @@
-docs[55]:
+docs[56]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -449,6 +449,15 @@ docs[55]:
     status: current
     updated: 2026-10-31
     refs[1]: REQ-RUNTIME-05
+  - doc: docs/results/POC-02e-bounded-restart.md
+    title: POC-2e Bounded restart
+    type: backlog
+    summary: "Result of slice 2e: per-service lifecycle with backoff, jitter, restart window and counter reset, with delays measured on the packaged binary."
+    ids: []
+    related[3]: docs/backlog/poc-2e-bounded-restart.md,docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/results/POC-02d-readiness-logs.md
+    status: current
+    updated: 2026-10-31
+    refs[1]: REQ-DESK-05
   - doc: docs/results/SPIKE-spa-serving.md
     title: SPIKE SPA serving in the SEA
     type: backlog

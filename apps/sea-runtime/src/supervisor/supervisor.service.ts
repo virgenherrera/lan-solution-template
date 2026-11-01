@@ -5,27 +5,19 @@ import {
   DISPATCHER_CONFIG,
   SUPERVISOR_CONFIG,
   aggregateState,
-  readyMessageSchema,
   serviceArgs,
   servicesAssetSchema,
   startupOrder,
   stateMessageSchema,
   type AggregateState,
-  type ServiceStatus,
 } from 'service-registry';
 import { hasWebBundle, loadWebBundle, type WebFile } from '../web/web-bundle.js';
 import { forwardLines, prefixed } from './log-lines.js';
-
-interface Service {
-  readonly id: string;
-  readonly child: ChildProcess;
-  status: ServiceStatus;
-  timer?: NodeJS.Timeout;
-}
+import { ServiceLifecycle } from './service-lifecycle.js';
 
 @Injectable()
 export class SupervisorService implements OnModuleInit, OnModuleDestroy {
-  private readonly services: Service[] = [];
+  private readonly services: ServiceLifecycle[] = [];
   private stopping = false;
   private state?: AggregateState;
   private readonly onSignal = (signal: NodeJS.Signals): void => {
@@ -58,52 +50,40 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
 
     // The asset lists ids only, so no dependency is known yet; the order is the registry order.
     const order = startupOrder(services.map((id) => ({ id, dependsOn: [], enabled: true })));
-    for (const id of order) this.start(id, id === 'api-gateway' ? web : undefined);
+    for (const id of order) {
+      const lifecycle = new ServiceLifecycle(id, {
+        spawn: () => this.spawnChild(id, id === 'api-gateway' ? web : undefined),
+        onStatus: () => this.update(),
+        log: (text) => this.log(text),
+      });
+      this.services.push(lifecycle);
+      lifecycle.start();
+    }
     this.update();
   }
 
-  // Spawns one service with the IPC control channel. Its output is piped and re-emitted with the id prefix.
-  private start(id: string, web: readonly WebFile[] | undefined): void {
+  // Spawns one process with the IPC control channel. Its output is piped and re-emitted with the id prefix. The web bundle is sent again on every restart, from memory.
+  private spawnChild(id: string, web: readonly WebFile[] | undefined): ChildProcess {
     const args = web === undefined ? serviceArgs(id) : [...serviceArgs(id), '--web', 'ipc'];
     const child = spawn(process.execPath, args, {
       shell: false,
       stdio: ['inherit', 'pipe', 'pipe', 'ipc'],
       serialization: 'advanced',
     });
-    const service: Service = { id, child, status: 'starting' };
-    this.services.push(service);
     if (child.stdout) forwardLines(id, child.stdout, process.stdout);
     if (child.stderr) forwardLines(id, child.stderr, process.stderr);
-    child.on('message', (message) => {
-      if (readyMessageSchema.safeParse(message).success) this.setStatus(service, 'ready');
-    });
-    child.on('exit', (code, signal) => {
-      if (this.stopping) return;
-      this.log(`service "${id}" exited (code ${code}, signal ${signal})`);
-      this.setStatus(service, 'failed');
-    });
-    service.timer = setTimeout(() => {
-      if (service.status !== 'starting') return;
-      this.log(`service "${id}" not ready within ${SUPERVISOR_CONFIG.readinessTimeoutMs} ms`);
-      this.setStatus(service, 'failed');
-    }, SUPERVISOR_CONFIG.readinessTimeoutMs);
     this.log(`spawned service "${id}" as pid ${child.pid}`);
     if (web !== undefined) {
       child.send({ kind: 'web-bundle', files: web }, (error) => {
         if (error) this.log(`web bundle handoff failed: ${error.message}`);
       });
     }
-  }
-
-  private setStatus(service: Service, status: ServiceStatus): void {
-    clearTimeout(service.timer);
-    service.status = status;
-    this.update();
+    return child;
   }
 
   // Recomputes the aggregate state; on a change logs it, prints one JSON line for the desktop shell and forwards it to the children.
   private update(): void {
-    const next = aggregateState(this.services.map((service) => service.status), this.stopping);
+    const next = aggregateState(this.services.map(({ status }) => status), this.stopping);
     if (next === this.state) return;
     this.state = next;
     const message = stateMessageSchema.parse({ kind: 'state', state: next });
@@ -111,7 +91,7 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     // Design for POC-5: one JSON line per change, never prefixed, so the shell can tell it from log lines. Not verified against Tauri.
     process.stdout.write(`${JSON.stringify(message)}\n`);
     for (const { child } of this.services) {
-      if (child.connected) child.send(message, () => undefined);
+      if (child?.connected) child.send(message, () => undefined);
     }
     if (next === 'error') void this.shutdown('SIGTERM', SUPERVISOR_CONFIG.errorExitCode);
   }
@@ -129,10 +109,11 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     this.update();
     await Promise.all(
       this.services.map(
-        ({ child, timer }) =>
+        (service) =>
           new Promise<void>((resolve) => {
-            clearTimeout(timer);
-            if (child.exitCode !== null || child.signalCode !== null) {
+            service.stop();
+            const { child } = service;
+            if (child === undefined || child.exitCode !== null || child.signalCode !== null) {
               resolve();
               return;
             }
