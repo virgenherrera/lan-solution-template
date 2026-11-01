@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "nx run-many -t test --exclude=lan-solution-template",
+    "test": "node tools/scripts/test-filter.ts",
     "build": "nx run-many -t build --exclude=lan-solution-template",
-    "package": "nx run-many -t package --exclude=lan-solution-template"
+    "package": "nx run-many -t package --exclude=lan-solution-template",
+    "securityCheck": "pnpm audit --audit-level=high"
   },
   "keywords": [],
   "author": "",

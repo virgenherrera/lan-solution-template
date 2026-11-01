@@ -7,7 +7,7 @@ summary: Mermaid architecture diagrams citing SRS sections for runtime and deskt
 ids[0]:
 related[1]: README.md
 status: current
-updated: 2026-10-30
+updated: 2026-10-31
 -->
 
 # Architecture overview
@@ -42,7 +42,7 @@ updated: 2026-10-30
 | Development | Separate apps behind a dev proxy | [Development topology](#development-topology) |
 | Production | One SEA, a supervisor, a gateway, one HTTPS origin | [Production topology](#production-topology) |
 | Desktop | Tauri starts the SEA supervisor as a sidecar | [Tauri sidecar](#tauri-sidecar) |
-| Decisions | Seven ADR placeholders. None is written yet. | [Architecture decisions](#architecture-decisions) |
+| Decisions | Seven ADR entries. ADR-001 is written; six are placeholders. | [Architecture decisions](#architecture-decisions) |
 
 ---
 
@@ -143,11 +143,11 @@ Sources:
 
 [Back to navigation](#navigation)
 
-The [roadmap proposal](../roadmap/PROPOSAL.md#pitches) defines ADR numbering once. Each POC deliverable names its ADR. The numbers are proposals, not SRS requirements. No decision record is written yet. Each entry below is a placeholder. Topics come from SRS v1.6 text.
+The [roadmap proposal](../roadmap/PROPOSAL.md#pitches) defines ADR numbering once. Each POC deliverable names its ADR. The numbers are proposals, not SRS requirements. ADR-001 is written. Each other entry below is a placeholder. Topics come from SRS v1.6 text.
 
 ### ADR-001: Toolchain substitution
 
-Status: placeholder. Written by POC-1, only if a version substitution happens ([POC-1](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)). No topic in this page.
+Status: accepted by human decision, recorded 2026-10-31. Written by POC-1e because version substitutions happened ([POC-1](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)). Full record: [ADR-001](adr/ADR-001-version-substitutions.md).
 
 ### ADR-002: Single-SEA portability
 

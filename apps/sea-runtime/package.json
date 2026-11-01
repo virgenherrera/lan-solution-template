@@ -15,7 +15,9 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "oxlint --type-aware src/ test/",
-    "test": "echo \"test: not defined for this package\""
+    "test": "pnpm run test:static && pnpm run test:dynamic",
+    "test:static": "tsc --noEmit -p tsconfig.json",
+    "test:dynamic": "echo \"test:dynamic: not defined for this package\""
   },
   "dependencies": {
     "@nestjs/common": "12.3.2",
@@ -52,7 +54,8 @@
       },
       "package": {
         "dependsOn": [
-          "build"
+          "build",
+          "test"
         ],
         "executor": "nx:run-commands",
         "outputs": [

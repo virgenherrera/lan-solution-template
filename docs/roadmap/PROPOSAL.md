@@ -53,7 +53,7 @@ Why this page exists: it orders the SRS v1.6 POCs and logs 17 human decisions. N
 | Status | Proposal v2. Not approved. No remote action ran. | [Decision Log](#decision-log) |
 | Method | Shape Up. 6 weeks of build, then 2 weeks of cooldown. | [Method](#method) |
 | Bets | 3 cycles. 8 active POCs (POC-9 on hold) and POC-6 in the backlog. | [Cycles and bets](#cycles-and-bets) |
-| ADR index | 13 rows: 9 approved, 1 proposed, 3 pending spike. | [ADR index](#adr-index) |
+| ADR index | 14 rows: 10 approved, 1 proposed, 3 pending spike. | [ADR index](#adr-index) |
 | Open questions | 17 rows. None blocks. | [Open questions](#open-questions) |
 | Coverage | 13 SRS sections and 36 acceptance criteria map to POCs. | [SRS coverage matrix](#srs-coverage-matrix) |
 
@@ -155,6 +155,7 @@ Each row summarizes one architecture decision record (ADR, Nygard format). ADRs 
 | Database | SQLite plus vector is the engine for now; PostgreSQL waits in the backlog. | 8 | approved |
 | Database | We install the current stable Drizzle tag first and use `1.0.0-rc.5` only if it fails. | 10 | approved |
 | Release | Release automation is on HOLD until all POCs are ready. | 9 | approved |
+| Toolchain | Version substitutions in POC-1 (S1 to S5) are recorded in [ADR-001](../architecture/adr/ADR-001-version-substitutions.md). | 1e, human | approved |
 
 The [Decision Log](#decision-log) keeps each decision as recorded.
 
@@ -277,7 +278,9 @@ POC-1 stays the umbrella id. Slices run in order; each depends on the previous o
 | 1b | Nest apps: `api-gateway`, `sea-runtime`, `shared-core` from the Nest CLI; dummy health endpoint; `sea-runtime` as a standalone `createApplicationContext(RuntimeModule)` with no listener (REQ-RUNTIME-02) | `minor/poc-01b-nest` | ~1 day | 1a |
 | 1c | SEA build: generic assembler `tools/scripts/compile-sea.ts` with native `node --build-sea`; the `package` target lives on `sea-runtime`; one executable runs the minimal supervisor and the dummy Nest app | `minor/poc-01b-nest` (same branch as 1b, human decision; see [POC-1c backlog](../backlog/poc-1c-sea-build.md)) | ~2 days | 1b |
 | 1d | Angular and link: `web-angular` from the Angular CLI; `sea-runtime` embeds its build and passes `--web-root`; `api-gateway` serves it over plain HTTP from the SEA (decision 17); dev uses the Angular dev server; Nx build order and post-package check | `minor/poc-01d-angular-link`: delivered on that branch (human decision) | ~1 day | 1c |
-| 1e | Hardening and desktop skeleton: `desktop` from the Tauri CLI, `securityCheck`, test filter stub, OS matrix, root sequence, tags, consolidated result | `minor/poc-01e-hardening` | ~1 day | 1d |
+| 1e | Hardening and desktop skeleton: `desktop` from the Tauri CLI, `securityCheck`, test filter stub, OS matrix, root sequence, tags, consolidated result | `minor/poc-01e-hardening`: delivered on that branch (one PR, human decision) | ~1 day | 1d |
+
+POC-1 is complete: slices 1a to 1e are delivered. Result: [POC-1 result](../results/POC-01-Result.md).
 
 Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-nest-apps.md), [1c](../backlog/poc-1c-sea-build.md), [1d](../backlog/poc-1d-angular-link.md), [1e](../backlog/poc-1e-hardening-desktop-skeleton.md).
 

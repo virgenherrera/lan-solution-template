@@ -1,0 +1,43 @@
+{
+  "name": "desktop",
+  "version": "0.0.1",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "test": "pnpm run test:static && pnpm run test:dynamic",
+    "build": "cargo check --manifest-path src-tauri/Cargo.toml",
+    "package": "tauri build --no-bundle",
+    "test:static": "echo \"test:static: not defined for this package\"",
+    "test:dynamic": "echo \"test:dynamic: not defined for this package\""
+  },
+  "type": "module",
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.4"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "dependsOn": [
+          {
+            "projects": [
+              "web-angular"
+            ],
+            "target": "build"
+          }
+        ]
+      },
+      "package": {
+        "dependsOn": [
+          {
+            "projects": [
+              "sea-runtime"
+            ],
+            "target": "package"
+          },
+          "build",
+          "test"
+        ]
+      }
+    }
+  }
+}

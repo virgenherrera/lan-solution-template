@@ -5,7 +5,11 @@
       "cache": true
     },
     "test": {
-      "cache": true
+      "cache": true,
+      "dependsOn": ["build"]
+    },
+    "package": {
+      "dependsOn": ["test"]
     },
     "lint": {
       "cache": true

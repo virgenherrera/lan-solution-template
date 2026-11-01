@@ -4,8 +4,11 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo 'test: not defined for this package'",
-    "build": "tsc -p tsconfig.json --rootDir src --outDir dist"
+    "test": "pnpm run test:static && pnpm run test:dynamic",
+    "build": "tsc -p tsconfig.json --rootDir src --outDir dist",
+    "test:static": "tsc --noEmit -p tsconfig.json",
+    "test:dynamic": "echo \"test:dynamic: not defined for this package\"",
+    "package": "echo \"package: not defined for this package\""
   },
   "keywords": [],
   "author": "",
