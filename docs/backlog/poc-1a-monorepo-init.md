@@ -32,7 +32,7 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Cycle 1 (planned) |
+| Status | Delivered in PR #4 (commit `2c815c9`, slices 1a to 1c) |
 | Slice | 1a of 1a to 1e; umbrella [POC-1](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton) |
 | Appetite | ~1 day, ASSUMPTION |
 | Depends on | none |
