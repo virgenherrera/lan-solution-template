@@ -34,11 +34,11 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Planned |
+| Status | Done in commit `97b5f01` on `minor/poc-02-supervisor`, see [result](../results/POC-02d-readiness-logs.md) |
 | Slice | 2d of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~380 authored lines (ASSUMPTION); the largest slice, split off first if it grows |
 | Depends on | [2c](poc-2c-assembler-registry-build.md) |
-| Branch (proposed) | `minor/poc-02d-readiness-logs` |
+| Branch (decided, D1) | `minor/poc-02-supervisor`, one commit or commit group per slice, one draft PR for all of POC-2 |
 | Result page | `docs/results/POC-02d-readiness-logs.md` |
 | Requirements | REQ-RUNTIME-05, REQ-RUNTIME-07, REQ-NET-01 |
 | Acceptance criteria | none new. Serves AC-28 |

@@ -36,15 +36,15 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Cycle 1 (planned), split into eight slices on 2026-10-31 |
+| Status | Done on 2026-10-31: slices 2a to 2h delivered on `minor/poc-02-supervisor` (commits `a606db3`, `48987d4`, `0f7a834`, `97b5f01`, `06ab764`, `85a8ed3`, `d5e8b04`, and the 2h documentation commit). Result: [POC-02-Result](../results/POC-02-Result.md), decision: [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md). Draft PR not opened (needs the human) |
 | Appetite | 2 weeks, big batch, highest uncertainty |
 | Depends on | POC-1 (slices 1a to 1e) and the POC-1f in-memory web serving (PR #9, merged) |
-| Branches | one per slice, see [Slices](#slices). The old single branch `minor/poc-02-sea-supervisor` is not used |
+| Branches | one branch `minor/poc-02-supervisor` for all of POC-2, one commit or commit group per slice, one draft PR against `main` (decided, human decision D1). The old branch `minor/poc-02-sea-supervisor` is not used |
 | Requirements | 13 REQ ids |
 | Acceptance criteria | AC-11, AC-28, AC-29, AC-30, AC-31 |
-| Rule | Start a slice only when the human says so, and only on that slice's branch ([AGENTS.md](../../AGENTS.md)) |
+| Rule | Start a slice only when the human says so, and only on branch `minor/poc-02-supervisor` ([AGENTS.md](../../AGENTS.md)) |
 
-POC-2 stays the umbrella id, the way POC-1 does. Each slice has its own epic, branch and result page. The slice sizes are estimates of authored changed lines (additions plus deletions), ASSUMPTION, and only a planning heuristic.
+POC-2 stays the umbrella id, the way POC-1 does. Each slice has its own epic and result page. All slices share branch `minor/poc-02-supervisor`. The slice sizes are estimates of authored changed lines (additions plus deletions), ASSUMPTION, and only a planning heuristic.
 
 ---
 
@@ -74,18 +74,18 @@ Circuit breaker, from the pitch: if the SEA cannot bundle the dispatcher and the
 
 [Back to navigation](#navigation)
 
-| Slice | Epic | Branch (proposed) | Depends on | Size (lines, ASSUMPTION) | Main ids |
+| Slice | Epic | Branch (decided, D1) | Depends on | Size (lines, ASSUMPTION) | Main ids |
 |---|---|---|---|---|---|
-| 2a | [Launcher cwd spike](poc-2a-launcher-cwd-spike.md) | `docs/poc-02a-launcher-cwd` | none (POC-1f merged) | ~120, docs only | decision 11, OQ1 |
-| 2b | [Dispatcher and service registry](poc-2b-dispatcher-service-registry.md) | `minor/poc-02b-dispatcher-registry` | none (2a is parallel) | ~250 | REQ-RUNTIME-03, REQ-RUNTIME-04, AC-29, AC-31 |
-| 2c | [Assembler driven by the registry](poc-2c-assembler-registry-build.md) | `minor/poc-02c-assembler-registry` | 2b | ~250 | REQ-SEA-01..03, REQ-BUILD-04, AC-11 |
-| 2d | [Supervisor readiness, logs and aggregate state](poc-2d-supervisor-readiness-logs.md) | `minor/poc-02d-readiness-logs` | 2c | ~380 | REQ-RUNTIME-05, REQ-NET-01 |
-| 2e | [Bounded restart](poc-2e-bounded-restart.md) | `minor/poc-02e-bounded-restart` | 2d | ~250 | REQ-RUNTIME-01, REQ-RUNTIME-03, REQ-RUNTIME-05 |
-| 2f | [Coordinated shutdown and orphan checks](poc-2f-coordinated-shutdown.md) | `minor/poc-02f-coordinated-shutdown` | 2d (2e for the no-restart rule) | ~350 | REQ-RUNTIME-06, AC-30 |
-| 2g | [Real-binary smoke test and Linux run](poc-2g-real-binary-smoke.md) | `minor/poc-02g-real-binary-smoke` | 2e, 2f | ~300 | REQ-RUNTIME-08, REQ-TEST-07, AC-28 |
-| 2h | [POC-02 result and ADR-002](poc-2h-result-and-adr.md) | `docs/poc-02h-result-adr` | 2a to 2g | ~200, docs only | AC-11, AC-29 |
+| 2a | [Launcher cwd spike](poc-2a-launcher-cwd-spike.md) | `minor/poc-02-supervisor` | none (POC-1f merged) | ~120, docs only | decision 11, OQ1 |
+| 2b | [Dispatcher and service registry](poc-2b-dispatcher-service-registry.md) | `minor/poc-02-supervisor` | none (2a is parallel) | ~250 | REQ-RUNTIME-03, REQ-RUNTIME-04, AC-29, AC-31 |
+| 2c | [Assembler driven by the registry](poc-2c-assembler-registry-build.md) | `minor/poc-02-supervisor` | 2b | ~250 | REQ-SEA-01..03, REQ-BUILD-04, AC-11 |
+| 2d | [Supervisor readiness, logs and aggregate state](poc-2d-supervisor-readiness-logs.md) | `minor/poc-02-supervisor` | 2c | ~380 | REQ-RUNTIME-05, REQ-NET-01 |
+| 2e | [Bounded restart](poc-2e-bounded-restart.md) | `minor/poc-02-supervisor` | 2d | ~250 | REQ-RUNTIME-01, REQ-RUNTIME-03, REQ-RUNTIME-05 |
+| 2f | [Coordinated shutdown and orphan checks](poc-2f-coordinated-shutdown.md) | `minor/poc-02-supervisor` | 2d (2e for the no-restart rule) | ~350 | REQ-RUNTIME-06, AC-30 |
+| 2g | [Real-binary smoke test and Linux run](poc-2g-real-binary-smoke.md) | `minor/poc-02-supervisor` | 2e, 2f | ~300 | REQ-RUNTIME-08, REQ-TEST-07, AC-28 |
+| 2h | [POC-02 result and ADR-002](poc-2h-result-and-adr.md) | `minor/poc-02-supervisor` | 2a to 2g | ~200, docs only | AC-11, AC-29 |
 
-Total estimate: about 1800 authored lines across eight PRs, one PR per slice (human decision, see D1). Branch prefixes follow [REQ-VERSION-02](../requirements/11-nx-quality-testing.md): `minor/` where a CLI or internal contract changes, `docs/` for documentation only.
+Total estimate: about 1800 authored lines on one branch and one draft PR, one commit or commit group per slice (decided, human decision D1). Branch prefixes follow [REQ-VERSION-02](../requirements/11-nx-quality-testing.md): `minor/` where a CLI or internal contract changes, `docs/` for documentation only.
 
 ---
 
@@ -213,15 +213,15 @@ Source: [POC-1 result, open items](../results/POC-01-Result.md#open-items-and-no
 
 [Back to navigation](#navigation)
 
-Only the human can take these. None blocks the start of 2b. Each has a recommendation and a default, so work continues on the default if the human stays silent.
+Decided by the human. Each row below is binding. The recommendation column keeps the original proposal for reference only.
 
-| Id | Decision | Recommendation (default) | Needed by |
+| Id | Decision | Decided (human decision) and original recommendation | Needed by |
 |---|---|---|---|
-| D1 | PR layout: one PR per slice (8 PRs) against `main`, in order; or one PR for the whole POC-2. | One PR per slice. Each is reviewable alone, and the pitch deliverable PR title splits into one conventional title per slice. 2a and 2h are docs only and can merge fast. | Before 2b |
-| D2 | Accept the proposed restart, backoff and readiness values of [OQ11](../roadmap/PROPOSAL.md#open-questions) (readiness 30 s, backoff 1 to 16 s capped at 30 s with 20 percent jitter, 5 restarts in 300 s, reset after 60 s, graceful stop 10 s). | Accept as constants in one Zod-validated object, measure them in 2e and 2f, and report real numbers in `POC-02-Result`. Configuration moves to the POC-3 singleton. | Before 2d |
-| D3 | Windows: no Windows host exists. Close POC-2 with host macOS plus Linux in Docker, and mark Windows (process tree, `taskkill /T`, SEA run) `blocked-by-environment`, carried to POC-8. Or pause POC-2 until a Windows VM or runner exists. | Close with Windows marked blocked, per [OQ7](../roadmap/PROPOSAL.md#open-questions). Code for the Windows branch of shutdown is written but labelled not verified. [REQ-TEST-09](../requirements/11-nx-quality-testing.md) forbids claiming Windows support. | Before 2f |
-| D4 | systemd evidence for 2a: a systemd container in Docker (privileged, Debian), a Linux VM, or leave systemd as not verified and verify only launchd. | A privileged systemd container as best effort, labelled "container, not a real host". Install no VM tool; AGENTS.md forbids `brew` and `apt` on the host. | Before 2a |
-| D5 | Where the real-binary smoke test runs. `test` runs before `package` ([REQ-BUILD-02](../requirements/11-nx-quality-testing.md)), but the smoke needs the packaged binary. Run it as a post-step of `package` (like the 1d post-package check), or make `test` depend on `package`, which breaks the root order. | Post-step of `package`, with the `@app` tag. The root order stays. [REQ-TEST-08](../requirements/11-nx-quality-testing.md) already says `package` validates the artifacts. | Before 2g |
+| D1 | PR layout: one PR per slice (8 PRs) against `main`, in order; or one PR for the whole POC-2. | **decided (human decision):** one branch `minor/poc-02-supervisor` for all of POC-2, one commit or commit group per slice, and one draft PR against `main`. Supersedes the original one-PR-per-slice recommendation. | Before 2b |
+| D2 | Accept the proposed restart, backoff and readiness values of [OQ11](../roadmap/PROPOSAL.md#open-questions) (readiness 30 s, backoff 1 to 16 s capped at 30 s with 20 percent jitter, 5 restarts in 300 s, reset after 60 s, graceful stop 10 s). | **decided (human decision):** the OQ11 values are accepted as constants that live in one Zod schema with `DEFAULTS`, not as loose values. Measure them in 2e and 2f, and report real numbers in `POC-02-Result`. Configuration moves to the POC-3 singleton. | Before 2d |
+| D3 | Windows: no Windows host exists. Close POC-2 with host macOS plus Linux in Docker, and mark Windows (process tree, `taskkill /T`, SEA run) `blocked-by-environment`, carried to POC-8. Or pause POC-2 until a Windows VM or runner exists. | **decided (human decision):** Windows is halted, marked `blocked-by-environment` (process tree, `taskkill /T`, SEA run), until the human tests it on his Windows computer on Monday. Code for the Windows branch of shutdown stays labelled not verified. [REQ-TEST-09](../requirements/11-nx-quality-testing.md) forbids claiming Windows support. | Before 2f |
+| D4 | systemd evidence for 2a: a systemd container in Docker (privileged, Debian), a Linux VM, or leave systemd as not verified and verify only launchd. | **decided (human decision):** systemd and Linux evidence comes from Docker (a privileged systemd container, best effort, labelled "container, not a real host"). On Monday the human tries a VM (VMware) on the Windows computer. AGENTS.md still forbids `brew` and `apt` on the host. | Before 2a |
+| D5 | Where the real-binary smoke test runs. `test` runs before `package` ([REQ-BUILD-02](../requirements/11-nx-quality-testing.md)), but the smoke needs the packaged binary. Run it as a post-step of `package` (like the 1d post-package check), or make `test` depend on `package`, which breaks the root order. | **decided (human decision):** the smoke test is a post-step of `package`, with the `@app` tag. The root order stays. [REQ-TEST-08](../requirements/11-nx-quality-testing.md) already says `package` validates the artifacts. | Before 2g |
 
 ---
 
@@ -235,4 +235,4 @@ Source: `docs/roadmap/PROPOSAL.md`, Open questions.
 |---|---|---|
 | [OQ1](../roadmap/PROPOSAL.md#open-questions) | root and cwd under each launcher | decided (decision 11); the cwd fact is verified in 2a |
 | [OQ7](../roadmap/PROPOSAL.md#open-questions) | what closes a micro-POC per OS | proposed; D3 applies it |
-| [OQ11](../roadmap/PROPOSAL.md#open-questions) | restart/backoff/readiness values | proposed; D2 |
+| [OQ11](../roadmap/PROPOSAL.md#open-questions) | restart/backoff/readiness values | decided (human decision, D2): constants in a Zod schema with `DEFAULTS`; measured values still to report |

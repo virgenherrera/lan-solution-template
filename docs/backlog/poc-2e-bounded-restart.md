@@ -34,11 +34,11 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Planned |
+| Status | Done in commit `06ab764` on `minor/poc-02-supervisor`, see [result](../results/POC-02e-bounded-restart.md) |
 | Slice | 2e of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~250 authored lines (ASSUMPTION) |
 | Depends on | [2d](poc-2d-supervisor-readiness-logs.md) |
-| Branch (proposed) | `minor/poc-02e-bounded-restart` |
+| Branch (decided, D1) | `minor/poc-02-supervisor`, one commit or commit group per slice, one draft PR for all of POC-2 |
 | Result page | `docs/results/POC-02e-bounded-restart.md` |
 | Requirements | REQ-RUNTIME-01, REQ-RUNTIME-03, REQ-RUNTIME-05 |
 | Acceptance criteria | AC-29 (respawn uses the same `process.execPath`) |

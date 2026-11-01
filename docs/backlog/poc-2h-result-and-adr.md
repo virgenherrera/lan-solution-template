@@ -34,13 +34,13 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Planned |
+| Status | Done in the commit that adds the result page and ADR-002, see [result](../results/POC-02-Result.md) and [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md) |
 | Slice | 2h of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~200 authored lines, documentation only (ASSUMPTION) |
 | Depends on | [2a](poc-2a-launcher-cwd-spike.md) to [2g](poc-2g-real-binary-smoke.md) |
-| Branch (proposed) | `docs/poc-02h-result-adr` |
+| Branch (decided, D1) | `minor/poc-02-supervisor`, one commit or commit group per slice, one draft PR for all of POC-2 |
 | Result page | `docs/results/POC-02-Result.md` |
-| Decision record | `docs/architecture/adr/ADR-002-single-sea-portability.md` (name proposed) |
+| Decision record | `docs/architecture/adr/ADR-002-single-sea-portability.md`  |
 | Acceptance criteria | AC-11, AC-29 |
 
 ---
@@ -75,7 +75,7 @@ Source: [PROPOSAL pitch deliverable](../roadmap/PROPOSAL.md#poc-2-single-sea-and
 
 Observable:
 
-- `POC-02-Result` lists every slice with its branch, its commit range or PR, and the commands with exit codes.
+- `POC-02-Result` lists every slice with its commit range, and the commands with exit codes.
 - Each inherited item of the umbrella has a status in the result.
 - The OS matrix labels each OS and architecture `verified`, `verified in Docker` or `not verified`. Windows reads `blocked-by-environment` ([REQ-TEST-09](../requirements/11-nx-quality-testing.md)).
 - The measured OQ11 values replace the proposals in the result, and [OQ11](../roadmap/PROPOSAL.md#open-questions) is updated to match (only with the human's approval).
@@ -87,13 +87,13 @@ Observable:
 
 [Back to navigation](#navigation)
 
-- [ ] Write `docs/results/POC-02-Result.md` from the slice pages 2a to 2g. Source: [REQ-REP-05](../requirements/03-file-structure.md), [AC-11](../requirements/11-nx-quality-testing.md), [AC-29](../requirements/11-nx-quality-testing.md).
-- [ ] Write `ADR-002`: one binary per platform, re-entry by role, no postject, the code-cache rule, and the limits found. Add it to the ADR index in the roadmap proposal. Source: [REQ-SEA-01](../requirements/10-node-sea-distribution.md), [REQ-SEA-02](../requirements/10-node-sea-distribution.md), [AC-11](../requirements/11-nx-quality-testing.md).
-- [ ] Review the requirement text that still names `ServeStaticModule`, `--web-root` or the temp extraction (POC-1f risk) and record each hit. Do not edit requirement files without the human; the SRS owner decides. Source: [REQ-NET-02](../requirements/06-web-gateway-https-pwa.md), not verified against the SRS owner.
-- [ ] Update the backlog index, the roadmap slice table and statuses; mark the 2a to 2g epics as delivered with their branches. Source: [REQ-REP-05](../requirements/03-file-structure.md).
-- [ ] Update `docs/requirements/traceability.md` rows for the REQ ids that POC-2 closed, only if the file records POC status. Source: not verified (read the file first).
-- [ ] Hand the open items to POC-3, POC-4, POC-5 and POC-8 by editing their "Inherited" or "Tasks" lines; link the 2a answer from POC-3. Source: [REQ-CFG-05](../requirements/04-configuration.md) (root), pitch ids of those POCs.
-- [ ] Regenerate `docs/meta.toon` and run the metadata check. Source: [Metadata block v1](../standards/README.md#metadata-block-v1).
+- [x] Write `docs/results/POC-02-Result.md` from the slice pages 2a to 2g. Source: [REQ-REP-05](../requirements/03-file-structure.md), [AC-11](../requirements/11-nx-quality-testing.md), [AC-29](../requirements/11-nx-quality-testing.md).
+- [x] Write `ADR-002`: one binary per platform, re-entry by role, no postject, the code-cache rule, and the limits found. Add it to the ADR index in the roadmap proposal. Source: [REQ-SEA-01](../requirements/10-node-sea-distribution.md), [REQ-SEA-02](../requirements/10-node-sea-distribution.md), [AC-11](../requirements/11-nx-quality-testing.md).
+- [x] Review the requirement text (result: [Requirement text review](../results/POC-02-Result.md#requirement-text-review); no file edited) that still names `ServeStaticModule`, `--web-root` or the temp extraction (POC-1f risk) and record each hit. Do not edit requirement files without the human; the SRS owner decides. Source: [REQ-NET-02](../requirements/06-web-gateway-https-pwa.md), not verified against the SRS owner.
+- [x] Update the backlog index, the roadmap slice table and statuses; mark the 2a to 2g epics as delivered with their branches. Source: [REQ-REP-05](../requirements/03-file-structure.md).
+- [ ] (not done, not verified: file not read in this slice) Update `docs/requirements/traceability.md` rows for the REQ ids that POC-2 closed, only if the file records POC status. Source: not verified (read the file first).
+- [ ] (partly done: the owners are proposed in the [result](../results/POC-02-Result.md#pending-items-inherited-and-new); the Inherited and Tasks lines of POC-3, POC-4, POC-5 and POC-8 are not edited) Hand the open items to POC-3, POC-4, POC-5 and POC-8 by editing their "Inherited" or "Tasks" lines; link the 2a answer from POC-3. Source: [REQ-CFG-05](../requirements/04-configuration.md) (root), pitch ids of those POCs.
+- [x] Regenerate `docs/meta.toon` and run the metadata check. Source: [Metadata block v1](../standards/README.md#metadata-block-v1).
 
 ---
 

@@ -26,6 +26,7 @@
     "@nestjs/platform-node": "12.3.2",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
+    "service-registry": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -45,5 +46,13 @@
     "vite": "8.3.5",
     "vitest": "4.1.12"
   },
-  "nx": {}
+  "nx": {
+    "targets": {
+      "build": {
+        "dependsOn": [
+          "^build"
+        ]
+      }
+    }
+  }
 }
