@@ -304,7 +304,7 @@ docs[39]:
     related[2]: docs/backlog/poc-1d-angular-link.md,docs/results/POC-01c-Result.md
     status: current
     updated: 2026-10-31
-    refs[3]: REQ-BUILD-05,REQ-NET-01,REQ-STACK-05
+    refs[4]: REQ-BUILD-05,REQ-NET-01,REQ-STACK-05,REQ-TEST
   - doc: docs/results/SPIKE-spa-serving.md
     title: SPIKE SPA serving in the SEA
     type: backlog

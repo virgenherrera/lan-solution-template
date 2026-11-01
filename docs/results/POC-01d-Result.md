@@ -20,7 +20,7 @@ Slice 1d of POC-1, delivered on branch `minor/poc-01d-angular-link`. This is the
 - Dev: `/api` is proxied to `127.0.0.1:3000` (`api-gateway`) through `proxy.conf.json`.
 - Packaged: `sea-runtime` embeds the `web-angular` browser output and passes `--web-root` to `api-gateway`. The binary serves the Angular index and its JS chunks over plain HTTP.
 - `compile-sea.ts` classifies each workspace dependency of `sea-runtime`. This settles decision 17, open item 2. See [Classification rule](#classification-rule).
-- Observed on macOS arm64 only. Not verified: rendering in a real browser, Lighthouse, and the splash visual. See [Not verified](#not-verified).
+- Observed on macOS arm64 only. A headless Chromium check ran against the packaged binary. See [Browser check](#browser-check-playwright). Not verified: phone width, keyboard and focus, Lighthouse, other browsers, and the splash look. See [Not verified](#not-verified).
 
 ## Commits
 
@@ -194,10 +194,42 @@ Not verified:
 
 - A peer-dependency warning printed by the install was not checked for being older than this change.
 
+## Browser check (Playwright)
+
+A throwaway script drove headless Chromium against the packaged binary. The script stayed outside the repo and is not committed. No image is added to the repo.
+
+Setup:
+
+- Playwright 1.64.1 and Chromium headless shell 156.0.8078.4 (browser cache 203 MB on disk).
+- Binary `artifacts/sea-runtime/sea-runtime-aarch64-apple-darwin`, started with `env -i PATH=/usr/bin:/bin`, no arguments.
+- Viewport 1280x800 only.
+
+Observed:
+
+- Console errors: 0. Page errors: 0. Failed requests: 0. Responses with 4xx or 5xx: 0.
+- The splash is in the raw server HTML. It is gone from the DOM when the page is ready.
+- Titles: `web-angular`. Headings: `Welcome` on `/`, `About` on `/about`, `Dashboard` on `/dashboard`, `Settings` on `/settings`.
+- Guard: a direct load of `/dashboard` or `/settings` redirects to `/`.
+- Enter on `/` (placeholder session) opens `/dashboard`. The nav links render `Dashboard` and `Settings`.
+- Lazy chunks: the first load fetches 2 JS files. The session ends with 5 unique JS files.
+- Theme: the toggle from light to dark sets `data-theme` to `dark`. The body background changes from `rgb(248, 250, 252)` to `rgb(11, 18, 32)`. The value persists across reload through `localStorage`.
+- A full reload on a private route returns to `/`. The session flag is in memory only.
+- Deep link `/about` loads directly and renders `About`.
+- Read timing: the toggle label updates a few ms after a click. A read taken right after the click can show the old label. Not investigated.
+- Screenshots: four, light and dark, for the welcome and dashboard pages. They are kept outside the repo. No visual review is recorded for them.
+
+Not checked in this run: phone width, keyboard and focus, Lighthouse, Firefox and WebKit, Windows and Linux browsers, and the dev server in a browser (`curl` only).
+
+Next: turning this check into a repo app or E2E test belongs to a later testing slice under REQ-TEST. It is not part of 1d. The sibling repos use Playwright 1.61.0 in their catalog (observed earlier). This check used 1.64.1 from a scratch install, so the versions differ.
+
 ## Not verified
 
-- Rendering in a real browser. Only `curl` checks ran.
-- Lighthouse and the splash visual.
+- Phone width. The browser check ran at 1280x800 only.
+- Keyboard and focus behaviour.
+- Lighthouse.
+- Firefox, WebKit, Windows and Linux browsers.
+- The splash look. Its presence in the HTML and its removal from the DOM were checked, not its visual.
+- The dev server in a browser. Only `curl` checks ran.
 - The Tauri bundle part of REQ-BUILD-05. It is checked in POC-1e.
 - Linux and Windows builds in this slice.
 - The Angular dev server script name.
