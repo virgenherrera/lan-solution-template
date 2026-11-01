@@ -1,0 +1,13 @@
+{
+  "name": "desktop",
+  "version": "0.0.1",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "test": "echo \"test: not defined for this package\""
+  },
+  "type": "module",
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.4"
+  }
+}
