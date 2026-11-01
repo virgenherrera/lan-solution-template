@@ -37,6 +37,7 @@ Packaged binary, run from a clean `mktemp -d` directory, macOS arm64:
 
 - SIGTERM on the supervisor: log `received SIGTERM; stopping 1 service(s)`. `pgrep -fl sea-runtime-aarch64` finds no process afterwards.
 - `pnpm run build`, `pnpm run test` and `pnpm exec nx run sea-runtime:package`: exit 0. `nx run-many -t build` and `-t test` with `--skip-nx-cache`: exit 0.
+- An independent check reported exit 124 for `--service nope`, `--service api-gateway --service api-gateway` and `--service sea-runtime`. It was a false positive of the shell: in zsh an unquoted variable holding `--service nope` is passed as ONE argument, so the binary sees no `--service` option and starts the supervisor. Re-run with an argument array against a freshly packaged binary, 10 s timeout per case: `--service nope` 2, `--service api-gateway --service api-gateway` 2, `--service sea-runtime` 2, `--service=nope` 2, `--service` 2, `--service=` 2. Passing each pair as one token (`"--service nope"`) reproduces exit 124 for all three.
 - `sea-runtime` is rejected as a service id because it is not in the registry. This is a proposal, not verified against the SRS.
 
 ## Registry design for a future auth-ms (AC-31)
@@ -80,7 +81,7 @@ An Nx library generator was not used: `nx list` shows no installed plugin that o
 ## Risks
 
 - The binary contract changed: a selector with no value or a repeated one now exits 2 instead of failing in the old template. Only the supervisor calls it today.
-- `pnpm add` also moved `zod` 4.6.6 to 4.6.7 for two transitive `@modelcontextprotocol` entries in `pnpm-lock.yaml`. Not requested; produced by the resolver.
+- `pnpm add` first moved `zod` 4.6.6 to 4.6.7 for two transitive `@modelcontextprotocol` entries in `pnpm-lock.yaml`. Reverted by hand; `pnpm install --frozen-lockfile` exits 0 and the lockfile now differs from the base only by the `service-registry` importer entries.
 - `compile-sea.ts` imports the built library with a dynamic `import()`, so `pnpm --filter sea-runtime build` must run first. The Nx `^build` dependency guarantees it.
 - Only macOS arm64 was tested.
 - `dependsOn` and `enabled` are validated but nothing consumes them yet (2c to 2e).
