@@ -34,7 +34,7 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Planned |
+| Status | Done in commit `06ab764` on `minor/poc-02-supervisor`, see [result](../results/POC-02e-bounded-restart.md) |
 | Slice | 2e of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~250 authored lines (ASSUMPTION) |
 | Depends on | [2d](poc-2d-supervisor-readiness-logs.md) |

@@ -36,7 +36,7 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Cycle 1 (planned), split into eight slices on 2026-10-31 |
+| Status | Done on 2026-10-31: slices 2a to 2h delivered on `minor/poc-02-supervisor` (commits `a606db3`, `48987d4`, `0f7a834`, `97b5f01`, `06ab764`, `85a8ed3`, `d5e8b04`, and the 2h documentation commit). Result: [POC-02-Result](../results/POC-02-Result.md), decision: [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md). Draft PR not opened (needs the human) |
 | Appetite | 2 weeks, big batch, highest uncertainty |
 | Depends on | POC-1 (slices 1a to 1e) and the POC-1f in-memory web serving (PR #9, merged) |
 | Branches | one branch `minor/poc-02-supervisor` for all of POC-2, one commit or commit group per slice, one draft PR against `main` (decided, human decision D1). The old branch `minor/poc-02-sea-supervisor` is not used |

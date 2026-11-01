@@ -34,7 +34,7 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Planned |
+| Status | Done in commit `48987d4` on `minor/poc-02-supervisor`, see [result](../results/POC-02b-dispatcher-registry.md) |
 | Slice | 2b of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~250 authored lines (ASSUMPTION) |
 | Depends on | none. POC-1c supplies the `--service <id>` entry that this slice replaces |

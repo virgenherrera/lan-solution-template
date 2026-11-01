@@ -156,6 +156,7 @@ Each row summarizes one architecture decision record (ADR, Nygard format). ADRs 
 | Database | We install the current stable Drizzle tag first and use `1.0.0-rc.5` only if it fails. | 10 | approved |
 | Release | Release automation is on HOLD until all POCs are ready. | 9 | approved |
 | Toolchain | Version substitutions in POC-1 (S1 to S5) are recorded in [ADR-001](../architecture/adr/ADR-001-version-substitutions.md). | 1e, human | approved |
+| Runtime | One SEA binary per platform, closed service registry, IPC control channel, bounded restart, coordinated shutdown and the package smoke are recorded in [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md). Windows not verified. | POC-2, D1 to D5 | approved as record; SRS owner review not verified |
 
 The [Decision Log](#decision-log) keeps each decision as recorded.
 
@@ -315,16 +316,16 @@ Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-
 
 POC-2 stays the umbrella id and one bet of 2 weeks. Slice sizes are authored changed lines and ASSUMPTION; the betting table may change them. Plan, order, inherited POC-1 items and decisions for the human: [POC-2 umbrella](../backlog/poc-2-single-sea-runtime-supervisor.md).
 
-| Slice | Scope | Branch (decided, D1) | Size (ASSUMPTION) | Depends on |
-|---|---|---|---|---|
-| 2a | Launcher cwd spike: initial cwd of supervisor and gateway under launchd and systemd (decision 11) | `minor/poc-02-supervisor` | ~120 lines, docs | none |
-| 2b | Dispatcher and closed service registry, Zod-validated; unknown roles rejected; `auth-ms` registry design only | `minor/poc-02-supervisor` | ~250 | none |
-| 2c | Assembler bundles dispatcher and services from the registry; invalidation on service change; SEA flags and code-cache rule | `minor/poc-02-supervisor` | ~250 | 2b |
-| 2d | IPC control channel, readiness timeout, per-service logs, aggregate state, `/api/health` from that state | `minor/poc-02-supervisor` | ~380 | 2c |
-| 2e | Respawn of `process.execPath --service <id>` with bounded backoff and an `error` state | `minor/poc-02-supervisor` | ~250 | 2d |
-| 2f | Shutdown by IPC, timeout, force-kill of descendants, supervisor-crash tolerance, orphan checks | `minor/poc-02-supervisor` | ~350 | 2d |
-| 2g | Real-binary smoke test, macOS and Linux Docker, `libatomic` | `minor/poc-02-supervisor` | ~300 | 2e, 2f |
-| 2h | `POC-02-Result`, `ADR-002`, inherited items closed | `minor/poc-02-supervisor` | ~200 lines, docs | 2a to 2g |
+| Slice | Scope | Branch (decided, D1) | Size (ASSUMPTION) | Depends on | Status |
+|---|---|---|---|---|---|
+| 2a | Launcher cwd spike: initial cwd of supervisor and gateway under launchd and systemd (decision 11) | `minor/poc-02-supervisor` | ~120 lines, docs | none | Done, commit `a606db3` |
+| 2b | Dispatcher and closed service registry, Zod-validated; unknown roles rejected; `auth-ms` registry design only | `minor/poc-02-supervisor` | ~250 | none | Done, commit `48987d4` |
+| 2c | Assembler bundles dispatcher and services from the registry; invalidation on service change; SEA flags and code-cache rule | `minor/poc-02-supervisor` | ~250 | 2b | Done, commit `0f7a834` |
+| 2d | IPC control channel, readiness timeout, per-service logs, aggregate state, `/api/health` from that state | `minor/poc-02-supervisor` | ~380 | 2c | Done, commit `97b5f01` |
+| 2e | Respawn of `process.execPath --service <id>` with bounded backoff and an `error` state | `minor/poc-02-supervisor` | ~250 | 2d | Done, commit `06ab764` |
+| 2f | Shutdown by IPC, timeout, force-kill of descendants, supervisor-crash tolerance, orphan checks | `minor/poc-02-supervisor` | ~350 | 2d | Done, commit `85a8ed3` |
+| 2g | Real-binary smoke test, macOS and Linux Docker, `libatomic` | `minor/poc-02-supervisor` | ~300 | 2e, 2f | Done, commit `d5e8b04` |
+| 2h | `POC-02-Result`, `ADR-002`, inherited items closed | `minor/poc-02-supervisor` | ~200 lines, docs | 2a to 2g | Done, see [POC-02-Result](../results/POC-02-Result.md) |
 
 Backlog epics: [2a](../backlog/poc-2a-launcher-cwd-spike.md), [2b](../backlog/poc-2b-dispatcher-service-registry.md), [2c](../backlog/poc-2c-assembler-registry-build.md), [2d](../backlog/poc-2d-supervisor-readiness-logs.md), [2e](../backlog/poc-2e-bounded-restart.md), [2f](../backlog/poc-2f-coordinated-shutdown.md), [2g](../backlog/poc-2g-real-binary-smoke.md), [2h](../backlog/poc-2h-result-and-adr.md).
 
@@ -832,5 +833,11 @@ Human decisions (source: plan `optimized-wondering-waffle.md`, section "Recorded
       2. How `compile-sea` recognizes `web-angular` as an asset bundle, not a service, in POC-1d.
       3. Cache cleanup and 404 for unknown paths, in POC-4.
     - (e) Item 2 settled in POC-1d: a workspace dependency with `dist/main.js` is a service; one with Angular browser output and `index.html` is the web bundle (at most one). See [POC-1d result](../results/POC-01d-Result.md#classification-rule).
+
+18. (2026-10-31) POC-2 closed. Status: delivered; the SRS owner has not reviewed the replaced text. Evidence: [POC-02-Result](../results/POC-02-Result.md), [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md).
+    - (a) Slices 2a to 2g delivered on `minor/poc-02-supervisor`, one commit per slice (see the slice table). Draft PR not opened.
+    - (b) Decisions D1 to D5 applied: one branch and one draft PR (D1); OQ11 values as Zod constants and measured (D2); Windows halted, `blocked-by-environment` (D3); systemd evidence from a container (D4); smoke as a `package` post-step (D5).
+    - (c) Measured on macOS arm64: restart delays inside the OQ11 ranges, budget exhausted after 5 restarts in 300 s, graceful stop escalates at 10 s. OQ11 text is not changed here; that needs the human.
+    - (d) Open for the human: serve `/api/health` from the supervisor (it is unreachable while the gateway restarts); Windows on Monday; the execution root recommendation for POC-3.
 
 The design notes for auth, config and TLS are unreviewed research summaries. They appear in POC-7, POC-3, POC-4/5 and POC-8.

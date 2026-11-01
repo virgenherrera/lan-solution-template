@@ -34,7 +34,7 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Planned |
+| Status | Done in commit `85a8ed3` on `minor/poc-02-supervisor`, see [result](../results/POC-02f-coordinated-shutdown.md) |
 | Slice | 2f of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~350 authored lines (ASSUMPTION) |
 | Depends on | [2d](poc-2d-supervisor-readiness-logs.md); the no-restart-while-stopping rule needs [2e](poc-2e-bounded-restart.md) if that lands first |

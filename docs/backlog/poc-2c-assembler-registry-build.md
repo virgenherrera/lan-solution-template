@@ -34,7 +34,7 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Planned |
+| Status | Done in commit `0f7a834` on `minor/poc-02-supervisor`, see [result](../results/POC-02c-assembler-registry.md) |
 | Slice | 2c of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~250 authored lines (ASSUMPTION) |
 | Depends on | [2b](poc-2b-dispatcher-service-registry.md) |

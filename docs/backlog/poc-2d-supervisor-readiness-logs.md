@@ -34,7 +34,7 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Planned |
+| Status | Done in commit `97b5f01` on `minor/poc-02-supervisor`, see [result](../results/POC-02d-readiness-logs.md) |
 | Slice | 2d of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~380 authored lines (ASSUMPTION); the largest slice, split off first if it grows |
 | Depends on | [2c](poc-2c-assembler-registry-build.md) |

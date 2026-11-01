@@ -1,4 +1,4 @@
-docs[58]:
+docs[60]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -8,6 +8,15 @@ docs[58]:
     status: current
     updated: 2026-10-31
     refs[4]: REQ-STACK-03,REQ-STACK-05,REQ-STACK-08,REQ-SUPPLY-01
+  - doc: docs/architecture/adr/ADR-002-single-sea-portability.md
+    title: ADR-002 Single SEA portability and supervisor
+    type: architecture
+    summary: "Records the POC-2 decisions: one SEA per platform, closed registry, IPC control channel, bounded restart, coordinated shutdown and package smoke."
+    ids: []
+    related[4]: docs/architecture/overview.md,docs/roadmap/PROPOSAL.md,docs/results/POC-02-Result.md,docs/architecture/adr/ADR-001-version-substitutions.md
+    status: current
+    updated: 2026-10-31
+    refs[17]: AC-31,REQ-BUILD-04,REQ-NET-01,REQ-RUNTIME-01,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-TEST-01,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09
   - doc: docs/architecture/overview.md
     title: Architecture overview
     type: architecture
@@ -413,6 +422,15 @@ docs[58]:
     status: current
     updated: 2026-10-31
     refs: []
+  - doc: docs/results/POC-02-Result.md
+    title: POC-2 Result
+    type: backlog
+    summary: "Consolidated result of POC-2 slices 2a to 2h: commits, measurements, OS matrix, deviations and inherited and new pending items."
+    ids: []
+    related[10]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2h-result-and-adr.md,docs/results/POC-02a-launcher-cwd.md,docs/results/POC-02b-dispatcher-registry.md,docs/results/POC-02c-assembler-registry.md,docs/results/POC-02d-readiness-logs.md,docs/results/POC-02e-bounded-restart.md,docs/results/POC-02f-coordinated-shutdown.md,docs/results/POC-02g-real-binary-smoke.md,docs/architecture/adr/ADR-002-single-sea-portability.md
+    status: current
+    updated: 2026-10-31
+    refs[14]: AC-11,AC-16,AC-18,AC-20,AC-28,AC-29,AC-30,AC-31,REQ-DESK-05,REQ-NET-01,REQ-RUNTIME-08,REQ-SEA-04,REQ-TEST-01,REQ-TEST-09
   - doc: docs/results/POC-02a-launcher-cwd.md
     title: POC-2a Launcher cwd
     type: backlog

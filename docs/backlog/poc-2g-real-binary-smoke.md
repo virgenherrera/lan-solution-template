@@ -34,7 +34,7 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Planned |
+| Status | Done in commit `d5e8b04` on `minor/poc-02-supervisor`, see [result](../results/POC-02g-real-binary-smoke.md) |
 | Slice | 2g of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~300 authored lines (ASSUMPTION) |
 | Depends on | [2e](poc-2e-bounded-restart.md), [2f](poc-2f-coordinated-shutdown.md) |
