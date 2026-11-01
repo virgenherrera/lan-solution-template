@@ -1,4 +1,4 @@
-docs[41]:
+docs[42]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -323,6 +323,15 @@ docs[41]:
     status: current
     updated: 2026-10-31
     refs[4]: REQ-BUILD-05,REQ-NET-01,REQ-STACK-05,REQ-TEST
+  - doc: docs/results/POC-01f-web-from-memory.md
+    title: POC-1f Web from memory
+    type: backlog
+    summary: "Result: the SEA serves the Angular web from memory over IPC, with no extraction to the temp directory."
+    ids: []
+    related[2]: docs/results/SPIKE-spa-serving.md,docs/standards/README.md
+    status: current
+    updated: 2026-10-31
+    refs: []
   - doc: docs/results/SPIKE-spa-serving.md
     title: SPIKE SPA serving in the SEA
     type: backlog

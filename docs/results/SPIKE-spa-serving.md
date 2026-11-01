@@ -99,3 +99,5 @@ QC notes:
 - With `TMPDIR` unset, the cache falls back to `/tmp`.
 - The second start reuses the directory unchanged.
 - `/nope` returns 200 with the index.
+
+Superseded in part by [POC-1f Web from memory](POC-01f-web-from-memory.md): the supervisor no longer extracts the tree or passes `--web-root`. It sends the files over IPC (`--web ipc`) and `api-gateway` serves them from memory without `@nestjs/serve-static`.
