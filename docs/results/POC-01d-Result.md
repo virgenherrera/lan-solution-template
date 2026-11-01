@@ -147,7 +147,7 @@ Manual edits 1 to 16 come from the generated-app report. Edits 17 to 19 come fro
 - `pnpm add -D web-angular --workspace` added peer suffixes (`jiti`, `sass`, `sass-embedded`) to the `vite` and `vitest` lockfile entries. About 54 lines removed and 9 added.
 - `pnpm` peers check warns about unmet `@emnapi/core` and `@emnapi/runtime` through the Tailwind wasm dependencies of `web-angular`. Not investigated.
 - The `package` target has no cache enabled. It runs on every call.
-- `api-gateway` serves health at `/health`. [REQ-NET-01](../requirements/06-web-gateway-https-pwa.md) names an `/api` health path. Not verified whether the prefix is POC-2 or POC-4 scope.
+- `api-gateway` serves health at `/health`. The POC-2 pitch plans an `/api` health endpoint, citing [REQ-NET-01](../requirements/06-web-gateway-https-pwa.md). REQ-NET-01's own text names no health path. The prefix is owned by POC-2.
 - Unknown paths return the index with 200. POC-4 owns the 404 rule.
 - The extracted web cache is under the OS temp directory (`lan-web-tree/<hash>`). It survives SIGTERM. Cleanup and the cache location move are POC-4 and POC-3 work.
 
