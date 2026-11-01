@@ -218,9 +218,47 @@ Observed:
 - Read timing: the toggle label updates a few ms after a click. A read taken right after the click can show the old label. Not investigated.
 - Screenshots: four, light and dark, for the welcome and dashboard pages. They are kept outside the repo. No visual review is recorded for them.
 
-Not checked in this run: phone width, keyboard and focus, Lighthouse, Firefox and WebKit, Windows and Linux browsers, and the dev server in a browser (`curl` only).
+Not checked in this run: phone width, keyboard and focus, Lighthouse, Firefox and WebKit, Windows and Linux browsers. The dev server run is in the Dev server subsection below.
 
 Next: turning this check into a repo app or E2E test belongs to a later testing slice under REQ-TEST. It is not part of 1d. The sibling repos use Playwright 1.61.0 in their catalog (observed earlier). This check used 1.64.1 from a scratch install, so the versions differ.
+
+### Dev server
+
+Same Playwright 1.64.1 and Chromium headless shell as above. Viewport 1280x800 only. The script was copied and its base URL set to `http://127.0.0.1:4200`.
+
+Setup:
+
+- Angular dev server: `pnpm run start --host 127.0.0.1 --port 4200` in `apps/web-angular` (script `ng serve`).
+- api-gateway dev build on `127.0.0.1:3000`, started without `--web-root`. Its `/` returns 404.
+
+Observed:
+
+- Splash: present in the raw HTML and in the DOM at page commit (1 element). Gone when the `h1` was visible, 81 ms after the wait began.
+- Headings: `Welcome` on `/`. `About` on nav click and on a deep link. `Dashboard` after Enter. `Settings` and `Dashboard` on nav clicks.
+- Guard: a direct load of `/dashboard` or `/settings` redirects to `/`.
+- Theme: light to dark sets `data-theme` to `dark`. The body background changes from `rgb(248, 250, 252)` to `rgb(11, 18, 32)`. A reload on `/dashboard` redirects to `/`. The dark value persists.
+- Flow run errors: console errors 0, page errors 0, failed requests 0, responses with 4xx or 5xx 0.
+- Proxy: from the page, `/api/health` and `/api/x` return 404 with `Content-Type: application/json` and the Nest body `{"message":"Cannot GET /api/health","error":"Not Found","statusCode":404}` (the `/api/x` body has the same shape). The body comes from api-gateway, so the proxy reaches it.
+- `/health` on port 4200 is not proxied. It returns 200 `text/html`, the Angular index.
+- Direct to api-gateway on port 3000: `/health` returns 200. `/api/x` returns 404 with the same Nest body shape.
+- api-gateway exposes `/health` only. No `/api/health` route exists yet. REQ-NET-01 (`docs/requirements/06-web-gateway-https-pwa.md`) does not name a health path.
+- Dev-only output, listed as seen:
+  - Vite client console messages `[vite] connecting...` and `[vite] connected.` (debug level).
+  - A Vite WebSocket to `/?token=...` opened. Its frames were not inspected.
+  - `Angular is running in development mode.` (log level).
+  - Two `Failed to load resource: 404` console errors. They come from the two deliberate 404 fetches in the probe, not from the app. The flow run had none.
+  - The `ng serve` log has no warnings or errors. It shows one line, `Re-optimizing dependencies because lockfile has changed`, at start.
+  - The flow run recorded errors only. Other console levels were captured only in the probe, on `/`.
+- Toggle label lag: a read right after a click showed the old label (for example `Theme: light` with `data-theme` set to `dark`). The packaged run showed the same lag.
+
+Differences from the packaged run:
+
+- First load JS: packaged 2 files. Dev 8 requests: `main.js`, two `chunk-*.js`, and five Angular or vendor modules (`@angular_core.js`, `@angular_router.js`, `@angular_platform-browser.js`, `platform-browser-*.js`, `core-*.js`). The dev server serves modules unbundled.
+- Whole flow: 11 unique JS files in dev, 5 packaged. Lazy chunk names differ between the runs. Names are not comparable.
+- Splash at commit: 1 element in dev. The packaged check did not prove this point (count 0 at commit, too early to read).
+- Time to `h1`: 81 ms in dev, 10 ms packaged. One run each. Not a timing benchmark.
+
+Not verified in the dev run: hot reload after a file change, WebSocket frames, phone width, keyboard and focus.
 
 ## Not verified
 
@@ -229,7 +267,6 @@ Next: turning this check into a repo app or E2E test belongs to a later testing 
 - Lighthouse.
 - Firefox, WebKit, Windows and Linux browsers.
 - The splash look. Its presence in the HTML and its removal from the DOM were checked, not its visual.
-- The dev server in a browser. Only `curl` checks ran.
 - The Tauri bundle part of REQ-BUILD-05. It is checked in POC-1e.
 - Linux and Windows builds in this slice.
 - The Angular dev server script name.
