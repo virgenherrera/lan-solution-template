@@ -18,7 +18,7 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self' ipc: http://ipc.localhost; connect-src 'self' ipc: http://ipc.localhost http://127.0.0.1:*; img-src 'self' asset: http://asset.localhost blob: data:"
     }
   },
   "bundle": {
@@ -31,6 +31,20 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "offlineInstaller",
+        "silent": true
+      }
+    },
+    "linux": {
+      "deb": {
+        "depends": ["libatomic1"]
+      },
+      "rpm": {
+        "depends": ["libatomic"]
+      }
+    },
     "android": {
       "debugApplicationIdSuffix": ".debug"
     }
