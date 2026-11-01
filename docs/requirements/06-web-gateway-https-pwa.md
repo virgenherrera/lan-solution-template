@@ -77,8 +77,6 @@ sequenceDiagram
     A->>N: HTTPS /api/session (proxy)
     N-->>A: 200/401 + JSON
     A-->>B: API response (same origin :4200)
-    Note over B,N: In production there is no development proxy
-```
 
 **Conceptual Angular proxy example.** The agent **MUST** adapt the format to the real builder and certify the result. Do not fix this sample as its own API:
 
@@ -96,15 +94,15 @@ sequenceDiagram
 
 ### 6.2 Production: a single SEA serves both compiled artifacts
 
-- **REQ-NET-01.** NestJS **MUST** use `NodeAdapter` from `@nestjs/platform-node`, without Express or Fastify. The API and the SPA **MUST** share process and HTTPS origin in production. *(Premise `NodeAdapter` + `ServeStaticModule` without Express/Fastify: not verified.)*
-- **REQ-NET-02.** The `api-gateway` **MUST** enable `ServeStaticModule` **only when its validated config has `webRoot`**. It **MUST NOT** check `node:sea.isSea()` or any other runtime mode. `webRoot` is the optional CLI argument `--web-root`, parsed with `node:util` and validated with Zod. It is read without `process.env`. Use `@nestjs/serve-static` **(>=12.1.1, a compatible pinned version)** with support for `@nestjs/platform-node >=12.3.1`. Without `webRoot`, as in a development run, it is not enabled.
-  *Human decision 17: the gateway checks `webRoot`, not `isSea()`. See the [Decision Log](../roadmap/PROPOSAL.md#decision-log).*
-- **REQ-NET-03.** `@nestjs/serve-static` needs **`rootPath` as a real directory**. `node:sea.getAsset()` does not by itself produce a browsable filesystem. Therefore, before the gateway starts, the **`sea-runtime` supervisor** **MUST** materialize the packaged Angular tree from the SEA assets and pass its directory to `api-gateway` as `--web-root`. The target is a **per-version/build-ID cache outside the executable**.
-  *Human decision 17: the supervisor, not the backend, extracts the tree. The spike used the OS temp directory; the cache moves under the [REQ-SEA-05](10-node-sea-distribution.md) root in POC-3.*
-- **REQ-NET-04.** Materialization **MUST** be safe. Validate manifest + checksums. Prevent `../` traversal. Prevent overwriting unmanaged paths. Write to a temporary location and publish atomically. Handle concurrent extraction. Use minimal permissions. Clean up obsolete versions. If the tree already matches the manifest, reuse it without re-extracting.
-  *Human decision 17: the supervisor performs this step. The spike staged into a `.tmp-<pid>` directory, checked every hash, renamed into place and wrote a `.complete` marker. Cleanup of obsolete versions is open and belongs to POC-4 ([spike](../results/SPIKE-spa-serving.md)).*
-- **REQ-NET-05.** After the supervisor has materialized the tree, `ServeStaticModule.forRoot({ rootPath: <verified-directory> })` **MUST** be configured through Nest module composition done before `NestFactory.create()`, and only when the validated config has `webRoot`. Do **not** instantiate the module afterwards as a dynamic step. Do not add a generic hook orchestrator either.
-  *Human decision 17: `AppModule.register(config)` composes the module before `NestFactory.create()`.*
+- **REQ-NET-01.** NestJS **MUST** use `NodeAdapter` from `@nestjs/platform-node`, without Express or Fastify. The API and the SPA **MUST** share process and HTTPS origin in production. *(Premise `NodeAdapter` without Express/Fastify: not verified. The former `ServeStaticModule` premise is replaced by POC-1f.)*
+- **REQ-NET-02.** The `api-gateway` **MUST** serve the web bundle from memory **only when started with `--web ipc`**. `--web` takes `none` (default) or `ipc`, is parsed with `node:util` and validated with Zod. It **MUST NOT** check `node:sea.isSea()`, read `process.env`, or use `@nestjs/serve-static`. Without `--web ipc`, as in a development run, no static serving is mounted.
+  *Replaces the `ServeStaticModule` + `--web-root` design of human decision 17. Source: [POC-1f result](../results/POC-01f-web-from-memory.md). Not verified against the SRS owner.*
+- **REQ-NET-03.** Before the gateway starts, the **`sea-runtime` supervisor** **MUST** read the packaged Angular files from the SEA assets with `getRawAsset`, verify each sha256 against the manifest, and send all files to `api-gateway` in one IPC message. Nothing is written to disk.
+  *Replaces the extraction to a directory of human decision 17.*
+- **REQ-NET-04.** The gateway **MUST** validate the IPC message (`Uint8Array` bytes, relative path, no `..`, no leading `/`). A missing channel, an invalid message, a closed channel or a 10 s timeout **MUST** stop the process before the port opens. It **MUST** serve GET and HEAD only, from an immutable map: exact file first, then `index.html` for any other path outside `/api`. `/api/**` and other methods **MUST NOT** receive `index.html`.
+  *Not met: a missing `.js` returns `index.html` with 200 until POC-4 applies REQ-NET-07. Not verified.*
+- **REQ-NET-05.** Hashed file names (`-XXXXXXXX.ext`) **MUST** get `public, max-age=31536000, immutable`. `index.html` and unhashed files **MUST** get `no-cache`. The content type comes from an extension table with an `application/octet-stream` fallback.
+  *Replaces the `AppModule.register(config)` composition of human decision 17.*
 - **REQ-NET-06.** The HTTPS listener **MUST** use `8443` by default, configurable from the singleton; `0.0.0.0` LAN exposure is configured on the installed server and the API is served under `/api/**`. SPA, manifest, service worker and API use the same origin.
 - **REQ-NET-07.** Requests to `/api/**` **MUST NOT** receive `index.html` as the SPA fallback. Valid Angular routes may receive the fallback. Missing files (`.js`, `.css`, `.wasm`, manifests, icons) **MUST** respond `404`, not HTML. Implement correct headers/MIME/cache.
 - **REQ-NET-08.** A minimal HTTP listener on `8080` **MUST** redirect to HTTPS `:8443` using **308**. Do not serve data or authentication over HTTP. Validate the redirect target and avoid open redirects with a malicious `Host`.
@@ -112,20 +110,12 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant SEA as sea-runtime supervisor
-    participant Assets as node:sea getAsset
-    participant Cache as SPA cache per version
+    participant Assets as node:sea getRawAsset
     participant Gateway as api-gateway process
-    participant Static as ServeStaticModule
     SEA->>Assets: Read manifest + Angular files
-    SEA->>Cache: Verify version hash
-    alt First run or invalid cache
-      SEA->>Cache: Extract to temporary directory
-      SEA->>Cache: Verify checksum + atomic publication
-    else Valid cache
-      Cache-->>SEA: Reuse existing tree
-    end
-    SEA->>Gateway: Spawn with --web-root <verified directory>
-    Gateway->>Static: Mount only when webRoot is present
+    SEA->>SEA: Verify sha256 of each file
+    SEA->>Gateway: Spawn with --web ipc, send all files in one IPC message
+    Gateway->>Gateway: Validate message, build immutable map
     Gateway-->>SEA: Server ready on HTTPS :8443
 ```
 
@@ -133,7 +123,7 @@ sequenceDiagram
 flowchart TD
     Request["HTTPS :8443"] --> Router{Route}
     Router -->|"/api/**"| Api[Nest controllers + guards]
-    Router -->|Existing asset| File["ServeStaticModule: file + MIME/cache"]
+    Router -->|Existing asset| File["Gateway memory map: file + MIME/cache"]
     Router -->|SPA route without extension| SPA[Fallback index.html]
     Router -->|Missing file| NF[404]
     Api --> Res[JSON with HTTP status]

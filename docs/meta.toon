@@ -196,7 +196,7 @@ docs[42]:
     related[3]: docs/requirements/README.md,docs/requirements/05-persistence.md,docs/requirements/07-security.md
     status: current
     updated: 2026-10-31
-    refs[1]: REQ-SEA-05
+    refs: []
   - doc: docs/requirements/07-security.md
     title: Security
     type: requirement
@@ -240,7 +240,7 @@ docs[42]:
     ids[78]: REQ-SEC-CI-01,REQ-SEC-CI-02,REQ-SEC-CI-03,REQ-SEC-CI-04,REQ-BUILD-01,REQ-BUILD-02,REQ-BUILD-03,REQ-BUILD-04,REQ-BUILD-05,REQ-TEST-01,REQ-TEST-02,REQ-TEST-03,REQ-TEST-04,REQ-TEST-05,REQ-TEST-06,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09,REQ-TEST-10,REQ-ECO-01,REQ-ECO-02,REQ-ECO-03,REQ-ECO-04,REQ-ECO-05,REQ-ECO-06,REQ-ECO-07,REQ-REF-01,REQ-DEPS-01,REQ-DEPS-02,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03,REQ-CI-01,REQ-CI-02,REQ-CI-03,REQ-CI-04,REQ-CI-05,REQ-CI-06,REQ-CI-07,REQ-CI-08,REQ-CI-09,REQ-CI-10,AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36
     related[3]: docs/requirements/README.md,docs/requirements/10-node-sea-distribution.md,docs/requirements/12-agent-delivery.md
     status: current
-    updated: 2026-10-30
+    updated: 2026-10-31
     refs: []
   - doc: docs/requirements/12-agent-delivery.md
     title: Delivery instructions for the agent
@@ -267,7 +267,7 @@ docs[42]:
     ids: []
     related[3]: docs/requirements/README.md,docs/requirements/12-agent-delivery.md,docs/requirements/traceability.md
     status: current
-    updated: 2026-10-30
+    updated: 2026-10-31
     refs[5]: REQ-CFG-05,REQ-NET-01,REQ-SEA-05,REQ-SEC-02,REQ-STACK-07
   - doc: docs/requirements/traceability.md
     title: Traceability
@@ -332,6 +332,15 @@ docs[42]:
     status: current
     updated: 2026-10-31
     refs[4]: REQ-BUILD-05,REQ-NET-01,REQ-STACK-05,REQ-TEST
+  - doc: docs/results/POC-01f-web-from-memory.md
+    title: POC-1f Web from memory
+    type: backlog
+    summary: "Result: the SEA serves the Angular web from memory over IPC, with no extraction to the temp directory."
+    ids: []
+    related[4]: docs/results/SPIKE-spa-serving.md,docs/standards/README.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/backlog/poc-4-https-gateway-angular-pwa.md
+    status: current
+    updated: 2026-10-31
+    refs: []
   - doc: docs/results/SPIKE-spa-serving.md
     title: SPIKE SPA serving in the SEA
     type: backlog

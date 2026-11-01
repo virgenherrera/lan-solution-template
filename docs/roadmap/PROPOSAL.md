@@ -277,7 +277,7 @@ POC-1 stays the umbrella id. Slices run in order; each depends on the previous o
 | 1a | Monorepo init: version table, pnpm workspace and catalog, supply-chain settings, Nx local, root no-op scripts, one Node engine pin, reference study | `minor/poc-01a-monorepo` | ~1 day | none |
 | 1b | Nest apps: `api-gateway`, `sea-runtime`, `shared-core` from the Nest CLI; dummy health endpoint; `sea-runtime` as a standalone `createApplicationContext(RuntimeModule)` with no listener (REQ-RUNTIME-02) | `minor/poc-01b-nest` | ~1 day | 1a |
 | 1c | SEA build: generic assembler `tools/scripts/compile-sea.ts` with native `node --build-sea`; the `package` target lives on `sea-runtime`; one executable runs the minimal supervisor and the dummy Nest app | `minor/poc-01b-nest` (same branch as 1b, human decision; see [POC-1c backlog](../backlog/poc-1c-sea-build.md)) | ~2 days | 1b |
-| 1d | Angular and link: `web-angular` from the Angular CLI; `sea-runtime` embeds its build and passes `--web-root`; `api-gateway` serves it over plain HTTP from the SEA (decision 17); dev uses the Angular dev server; Nx build order and post-package check | `minor/poc-01d-angular-link`: delivered on that branch (human decision) | ~1 day | 1c |
+| 1d | Angular and link: `web-angular` from the Angular CLI; `sea-runtime` embeds its build and sends it over IPC (`--web ipc`; replaced in POC-1f, was `--web-root`); `api-gateway` serves it over plain HTTP from the SEA (decision 17); dev uses the Angular dev server; Nx build order and post-package check | `minor/poc-01d-angular-link`: delivered on that branch (human decision) | ~1 day | 1c |
 | 1e | Hardening and desktop skeleton: `desktop` from the Tauri CLI, `securityCheck`, test filter stub, OS matrix, root sequence, tags, consolidated result | `minor/poc-01e-hardening`: delivered on that branch (one PR, human decision) | ~1 day | 1d |
 
 POC-1 is complete: slices 1a to 1e are delivered. Result: [POC-1 result](../results/POC-01-Result.md).
@@ -379,7 +379,7 @@ Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-
   - Serve HTTPS on 8443 and an HTTP 308 redirect on 8080. The redirect has no Host-based open redirect (REQ-NET-06, REQ-NET-08).
   - Plain-HTTP serving of a dummy page is not repeated here (POC-1d). Harden it as follows.
   - Materialize the SPA into a per-version hashed cache (REQ-NET-03, REQ-NET-04, REQ-SEA-04). The cache needs a manifest, checksums, atomic publish, concurrency safety and stale cleanup.
-  - Mount `ServeStaticModule` only when `api-gateway` has `webRoot` (`--web-root`, decision 17). The gateway does not call `isSea()`. Configure it before `NestFactory.create` (REQ-NET-02, REQ-NET-05).
+  - Superseded by POC-1f: in-memory serving over IPC (`--web ipc`), no `ServeStaticModule`, no `--web-root`. The gateway does not call `isSea()` (REQ-NET-02, REQ-NET-05).
   - POC-4 owns the 404 rule for unknown asset paths and API paths (the spike returns the index for `/nope`), cache hardening and cleanup, TLS and PWA (decision 17).
   - `/api/**` never falls back to `index.html`. A missing asset returns 404 (REQ-NET-07).
   - Send revalidatable cache headers for `index.html` and the service worker. Hashed files are immutable (REQ-PWA-02).
@@ -801,8 +801,8 @@ Human decisions (source: plan `optimized-wondering-waffle.md`, section "Recorded
     - The POC-1 and POC-2 pitch text and slice table follow this decision. The package target lives on `sea-runtime`. The minimal supervisor spawn is built in POC-1c. POC-2 keeps the Zod closed-registry dispatcher, IPC shutdown, readiness, restart with backoff, and process-tree cleanup.
 
 17. (2026-10-31) SPA serving in the SEA. Status: decided (human decision). Evidence: [SPIKE-spa-serving](../results/SPIKE-spa-serving.md), branch `minor/poc-01d-angular-link`.
-    - (a) Layering. `api-gateway` stays SEA-agnostic. It never calls `isSea()` and never reads `process.env`. It mounts static serving only when its Zod-validated config has `webRoot`, given as the optional CLI argument `--web-root` (parsed with `node:util`).
-    - (b) Supervisor. `sea-runtime` extracts the SEA-embedded web assets to a verified directory and spawns `api-gateway` with `--web-root <dir>`. Other services receive `--service <id>` only.
+    - (a) Layering. `api-gateway` stays SEA-agnostic. It never calls `isSea()` and never reads `process.env`. It mounts static serving only when its Zod-validated config has `webRoot`, given as the optional CLI argument `--web-root` (parsed with `node:util`). Superseded by POC-1f: `--web none|ipc`, no `ServeStaticModule`.
+    - (b) Supervisor. `sea-runtime` extracts the SEA-embedded web assets to a verified directory and spawns `api-gateway` with `--web-root <dir>`. Superseded by POC-1f: the bundle goes over IPC with `--web ipc`. Other services receive `--service <id>` only.
     - (c) Verified facts from the spike (macOS arm64, Darwin 27.2.0, only platform tested):
       - `@nestjs/serve-static` 12.1.1 works with `NodeAdapter` (its `NodeLoader` path). Express and Fastify are not needed.
       - Default fallback: an unknown path such as `/nope` returns the index with 200. POC-4 must keep API paths and missing assets as 404 and own that hardening.

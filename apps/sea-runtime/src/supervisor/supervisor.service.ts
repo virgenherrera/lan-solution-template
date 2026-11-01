@@ -7,12 +7,10 @@ import {
 import { spawn, type ChildProcess } from 'node:child_process';
 import { getAsset, isSea } from 'node:sea';
 import { z } from 'zod';
-import { extractWebTree } from '../web/web-tree.js';
+import { hasWebBundle, loadWebBundle, type WebFile } from '../web/web-bundle.js';
 
 // Asset written by the assembler: the ids of every service that is not the supervisor itself.
 const SERVICES_ASSET = 'services.json';
-// Asset written by the assembler only when a web bundle is embedded.
-const WEB_MANIFEST_ASSET = 'web-manifest.json';
 
 const servicesAssetSchema = z.object({
   services: z.array(z.string().min(1)),
@@ -38,25 +36,32 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     }
     const { services } = servicesAssetSchema.parse(JSON.parse(raw));
 
-    // The web tree is extracted once per build; only the api-gateway child serves it. No web bundle in the build means no --web-root.
-    const webRoot = getAsset(WEB_MANIFEST_ASSET, 'utf8') === undefined ? undefined : extractWebTree();
-    this.logger.log(webRoot === undefined ? 'no web bundle embedded' : `web tree extracted to ${webRoot}`);
+    // The web bundle is read from the executable and sent to the api-gateway child over IPC; nothing is written to disk. No web bundle in the build means no --web flag.
+    const web = hasWebBundle() ? loadWebBundle() : undefined;
+    this.logger.log(web === undefined ? 'no web bundle embedded' : `web bundle loaded in memory: ${web.length} files`);
 
     process.once('SIGINT', this.onSignal);
     process.once('SIGTERM', this.onSignal);
 
     for (const id of services) {
-      const args =
-        id === 'api-gateway' && webRoot !== undefined
-          ? ['--service', id, '--web-root', webRoot]
-          : ['--service', id];
-      const child = spawn(process.execPath, args, {
-        shell: false,
-        stdio: 'inherit',
-      });
+      const sendsWeb = id === 'api-gateway' && web !== undefined;
+      const child = sendsWeb
+        ? spawn(process.execPath, ['--service', id, '--web', 'ipc'], {
+            shell: false,
+            stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+            serialization: 'advanced',
+          })
+        : spawn(process.execPath, ['--service', id], { shell: false, stdio: 'inherit' });
+      if (sendsWeb) this.sendWeb(child, web);
       this.children.push(child);
       this.logger.log(`spawned service "${id}" as pid ${child.pid}`);
     }
+  }
+
+  private sendWeb(child: ChildProcess, web: readonly WebFile[]): void {
+    child.send({ kind: 'web-bundle', files: web }, (error) => {
+      if (error) this.logger.error(`web bundle handoff failed: ${error.message}`);
+    });
   }
 
   onModuleDestroy(): void {
