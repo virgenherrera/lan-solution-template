@@ -11,7 +11,7 @@ export class AppModule {
   static register(config: ServerConfig): DynamicModule {
     const imports: DynamicModule['imports'] = [ConfigModule.register(config)];
     if (config.webRoot !== undefined) {
-      imports.push(ServeStaticModule.forRoot({ rootPath: config.webRoot }));
+      imports.push(ServeStaticModule.forRoot({ rootPath: config.webRoot, exclude: ['/api/*path'] }));
     }
     return { module: AppModule, imports };
   }

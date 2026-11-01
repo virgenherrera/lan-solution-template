@@ -50,6 +50,6 @@ Use these substitutions in POC-1. Each row gives the reason and what would rever
 
 These are placeholders or gaps. They are not version choices, and this ADR does not decide them:
 
-- The desktop identifier `com.example.lansolution.desktop` is a PLACEHOLDER.
+- The desktop identifier is a human decision. Its value lives only in the `identifier` field of `apps/desktop/src-tauri/tauri.conf.json`. No other file repeats it. Rust code reads it with `app.config().identifier`.
 - The Tauri CSP is `null`. A decision is needed before the security POCs.
 - The crate name `app` and the crate authors cannot be set by CLI flags.
