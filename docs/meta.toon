@@ -1,4 +1,4 @@
-docs[51]:
+docs[52]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -413,6 +413,15 @@ docs[51]:
     status: current
     updated: 2026-10-31
     refs: []
+  - doc: docs/results/POC-02b-dispatcher-registry.md
+    title: POC-2b Dispatcher and service registry
+    type: backlog
+    summary: "Result of slice 2b: Zod dispatcher and closed service registry in libs/service-registry, unknown roles rejected, auth-ms registry dry run."
+    ids: []
+    related[3]: docs/backlog/poc-2b-dispatcher-service-registry.md,docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/results/POC-01f-web-from-memory.md
+    status: current
+    updated: 2026-10-31
+    refs[1]: AC-31
   - doc: docs/results/SPIKE-spa-serving.md
     title: SPIKE SPA serving in the SEA
     type: backlog

@@ -294,6 +294,9 @@ importers:
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
+      service-registry:
+        specifier: workspace:*
+        version: link:../../libs/service-registry
       zod:
         specifier: 'catalog:'
         version: 4.6.7
@@ -401,6 +404,16 @@ importers:
       typescript:
         specifier: 6.0.3
         version: 6.0.3
+
+  libs/service-registry:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
 
   libs/shared-core: {}
 
@@ -4855,12 +4868,12 @@ snapshots:
 
   '@modelcontextprotocol/core@2.3.1':
     dependencies:
-      zod: 4.6.6
+      zod: 4.6.7
 
   '@modelcontextprotocol/server@2.3.1':
     dependencies:
       '@modelcontextprotocol/core': 2.3.1
-      zod: 4.6.6
+      zod: 4.6.7
 
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.4':
     optional: true

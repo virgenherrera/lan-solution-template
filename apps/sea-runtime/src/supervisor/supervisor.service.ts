@@ -6,15 +6,8 @@ import {
 } from '@nestjs/common';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { getAsset, isSea } from 'node:sea';
-import { z } from 'zod';
+import { DISPATCHER_CONFIG, serviceArgs, servicesAssetSchema } from 'service-registry';
 import { hasWebBundle, loadWebBundle, type WebFile } from '../web/web-bundle.js';
-
-// Asset written by the assembler: the ids of every service that is not the supervisor itself.
-const SERVICES_ASSET = 'services.json';
-
-const servicesAssetSchema = z.object({
-  services: z.array(z.string().min(1)),
-});
 
 @Injectable()
 export class SupervisorService implements OnModuleInit, OnModuleDestroy {
@@ -30,9 +23,9 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    const raw = getAsset(SERVICES_ASSET, 'utf8');
+    const raw = getAsset(DISPATCHER_CONFIG.servicesAsset, 'utf8');
     if (raw === undefined) {
-      throw new Error(`SEA asset "${SERVICES_ASSET}" is missing`);
+      throw new Error(`SEA asset "${DISPATCHER_CONFIG.servicesAsset}" is missing`);
     }
     const { services } = servicesAssetSchema.parse(JSON.parse(raw));
 
@@ -46,12 +39,12 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     for (const id of services) {
       const sendsWeb = id === 'api-gateway' && web !== undefined;
       const child = sendsWeb
-        ? spawn(process.execPath, ['--service', id, '--web', 'ipc'], {
+        ? spawn(process.execPath, [...serviceArgs(id), '--web', 'ipc'], {
             shell: false,
             stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
             serialization: 'advanced',
           })
-        : spawn(process.execPath, ['--service', id], { shell: false, stdio: 'inherit' });
+        : spawn(process.execPath, serviceArgs(id), { shell: false, stdio: 'inherit' });
       if (sendsWeb) this.sendWeb(child, web);
       this.children.push(child);
       this.logger.log(`spawned service "${id}" as pid ${child.pid}`);

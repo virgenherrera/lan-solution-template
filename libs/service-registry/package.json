@@ -1,0 +1,24 @@
+{
+  "name": "service-registry",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --rootDir src --outDir dist",
+    "test": "pnpm run test:static && pnpm run test:dynamic",
+    "test:static": "tsc --noEmit -p tsconfig.json",
+    "test:dynamic": "echo \"test:dynamic: not defined for this package\"",
+    "package": "echo \"package: not defined for this package\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2"
+  },
+  "types": "dist/index.d.ts"
+}
