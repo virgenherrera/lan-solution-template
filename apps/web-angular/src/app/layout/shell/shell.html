@@ -1,0 +1,32 @@
+<div class="flex min-h-screen flex-col bg-app-bg text-app-fg">
+  <header class="border-b border-app-border bg-app-surface">
+    <nav class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 p-4">
+      <a routerLink="/" class="text-lg font-semibold">web-angular</a>
+      <ul class="flex flex-wrap items-center gap-4 text-sm">
+        <li><a routerLink="/" routerLinkActive="text-app-accent" [routerLinkActiveOptions]="{ exact: true }" class="hover:text-app-accent">Welcome</a></li>
+        <li><a routerLink="/about" routerLinkActive="text-app-accent" class="hover:text-app-accent">About</a></li>
+        @if (session.entered()) {
+          <li><a routerLink="/dashboard" routerLinkActive="text-app-accent" class="hover:text-app-accent">Dashboard</a></li>
+          <li><a routerLink="/settings" routerLinkActive="text-app-accent" class="hover:text-app-accent">Settings</a></li>
+          <li>
+            <a routerLink="/" (click)="session.leave()" class="rounded-md border border-app-border px-3 py-1 hover:text-app-accent">
+              Leave
+            </a>
+          </li>
+        }
+        <li>
+          <button
+            type="button"
+            (click)="theme.toggle()"
+            class="rounded-md border border-app-border px-3 py-1 hover:text-app-accent"
+          >
+            Theme: {{ theme.theme() }}
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </header>
+  <main class="mx-auto w-full max-w-5xl flex-1 p-4">
+    <router-outlet />
+  </main>
+</div>

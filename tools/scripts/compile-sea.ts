@@ -1,9 +1,11 @@
 // Packages a supervisor app and its workspace service dependencies into ONE Node SEA executable.
 // Run from the repository root: `node tools/scripts/compile-sea.ts <supervisor-project>`.
-// Services are the workspace dependencies of the supervisor (`workspace:` ranges); each service's entry is its built dist/main.js.
+// Dependencies of the supervisor (`workspace:` ranges) are classified by build output: <root>/dist/main.js is a service; <root>/dist/<name>/browser/index.html (or angular.json outputPath + /browser) is a web bundle; anything else fails.
+// At most one web bundle; zero means no web assets and no --web-root.
 // The generated role-map entry and the SEA config are written under dist/ at build time and are never committed.
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import * as rspackNamespace from '@rspack/core';
 import sharedNestConfig from '../rspack/nest.config.ts';
@@ -14,6 +16,7 @@ const entryPath = join(workDir, 'entry.mjs');
 const bundlePath = join(workDir, 'sea-app.mjs');
 const servicesPath = join(workDir, 'services.json');
 const configPath = join(workDir, 'sea-config.json');
+const manifestPath = join(workDir, 'web-manifest.json');
 
 // Keys are "<process.platform> <process.arch>"; values are Rust target triples (the Tauri sidecar naming).
 const TARGET_TRIPLES: Record<string, string> = {
@@ -30,6 +33,11 @@ type Version = [number, number, number];
 interface ServiceEntry {
   service: string;
   entryPath: string;
+}
+
+interface WebBundle {
+  name: string;
+  dir: string;
 }
 
 function parseVersion(text: string): Version {
@@ -91,16 +99,35 @@ function projectRoot(name: string): string {
   return join(root, project.root);
 }
 
-function builtEntry(name: string, projectDir: string): string {
-  const entry = join(projectDir, 'dist', 'main.js');
-  if (!existsSync(entry)) {
-    throw new Error(`${name}: missing ${entry}; run the ${name} build target first`);
-  }
-  return entry;
+// Angular browser output: angular.json outputPath (default dist/<name>) plus the application builder's browser/ folder.
+function webBrowserDir(name: string, projectDir: string): string {
+  const angularJson = join(projectDir, 'angular.json');
+  const config = existsSync(angularJson)
+    ? (JSON.parse(readFileSync(angularJson, 'utf8')) as {
+        architect?: { build?: { options?: { outputPath?: string } } };
+      })
+    : undefined;
+  const outputPath = config?.architect?.build?.options?.outputPath ?? join('dist', name);
+  return join(projectDir, outputPath, 'browser');
 }
 
-// Services are the supervisor's workspace dependencies, read from its own package.json.
-function discoverServices(supervisor: string, supervisorDir: string): ServiceEntry[] {
+// Classifies one workspace dependency by its build output shape; the first matching shape wins.
+function classify(name: string): { kind: 'service'; entry: ServiceEntry } | { kind: 'web'; bundle: WebBundle } {
+  const dir = projectRoot(name);
+  const entry = join(dir, 'dist', 'main.js');
+  if (existsSync(entry)) return { kind: 'service', entry: { service: name, entryPath: entry } };
+  const browser = webBrowserDir(name, dir);
+  if (existsSync(join(browser, 'index.html'))) return { kind: 'web', bundle: { name, dir: browser } };
+  throw new Error(
+    `${name}: neither a service (missing ${entry}) nor a web bundle (missing ${join(browser, 'index.html')}); run the ${name} build target first`,
+  );
+}
+
+// Dependencies are the supervisor's workspace dependencies, read from its own package.json.
+function discoverDependencies(
+  supervisor: string,
+  supervisorDir: string,
+): { services: ServiceEntry[]; web: WebBundle | undefined } {
   const manifest = JSON.parse(readFileSync(join(supervisorDir, 'package.json'), 'utf8')) as {
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
@@ -112,10 +139,16 @@ function discoverServices(supervisor: string, supervisorDir: string): ServiceEnt
   if (names.length === 0) {
     throw new Error(`${supervisor} has no workspace dependency to package as a service`);
   }
-  return names.map((name) => ({
-    service: name,
-    entryPath: builtEntry(name, projectRoot(name)),
-  }));
+  const classified = names.map(classify);
+  const services = classified.flatMap((c) => (c.kind === 'service' ? [c.entry] : []));
+  const webs = classified.flatMap((c) => (c.kind === 'web' ? [c.bundle] : []));
+  if (webs.length > 1) {
+    throw new Error(`exactly one web bundle is allowed; found ${webs.map((w) => w.name).join(', ')}`);
+  }
+  if (services.length === 0) {
+    throw new Error(`${supervisor} has no service dependency (dist/main.js)`);
+  }
+  return { services, web: webs[0] };
 }
 
 // The generated entry picks the role: no --service argument starts the supervisor; --service <id> starts that service.
@@ -181,7 +214,26 @@ async function bundle(): Promise<void> {
   });
 }
 
-function writeSeaConfig(binaryPath: string): void {
+// Every file of the web bundle becomes SEA asset "web/<relative path>"; the manifest (path to sha256) is written next to the bundle and embedded as "web-manifest.json".
+// No web bundle means no web assets and no manifest; the supervisor then passes no --web-root.
+function webAssets(web: WebBundle | undefined): Record<string, string> {
+  if (web === undefined) return {};
+  const walk = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+      entry.isDirectory() ? walk(join(dir, entry.name)) : [join(dir, entry.name)],
+    );
+  const files = walk(web.dir).map((file) => file.slice(web.dir.length + 1).split('\\').join('/')).sort();
+  const hashes = Object.fromEntries(
+    files.map((rel) => [rel, createHash('sha256').update(readFileSync(join(web.dir, rel))).digest('hex')]),
+  );
+  writeFileSync(manifestPath, `${JSON.stringify({ files: hashes }, null, 2)}\n`);
+  const assets: Record<string, string> = { 'web-manifest.json': manifestPath };
+  for (const rel of files) assets[`web/${rel}`] = join(web.dir, rel);
+  console.log(`web bundle ${web.name}: ${files.length} files from ${web.dir}`);
+  return assets;
+}
+
+function writeSeaConfig(binaryPath: string, web: WebBundle | undefined): void {
   const config = {
     main: bundlePath,
     mainFormat: 'module',
@@ -190,7 +242,7 @@ function writeSeaConfig(binaryPath: string): void {
     useSnapshot: false,
     useCodeCache: true,
     execArgvExtension: 'none',
-    assets: { 'services.json': servicesPath },
+    assets: { 'services.json': servicesPath, ...webAssets(web) },
   };
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 }
@@ -209,9 +261,14 @@ async function main(): Promise<void> {
   assertBuildNodeMatchesEngine();
 
   const supervisorDir = projectRoot(supervisor);
-  const supervisorEntry = builtEntry(supervisor, supervisorDir);
-  const services = discoverServices(supervisor, supervisorDir);
-  console.log(`supervisor ${supervisor}; services: ${services.map((s) => s.service).join(', ')}`);
+  const supervisorEntry = join(supervisorDir, 'dist', 'main.js');
+  if (!existsSync(supervisorEntry)) {
+    throw new Error(`${supervisor}: missing ${supervisorEntry}; run the ${supervisor} build target first`);
+  }
+  const { services, web } = discoverDependencies(supervisor, supervisorDir);
+  console.log(
+    `supervisor ${supervisor}; services: ${services.map((s) => s.service).join(', ')}; web: ${web?.name ?? 'none'}`,
+  );
 
   const artifactDir = join(root, 'artifacts', supervisor);
   const binaryName = `${supervisor}-${targetTriple()}${process.platform === 'win32' ? '.exe' : ''}`;
@@ -228,7 +285,7 @@ async function main(): Promise<void> {
     `${JSON.stringify({ services: services.map((s) => s.service) }, null, 2)}\n`,
   );
   await bundle();
-  writeSeaConfig(binaryPath);
+  writeSeaConfig(binaryPath, web);
   buildSea(binaryPath);
 
   console.log(`sea executable: ${binaryPath} (${statSync(binaryPath).size} bytes)`);

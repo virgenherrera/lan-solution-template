@@ -13,7 +13,7 @@ updated: 2026-10-31
 
 [Home](../../README.md) | [Requirements](../requirements/README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](PROPOSAL.md) | [Traceability](../requirements/traceability.md) | [Backlog](../backlog/README.md)
 
-Status: PROPOSAL v2, revised with 16 human decisions (see Decision Log). Not approved. No remote action ran from this work. Origin and push state: not verified.
+Status: PROPOSAL v2, revised with 17 human decisions (see Decision Log). Not approved. No remote action ran from this work. Origin and push state: not verified.
 Source: `lan-solution-template-SRS-v1.6.md` (sections 1-13). The REQ-* and AC-* IDs come from the SRS. The FR/NFR, R-*, A-*, Q-* and D-* IDs come from extraction files. Those files are outside this repo (see [Context](#context)). Items not found in the SRS carry the tag `ASSUMPTION`.
 
 ## Navigation
@@ -46,7 +46,7 @@ Source: `lan-solution-template-SRS-v1.6.md` (sections 1-13). The REQ-* and AC-* 
 
 [Back to navigation](#navigation)
 
-Why this page exists: it orders the SRS v1.6 POCs and logs 16 human decisions. Next: the betting table picks the bets of cycle 1.
+Why this page exists: it orders the SRS v1.6 POCs and logs 17 human decisions. Next: the betting table picks the bets of cycle 1.
 
 | Topic | Fact | Section |
 |---|---|---|
@@ -276,7 +276,7 @@ POC-1 stays the umbrella id. Slices run in order; each depends on the previous o
 | 1a | Monorepo init: version table, pnpm workspace and catalog, supply-chain settings, Nx local, root no-op scripts, one Node engine pin, reference study | `minor/poc-01a-monorepo` | ~1 day | none |
 | 1b | Nest apps: `api-gateway`, `sea-runtime`, `shared-core` from the Nest CLI; dummy health endpoint; `sea-runtime` as a standalone `createApplicationContext(RuntimeModule)` with no listener (REQ-RUNTIME-02) | `minor/poc-01b-nest` | ~1 day | 1a |
 | 1c | SEA build: generic assembler `tools/scripts/compile-sea.ts` with native `node --build-sea`; the `package` target lives on `sea-runtime`; one executable runs the minimal supervisor and the dummy Nest app | `minor/poc-01b-nest` (same branch as 1b, human decision; see [POC-1c backlog](../backlog/poc-1c-sea-build.md)) | ~2 days | 1b |
-| 1d | Angular and link: `web-angular` from the Angular CLI; `api-gateway` serves a dummy page over plain HTTP in dev and from the SEA; Nx build order and post-package check | `minor/poc-01d-angular-link` | ~1 day | 1c |
+| 1d | Angular and link: `web-angular` from the Angular CLI; `sea-runtime` embeds its build and passes `--web-root`; `api-gateway` serves it over plain HTTP from the SEA (decision 17); dev uses the Angular dev server; Nx build order and post-package check | `minor/poc-01d-angular-link`: delivered on that branch (human decision) | ~1 day | 1c |
 | 1e | Hardening and desktop skeleton: `desktop` from the Tauri CLI, `securityCheck`, test filter stub, OS matrix, root sequence, tags, consolidated result | `minor/poc-01e-hardening` | ~1 day | 1d |
 
 Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-nest-apps.md), [1c](../backlog/poc-1c-sea-build.md), [1d](../backlog/poc-1d-angular-link.md), [1e](../backlog/poc-1e-hardening-desktop-skeleton.md).
@@ -357,7 +357,7 @@ Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-
 [Back to navigation](#navigation)
 
 - **Scope**: HTTPS gateway that serves the Angular PWA from the SEA, plus the dev loop.
-- **Problem**: POC-1d already proves a dummy Angular page served by `api-gateway` over plain HTTP, in dev and from the SEA. The gateway must now serve one Angular build over HTTPS (FR-04). The clients are browsers and the Tauri WebView. The SEA must materialize the assets safely (R3, R-07). Developers need a fast loop that does not need the SEA (REQ-DEV-01..05). Local CA trust is a known friction (R-05).
+- **Problem**: POC-1d links the Angular build to `api-gateway` over plain HTTP. Decision 17 and its spike prove the SEA handoff with a dummy page. The gateway must now serve one Angular build over HTTPS (FR-04). The clients are browsers and the Tauri WebView. The SEA must materialize the assets safely (R3, R-07). Developers need a fast loop that does not need the SEA (REQ-DEV-01..05). Local CA trust is a known friction (R-05).
 - **Appetite**: 2 weeks, big batch.
 - **Solution sketch**:
   - Configure the `web-angular` app generated in POC-1d as Angular 22, zoneless, strict TypeScript, Signals, Tailwind and PWA (REQ-WEB-01, REQ-PWA-01).
@@ -376,7 +376,8 @@ Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-
   - Serve HTTPS on 8443 and an HTTP 308 redirect on 8080. The redirect has no Host-based open redirect (REQ-NET-06, REQ-NET-08).
   - Plain-HTTP serving of a dummy page is not repeated here (POC-1d). Harden it as follows.
   - Materialize the SPA into a per-version hashed cache (REQ-NET-03, REQ-NET-04, REQ-SEA-04). The cache needs a manifest, checksums, atomic publish, concurrency safety and stale cleanup.
-  - Load `ServeStaticModule` only when `isSea()`. Configure it before `NestFactory.create` (REQ-NET-02, REQ-NET-05).
+  - Mount `ServeStaticModule` only when `api-gateway` has `webRoot` (`--web-root`, decision 17). The gateway does not call `isSea()`. Configure it before `NestFactory.create` (REQ-NET-02, REQ-NET-05).
+  - POC-4 owns the 404 rule for unknown asset paths and API paths (the spike returns the index for `/nope`), cache hardening and cleanup, TLS and PWA (decision 17).
   - `/api/**` never falls back to `index.html`. A missing asset returns 404 (REQ-NET-07).
   - Send revalidatable cache headers for `index.html` and the service worker. Hashed files are immutable (REQ-PWA-02).
 - **Rabbit holes**:
@@ -795,5 +796,21 @@ Human decisions (source: plan `optimized-wondering-waffle.md`, section "Recorded
     - (c) Build. Every Nest app builds to one self-contained ESM `dist/main.js` (plus a source map) through the Nest CLI rspack builder, with one shared config in `tools/rspack/`. Services register by workspace dependency of `sea-runtime`.
     - (d) Tests. No unit or integration tests (REQ-TEST-01). Spec files that generators create are deleted in the same commit.
     - The POC-1 and POC-2 pitch text and slice table follow this decision. The package target lives on `sea-runtime`. The minimal supervisor spawn is built in POC-1c. POC-2 keeps the Zod closed-registry dispatcher, IPC shutdown, readiness, restart with backoff, and process-tree cleanup.
+
+17. (2026-10-31) SPA serving in the SEA. Status: decided (human decision). Evidence: [SPIKE-spa-serving](../results/SPIKE-spa-serving.md), branch `minor/poc-01d-angular-link`.
+    - (a) Layering. `api-gateway` stays SEA-agnostic. It never calls `isSea()` and never reads `process.env`. It mounts static serving only when its Zod-validated config has `webRoot`, given as the optional CLI argument `--web-root` (parsed with `node:util`).
+    - (b) Supervisor. `sea-runtime` extracts the SEA-embedded web assets to a verified directory and spawns `api-gateway` with `--web-root <dir>`. Other services receive `--service <id>` only.
+    - (c) Verified facts from the spike (macOS arm64, Darwin 27.2.0, only platform tested):
+      - `@nestjs/serve-static` 12.1.1 works with `NodeAdapter` (its `NodeLoader` path). Express and Fastify are not needed.
+      - Default fallback: an unknown path such as `/nope` returns the index with 200. POC-4 must keep API paths and missing assets as 404 and own that hardening.
+      - SEA assets come from `node:sea` `getAsset`, with a sha256 manifest. 21 files extract in 7 ms the first time and in 3 ms on reuse, with the hash check.
+      - The SEA grows by about the asset size: a 2,000,000-byte asset added 2,002,752 bytes.
+      - ESM needs `"mainFormat": "module"`. The default `commonjs` failed to load.
+      - Not tested: `useVfs`, a large real SPA, Linux, Windows.
+    - (d) Open items:
+      1. Cache location. The spike used the OS temp directory. [REQ-SEA-05](../requirements/10-node-sea-distribution.md) anchors runtime data under the root of `process.execPath`, resolved by the paths library. The cache moves there in POC-3.
+      2. How `compile-sea` recognizes `web-angular` as an asset bundle, not a service, in POC-1d.
+      3. Cache cleanup and 404 for unknown paths, in POC-4.
+    - (e) Item 2 settled in POC-1d: a workspace dependency with `dist/main.js` is a service; one with Angular browser output and `index.html` is the web bundle (at most one). See [POC-1d result](../results/POC-01d-Result.md#classification-rule).
 
 The design notes for auth, config and TLS are unreviewed research summaries. They appear in POC-7, POC-3, POC-4/5 and POC-8.

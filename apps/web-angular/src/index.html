@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>web-angular</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script>
+    // Set the theme before first paint to avoid a flash of the wrong theme.
+    (function () {
+      var theme = 'light';
+      try {
+        if (localStorage.getItem('theme') === 'dark') theme = 'dark';
+      } catch (e) {}
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+  <style>
+    #splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      color: #0f172a;
+      font: 600 1.25rem system-ui, sans-serif;
+    }
+    :root[data-theme='dark'] #splash {
+      background: #0b1220;
+      color: #e2e8f0;
+    }
+    #splash span {
+      animation: splash-pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes splash-pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div id="splash"><span>web-angular</span></div>
+  <app-root></app-root>
+</body>
+</html>

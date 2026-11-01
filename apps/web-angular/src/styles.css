@@ -1,0 +1,39 @@
+@import 'tailwindcss';
+
+/* Light theme is the default on :root; dark overrides below. */
+:root {
+  --app-bg: #f8fafc;
+  --app-fg: #0f172a;
+  --app-muted: #475569;
+  --app-surface: #ffffff;
+  --app-border: #cbd5e1;
+  --app-accent: #2563eb;
+  --app-accent-fg: #ffffff;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --app-bg: #0b1220;
+  --app-fg: #e2e8f0;
+  --app-muted: #94a3b8;
+  --app-surface: #111a2e;
+  --app-border: #334155;
+  --app-accent: #60a5fa;
+  --app-accent-fg: #0b1220;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-app-bg: var(--app-bg);
+  --color-app-fg: var(--app-fg);
+  --color-app-muted: var(--app-muted);
+  --color-app-surface: var(--app-surface);
+  --color-app-border: var(--app-border);
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-fg: var(--app-accent-fg);
+}
+
+body {
+  background-color: var(--app-bg);
+  color: var(--app-fg);
+}
