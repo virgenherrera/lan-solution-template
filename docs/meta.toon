@@ -328,7 +328,7 @@ docs[42]:
     type: backlog
     summary: "Result: the SEA serves the Angular web from memory over IPC, with no extraction to the temp directory."
     ids: []
-    related[2]: docs/results/SPIKE-spa-serving.md,docs/standards/README.md
+    related[4]: docs/results/SPIKE-spa-serving.md,docs/standards/README.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/backlog/poc-4-https-gateway-angular-pwa.md
     status: current
     updated: 2026-10-31
     refs: []

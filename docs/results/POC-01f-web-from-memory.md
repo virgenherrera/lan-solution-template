@@ -5,7 +5,7 @@ title: "POC-1f Web from memory"
 type: backlog
 summary: "Result: the SEA serves the Angular web from memory over IPC, with no extraction to the temp directory."
 ids[0]:
-related[2]: docs/results/SPIKE-spa-serving.md,docs/standards/README.md
+related[4]: docs/results/SPIKE-spa-serving.md,docs/standards/README.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/backlog/poc-4-https-gateway-angular-pwa.md
 status: current
 updated: 2026-10-31
 -->
@@ -74,6 +74,15 @@ Packaged binary on `127.0.0.1:3000`, started with no arguments:
 - The 10 s receive timeout is a fixed constant. A slow start on weak hardware is not tested.
 - Requirement text in `docs/requirements/06-web-gateway-https-pwa.md` and `11-nx-quality-testing.md` still names `ServeStaticModule`, `--web-root` and the temp extraction. It is not updated here. Not verified against the SRS owner.
 - Only macOS arm64 was tested.
+
+## Integration plan
+
+1. Merge PR #7 (`chore/tech-debt-poc-1`) first. This branch starts from its head (`8624bcc`) and depends on two of its commits: `/api/health` under the `api` prefix (`8ce213a`) and `/api` paths kept out of the SPA fallback (`d5945c7`). The new middleware keeps that rule.
+2. After PR #7 merges, rebase `minor/web-from-memory` onto `main`. Only the two commits of this slice remain. Run `pnpm run build`, `pnpm run test` and the package command again, and repeat the request table above.
+3. Open the PR from `minor/web-from-memory` to `main` (human decision). Branch prefix `minor/` because the gateway CLI contract changes: `--web-root <dir>` is removed and `--web none|ipc` is added. Only the supervisor passed `--web-root`, so no other caller breaks.
+4. Update the backlog in the same PR or right after it. In `docs/backlog/poc-4-https-gateway-angular-pwa.md`, the items "Materialize the SPA into a per-version hashed cache" and "Mount `ServeStaticModule` only when `api-gateway` has `webRoot`" are superseded by in-memory serving. The 404 rule for unknown asset paths and the PWA cache headers stay with POC-4. `docs/requirements/06` and `11` need the same review (see Risks).
+5. POC-3 impact: the paths library resolves one runtime root for `config.json` and SQLite. The web bundle no longer needs any directory, so the root does not need a cache or temp subtree for the web. Nothing in POC-3 must change for this slice. If extraction ever returns, it goes under that root or the host app cache dir, keyed by manifest hash, with stale cleanup. Not verified: the cwd and root per launcher (POC-2 and POC-3 open items).
+6. POC-5 impact: the Tauri window loads the sidecar URL. No `frontendDist` copy of the SPA is needed (research note, not verified in this repo).
 
 ## Scratch
 
