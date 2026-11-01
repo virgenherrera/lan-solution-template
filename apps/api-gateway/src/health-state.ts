@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { stateMessageSchema, type AggregateState } from 'service-registry';
+import { AGGREGATE_STATE, stateMessageSchema, type AggregateState } from 'service-registry';
 
 // Aggregate state of the runtime as last told by the supervisor. Standalone (no supervisor) it starts at "starting" and the bootstrap sets "ready" after listen.
 @Injectable()
 export class HealthState {
-  private current: AggregateState = 'starting';
+  private current: AggregateState = AGGREGATE_STATE.starting;
 
   get(): AggregateState {
     return this.current;

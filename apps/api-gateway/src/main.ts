@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { NodeAdapter } from '@nestjs/platform-node';
-import { readyMessageSchema } from 'service-registry';
+import { AGGREGATE_STATE, CONTROL_KIND, readyMessageSchema } from 'service-registry';
 import { AppModule } from './app.module.js';
 import { HealthState } from './health-state.js';
 import { parseServerConfig } from './server-config.js';
@@ -18,11 +18,11 @@ async function bootstrap() {
   await app.listen(config.port, config.hostname);
   if (process.send === undefined) {
     // Standalone run: no supervisor, so listening is ready.
-    health.set('ready');
+    health.set(AGGREGATE_STATE.ready);
     return;
   }
   // Supervised run: tell the supervisor, then follow the aggregate state it sends back.
   process.on('message', (raw) => health.apply(raw));
-  process.send(readyMessageSchema.parse({ kind: 'ready' }));
+  process.send(readyMessageSchema.parse({ kind: CONTROL_KIND.ready }));
 }
 await bootstrap();

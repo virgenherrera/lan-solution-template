@@ -5,4 +5,5 @@ export * from './control-channel.js';
 export * from './dispatcher.js';
 export * from './service-definition.js';
 export * from './startup-order.js';
+export * from './states.js';
 export * from './supervisor-config.js';

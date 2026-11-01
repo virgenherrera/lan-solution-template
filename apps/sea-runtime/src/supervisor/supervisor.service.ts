@@ -2,6 +2,8 @@ import { Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/com
 import { spawn, type ChildProcess } from 'node:child_process';
 import { getAsset, isSea } from 'node:sea';
 import {
+  AGGREGATE_STATE,
+  CONTROL_KIND,
   DISPATCHER_CONFIG,
   SUPERVISOR_CONFIG,
   aggregateState,
@@ -86,14 +88,14 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     const next = aggregateState(this.services.map(({ status }) => status), this.stopping);
     if (next === this.state) return;
     this.state = next;
-    const message = stateMessageSchema.parse({ kind: 'state', state: next });
+    const message = stateMessageSchema.parse({ kind: CONTROL_KIND.state, state: next });
     this.log(`state ${next}`);
     // Design for POC-5: one JSON line per change, never prefixed, so the shell can tell it from log lines. Not verified against Tauri.
     process.stdout.write(`${JSON.stringify(message)}\n`);
     for (const { child } of this.services) {
       if (child?.connected) child.send(message, () => undefined);
     }
-    if (next === 'error') void this.shutdown('SIGTERM', SUPERVISOR_CONFIG.errorExitCode);
+    if (next === AGGREGATE_STATE.error) void this.shutdown('SIGTERM', SUPERVISOR_CONFIG.errorExitCode);
   }
 
   onModuleDestroy(): void {
