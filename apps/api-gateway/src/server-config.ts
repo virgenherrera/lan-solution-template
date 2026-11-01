@@ -6,8 +6,8 @@ export const SERVER_CONFIG = Symbol('SERVER_CONFIG');
 export const serverConfigSchema = z.object({
   port: z.number().int().min(1).max(65535).default(3000),
   hostname: z.literal('127.0.0.1').default('127.0.0.1'),
-  // Absent means no static serving (dev case).
-  webRoot: z.string().min(1).optional(),
+  // "none" (default, dev case) serves no web. "ipc": the parent process sends the web bundle over the IPC channel.
+  web: z.enum(['none', 'ipc']).default('none'),
 });
 
 export type ServerConfig = Readonly<z.infer<typeof serverConfigSchema>>;
@@ -16,8 +16,8 @@ export type ServerConfig = Readonly<z.infer<typeof serverConfigSchema>>;
 export function parseServerConfig(argv: readonly string[]): ServerConfig {
   const { values } = parseArgs({
     args: [...argv],
-    options: { 'web-root': { type: 'string' } },
+    options: { web: { type: 'string' } },
     strict: false,
   });
-  return Object.freeze(serverConfigSchema.parse({ webRoot: values['web-root'] }));
+  return Object.freeze(serverConfigSchema.parse({ web: values.web }));
 }

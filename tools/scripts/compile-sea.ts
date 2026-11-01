@@ -1,7 +1,7 @@
 // Packages a supervisor app and its workspace service dependencies into ONE Node SEA executable.
 // Run from the repository root: `node tools/scripts/compile-sea.ts <supervisor-project>`.
 // Dependencies of the supervisor (`workspace:` ranges) are classified by build output: <root>/dist/main.js is a service; <root>/dist/<name>/browser/index.html (or angular.json outputPath + /browser) is a web bundle; anything else fails.
-// At most one web bundle; zero means no web assets and no --web-root.
+// At most one web bundle; zero means no web assets and no --web flag.
 // The generated role-map entry and the SEA config are written under dist/ at build time and are never committed.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -215,7 +215,7 @@ async function bundle(): Promise<void> {
 }
 
 // Every file of the web bundle becomes SEA asset "web/<relative path>"; the manifest (path to sha256) is written next to the bundle and embedded as "web-manifest.json".
-// No web bundle means no web assets and no manifest; the supervisor then passes no --web-root.
+// No web bundle means no web assets and no manifest; the supervisor then passes no --web flag. With a bundle, the supervisor reads the files in memory (getRawAsset) and sends them to the gateway over IPC; nothing is extracted.
 function webAssets(web: WebBundle | undefined): Record<string, string> {
   if (web === undefined) return {};
   const walk = (dir: string): string[] =>
