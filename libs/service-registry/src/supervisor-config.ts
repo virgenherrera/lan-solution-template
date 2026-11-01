@@ -18,6 +18,10 @@ export const supervisorConfigSchema = z.object({
   restartWindowMs: z.number().int().min(1).default(300_000),
   // A process that ran at least this long before exiting resets the attempt counter and the window.
   stableResetMs: z.number().int().min(1).default(60_000),
+  // Coordinated stop (REQ-RUNTIME-06, OQ11, decision D2): a child that has not exited this long after the shutdown message is killed with its descendants.
+  gracefulStopMs: z.number().int().min(1).default(10_000),
+  // Windows tree kill: `<command> /pid <pid> /T /F`. Written but not verified (decision D3, REQ-TEST-09).
+  windowsKillCommand: z.string().min(1).default('taskkill'),
 });
 
 export type SupervisorConfig = Readonly<z.infer<typeof supervisorConfigSchema>>;

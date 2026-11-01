@@ -15,6 +15,7 @@ import {
 } from 'service-registry';
 import { hasWebBundle, loadWebBundle, type WebFile } from '../web/web-bundle.js';
 import { forwardLines, prefixed } from './log-lines.js';
+import { stopTree, treeSpawnOptions } from './process-tree.js';
 import { ServiceLifecycle } from './service-lifecycle.js';
 
 @Injectable()
@@ -71,6 +72,7 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
       shell: false,
       stdio: ['inherit', 'pipe', 'pipe', 'ipc'],
       serialization: 'advanced',
+      ...treeSpawnOptions(),
     });
     if (child.stdout) forwardLines(id, child.stdout, process.stdout);
     if (child.stderr) forwardLines(id, child.stderr, process.stderr);
@@ -103,27 +105,16 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     process.off('SIGTERM', this.onSignal);
   }
 
-  // Kills every child, waits until each has exited, then ends the supervisor with the given exit code.
+  // Stops every child in reverse startup order (shutdown message, timeout, tree kill), then ends the supervisor with the given exit code.
   private async shutdown(signal: NodeJS.Signals, exitCode: number): Promise<void> {
     if (this.stopping) return;
     this.stopping = true;
     this.log(`received ${signal}; stopping ${this.services.length} service(s)`);
     this.update();
-    await Promise.all(
-      this.services.map(
-        (service) =>
-          new Promise<void>((resolve) => {
-            service.stop();
-            const { child } = service;
-            if (child === undefined || child.exitCode !== null || child.signalCode !== null) {
-              resolve();
-              return;
-            }
-            child.once('exit', () => resolve());
-            child.kill(signal);
-          }),
-      ),
-    );
+    for (const service of [...this.services].reverse()) {
+      service.stop();
+      if (service.child !== undefined) await stopTree(service.id, service.child, SUPERVISOR_CONFIG, (text) => this.log(text));
+    }
     process.exit(exitCode);
   }
 }

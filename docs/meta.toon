@@ -1,4 +1,4 @@
-docs[56]:
+docs[57]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -458,6 +458,15 @@ docs[56]:
     status: current
     updated: 2026-10-31
     refs[1]: REQ-DESK-05
+  - doc: docs/results/POC-02f-coordinated-shutdown.md
+    title: POC-2f Coordinated shutdown
+    type: backlog
+    summary: "Result of slice 2f: IPC shutdown, graceful timeout, process-tree kill and orphan checks, measured on the packaged macOS binary."
+    ids: []
+    related[3]: docs/backlog/poc-2f-coordinated-shutdown.md,docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/results/POC-02e-bounded-restart.md
+    status: current
+    updated: 2026-10-31
+    refs[2]: REQ-DESK-02,REQ-TEST-09
   - doc: docs/results/SPIKE-spa-serving.md
     title: SPIKE SPA serving in the SEA
     type: backlog
