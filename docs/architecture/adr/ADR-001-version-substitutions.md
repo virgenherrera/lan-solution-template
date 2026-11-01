@@ -51,5 +51,6 @@ Use these substitutions in POC-1. Each row gives the reason and what would rever
 These are placeholders or gaps. They are not version choices, and this ADR does not decide them:
 
 - The desktop identifier is a human decision. Its value lives only in the `identifier` field of `apps/desktop/src-tauri/tauri.conf.json`. No other file repeats it. Rust code reads it with `app.config().identifier`.
-- The Tauri CSP is `null`. A decision is needed before the security POCs.
+- The Tauri CSP is explicit. It limits `default-src` to `'self'` and the Tauri IPC origins, and `connect-src` also allows `http://127.0.0.1:*`. The port is a wildcard because the sidecar port is not fixed. See the [hardening result](../../results/CHORE-tauri-hardening-Result.md). The CSP is not exercised at runtime (not verified).
+- `libatomic1` (deb) and `libatomic` (rpm) are declared as bundle dependencies in `tauri.conf.json`. The runtime need is verified only on arm64 (see the [POC-1c result](../../results/POC-01c-Result.md)). It is not verified on amd64.
 - The crate name `app` and the crate authors cannot be set by CLI flags.
