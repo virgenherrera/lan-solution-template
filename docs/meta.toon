@@ -1,4 +1,4 @@
-docs[52]:
+docs[53]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -410,6 +410,15 @@ docs[52]:
     summary: "Result: the SEA serves the Angular web from memory over IPC, with no extraction to the temp directory."
     ids: []
     related[4]: docs/results/SPIKE-spa-serving.md,docs/standards/README.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/backlog/poc-4-https-gateway-angular-pwa.md
+    status: current
+    updated: 2026-10-31
+    refs: []
+  - doc: docs/results/POC-02a-launcher-cwd.md
+    title: POC-2a Launcher cwd
+    type: backlog
+    summary: "Result: under launchd and systemd the packaged binary starts in / without WorkingDirectory; the gateway child inherits it."
+    ids: []
+    related[3]: docs/backlog/poc-2a-launcher-cwd-spike.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/backlog/poc-2-single-sea-runtime-supervisor.md
     status: current
     updated: 2026-10-31
     refs: []

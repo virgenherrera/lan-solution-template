@@ -34,7 +34,7 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Planned |
+| Status | Done, see [result](../results/POC-02a-launcher-cwd.md) |
 | Slice | 2a of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~120 authored lines, documentation only (ASSUMPTION) |
 | Depends on | none. Needs the packaged binary from `main` (POC-1f merged) |
@@ -89,12 +89,12 @@ No AC id. Observable outcomes:
 
 [Back to navigation](#navigation)
 
-- [ ] Build the packaged binary from `main` with the existing targets (`pnpm run build`, then `pnpm exec nx run sea-runtime:package`). Record the commit and the binary path. Source: [REQ-SEA-01](../requirements/10-node-sea-distribution.md); no new REQ.
-- [ ] Run it under launchd on the macOS host as a user agent without `WorkingDirectory`, then with it. Read the cwd of the supervisor and of the gateway child with `lsof -a -d cwd -p <pid>`. Source: [decision 11](../roadmap/PROPOSAL.md#decision-log), [OQ1](../roadmap/PROPOSAL.md#open-questions); no REQ or AC id.
-- [ ] Run it under systemd (a system unit and a user unit if the environment has both) without and with `WorkingDirectory`. Read `readlink /proc/<pid>/cwd`. The environment follows D4 of the [umbrella](poc-2-single-sea-runtime-supervisor.md#decisions-for-the-human). Source: [decision 11](../roadmap/PROPOSAL.md#decision-log); no REQ or AC id.
-- [ ] Record whether the gateway child inherits the supervisor cwd (`spawn` is called without a `cwd` option today). Source: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md).
-- [ ] State the consequence for the paths library: the root comes from the OS location of decision 11, never from the cwd. Link it from [POC-3](poc-3-config-sqlite-vector.md). Source: [REQ-CFG-05](../requirements/04-configuration.md), [REQ-SEA-05](../requirements/10-node-sea-distribution.md).
-- [ ] Publish `docs/results/POC-02a-launcher-cwd.md` and regenerate `docs/meta.toon`. Source: not verified (no pitch id).
+- [x] Build the packaged binary from `main` with the existing targets (`pnpm run build`, then `pnpm exec nx run sea-runtime:package`). Record the commit and the binary path. Source: [REQ-SEA-01](../requirements/10-node-sea-distribution.md); no new REQ.
+- [x] Run it under launchd on the macOS host as a user agent without `WorkingDirectory`, then with it. Read the cwd of the supervisor and of the gateway child with `lsof -a -d cwd -p <pid>`. Source: [decision 11](../roadmap/PROPOSAL.md#decision-log), [OQ1](../roadmap/PROPOSAL.md#open-questions); no REQ or AC id.
+- [x] Run it under systemd (a system unit and a user unit if the environment has both) without and with `WorkingDirectory`. Read `readlink /proc/<pid>/cwd`. The environment follows D4 of the [umbrella](poc-2-single-sea-runtime-supervisor.md#decisions-for-the-human). Source: [decision 11](../roadmap/PROPOSAL.md#decision-log); no REQ or AC id.
+- [x] Record whether the gateway child inherits the supervisor cwd (`spawn` is called without a `cwd` option today). Source: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md).
+- [x] State the consequence for the paths library: the root comes from the OS location of decision 11, never from the cwd. Link it from [POC-3](poc-3-config-sqlite-vector.md). Source: [REQ-CFG-05](../requirements/04-configuration.md), [REQ-SEA-05](../requirements/10-node-sea-distribution.md).
+- [x] Publish `docs/results/POC-02a-launcher-cwd.md` and regenerate `docs/meta.toon`. Source: not verified (no pitch id).
 
 ---
 
