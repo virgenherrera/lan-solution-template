@@ -13,7 +13,7 @@ updated: 2026-10-30
 
 [Home](../../README.md) | [Requirements](../requirements/README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](../roadmap/PROPOSAL.md) | [Traceability](../requirements/traceability.md) | [Backlog](README.md)
 
-[Previous](poc-2-single-sea-runtime-supervisor.md) | [Up](README.md) | [Next](poc-4-https-gateway-angular-pwa.md)
+[Previous](poc-2h-result-and-adr.md) | [Up](README.md) | [Next](poc-4-https-gateway-angular-pwa.md)
 
 ## Navigation
 
