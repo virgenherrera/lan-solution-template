@@ -1,4 +1,4 @@
-docs[42]:
+docs[51]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -74,12 +74,84 @@ docs[42]:
   - doc: docs/backlog/poc-2-single-sea-runtime-supervisor.md
     title: POC-2 Single SEA and runtime supervisor
     type: backlog
-    summary: Backlog item for a single SEA build and the runtime supervisor.
+    summary: "Umbrella for POC-2: slices 2a to 2h, order, inherited POC-1 items, and decisions that need the human."
     ids: []
-    related[3]: docs/backlog/README.md,docs/backlog/poc-1e-hardening-desktop-skeleton.md,docs/backlog/poc-3-config-sqlite-vector.md
+    related[10]: docs/backlog/README.md,docs/backlog/poc-1e-hardening-desktop-skeleton.md,docs/backlog/poc-2a-launcher-cwd-spike.md,docs/backlog/poc-2b-dispatcher-service-registry.md,docs/backlog/poc-2c-assembler-registry-build.md,docs/backlog/poc-2d-supervisor-readiness-logs.md,docs/backlog/poc-2e-bounded-restart.md,docs/backlog/poc-2f-coordinated-shutdown.md,docs/backlog/poc-2g-real-binary-smoke.md,docs/backlog/poc-2h-result-and-adr.md
     status: current
     updated: 2026-10-31
-    refs[19]: AC-11,AC-28,AC-29,AC-30,AC-31,REQ-BUILD-04,REQ-NET-01,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-TEST-07
+    refs[25]: AC-11,AC-28,AC-29,AC-30,AC-31,REQ-BUILD-02,REQ-BUILD-04,REQ-ECO-05,REQ-NET-01,REQ-NET-07,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09,REQ-VERSION-02
+  - doc: docs/backlog/poc-2a-launcher-cwd-spike.md
+    title: POC-2a Launcher cwd spike
+    type: backlog
+    summary: "Backlog slice 2a of POC-2: record the initial cwd of supervisor and gateway under launchd and systemd."
+    ids: []
+    related[3]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2b-dispatcher-service-registry.md,docs/backlog/poc-3-config-sqlite-vector.md
+    status: current
+    updated: 2026-10-31
+    refs[4]: REQ-CFG-05,REQ-RUNTIME-03,REQ-SEA-01,REQ-SEA-05
+  - doc: docs/backlog/poc-2b-dispatcher-service-registry.md
+    title: POC-2b Dispatcher and service registry
+    type: backlog
+    summary: "Backlog slice 2b of POC-2: Zod-validated dispatcher, closed service registry and the auth-ms registry design."
+    ids: []
+    related[4]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2a-launcher-cwd-spike.md,docs/backlog/poc-2c-assembler-registry-build.md,docs/backlog/poc-1c-sea-build.md
+    status: current
+    updated: 2026-10-31
+    refs[8]: AC-28,AC-29,AC-31,REQ-NET-01,REQ-REP-02,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-TEST-01
+  - doc: docs/backlog/poc-2c-assembler-registry-build.md
+    title: POC-2c Assembler driven by the registry
+    type: backlog
+    summary: "Backlog slice 2c of POC-2: assembler bundles dispatcher and services from the registry and invalidates on change."
+    ids: []
+    related[3]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2b-dispatcher-service-registry.md,docs/backlog/poc-2d-supervisor-readiness-logs.md
+    status: current
+    updated: 2026-10-31
+    refs[6]: AC-11,REQ-BUILD-04,REQ-RUNTIME-01,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03
+  - doc: docs/backlog/poc-2d-supervisor-readiness-logs.md
+    title: "POC-2d Supervisor readiness, logs and aggregate state"
+    type: backlog
+    summary: "Backlog slice 2d of POC-2: IPC control channel, readiness timeout, per-service logs, aggregate state and gateway health."
+    ids: []
+    related[4]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2c-assembler-registry-build.md,docs/backlog/poc-2e-bounded-restart.md,docs/results/POC-01f-web-from-memory.md
+    status: current
+    updated: 2026-10-31
+    refs[10]: AC-28,REQ-NET-01,REQ-NET-04,REQ-NET-06,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-TEST-01
+  - doc: docs/backlog/poc-2e-bounded-restart.md
+    title: POC-2e Bounded restart
+    type: backlog
+    summary: "Backlog slice 2e of POC-2: respawn of process.execPath with backoff, a restart budget and an error state."
+    ids: []
+    related[3]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2d-supervisor-readiness-logs.md,docs/backlog/poc-2f-coordinated-shutdown.md
+    status: current
+    updated: 2026-10-31
+    refs[7]: AC-29,REQ-DESK-05,REQ-NET-03,REQ-RUNTIME-01,REQ-RUNTIME-03,REQ-RUNTIME-05,REQ-RUNTIME-08
+  - doc: docs/backlog/poc-2f-coordinated-shutdown.md
+    title: POC-2f Coordinated shutdown and orphan checks
+    type: backlog
+    summary: "Backlog slice 2f of POC-2: IPC shutdown, timeout, force-kill of descendants and orphan checks on the host OS."
+    ids: []
+    related[4]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2d-supervisor-readiness-logs.md,docs/backlog/poc-2e-bounded-restart.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md
+    status: current
+    updated: 2026-10-31
+    refs[5]: AC-30,REQ-DESK-02,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-TEST-09
+  - doc: docs/backlog/poc-2g-real-binary-smoke.md
+    title: POC-2g Real-binary smoke test and Linux run
+    type: backlog
+    summary: "Backlog slice 2g of POC-2: smoke test of the packaged binary on macOS and Linux, including libatomic."
+    ids: []
+    related[4]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2e-bounded-restart.md,docs/backlog/poc-2f-coordinated-shutdown.md,docs/results/POC-01c-Result.md
+    status: current
+    updated: 2026-10-31
+    refs[16]: AC-11,AC-18,AC-20,AC-28,AC-29,AC-34,REQ-BUILD-02,REQ-NET-05,REQ-RUNTIME-01,REQ-RUNTIME-08,REQ-TEST-01,REQ-TEST-02,REQ-TEST-03,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09
+  - doc: docs/backlog/poc-2h-result-and-adr.md
+    title: POC-2h POC-02 result and ADR-002
+    type: backlog
+    summary: "Backlog slice 2h of POC-2: consolidated POC-02 result, ADR-002 and the closing of inherited items."
+    ids: []
+    related[3]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2g-real-binary-smoke.md,docs/backlog/poc-3-config-sqlite-vector.md
+    status: current
+    updated: 2026-10-31
+    refs[9]: AC-11,AC-29,REQ-CFG-05,REQ-NET-02,REQ-REP-05,REQ-RUNTIME-01,REQ-SEA-01,REQ-SEA-02,REQ-TEST-09
   - doc: docs/backlog/poc-3-config-sqlite-vector.md
     title: POC-3 Config and SQLite vector persistence inside the SEA
     type: backlog

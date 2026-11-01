@@ -209,7 +209,7 @@ flowchart LR
 | POC | Title | Appetite | Batch | Depends on | Branch |
 |---|---|---|---|---|---|
 | POC-1 | Toolchain viability + OS matrix + workspace skeleton, delivered as slices 1a to 1e (see [POC-1 Slices](#poc-1-slices)) | 1 week (slice appetites are ASSUMPTION) | small | none | `minor/poc-01a-monorepo`, `minor/poc-01b-nest` (carries 1b and 1c), `minor/poc-01d-angular-link`, `minor/poc-01e-hardening` |
-| POC-2 | Single SEA + runtime supervisor | 2 weeks | big | POC-1 | `minor/poc-02-sea-supervisor` |
+| POC-2 | Single SEA + runtime supervisor | 2 weeks | big | POC-1 | `minor/poc-02b-dispatcher-registry` to `minor/poc-02g-real-binary-smoke`, plus `docs/poc-02a-launcher-cwd` and `docs/poc-02h-result-adr` (see [POC-2 Slices](#poc-2-slices)) |
 | POC-3 | Config (`config.json`) + SQLite vector inside SEA | 2 weeks | big | POC-2 | `minor/poc-03-sqlite-vector` |
 | POC-4 | HTTPS gateway (dev-certs-style TLS) serving Angular PWA + dev loop | 2 weeks | big | POC-2 (POC-3 not blocking) | `minor/poc-04-https-spa` |
 | POC-5 | Tauri desktop shell with SEA sidecar + CA install + first-run setup | 2 weeks | big | POC-2, POC-4 | `minor/poc-05-tauri-sidecar` |
@@ -309,7 +309,24 @@ Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-
 - **No-gos**: no fake `auth-ms` (REQ-RUNTIME-04, SRS L943, D-03). No postject without a documented need. No second executable. Also no Express or Fastify, no SPA yet.
 - **Circuit breaker**: if the SEA cannot bundle the dispatcher and the real services within the appetite, stop. Publish the findings: what failed and which Node limits apply. Then reshape. Either split bundling from supervision, or evaluate a documented postject need.
 - **Acceptance criteria**: AC-11 (partial: no Node install on the host), AC-28, AC-29. AC-30 (host OS only, others pending) and AC-31 (registry design only) apply too. Also REQ-RUNTIME-01..08, REQ-SEA-01..03, REQ-TEST-07 (supervisor subset).
-- **Deliverable**: branch `minor/poc-02-sea-supervisor`. PR title: `feat: single SEA with runtime supervisor and gateway health`. Results under `docs/`: `POC-02-Result` and `ADR-002` (single-SEA portability decision).
+- **Deliverable**: delivered as eight slices, 2a to 2h (see [POC-2 Slices](#poc-2-slices)), one branch each. The single branch `minor/poc-02-sea-supervisor` is not used. Results under `docs/`: `POC-02-Result` and `ADR-002` (single-SEA portability decision).
+
+#### POC-2 Slices
+
+POC-2 stays the umbrella id and one bet of 2 weeks. Slice sizes are authored changed lines and ASSUMPTION; the betting table may change them. Plan, order, inherited POC-1 items and decisions for the human: [POC-2 umbrella](../backlog/poc-2-single-sea-runtime-supervisor.md).
+
+| Slice | Scope | Branch (proposed) | Size (ASSUMPTION) | Depends on |
+|---|---|---|---|---|
+| 2a | Launcher cwd spike: initial cwd of supervisor and gateway under launchd and systemd (decision 11) | `docs/poc-02a-launcher-cwd` | ~120 lines, docs | none |
+| 2b | Dispatcher and closed service registry, Zod-validated; unknown roles rejected; `auth-ms` registry design only | `minor/poc-02b-dispatcher-registry` | ~250 | none |
+| 2c | Assembler bundles dispatcher and services from the registry; invalidation on service change; SEA flags and code-cache rule | `minor/poc-02c-assembler-registry` | ~250 | 2b |
+| 2d | IPC control channel, readiness timeout, per-service logs, aggregate state, `/api/health` from that state | `minor/poc-02d-readiness-logs` | ~380 | 2c |
+| 2e | Respawn of `process.execPath --service <id>` with bounded backoff and an `error` state | `minor/poc-02e-bounded-restart` | ~250 | 2d |
+| 2f | Shutdown by IPC, timeout, force-kill of descendants, supervisor-crash tolerance, orphan checks | `minor/poc-02f-coordinated-shutdown` | ~350 | 2d |
+| 2g | Real-binary smoke test, macOS and Linux Docker, `libatomic` | `minor/poc-02g-real-binary-smoke` | ~300 | 2e, 2f |
+| 2h | `POC-02-Result`, `ADR-002`, inherited items closed | `docs/poc-02h-result-adr` | ~200 lines, docs | 2a to 2g |
+
+Backlog epics: [2a](../backlog/poc-2a-launcher-cwd-spike.md), [2b](../backlog/poc-2b-dispatcher-service-registry.md), [2c](../backlog/poc-2c-assembler-registry-build.md), [2d](../backlog/poc-2d-supervisor-readiness-logs.md), [2e](../backlog/poc-2e-bounded-restart.md), [2f](../backlog/poc-2f-coordinated-shutdown.md), [2g](../backlog/poc-2g-real-binary-smoke.md), [2h](../backlog/poc-2h-result-and-adr.md).
 
 ### POC-3: Config and SQLite vector persistence inside the SEA
 
