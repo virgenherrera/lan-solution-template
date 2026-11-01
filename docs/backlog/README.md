@@ -80,14 +80,14 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | POC-1d | [Angular and link](poc-1d-angular-link.md) | Delivered on branch `minor/poc-01d-angular-link` (same PR as the spike and decision 17 docs) | AC-13 |
 | POC-1e | [Hardening and desktop skeleton](poc-1e-hardening-desktop-skeleton.md) | Delivered on branch `minor/poc-01e-hardening` (one PR, human decision) | AC-01, AC-02, AC-13, AC-19, AC-22, AC-32, AC-33, AC-34 |
 | POC-2 | [Single SEA and runtime supervisor (umbrella)](poc-2-single-sea-runtime-supervisor.md) | Cycle 1 (planned), eight slices 2a to 2h | AC-11, AC-28, AC-29, AC-30, AC-31 |
-| POC-2a | [Launcher cwd spike](poc-2a-launcher-cwd-spike.md) | Planned, branch `docs/poc-02a-launcher-cwd` | none cited |
-| POC-2b | [Dispatcher and service registry](poc-2b-dispatcher-service-registry.md) | Planned, branch `minor/poc-02b-dispatcher-registry` | AC-28, AC-29, AC-31 |
-| POC-2c | [Assembler driven by the registry](poc-2c-assembler-registry-build.md) | Planned, branch `minor/poc-02c-assembler-registry` | AC-11 |
-| POC-2d | [Supervisor readiness, logs and aggregate state](poc-2d-supervisor-readiness-logs.md) | Planned, branch `minor/poc-02d-readiness-logs` | none new |
-| POC-2e | [Bounded restart](poc-2e-bounded-restart.md) | Planned, branch `minor/poc-02e-bounded-restart` | AC-29 |
-| POC-2f | [Coordinated shutdown and orphan checks](poc-2f-coordinated-shutdown.md) | Planned, branch `minor/poc-02f-coordinated-shutdown` | AC-30 |
-| POC-2g | [Real-binary smoke test and Linux run](poc-2g-real-binary-smoke.md) | Planned, branch `minor/poc-02g-real-binary-smoke` | AC-28, AC-29, AC-11 |
-| POC-2h | [POC-02 result and ADR-002](poc-2h-result-and-adr.md) | Planned, branch `docs/poc-02h-result-adr` | AC-11, AC-29 |
+| POC-2a | [Launcher cwd spike](poc-2a-launcher-cwd-spike.md) | Planned, branch `minor/poc-02-supervisor` (commit per slice) | none cited |
+| POC-2b | [Dispatcher and service registry](poc-2b-dispatcher-service-registry.md) | Planned, branch `minor/poc-02-supervisor` (commit per slice) | AC-28, AC-29, AC-31 |
+| POC-2c | [Assembler driven by the registry](poc-2c-assembler-registry-build.md) | Planned, branch `minor/poc-02-supervisor` (commit per slice) | AC-11 |
+| POC-2d | [Supervisor readiness, logs and aggregate state](poc-2d-supervisor-readiness-logs.md) | Planned, branch `minor/poc-02-supervisor` (commit per slice) | none new |
+| POC-2e | [Bounded restart](poc-2e-bounded-restart.md) | Planned, branch `minor/poc-02-supervisor` (commit per slice) | AC-29 |
+| POC-2f | [Coordinated shutdown and orphan checks](poc-2f-coordinated-shutdown.md) | Planned, branch `minor/poc-02-supervisor` (commit per slice) | AC-30 |
+| POC-2g | [Real-binary smoke test and Linux run](poc-2g-real-binary-smoke.md) | Planned, branch `minor/poc-02-supervisor` (commit per slice) | AC-28, AC-29, AC-11 |
+| POC-2h | [POC-02 result and ADR-002](poc-2h-result-and-adr.md) | Planned, branch `minor/poc-02-supervisor` (commit per slice) | AC-11, AC-29 |
 | POC-3 | [Config and SQLite vector persistence inside the SEA](poc-3-config-sqlite-vector.md) | Cycle 1 (planned) | AC-07, AC-08, AC-10 |
 | POC-4 | [HTTPS gateway serving the Angular PWA](poc-4-https-gateway-angular-pwa.md) | Cycle 2 (planned) | AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17 |
 | POC-5 | [Tauri desktop shell with SEA sidecar](poc-5-tauri-sidecar-desktop-shell.md) | Cycle 2 (planned) | AC-03, AC-18, AC-20, AC-30 |

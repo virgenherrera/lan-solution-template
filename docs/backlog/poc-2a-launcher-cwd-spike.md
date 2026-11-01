@@ -38,7 +38,7 @@ updated: 2026-10-31
 | Slice | 2a of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~120 authored lines, documentation only (ASSUMPTION) |
 | Depends on | none. Needs the packaged binary from `main` (POC-1f merged) |
-| Branch (proposed) | `docs/poc-02a-launcher-cwd` |
+| Branch (decided, D1) | `minor/poc-02-supervisor`, one commit or commit group per slice, one draft PR for all of POC-2 |
 | Result page | `docs/results/POC-02a-launcher-cwd.md` |
 | Requirements | none. The pitch gives no REQ or AC id for this task |
 

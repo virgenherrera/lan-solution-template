@@ -209,7 +209,7 @@ flowchart LR
 | POC | Title | Appetite | Batch | Depends on | Branch |
 |---|---|---|---|---|---|
 | POC-1 | Toolchain viability + OS matrix + workspace skeleton, delivered as slices 1a to 1e (see [POC-1 Slices](#poc-1-slices)) | 1 week (slice appetites are ASSUMPTION) | small | none | `minor/poc-01a-monorepo`, `minor/poc-01b-nest` (carries 1b and 1c), `minor/poc-01d-angular-link`, `minor/poc-01e-hardening` |
-| POC-2 | Single SEA + runtime supervisor | 2 weeks | big | POC-1 | `minor/poc-02b-dispatcher-registry` to `minor/poc-02g-real-binary-smoke`, plus `docs/poc-02a-launcher-cwd` and `docs/poc-02h-result-adr` (see [POC-2 Slices](#poc-2-slices)) |
+| POC-2 | Single SEA + runtime supervisor | 2 weeks | big | POC-1 | `minor/poc-02-supervisor` for all slices, one commit or commit group per slice (see [POC-2 Slices](#poc-2-slices)) |
 | POC-3 | Config (`config.json`) + SQLite vector inside SEA | 2 weeks | big | POC-2 | `minor/poc-03-sqlite-vector` |
 | POC-4 | HTTPS gateway (dev-certs-style TLS) serving Angular PWA + dev loop | 2 weeks | big | POC-2 (POC-3 not blocking) | `minor/poc-04-https-spa` |
 | POC-5 | Tauri desktop shell with SEA sidecar + CA install + first-run setup | 2 weeks | big | POC-2, POC-4 | `minor/poc-05-tauri-sidecar` |
@@ -309,22 +309,22 @@ Backlog epics: [1a](../backlog/poc-1a-monorepo-init.md), [1b](../backlog/poc-1b-
 - **No-gos**: no fake `auth-ms` (REQ-RUNTIME-04, SRS L943, D-03). No postject without a documented need. No second executable. Also no Express or Fastify, no SPA yet.
 - **Circuit breaker**: if the SEA cannot bundle the dispatcher and the real services within the appetite, stop. Publish the findings: what failed and which Node limits apply. Then reshape. Either split bundling from supervision, or evaluate a documented postject need.
 - **Acceptance criteria**: AC-11 (partial: no Node install on the host), AC-28, AC-29. AC-30 (host OS only, others pending) and AC-31 (registry design only) apply too. Also REQ-RUNTIME-01..08, REQ-SEA-01..03, REQ-TEST-07 (supervisor subset).
-- **Deliverable**: delivered as eight slices, 2a to 2h (see [POC-2 Slices](#poc-2-slices)), one branch each. The single branch `minor/poc-02-sea-supervisor` is not used. Results under `docs/`: `POC-02-Result` and `ADR-002` (single-SEA portability decision).
+- **Deliverable**: delivered as eight slices, 2a to 2h (see [POC-2 Slices](#poc-2-slices)), one branch `minor/poc-02-supervisor` for all slices, one commit or commit group per slice, and one draft PR against `main` (decided, human decision D1). The branch `minor/poc-02-sea-supervisor` is not used. Results under `docs/`: `POC-02-Result` and `ADR-002` (single-SEA portability decision).
 
 #### POC-2 Slices
 
 POC-2 stays the umbrella id and one bet of 2 weeks. Slice sizes are authored changed lines and ASSUMPTION; the betting table may change them. Plan, order, inherited POC-1 items and decisions for the human: [POC-2 umbrella](../backlog/poc-2-single-sea-runtime-supervisor.md).
 
-| Slice | Scope | Branch (proposed) | Size (ASSUMPTION) | Depends on |
+| Slice | Scope | Branch (decided, D1) | Size (ASSUMPTION) | Depends on |
 |---|---|---|---|---|
-| 2a | Launcher cwd spike: initial cwd of supervisor and gateway under launchd and systemd (decision 11) | `docs/poc-02a-launcher-cwd` | ~120 lines, docs | none |
-| 2b | Dispatcher and closed service registry, Zod-validated; unknown roles rejected; `auth-ms` registry design only | `minor/poc-02b-dispatcher-registry` | ~250 | none |
-| 2c | Assembler bundles dispatcher and services from the registry; invalidation on service change; SEA flags and code-cache rule | `minor/poc-02c-assembler-registry` | ~250 | 2b |
-| 2d | IPC control channel, readiness timeout, per-service logs, aggregate state, `/api/health` from that state | `minor/poc-02d-readiness-logs` | ~380 | 2c |
-| 2e | Respawn of `process.execPath --service <id>` with bounded backoff and an `error` state | `minor/poc-02e-bounded-restart` | ~250 | 2d |
-| 2f | Shutdown by IPC, timeout, force-kill of descendants, supervisor-crash tolerance, orphan checks | `minor/poc-02f-coordinated-shutdown` | ~350 | 2d |
-| 2g | Real-binary smoke test, macOS and Linux Docker, `libatomic` | `minor/poc-02g-real-binary-smoke` | ~300 | 2e, 2f |
-| 2h | `POC-02-Result`, `ADR-002`, inherited items closed | `docs/poc-02h-result-adr` | ~200 lines, docs | 2a to 2g |
+| 2a | Launcher cwd spike: initial cwd of supervisor and gateway under launchd and systemd (decision 11) | `minor/poc-02-supervisor` | ~120 lines, docs | none |
+| 2b | Dispatcher and closed service registry, Zod-validated; unknown roles rejected; `auth-ms` registry design only | `minor/poc-02-supervisor` | ~250 | none |
+| 2c | Assembler bundles dispatcher and services from the registry; invalidation on service change; SEA flags and code-cache rule | `minor/poc-02-supervisor` | ~250 | 2b |
+| 2d | IPC control channel, readiness timeout, per-service logs, aggregate state, `/api/health` from that state | `minor/poc-02-supervisor` | ~380 | 2c |
+| 2e | Respawn of `process.execPath --service <id>` with bounded backoff and an `error` state | `minor/poc-02-supervisor` | ~250 | 2d |
+| 2f | Shutdown by IPC, timeout, force-kill of descendants, supervisor-crash tolerance, orphan checks | `minor/poc-02-supervisor` | ~350 | 2d |
+| 2g | Real-binary smoke test, macOS and Linux Docker, `libatomic` | `minor/poc-02-supervisor` | ~300 | 2e, 2f |
+| 2h | `POC-02-Result`, `ADR-002`, inherited items closed | `minor/poc-02-supervisor` | ~200 lines, docs | 2a to 2g |
 
 Backlog epics: [2a](../backlog/poc-2a-launcher-cwd-spike.md), [2b](../backlog/poc-2b-dispatcher-service-registry.md), [2c](../backlog/poc-2c-assembler-registry-build.md), [2d](../backlog/poc-2d-supervisor-readiness-logs.md), [2e](../backlog/poc-2e-bounded-restart.md), [2f](../backlog/poc-2f-coordinated-shutdown.md), [2g](../backlog/poc-2g-real-binary-smoke.md), [2h](../backlog/poc-2h-result-and-adr.md).
 
@@ -683,7 +683,7 @@ Claims marked "not verified" stay unverified until a spike or a primary source c
 | OQ8 | TLS crypto library and key storage per OS (A-04, Q-07). | Decided by human decision 14: pending spike. Prefer zero dependencies: `node:crypto` plus a minimal own DER builder. It builds the CA and the leaf with SAN, IPs included. Fallback: a pure-JS dependency such as `@peculiar/x509`. Never native modules. The CA private key stays outside the database, encrypted in a `dataDir` file. A NestJS provider contract hides the storage. See Decision Log item 14. Not verified: that `node:crypto` lacks an X.509 build-and-sign API. Not verified: SAN support in `@peculiar/x509`. Not verified: the Windows ACL recipe. | agent:researcher | no | decided (human decision 14): pending spike |
 | OQ9 | Release through a bot commit or a release PR (Q-03). | Use a release PR as the default, in line with REQ-CI-04. Publish after merge by tagging the merged SHA, idempotent per REQ-CI-06. Use a bot commit only if branch protection allows it and the human approves. Branch protection bypass for personal repos is not verified. Nx release support for a PR flow is not verified. | agent:researcher | no (HOLD) | proposed |
 | OQ10 | Nx release group membership, including sea-runtime (Q-01). | Use one fixed group: web-angular, api-gateway, shared-core, desktop and sea-runtime. REQ-SEA-01 packs sea-runtime into the single SEA, so its version must match. REQ-VERSION-01 does not list sea-runtime, so this is an inference. Exclude test libs and tooling. Run `nx release --dry-run` to verify. | agent:builder | no | proposed |
-| OQ11 | Restart, backoff and readiness values (A3). | These are design proposals, not sourced. Readiness timeout 30 s. Health poll 500 ms. Backoff 1, 2, 4, 8, 16 s, capped at 30 s, with 20 percent jitter. At most 5 restarts in 300 s. Reset the counter after 60 s stable. Graceful stop 10 s. After exhaustion: state error, stop restarting, surface it to Tauri. Measure in POC-2. | agent:builder | no | proposed |
+| OQ11 | Restart, backoff and readiness values (A3). | These are design proposals, not sourced. Readiness timeout 30 s. Health poll 500 ms. Backoff 1, 2, 4, 8, 16 s, capped at 30 s, with 20 percent jitter. At most 5 restarts in 300 s. Reset the counter after 60 s stable. Graceful stop 10 s. After exhaustion: state error, stop restarting, surface it to Tauri. Measure in POC-2. | agent:builder | no | decided (human decision, POC-2 D2): values as constants in a Zod schema with DEFAULTS; measured values still to report |
 | OQ12 | Autostart default: on or opt-in (A7). | Decided by the human: autostart is opt-in and off by default. The user enables it with a checkbox in the tray menu. The MSI checkbox appears unchecked on Windows. The app persists the choice. This matches REQ-DESK-04. The Tauri autostart plugin needs Rust 1.90 or later (not independently verified). | agent:builder | no | decided (human) |
 | OQ13 | Rust audit tool and threshold (A9). | Run `cargo deny check advisories` in CI and before release. Set yanked to deny. Keep the defaults for unmaintained and unsound. Any vulnerability fails: the cargo-deny docs list `severity-threshold` as removed. Each ignore needs a reason and a 90-day expiry. Run weekly and on `Cargo.lock` change. Noise from transitive Tauri deps is not verified. | agent:builder | no (CI on HOLD) | proposed |
 | OQ14 | Persisted config bootstrap before the DB exists (A-01), with decision 11 in mind. | Use a file-based bootstrap config under the root, resolved by the paths library (decision 11). It has Zod validation, atomic write (tmp then rename) and restricted permissions. It holds only ports, data path, DB engine and TLS key location. The DB stores the rest. Start order: resolve root, read or create defaults, open DB, migrate. No secrets. OQ1 is decided, so this does not wait on it. A-01 is not present in the SRS. | agent:builder | no | proposed |

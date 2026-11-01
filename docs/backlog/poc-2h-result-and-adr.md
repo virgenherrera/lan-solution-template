@@ -38,7 +38,7 @@ updated: 2026-10-31
 | Slice | 2h of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~200 authored lines, documentation only (ASSUMPTION) |
 | Depends on | [2a](poc-2a-launcher-cwd-spike.md) to [2g](poc-2g-real-binary-smoke.md) |
-| Branch (proposed) | `docs/poc-02h-result-adr` |
+| Branch (decided, D1) | `minor/poc-02-supervisor`, one commit or commit group per slice, one draft PR for all of POC-2 |
 | Result page | `docs/results/POC-02-Result.md` |
 | Decision record | `docs/architecture/adr/ADR-002-single-sea-portability.md` (name proposed) |
 | Acceptance criteria | AC-11, AC-29 |
@@ -75,7 +75,7 @@ Source: [PROPOSAL pitch deliverable](../roadmap/PROPOSAL.md#poc-2-single-sea-and
 
 Observable:
 
-- `POC-02-Result` lists every slice with its branch, its commit range or PR, and the commands with exit codes.
+- `POC-02-Result` lists every slice with its commit range, and the commands with exit codes.
 - Each inherited item of the umbrella has a status in the result.
 - The OS matrix labels each OS and architecture `verified`, `verified in Docker` or `not verified`. Windows reads `blocked-by-environment` ([REQ-TEST-09](../requirements/11-nx-quality-testing.md)).
 - The measured OQ11 values replace the proposals in the result, and [OQ11](../roadmap/PROPOSAL.md#open-questions) is updated to match (only with the human's approval).

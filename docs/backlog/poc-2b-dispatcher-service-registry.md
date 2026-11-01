@@ -38,7 +38,7 @@ updated: 2026-10-31
 | Slice | 2b of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~250 authored lines (ASSUMPTION) |
 | Depends on | none. POC-1c supplies the `--service <id>` entry that this slice replaces |
-| Branch (proposed) | `minor/poc-02b-dispatcher-registry` |
+| Branch (decided, D1) | `minor/poc-02-supervisor`, one commit or commit group per slice, one draft PR for all of POC-2 |
 | Result page | `docs/results/POC-02b-dispatcher-registry.md` |
 | Requirements | REQ-RUNTIME-03, REQ-RUNTIME-04 |
 | Acceptance criteria | AC-28 (start), AC-29 (unknown roles), AC-31 |

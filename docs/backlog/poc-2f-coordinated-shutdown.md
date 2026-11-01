@@ -38,7 +38,7 @@ updated: 2026-10-31
 | Slice | 2f of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~350 authored lines (ASSUMPTION) |
 | Depends on | [2d](poc-2d-supervisor-readiness-logs.md); the no-restart-while-stopping rule needs [2e](poc-2e-bounded-restart.md) if that lands first |
-| Branch (proposed) | `minor/poc-02f-coordinated-shutdown` |
+| Branch (decided, D1) | `minor/poc-02-supervisor`, one commit or commit group per slice, one draft PR for all of POC-2 |
 | Result page | `docs/results/POC-02f-coordinated-shutdown.md` |
 | Requirements | REQ-RUNTIME-06 |
 | Acceptance criteria | AC-30 (host OS only, others pending) |

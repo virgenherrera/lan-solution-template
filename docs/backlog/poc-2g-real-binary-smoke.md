@@ -38,7 +38,7 @@ updated: 2026-10-31
 | Slice | 2g of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~300 authored lines (ASSUMPTION) |
 | Depends on | [2e](poc-2e-bounded-restart.md), [2f](poc-2f-coordinated-shutdown.md) |
-| Branch (proposed) | `minor/poc-02g-real-binary-smoke` |
+| Branch (decided, D1) | `minor/poc-02-supervisor`, one commit or commit group per slice, one draft PR for all of POC-2 |
 | Result page | `docs/results/POC-02g-real-binary-smoke.md` |
 | Requirements | REQ-RUNTIME-08, REQ-TEST-07 |
 | Acceptance criteria | AC-28, AC-29, AC-11 (with 2c) |
