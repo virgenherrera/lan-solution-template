@@ -34,7 +34,8 @@
             ],
             "target": "package"
           },
-          "build"
+          "build",
+          "test"
         ]
       }
     }

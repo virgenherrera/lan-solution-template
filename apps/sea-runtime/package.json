@@ -54,7 +54,8 @@
       },
       "package": {
         "dependsOn": [
-          "build"
+          "build",
+          "test"
         ],
         "executor": "nx:run-commands",
         "outputs": [
