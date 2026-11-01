@@ -39,7 +39,9 @@ Baseline pins come from [02-technology-baseline.md](../requirements/02-technolog
 | `@nestjs/schematics` | not in baseline | 12.0.12 | not recorded | verified (resolved by the CLI) |
 | Angular CLI `@angular/cli` | `>=22.2.5` (REQ-STACK-05) | 22.2.5 | not recorded | verified |
 | Angular runtime `@angular/core` packages | `>=22.2.5` (REQ-STACK-05) | 22.2.4 | not recorded | deviation D2; 22.2.5 was not in the registry when checked |
-| Tailwind | not in baseline | not recorded | not recorded | not verified (no version in the result pages or reports) |
+| Tailwind `tailwindcss` | not in baseline | 4.3.3 | not recorded | verified (read from `apps/web-angular/package.json` line 33; not run) |
+| `@tailwindcss/postcss` | not in baseline | 4.3.3 | not recorded | verified (read from `apps/web-angular/package.json` line 30; not run) |
+| `postcss` | not in baseline | 8.5.32 | not recorded | verified (read from `apps/web-angular/package.json` line 31; not run) |
 | rspack `@rspack/core` | not in baseline | 2.3.0 (catalog) | not recorded | verified for the pin (1c); the build was run |
 | Tauri CLI `@tauri-apps/cli` | minimum `2.12.5` (REQ-STACK-03) | 2.12.4 (exact) | npm latest 2.12.4; 2.12.5 not on npm | discrepancy D4; not decided |
 | Tauri crate `tauri` | minimum `2.12.5` (REQ-STACK-03) | 2.12.5 (`Cargo.lock`) | not recorded | verified (lockfile); `tauri-build` 2.7.4, `tauri-plugin-log` 2.10.1 |
@@ -80,7 +82,7 @@ Source: [Tauri 2 prerequisites](https://v2.tauri.app/start/prerequisites/), fetc
 | OS | Page text | Label |
 |---|---|---|
 | macOS | "macOS Catalina (10.15) and later", line 89 | verified (page text); host 27.2 is above 10.15 (verified by comparison) |
-| Windows | "Windows 7 and later", line 90 | verified (page text); not verified on a Windows host. WebView2 minimums not recorded: not verified |
+| Windows | "Windows 7 and later", line 90 | verified (page text); not verified on a Windows host. The page names Microsoft Edge WebView2 as the Windows renderer (lines 143, 154) and gives no WebView2 version minimum (WebView2 section, lines 152-155): WebView2 minimum not verified |
 | Linux | distributions listed on the page, line 88; no version minimum stated | verified (page text); minimum not verified |
 
 We keep no OS list of our own. Decision 15 in [PROPOSAL](../roadmap/PROPOSAL.md#decision-log) follows Tauri 2.
@@ -167,8 +169,7 @@ Each entry has no CLI route, or the CLI could not write it. Full rows with reaso
 - Windows: not verified (no build, no run, no Tauri check).
 - Phone width, keyboard and focus, and Lighthouse: not verified (1d).
 - Tauri Linux builds: not verified.
-- WebView2 minimums: not recorded, not verified.
-- Tailwind version: not recorded, not verified.
+- WebView2 minimum version: the saved Tauri 2 prerequisites page gives none (lines 152-155). Minimum not verified.
 - Node 26 compatibility of Nest, Angular, Tauri and Zod: not verified.
 - The rspack builder does no type check. No `tsc --noEmit` step runs in the build (open decision from 1c).
 - Whether `esbuild` leaves the lockfile: open decision.
