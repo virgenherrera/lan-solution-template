@@ -1,4 +1,4 @@
-docs[54]:
+docs[55]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -440,6 +440,15 @@ docs[54]:
     status: current
     updated: 2026-10-31
     refs[3]: AC-11,REQ-BUILD-04,REQ-SEA-03
+  - doc: docs/results/POC-02d-readiness-logs.md
+    title: "POC-2d Supervisor readiness, logs and aggregate state"
+    type: backlog
+    summary: "Result of slice 2d: IPC control channel, readiness timeout, prefixed logs, aggregate state and gateway health, observed on the packaged binary."
+    ids: []
+    related[3]: docs/backlog/poc-2d-supervisor-readiness-logs.md,docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/results/POC-02c-assembler-registry.md
+    status: current
+    updated: 2026-10-31
+    refs[1]: REQ-RUNTIME-05
   - doc: docs/results/SPIKE-spa-serving.md
     title: SPIKE SPA serving in the SEA
     type: backlog

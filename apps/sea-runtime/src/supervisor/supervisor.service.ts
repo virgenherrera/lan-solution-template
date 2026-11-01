@@ -1,25 +1,45 @@
-import {
-  Injectable,
-  Logger,
-  type OnModuleDestroy,
-  type OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { getAsset, isSea } from 'node:sea';
-import { DISPATCHER_CONFIG, serviceArgs, servicesAssetSchema } from 'service-registry';
+import {
+  DISPATCHER_CONFIG,
+  SUPERVISOR_CONFIG,
+  aggregateState,
+  readyMessageSchema,
+  serviceArgs,
+  servicesAssetSchema,
+  startupOrder,
+  stateMessageSchema,
+  type AggregateState,
+  type ServiceStatus,
+} from 'service-registry';
 import { hasWebBundle, loadWebBundle, type WebFile } from '../web/web-bundle.js';
+import { forwardLines, prefixed } from './log-lines.js';
+
+interface Service {
+  readonly id: string;
+  readonly child: ChildProcess;
+  status: ServiceStatus;
+  timer?: NodeJS.Timeout;
+}
 
 @Injectable()
 export class SupervisorService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger('SupervisorService');
-  private readonly children: ChildProcess[] = [];
+  private readonly services: Service[] = [];
+  private stopping = false;
+  private state?: AggregateState;
   private readonly onSignal = (signal: NodeJS.Signals): void => {
-    void this.shutdown(signal);
+    void this.shutdown(signal, 0);
   };
+
+  // Every supervisor line carries the supervisor id as prefix.
+  private log(text: string): void {
+    process.stdout.write(`${prefixed(SUPERVISOR_CONFIG.id, text)}\n`);
+  }
 
   onModuleInit(): void {
     if (!isSea()) {
-      this.logger.log('not running as a SEA executable; spawning no services');
+      this.log('not running as a SEA executable; spawning no services');
       return;
     }
 
@@ -31,30 +51,69 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
 
     // The web bundle is read from the executable and sent to the api-gateway child over IPC; nothing is written to disk. No web bundle in the build means no --web flag.
     const web = hasWebBundle() ? loadWebBundle() : undefined;
-    this.logger.log(web === undefined ? 'no web bundle embedded' : `web bundle loaded in memory: ${web.length} files`);
+    this.log(web === undefined ? 'no web bundle embedded' : `web bundle loaded in memory: ${web.length} files`);
 
     process.once('SIGINT', this.onSignal);
     process.once('SIGTERM', this.onSignal);
 
-    for (const id of services) {
-      const sendsWeb = id === 'api-gateway' && web !== undefined;
-      const child = sendsWeb
-        ? spawn(process.execPath, [...serviceArgs(id), '--web', 'ipc'], {
-            shell: false,
-            stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
-            serialization: 'advanced',
-          })
-        : spawn(process.execPath, serviceArgs(id), { shell: false, stdio: 'inherit' });
-      if (sendsWeb) this.sendWeb(child, web);
-      this.children.push(child);
-      this.logger.log(`spawned service "${id}" as pid ${child.pid}`);
+    // The asset lists ids only, so no dependency is known yet; the order is the registry order.
+    const order = startupOrder(services.map((id) => ({ id, dependsOn: [], enabled: true })));
+    for (const id of order) this.start(id, id === 'api-gateway' ? web : undefined);
+    this.update();
+  }
+
+  // Spawns one service with the IPC control channel. Its output is piped and re-emitted with the id prefix.
+  private start(id: string, web: readonly WebFile[] | undefined): void {
+    const args = web === undefined ? serviceArgs(id) : [...serviceArgs(id), '--web', 'ipc'];
+    const child = spawn(process.execPath, args, {
+      shell: false,
+      stdio: ['inherit', 'pipe', 'pipe', 'ipc'],
+      serialization: 'advanced',
+    });
+    const service: Service = { id, child, status: 'starting' };
+    this.services.push(service);
+    if (child.stdout) forwardLines(id, child.stdout, process.stdout);
+    if (child.stderr) forwardLines(id, child.stderr, process.stderr);
+    child.on('message', (message) => {
+      if (readyMessageSchema.safeParse(message).success) this.setStatus(service, 'ready');
+    });
+    child.on('exit', (code, signal) => {
+      if (this.stopping) return;
+      this.log(`service "${id}" exited (code ${code}, signal ${signal})`);
+      this.setStatus(service, 'failed');
+    });
+    service.timer = setTimeout(() => {
+      if (service.status !== 'starting') return;
+      this.log(`service "${id}" not ready within ${SUPERVISOR_CONFIG.readinessTimeoutMs} ms`);
+      this.setStatus(service, 'failed');
+    }, SUPERVISOR_CONFIG.readinessTimeoutMs);
+    this.log(`spawned service "${id}" as pid ${child.pid}`);
+    if (web !== undefined) {
+      child.send({ kind: 'web-bundle', files: web }, (error) => {
+        if (error) this.log(`web bundle handoff failed: ${error.message}`);
+      });
     }
   }
 
-  private sendWeb(child: ChildProcess, web: readonly WebFile[]): void {
-    child.send({ kind: 'web-bundle', files: web }, (error) => {
-      if (error) this.logger.error(`web bundle handoff failed: ${error.message}`);
-    });
+  private setStatus(service: Service, status: ServiceStatus): void {
+    clearTimeout(service.timer);
+    service.status = status;
+    this.update();
+  }
+
+  // Recomputes the aggregate state; on a change logs it, prints one JSON line for the desktop shell and forwards it to the children.
+  private update(): void {
+    const next = aggregateState(this.services.map((service) => service.status), this.stopping);
+    if (next === this.state) return;
+    this.state = next;
+    const message = stateMessageSchema.parse({ kind: 'state', state: next });
+    this.log(`state ${next}`);
+    // Design for POC-5: one JSON line per change, never prefixed, so the shell can tell it from log lines. Not verified against Tauri.
+    process.stdout.write(`${JSON.stringify(message)}\n`);
+    for (const { child } of this.services) {
+      if (child.connected) child.send(message, () => undefined);
+    }
+    if (next === 'error') void this.shutdown('SIGTERM', SUPERVISOR_CONFIG.errorExitCode);
   }
 
   onModuleDestroy(): void {
@@ -62,15 +121,17 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     process.off('SIGTERM', this.onSignal);
   }
 
-  // Kills every child, waits until each has exited, then ends the supervisor.
-  private async shutdown(signal: NodeJS.Signals): Promise<void> {
-    this.logger.log(
-      `received ${signal}; stopping ${this.children.length} service(s)`,
-    );
+  // Kills every child, waits until each has exited, then ends the supervisor with the given exit code.
+  private async shutdown(signal: NodeJS.Signals, exitCode: number): Promise<void> {
+    if (this.stopping) return;
+    this.stopping = true;
+    this.log(`received ${signal}; stopping ${this.services.length} service(s)`);
+    this.update();
     await Promise.all(
-      this.children.map(
-        (child) =>
+      this.services.map(
+        ({ child, timer }) =>
           new Promise<void>((resolve) => {
+            clearTimeout(timer);
             if (child.exitCode !== null || child.signalCode !== null) {
               resolve();
               return;
@@ -80,6 +141,6 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
           }),
       ),
     );
-    process.exit(0);
+    process.exit(exitCode);
   }
 }

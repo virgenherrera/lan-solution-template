@@ -53,7 +53,7 @@ export function toWebBundle(message: z.infer<typeof webBundleMessageSchema>): We
   );
 }
 
-// Waits for exactly one valid web-bundle message from the parent, then closes the IPC channel so the process does not hold it.
+// Waits for exactly one valid web-bundle message from the parent. The channel stays open afterwards: the supervisor sends state messages over it.
 // Fails fast with a clear error when there is no channel, the message is invalid, or nothing arrives in time.
 export function receiveWebBundle(timeoutMs: number = RECEIVE_TIMEOUT_MS): Promise<WebBundle> {
   return new Promise((resolve, reject) => {
@@ -73,7 +73,6 @@ export function receiveWebBundle(timeoutMs: number = RECEIVE_TIMEOUT_MS): Promis
         reject(new Error(`invalid web bundle message: ${parsed.error.message}`));
         return;
       }
-      process.disconnect();
       resolve(toWebBundle(parsed.data));
     };
     const onDisconnect = (): void => {
