@@ -32,11 +32,11 @@ updated: 2026-11-02
 
 | Item | Value |
 |---|---|
-| Status | In progress on `minor/dbm-drizzle-migrations` |
+| Status | Done on `minor/dbm-drizzle-migrations`; see [DBM-Result](../results/DBM-Result.md) |
 | Depends on | POC-3 |
 | Branch | `minor/dbm-drizzle-migrations` |
 | Delivery | One branch, one PR |
-| Decision | [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md) (proposed) |
+| Decision | [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md) (accepted) |
 | Requirements | REQ-DB-03, REQ-DB-04, REQ-DB-05, REQ-DB-06, REQ-STACK-07 |
 | Acceptance criteria | AC-07, AC-08, AC-10 (same as POC-3) |
 
@@ -82,14 +82,14 @@ Proof is by real runs of the build and the packaged binary. AC ids are those of 
 
 [Back to navigation](#navigation)
 
-- [ ] Prove with a spike that `drizzle-kit` generates offline SQL and a class contract compiles. Source: [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md)
-- [ ] Amend REQ-DB-04, REQ-DB-05 and REQ-STACK-07. Close [OQ15](../roadmap/PROPOSAL.md#open-questions). Write ADR-004. Source: [amendments-2026-11-02](../requirements/amendments-2026-11-02.md)
-- [ ] Create `libs/db-migrations` with the contract, the SQLite schema and the first migration.
-- [ ] Extend the migrator: statement markers, history columns, manifest check, RxJS event stream.
-- [ ] Add a pack step, a manifest, SEA assets and a drift target.
-- [ ] Run migrations and the `app_meta` upserts in the supervisor boot pipeline.
-- [ ] Compare the migrated database with the descriptor by introspection.
-- [ ] Publish the result page, finalize ADR-004 and regenerate `docs/meta.toon`.
+- [x] Prove with a spike that `drizzle-kit` generates offline SQL and a class contract compiles. Source: [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md)
+- [x] Amend REQ-DB-04, REQ-DB-05 and REQ-STACK-07. Close [OQ15](../roadmap/PROPOSAL.md#open-questions). Write ADR-004. Source: [amendments-2026-11-02](../requirements/amendments-2026-11-02.md)
+- [x] Create `libs/db-migrations` with the contract, the SQLite schema and the first migration.
+- [x] Extend the migrator: statement markers, history columns, manifest check, RxJS event stream.
+- [x] Add a pack step, a manifest, SEA assets and a drift target.
+- [x] Run migrations and the `app_meta` upserts in the supervisor boot pipeline.
+- [x] Compare the migrated database with the descriptor by introspection.
+- [x] Publish the result page, finalize ADR-004 and regenerate `docs/meta.toon`.
 
 ---
 
@@ -102,11 +102,11 @@ One branch, one PR. Slice names DBM-a to DBM-h are an assumption.
 | Slice | Scope | Depends on |
 |---|---|---|
 | DBM-a | Spike: offline `generate`, `--> statement-breakpoint`, no-change regenerate, `check`, `--custom`, class contract | none |
-| DBM-b | Docs: amend REQ-DB-04, REQ-DB-05, REQ-STACK-07; close OQ15; ADR-004 (proposed); this page | DBM-a |
+| DBM-b | Docs: amend REQ-DB-04, REQ-DB-05, REQ-STACK-07; close OQ15; ADR-004; this page | DBM-a |
 | DBM-c | `libs/db-migrations`: `contract/`, `sqlite/schema.ts`, `drizzle.config.ts`, first migration for `app_meta` | DBM-a |
 | DBM-d | Migrator: marker split, checksum over full text, `runtime_version` and `duration_ms` in `schema_migrations`, manifest check, RxJS event stream | DBM-c |
 | DBM-e | Pack step that rejects an unmarked multi-statement file, `manifest.json`, SEA assets, drift target with `git diff --exit-code` | DBM-c |
-| DBM-f | Boot pipeline in `apps/sea-runtime`: migrations, `app_meta` upserts, dev path, packaged-binary smoke that finds no Drizzle code | DBM-d, DBM-e |
+| DBM-f | Boot pipeline in `apps/sea-runtime`: migrations, `app_meta` upserts, packaged-binary smoke that finds no Drizzle code. Dev (`nest start`) does not run persistence yet | DBM-d, DBM-e |
 | DBM-g | Parity check: temporary database, `PRAGMA table_info` and indexes against `contract/tables.ts` | DBM-c, DBM-d |
 | DBM-h | Result page, ADR-004 set to accepted, `docs/meta.toon`, independent verification | DBM-f, DBM-g |
 

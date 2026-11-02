@@ -43,7 +43,7 @@ Three requirement changes and one closed question. Cause: the human asked for Dr
 | Direction: Drizzle at build time only, SQL in the SEA | Human request, 2026-11-02 |
 | Versions `0.45.4` and `0.31.11` | Agent proposal, verified in a spike on 2026-11-02 |
 | Text of [REQ-DB-04](05-persistence.md), [REQ-DB-05](05-persistence.md), [REQ-STACK-07](02-technology-baseline.md) | Agent proposal |
-| [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md) | Proposed until the code exists |
+| [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md) | Accepted 2026-11-02, after the code and the smoke run (see DBM-Result) |
 | Slice names, `app_meta` as first table | Assumption, not answered by the human |
 | Downgrade guard from `runtime_version` | Proposed, not approved, not applied |
 

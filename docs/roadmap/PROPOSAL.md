@@ -124,7 +124,7 @@ Main risks from the SRS:
 - Many very new versions. Their existence is not verified (R-02, R11).
 - The single-SEA design (R-04, R2).
 - The sqlite-vector native extension (R-03).
-- Drizzle `1.0.0-rc.5` (R-01, R-07). A stable Drizzle tag is preferred. The POC uses `1.0.0-rc.5` only as a fallback (decision 10).
+- Drizzle `1.0.0-rc.5` (R-01, R-07). A stable Drizzle tag is preferred. The POC uses `1.0.0-rc.5` only as a fallback (decision 10). Resolved 2026-11-02: `drizzle-orm` `0.45.4` with `drizzle-kit` `0.31.11`, build time only (see ADR-004).
 - Cross-OS process-tree shutdown (R1, R-04).
 - The native 3-OS CI matrix (R-01 of 11.4.1).
 
@@ -239,7 +239,7 @@ Ordering rationale:
 
 [Back to navigation](#navigation)
 
-- **Problem**: The SRS pins very new versions (table below). Their existence and compatibility are not verified (R-02, R11, R-08). The `drizzle-orm 1.0.0-rc.5` pin is a risk (R-01, R-07). POC-3 tests the stable tag first (decision 10). This POC does not change the SRS pin.
+- **Problem**: The SRS pins very new versions (table below). Their existence and compatibility are not verified (R-02, R11, R-08). The `drizzle-orm 1.0.0-rc.5` pin is a risk (R-01, R-07). POC-3 tests the stable tag first (decision 10). Resolved 2026-11-02: see ADR-004. This POC does not change the SRS pin.
 
 | Node | pnpm | NestJS | Angular | Zod | drizzle-orm | Tauri | sqlite-vector |
 |---|---|---|---|---|---|---|---|
@@ -352,7 +352,7 @@ Backlog epics: [2a](../backlog/poc-2a-launcher-cwd-spike.md), [2b](../backlog/po
     - Verify vector support on SQLite.
     - If it fails, bump to `1.0.0-rc.5`.
     - Record the result and the reason in `ADR-003`.
-  - Use SQLite through `node:sqlite`, the Drizzle tag chosen above and sqlite-vector 1.1.2. Extract the native library from a SEA asset. Check its integrity per OS/arch (REQ-DB-09).
+  - Use SQLite through `node:sqlite`, sqlite-vector 1.1.2 (Drizzle is build time only, see ADR-004). Extract the native library from a SEA asset. Check its integrity per OS/arch (REQ-DB-09).
   - Build a custom migrator. It records version, checksum and applied_at. It detects tampering, locks, and uses a transaction per engine (REQ-DB-04, REQ-DB-05).
   - Startup order: config, adapter, connection, vector check, migrations, ready (REQ-DB-06).
   - Set `foreign_keys` on. Evaluate WAL. Set explicit durability. Keep the DB outside the SEA (REQ-DB-07, REQ-SEA-05).

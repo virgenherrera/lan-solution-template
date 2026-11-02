@@ -3,9 +3,9 @@ fmt: TOON
 doc: docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md
 title: "ADR-004 Drizzle build-time migrations"
 type: architecture
-summary: "Proposes Drizzle as a build-time tool only: drizzle-kit generates SQL, the SEA carries the SQL, the in-house migrator applies it."
+summary: "Records Drizzle as a build-time tool only: drizzle-kit generates SQL, the SEA carries the SQL, the in-house migrator applies it."
 related[5]: docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/backlog/dbm-drizzle-migrations.md,docs/requirements/amendments-2026-11-02.md,docs/requirements/05-persistence.md,docs/requirements/02-technology-baseline.md
-status: proposed
+status: accepted
 updated: 2026-11-02
 -->
 
@@ -15,7 +15,7 @@ updated: 2026-11-02
 
 ## Status
 
-Proposed, 2026-11-02. It becomes accepted when the code of slices DBM-c to DBM-g exists and the smoke run passes. The human asked for the direction. The details below are agent proposals unless a line says otherwise. The SRS owner has not reviewed it: not verified.
+Accepted, 2026-11-02, as the record of what DBM-c to DBM-g built. The packaged smoke run passes (13 checks) and an independent verification found no blockers. The human asked for the direction. The details below are agent proposals unless a line says otherwise. The SRS owner has not reviewed it: not verified.
 
 ## Context
 
