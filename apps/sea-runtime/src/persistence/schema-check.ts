@@ -30,11 +30,6 @@ function assertMatches(db: DbAdapter, location: string, report: SchemaReport): S
   return report;
 }
 
-// One failure line per message line, so each carries the supervisor prefix.
-function logFailure(log: Log, error: unknown): void {
-  if (error instanceof SchemaMismatchError) error.message.split('\n').forEach(log);
-}
-
 // Runs once per start, after the migrations: the live structure must contain what this build needs (S4, S6).
 // Extras that cannot hurt this build are tolerated and only logged.
 export function verifySchema$(db: DbAdapter, location: string, log: Log): Observable<SchemaReport> {
@@ -42,9 +37,7 @@ export function verifySchema$(db: DbAdapter, location: string, log: Log): Observ
     const expected = tablesSchema.parse(tables);
     return from(db.introspectSchema()).pipe(map((live) => assertMatches(db, location, compareSchema(expected, live, 'required'))));
   }).pipe(
-    tap({
-      next: (report) => logOk(log, report.tolerated),
-      error: (error: unknown) => logFailure(log, error),
-    }),
+    // A failure is printed once, in full, by main.ts when the boot stream rejects.
+    tap((report) => logOk(log, report.tolerated)),
   );
 }

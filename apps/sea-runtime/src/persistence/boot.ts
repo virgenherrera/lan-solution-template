@@ -39,8 +39,11 @@ function openDatabase$(log: Log, source: AssetSource, devAnchor?: string): Obser
     const db = createDbAdapter(config, paths, {
       sqliteVector: new SqliteVector({ getAsset: (name) => source.readRaw(name), directory: join(paths.dataDir, 'native') }),
     });
+    const location = resolve(paths.dataDir, config.db.sqlite.file);
     return from(db.connect()).pipe(
-      map((): PersistenceBoot => ({ db, root: paths.root, location: resolve(paths.dataDir, config.db.sqlite.file) })),
+      // "file is not a database" alone does not say which file; the operator needs the path.
+      catchError((error: unknown) => throwError(() => new Error(`cannot open the database at ${location}: ${error instanceof Error ? error.message : String(error)}`))),
+      map((): PersistenceBoot => ({ db, root: paths.root, location })),
       closeOnError(db),
     );
   });
