@@ -1,19 +1,9 @@
+import type { ColumnDescriptor, IndexDescriptor } from './descriptor.js';
 import type { AppMetaRow } from './domain.js';
 
 // Declarative description of each table (S6). The parity check compares it with what the real migrations create.
-// Logical types: each engine maps its physical types onto these names.
-export type LogicalType = 'text' | 'integer' | 'real' | 'blob' | 'vector';
-
-export interface ColumnDescriptor {
-  readonly type: LogicalType;
-  readonly nullable: boolean;
-  readonly primaryKey: boolean;
-}
-
-export interface IndexDescriptor {
-  readonly columns: readonly string[];
-  readonly unique: boolean;
-}
+// Types come from the Zod descriptor (descriptor.ts) so validation and types cannot diverge.
+export type { ColumnDescriptor, IndexDescriptor, LogicalType } from './descriptor.js';
 
 // One descriptor per row type. The mapped type needs exactly the row's columns: a missing or extra one fails to compile,
 // so descriptor and contract cannot diverge.

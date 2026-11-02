@@ -6,23 +6,14 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import type { DbAdapter } from '../../libs/shared-core/dist/index.js';
-import type { ColumnDescriptor, IndexDescriptor, LogicalType, TableDescriptor } from '../../libs/db-migrations/dist/contract/index.js';
+import type { IndexDescriptor, LiveSchema, LiveTable, LogicalType } from '../../libs/db-migrations/dist/contract/index.js';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const sharedCorePath = join(root, 'libs', 'shared-core', 'dist', 'index.js');
 const contractPath = join(root, 'libs', 'db-migrations', 'dist', 'contract', 'index.js');
 const DEFAULT_MIGRATIONS_DIR = join(root, 'libs', 'db-migrations', 'sqlite', 'migrations');
 
-// What an introspector reports for one table; same facts as the descriptor.
-interface ActualTable {
-  readonly columns: Readonly<Record<string, ColumnDescriptor>>;
-  readonly indexes: readonly IndexDescriptor[];
-}
-type ActualSchema = ReadonlyMap<string, ActualTable>;
-type Introspector = (db: DbAdapter) => Promise<ActualSchema>;
-
-// Tables the check never reports as extra: migrator bookkeeping and engine internals.
-const IGNORED_TABLE = /^(schema_migrations|sqlite_.*)$/;
+type Introspector = (db: DbAdapter) => Promise<LiveSchema>;
 
 const SQLITE_TYPES: Readonly<Record<string, LogicalType>> = { TEXT: 'text', INTEGER: 'integer', REAL: 'real', BLOB: 'blob' };
 
@@ -51,16 +42,16 @@ async function sqliteIndexes(db: DbAdapter, table: string): Promise<IndexDescrip
   );
 }
 
-async function introspectSqlite(db: DbAdapter): Promise<ActualSchema> {
+async function introspectSqlite(db: DbAdapter): Promise<LiveSchema> {
   const names = await db.all(`SELECT name FROM sqlite_master WHERE type = 'table'`);
-  const schema = new Map<string, ActualTable>();
+  const schema = new Map<string, LiveTable>();
   for (const { name } of names) {
     const table = String(name);
     const info = await db.all(`PRAGMA table_info(${quoted(table)})`);
     const columns = Object.fromEntries(
       info.map((column) => [
         String(column.name),
-        { type: logicalTypeOfSqlite(column.type), nullable: column.notnull === 0, primaryKey: Number(column.pk) > 0 },
+        { type: logicalTypeOfSqlite(column.type), nullable: column.notnull === 0, primaryKey: Number(column.pk) > 0, hasDefault: column.dflt_value !== null },
       ]),
     );
     schema.set(table, { columns, indexes: await sqliteIndexes(db, table) });
@@ -70,42 +61,6 @@ async function introspectSqlite(db: DbAdapter): Promise<ActualSchema> {
 
 // A new engine (pg) plugs in here with an introspector over information_schema; the check itself does not change.
 const INTROSPECTORS: Readonly<Record<string, Introspector>> = { sqlite: introspectSqlite };
-
-const indexKey = (index: IndexDescriptor): string => `${index.unique ? 'unique ' : ''}(${index.columns.join(', ')})`;
-
-function diffColumn(table: string, name: string, expected: ColumnDescriptor, actual: ColumnDescriptor | undefined): string[] {
-  if (actual === undefined) return [`${table}.${name}: column missing`];
-  const facts = ['type', 'nullable', 'primaryKey'] as const;
-  return facts
-    .filter((fact) => expected[fact] !== actual[fact])
-    .map((fact) => `${table}.${name}: ${fact} expected ${expected[fact]}, actual ${actual[fact]}`);
-}
-
-function diffIndexes(table: string, expected: readonly IndexDescriptor[], actual: readonly IndexDescriptor[]): string[] {
-  const want = new Set(expected.map(indexKey));
-  const have = new Set(actual.map(indexKey));
-  return [
-    ...[...want].filter((key) => !have.has(key)).map((key) => `${table}: index ${key} missing`),
-    ...[...have].filter((key) => !want.has(key)).map((key) => `${table}: unexpected index ${key}`),
-  ];
-}
-
-function diffTable(expected: TableDescriptor, actual: ActualTable | undefined): string[] {
-  if (actual === undefined) return [`${expected.name}: table missing`];
-  const expectedColumns = Object.entries(expected.columns as Record<string, ColumnDescriptor>);
-  const extra = Object.keys(actual.columns).filter((name) => !(name in expected.columns));
-  return [
-    ...expectedColumns.flatMap(([name, column]) => diffColumn(expected.name, name, column, actual.columns[name])),
-    ...extra.map((name) => `${expected.name}.${name}: unexpected column`),
-    ...diffIndexes(expected.name, expected.indexes, actual.indexes),
-  ];
-}
-
-function diffSchema(expected: readonly TableDescriptor[], actual: ActualSchema): string[] {
-  const known = new Set(expected.map((table) => table.name));
-  const extraTables = [...actual.keys()].filter((name) => !known.has(name) && !IGNORED_TABLE.test(name));
-  return [...expected.flatMap((table) => diffTable(table, actual.get(table.name))), ...extraTables.map((name) => `${name}: unexpected table`)];
-}
 
 // Same order and numbering as the migrator input: journal idx + 1 is the version.
 function readMigrations(dir: string): { version: number; name: string; sql: string }[] {
@@ -127,7 +82,7 @@ async function main(): Promise<number> {
     if (!existsSync(path)) fail(`${path} missing; build shared-core and db-migrations first`);
   }
   const { SqliteAdapter, runMigrations } = (await import(sharedCorePath)) as typeof import('../../libs/shared-core/dist/index.js');
-  const { tables } = (await import(contractPath)) as typeof import('../../libs/db-migrations/dist/contract/index.js');
+  const { tables, tablesSchema, compareSchema } = (await import(contractPath)) as typeof import('../../libs/db-migrations/dist/contract/index.js');
   const migrations = readMigrations(resolve(option('migrations-dir', DEFAULT_MIGRATIONS_DIR)));
 
   const workDir = mkdtempSync(join(tmpdir(), 'db-parity-'));
@@ -136,7 +91,8 @@ async function main(): Promise<number> {
   try {
     await db.connect();
     await runMigrations(db, migrations);
-    const diff = diffSchema(tables, await introspect(db));
+    // Validate the descriptor itself first, then compare it exactly with what the real migrations built.
+    const diff = compareSchema(tablesSchema.parse(tables), await introspect(db), 'exact').problems;
     if (diff.length === 0) {
       console.log(`parity ok: ${tables.length} table(s) match the descriptor (engine ${engine})`);
       return 0;
