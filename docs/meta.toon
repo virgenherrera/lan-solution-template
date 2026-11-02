@@ -1,4 +1,4 @@
-docs[60]:
+docs[61]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -31,9 +31,9 @@ docs[60]:
     type: backlog
     summary: Backlog index of POC epics mapped to acceptance criteria and cycles.
     ids: []
-    related[1]: docs/roadmap/PROPOSAL.md
+    related[2]: docs/roadmap/PROPOSAL.md,docs/backlog/service-status-indicator.md
     status: current
-    updated: 2026-10-31
+    updated: 2026-11-02
     refs[36]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36
   - doc: docs/backlog/poc-1a-monorepo-init.md
     title: POC-1a Monorepo init
@@ -224,6 +224,15 @@ docs[60]:
     status: current
     updated: 2026-10-30
     refs[22]: AC-02,AC-26,AC-27,AC-32,AC-35,AC-36,REQ-CI-01,REQ-CI-02,REQ-CI-03,REQ-CI-04,REQ-CI-05,REQ-CI-06,REQ-CI-07,REQ-CI-08,REQ-CI-09,REQ-CI-10,REQ-DEPS-02,REQ-ECO-07,REQ-SEC-CI-01,REQ-SEC-CI-02,REQ-SEC-CI-03,REQ-SEC-CI-04
+  - doc: docs/backlog/service-status-indicator.md
+    title: Service status indicator
+    type: backlog
+    summary: "Proposed backlog item: a supervisor-owned, XAMPP-style per-service status surface that stays up while services restart."
+    ids: []
+    related[4]: docs/backlog/README.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/results/POC-02d-readiness-logs.md,docs/results/POC-02e-bounded-restart.md
+    status: proposed
+    updated: 2026-11-02
+    refs[1]: REQ-DESK-03
   - doc: docs/requirements/01-purpose-and-scope.md
     title: Purpose and Scope
     type: requirement
