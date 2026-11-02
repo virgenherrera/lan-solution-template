@@ -57,20 +57,26 @@
       "package": {
         "dependsOn": [
           "build",
-          "test"
+          "test",
+          {
+            "projects": "db-migrations",
+            "target": "build"
+          }
         ],
         "executor": "nx:run-commands",
         "outputs": [
           "{workspaceRoot}/artifacts/sea-runtime"
         ],
         "options": {
-          "command": "node tools/scripts/compile-sea.ts sea-runtime && node tools/scripts/smoke-sea.ts",
+          "command": "node tools/scripts/pack-migrations.ts && node tools/scripts/compile-sea.ts sea-runtime && node tools/scripts/smoke-sea.ts",
           "cwd": "{workspaceRoot}"
         },
         "inputs": [
           "default",
           "^default",
           "{workspaceRoot}/tools/scripts/compile-sea.ts",
+          "{workspaceRoot}/tools/scripts/pack-migrations.ts",
+          "{workspaceRoot}/libs/db-migrations/sqlite/migrations/**/*",
           "{workspaceRoot}/tools/scripts/smoke-sea.ts",
           "{workspaceRoot}/tools/rspack/**/*"
         ]

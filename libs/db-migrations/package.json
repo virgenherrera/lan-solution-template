@@ -7,6 +7,7 @@
     "test": "pnpm run test:static && pnpm run test:dynamic",
     "build": "tsc -p tsconfig.build.json",
     "generate": "cd sqlite && drizzle-kit generate --config drizzle.config.ts",
+    "drift": "pnpm run generate && git diff --exit-code -- sqlite/migrations && test -z \"$(git ls-files --others --exclude-standard -- sqlite/migrations)\"",
     "test:static": "tsc --noEmit -p tsconfig.json",
     "test:dynamic": "echo \"test:dynamic: not defined for this package\"",
     "package": "echo \"package: not defined for this package\""

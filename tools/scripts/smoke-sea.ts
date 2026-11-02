@@ -199,6 +199,21 @@ await check('artifacts: one executable, no node copy', async () => {
   return entries[0];
 });
 
+// Module markers of Drizzle code (S7). The literal "drizzle-kit@x.y.z" in build-info.json is data, not code, and matches none of these.
+const DRIZZLE_MARKERS = ['drizzle-orm', 'drizzle-kit/', 'sqliteTable'];
+
+await check('no Drizzle code in the bundle or the executable', async () => {
+  const bundle = join(root, 'dist', 'sea-package', 'sea-app.mjs');
+  const scanned = [bundle, binary];
+  for (const file of scanned) {
+    const content = readFileSync(file);
+    for (const marker of DRIZZLE_MARKERS) {
+      expect(content.indexOf(marker) === -1, `marker "${marker}" found in ${file}`);
+    }
+  }
+  return `${DRIZZLE_MARKERS.length} markers, ${scanned.length} files`;
+});
+
 await check(`port ${PORT} is free`, async () => {
   expect(await portFree(), `port ${PORT} is in use; the gateway port is not configurable`);
 });

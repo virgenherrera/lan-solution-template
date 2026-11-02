@@ -11,6 +11,15 @@ import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import * as rspackNamespace from '@rspack/core';
 import sharedNestConfig from '../rspack/nest.config.ts';
+import {
+  BUILD_INFO_FILE,
+  MANIFEST_FILE,
+  PACK_OUT_DIR,
+  buildInfoAssetName,
+  manifestAssetName,
+  migrationAssetName,
+  migrationsDir,
+} from './pack-migrations.ts';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const workDir = join(root, 'dist', 'sea-package');
@@ -357,6 +366,27 @@ async function vectorAssets(target: BuildTarget): Promise<Record<string, string>
   return { 'sqlite-vector/pin.json': vectorPinPath, [`sqlite-vector/${entry.file}`]: binary };
 }
 
+// The packed migrations (pack-migrations.ts, run before this script) become SEA assets "db-migrations/manifest.json", "db-migrations/build-info.json" and "db-migrations/<tag>.sql".
+// Asset names come from the constants shared with the pack step; only SQL and JSON travel, never Drizzle (S7).
+function migrationAssets(): Record<string, string> {
+  const manifestPath = join(PACK_OUT_DIR, MANIFEST_FILE);
+  const buildInfoPath = join(PACK_OUT_DIR, BUILD_INFO_FILE);
+  for (const path of [manifestPath, buildInfoPath]) {
+    if (!existsSync(path)) throw new Error(`${path} missing; run "node tools/scripts/pack-migrations.ts" first`);
+  }
+  const { migrations } = JSON.parse(readFileSync(manifestPath, 'utf8')) as { migrations: { file: string; sha256: string }[] };
+  const assets: Record<string, string> = { [manifestAssetName]: manifestPath, [buildInfoAssetName]: buildInfoPath };
+  for (const { file, sha256 } of migrations) {
+    const path = join(migrationsDir, file);
+    if (createHash('sha256').update(readFileSync(path, 'utf8')).digest('hex') !== sha256) {
+      throw new Error(`${file}: differs from the packed manifest; run "node tools/scripts/pack-migrations.ts" again`);
+    }
+    assets[migrationAssetName(file)] = path;
+  }
+  console.log(`db migrations: ${migrations.length} sql file(s) plus manifest and build info`);
+  return assets;
+}
+
 // REQ-SEA-03 baseline from ASSEMBLER_CONFIG; the code cache follows the native/cross rule; a cross build names the target's Node as the SEA base.
 function writeSeaConfig(
   binaryPath: string,
@@ -375,7 +405,7 @@ function writeSeaConfig(
     useSnapshot: ASSEMBLER_CONFIG.useSnapshot,
     useCodeCache: contract.useCodeCache(hostTriple(), target.triple),
     execArgvExtension: ASSEMBLER_CONFIG.execArgvExtension,
-    assets: { [DISPATCHER_CONFIG.servicesAsset]: servicesPath, ...webAssets(web), ...vector },
+    assets: { [DISPATCHER_CONFIG.servicesAsset]: servicesPath, ...webAssets(web), ...vector, ...migrationAssets() },
   };
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 }
