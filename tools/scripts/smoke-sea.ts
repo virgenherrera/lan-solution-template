@@ -4,6 +4,7 @@
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
 import { mkdtempSync, readFileSync, readdirSync, rmSync, readlinkSync, realpathSync, statSync } from 'node:fs';
 import { createServer } from 'node:net';
+import { DatabaseSync } from 'node:sqlite';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
@@ -260,6 +261,37 @@ await check(`GET ${ROUTES.index}`, async () => {
 await check(`GET ${ROUTES.missing}`, async () => {
   const response = await get(ROUTES.missing);
   expect(response?.status === EXPECTED_STATUS.notFound, `status ${response?.status}`);
+});
+
+// Keys the boot code writes to app_meta (S4). db_engine is deliberately absent.
+const APP_META_KEYS = [
+  'first_installed_runtime_version',
+  'gateway_version',
+  'last_started_at',
+  'drizzle_version',
+  'runtime_version',
+  'vector_lib_version',
+  'web_version',
+] as const;
+const VERSIONED_NAME = /^@?[^@\s]+@\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?$/;
+
+await check('database: app_meta keys and schema_migrations row', async () => {
+  const db = new DatabaseSync(join(smokeRoot, 'data', 'lan.db'), { readOnly: true });
+  try {
+    const meta = Object.fromEntries(db.prepare('SELECT key, value FROM app_meta').all().map((row) => [String(row.key), String(row.value)]));
+    expect(JSON.stringify(Object.keys(meta).sort()) === JSON.stringify([...APP_META_KEYS].sort()), `app_meta keys: ${Object.keys(meta).sort().join(', ')}`);
+    for (const key of APP_META_KEYS) {
+      if (key !== 'last_started_at') expect(VERSIONED_NAME.test(meta[key]), `app_meta.${key} "${meta[key]}" is not name@exactVersion`);
+    }
+    expect(!Number.isNaN(Date.parse(meta.last_started_at)), `app_meta.last_started_at "${meta.last_started_at}" is not a date`);
+    const history = db.prepare('SELECT version, runtime_version, duration_ms FROM schema_migrations').all();
+    expect(history.length === 1, `schema_migrations has ${history.length} rows`);
+    expect(history[0].runtime_version === meta.runtime_version, `history runtime_version "${history[0].runtime_version}" != app_meta "${meta.runtime_version}"`);
+    expect(typeof history[0].duration_ms === 'number', 'schema_migrations.duration_ms is not a number');
+    return `${APP_META_KEYS.length} keys, ${history.length} migration`;
+  } finally {
+    db.close();
+  }
 });
 
 await check(`child killed (SIGKILL) returns to ${AGGREGATE_STATE.ready}`, async () => {

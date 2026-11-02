@@ -1,6 +1,7 @@
 import { Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { getAsset, isSea } from 'node:sea';
+import { lastValueFrom } from 'rxjs';
 import {
   AGGREGATE_STATE,
   CONTROL_KIND,
@@ -13,7 +14,7 @@ import {
   stateMessageSchema,
   type AggregateState,
 } from 'service-registry';
-import { bootPersistence, type PersistenceBoot } from '../persistence/boot.js';
+import { bootPersistence$, type PersistenceBoot } from '../persistence/boot.js';
 import { hasWebBundle, loadWebBundle, type WebFile } from '../web/web-bundle.js';
 import { forwardLines, prefixed, spawnedMessage, stateMessage } from './log-lines.js';
 import { stopTree, treeSpawnOptions } from './process-tree.js';
@@ -51,7 +52,7 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     this.log(web === undefined ? 'no web bundle embedded' : `web bundle loaded in memory: ${web.length} files`);
 
     // Invalid config or an incompatible database throws here, before any service is spawned and before ready (REQ-DB-06).
-    this.persistence = await bootPersistence((text) => this.log(text));
+    this.persistence = await lastValueFrom(bootPersistence$((text) => this.log(text)));
 
     process.once('SIGINT', this.onSignal);
     process.once('SIGTERM', this.onSignal);

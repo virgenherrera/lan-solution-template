@@ -22,8 +22,8 @@ export interface MigrationResult {
 }
 
 export class MigrationTamperedError extends Error {
-  constructor(version: number, name: string) {
-    super(`migration ${version} (${name}) changed after it was applied`);
+  constructor(version: number, name: string, reason = 'changed after it was applied') {
+    super(`migration ${version} (${name}) ${reason}`);
     this.name = 'MigrationTamperedError';
   }
 }
@@ -64,7 +64,7 @@ function validate(migrations: readonly Migration[]): void {
       throw new MigrationInputError(`version ${migration.version} comes after ${previous}; list must be ascending`);
     }
     if (migration.sha256 !== undefined && migration.sha256 !== checksumOf(migration.sql)) {
-      throw new MigrationTamperedError(migration.version, migration.name);
+      throw new MigrationTamperedError(migration.version, migration.name, 'does not match the build manifest');
     }
   });
 }
