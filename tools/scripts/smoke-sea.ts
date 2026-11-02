@@ -2,7 +2,7 @@
 // Usage: `node tools/scripts/smoke-sea.ts [--artifacts <dir>]`; the default dir is artifacts/sea-runtime. One line per check; the first failed check prints the tail of the run output and exits 1.
 // Needs the built service-registry library (the same contract the assembler loads). Windows is not verified (decision D3): the executable lookup throws there.
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, readlinkSync, realpathSync, statSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, readlinkSync, realpathSync, statSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { DatabaseSync } from 'node:sqlite';
 import { tmpdir } from 'node:os';
@@ -58,9 +58,9 @@ class Run {
   exitCode: number | null | undefined;
   private readonly child: ChildProcess;
 
-  constructor(binary: string, args: readonly string[]) {
+  constructor(binary: string, args: readonly string[], home: string = smokeRoot) {
     // APP_HOME points the paths library at a scratch root; the default OS root is not writable for a test run.
-    this.child = spawn(binary, [...args], { stdio: ['ignore', 'pipe', 'pipe'], env: { APP_HOME: smokeRoot } });
+    this.child = spawn(binary, [...args], { stdio: ['ignore', 'pipe', 'pipe'], env: { APP_HOME: home } });
     for (const stream of [this.child.stdout, this.child.stderr]) {
       if (stream) createInterface({ input: stream }).on('line', (line) => this.lines.push(line));
     }
@@ -311,6 +311,26 @@ await check('SIGTERM: exit 0, no process left', async () => {
   expect(code === 0, `supervisor exited ${code}`);
   await allGone([run.pid, ...knownPids], 'after SIGTERM');
   expect(await portFree(), `port ${PORT} still in use`);
+});
+
+// The shipped build expects app_meta.value (S1): a database without it must stop the start before any service spawns.
+await check('schema mismatch (app_meta.value missing): exit 1, no service spawned', async () => {
+  const home = mkdtempSync(join(smokeRoot, 'mismatch-'));
+  mkdirSync(join(home, 'data'));
+  copyFileSync(join(smokeRoot, 'data', 'lan.db'), join(home, 'data', 'lan.db'));
+  const db = new DatabaseSync(join(home, 'data', 'lan.db'));
+  try {
+    db.exec('ALTER TABLE app_meta DROP COLUMN value');
+  } finally {
+    db.close();
+  }
+  const broken = new Run(binary, [], home);
+  current = broken;
+  const code = await broken.exit(SLACK_MS, 'start on a mismatched schema');
+  expect(code === 1, `exited ${code}`);
+  expect(broken.lines.some((line) => line.includes('schema check FAILED')), 'no "schema check FAILED" line');
+  expect(broken.spawnedPids().length === 0, 'a service was spawned');
+  return 'exit 1';
 });
 
 await check(`restart budget (${SUPERVISOR_CONFIG.maxRestarts}) ends in ${AGGREGATE_STATE.error}, exit ${SUPERVISOR_CONFIG.errorExitCode}`, async () => {

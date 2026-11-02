@@ -1,5 +1,5 @@
 import { getRawAsset } from 'node:sea';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { catchError, concatMap, defer, from, map, type MonoTypeOperatorFunction, type Observable, tap, throwError, toArray } from 'rxjs';
 import {
   SqliteVector,
@@ -14,10 +14,13 @@ import {
 import { writeAppMeta$ } from './app-meta.js';
 import { readBuildInfo } from './build-info.js';
 import { readEmbeddedMigrations } from './migrations-source.js';
+import { verifySchema$ } from './schema-check.js';
 
 export interface PersistenceBoot {
   readonly db: DbAdapter;
   readonly root: string;
+  // Where the database lives, for operator messages.
+  readonly location: string;
 }
 
 type Log = (text: string) => void;
@@ -32,11 +35,12 @@ function openDatabase$(log: Log): Observable<PersistenceBoot> {
     const resolved = resolveRoot({ argv: process.argv.slice(2), env: process.env, execPath: process.execPath, platform: process.platform });
     const paths = derivePaths(resolved, process.execPath);
     log(`root ${paths.root} (${resolved.source})`);
-    const db = createDbAdapter(initConfig(paths), paths, {
+    const config = initConfig(paths);
+    const db = createDbAdapter(config, paths, {
       sqliteVector: new SqliteVector({ getAsset: (name) => getRawAsset(name), directory: join(paths.dataDir, 'native') }),
     });
     return from(db.connect()).pipe(
-      map((): PersistenceBoot => ({ db, root: paths.root })),
+      map((): PersistenceBoot => ({ db, root: paths.root, location: resolve(paths.dataDir, config.db.sqlite.file) })),
       closeOnError(db),
     );
   });
@@ -49,13 +53,14 @@ function logMigration(log: Log, event: MigrationEvent): void {
 }
 
 function prepare$(boot: PersistenceBoot, log: Log): Observable<PersistenceBoot> {
-  const { db } = boot;
+  const { db, location } = boot;
   return defer(() => {
     const info = readBuildInfo();
     return from(db.verifyVector()).pipe(
       concatMap(() => migrate$(db, readEmbeddedMigrations(), { runtimeVersion: info.runtime_version })),
       tap((event) => logMigration(log, event)),
       toArray(),
+      concatMap(() => verifySchema$(db, location, log)),
       concatMap(() => writeAppMeta$(db, info)),
       tap(() => log(`database ${db.engine} ready, vector ok`)),
       map(() => boot),
@@ -63,7 +68,7 @@ function prepare$(boot: PersistenceBoot, log: Log): Observable<PersistenceBoot> 
   }).pipe(closeOnError(db));
 }
 
-// Startup order (REQ-DB-06): root, config, adapter, connection, vector check, migrations, app_meta, ready.
+// Startup order (REQ-DB-06): root, config, adapter, connection, vector check, migrations, schema check, app_meta, ready.
 // Any failure ends the stream with an error before a service is spawned. Nothing runs until someone subscribes.
 export function bootPersistence$(log: Log): Observable<PersistenceBoot> {
   return openDatabase$(log).pipe(concatMap((boot) => prepare$(boot, log)));
