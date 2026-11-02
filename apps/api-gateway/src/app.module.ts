@@ -1,5 +1,6 @@
 import { Module, type DynamicModule } from '@nestjs/common';
 import { ConfigModule } from './config.module.js';
+import { DatabaseModule } from './database/database.module.js';
 import { HealthController } from './health.controller.js';
 import { HealthState } from './health-state.js';
 import { type ServerConfig } from './server-config.js';
@@ -10,6 +11,6 @@ import { type ServerConfig } from './server-config.js';
 })
 export class AppModule {
   static register(config: ServerConfig): DynamicModule {
-    return { module: AppModule, imports: [ConfigModule.register(config)] };
+    return { module: AppModule, imports: [ConfigModule.register(config), DatabaseModule] };
   }
 }

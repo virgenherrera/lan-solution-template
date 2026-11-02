@@ -86,6 +86,8 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     const args = web === undefined ? serviceArgs(id) : [...serviceArgs(id), '--web', 'ipc'];
     const child = spawn(process.execPath, args, {
       shell: false,
+      // The service opens the same database as the supervisor, so it gets the root the supervisor resolved (it may come from --root).
+      env: { ...process.env, ...(this.persistence === undefined ? {} : { APP_HOME: this.persistence.root }) },
       stdio: ['inherit', 'pipe', 'pipe', 'ipc'],
       serialization: 'advanced',
       ...treeSpawnOptions(),

@@ -38,4 +38,10 @@ async function bootstrap() {
   process.once('disconnect', () => void close(false));
   process.send(readyMessageSchema.parse({ kind: CONTROL_KIND.ready }));
 }
-await bootstrap();
+try {
+  await bootstrap();
+} catch (error) {
+  // A rejected top-level await makes Node print a line of the bundled source. The message plus exit code 1 is what the supervisor and the operator need.
+  process.stderr.write(`startup failed: ${error instanceof Error ? error.message : String(error)}\n`);
+  process.exit(1);
+}

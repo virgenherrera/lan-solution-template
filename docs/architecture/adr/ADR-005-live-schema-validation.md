@@ -103,7 +103,7 @@ A newer build may have migrated the database. This build does not read the unkno
 
 Migrating stays at the runtime level. Services never read schema versions. A service does not know which migrations ran.
 
-A Nest database module for services is a later slice, DBM-n. It does a one-time `SELECT 1` handshake when a service connects. It is built when the first service injects the database. It does not check the structure.
+A Nest database module for services, DBM-n, is built in the api-gateway. It does a one-time `SELECT 1` handshake when a service connects. It does not check the structure.
 
 ## Options rejected
 

@@ -31,7 +31,7 @@ updated: 2026-11-02
 
 | Item | Value |
 |---|---|
-| Status | Done for DBM-i to DBM-m on `minor/dbm-schema-gate`; DBM-n is later. See [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md) |
+| Status | Done for DBM-i to DBM-n. See [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md) |
 | Depends on | DBM ([DBM-Result](../results/DBM-Result.md)) |
 | Branch | `minor/dbm-schema-gate`, off `minor/dbm-drizzle-migrations` |
 | Delivery | One branch, one PR |
@@ -77,7 +77,7 @@ Proof is by real runs of the build and the packaged binary.
 
 [Back to navigation](#navigation)
 
-One branch, one PR. Slice names DBM-i to DBM-n are an assumption. DBM-n is a later slice.
+One branch, one PR. Slice names DBM-i to DBM-n are an assumption. DBM-n is done: the api-gateway has a Nest database module.
 
 | Slice | Scope | Depends on | Evidence required |
 |---|---|---|---|
@@ -86,7 +86,7 @@ One branch, one PR. Slice names DBM-i to DBM-n are an assumption. DBM-n is a lat
 | DBM-k | Port: `LiveSchema` and `DbAdapter.introspectSchema`. `SqliteAdapter` implements it and reports defaults. The parity check drops its own introspector | DBM-j | Parity stdout and exit code are identical to the base run |
 | DBM-l | Gate: `verifySchema$` in the boot pipeline, between the migrations and the `app_meta` write, using `required` mode | DBM-k | The packaged binary runs against 11 databases. The 10 cases from the earlier prototype and one rebuilt table with an extra `NOT NULL` column. 6 exit 1 with the message and no spawn. 5 exit 0 with a spawn |
 | DBM-m | Dev: an `AssetSource` with a `sea` and an `fs` implementation. `nest start` runs the same persistence path | DBM-l | `nest start` against a mutated database exits 1 with the same message. A valid database starts |
-| DBM-n | Later: a Nest database module with a one-time `SELECT 1` handshake for services. Optional `database` component in the service status indicator | DBM-l, the merge of `docs/service-status-indicator`, and a service that opens the database | A service against an unreachable database reports failed |
+| DBM-n | Done: a Nest database module with a one-time `SELECT 1` handshake for services. Optional `database` component in the service status indicator | DBM-l, the merge of `docs/service-status-indicator`, and a service that opens the database | A service against an unreachable database reports failed |
 
 Design rules for all slices:
 
@@ -105,6 +105,6 @@ Design rules for all slices:
 |---|---|
 | [REQ-DB-10](../requirements/05-persistence.md) text | proposed, not approved by the human |
 | Slice names DBM-i to DBM-n | assumption, not answered by the human |
-| Do services open their own database connection, or only the supervisor? Decides whether DBM-n exists | not verified |
+| Do services open their own database connection, or only the supervisor? | Answered by the human: services get a database module (DBM-n) |
 | Does a `database` status component belong in DBM-l or in the `docs/service-status-indicator` branch? | open |
 | PostgreSQL type mapping for the gate | not verified, belongs to POC-6 |
