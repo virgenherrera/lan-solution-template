@@ -33,7 +33,7 @@ updated: 2026-10-30
 
 | Item | Value |
 |---|---|
-| Status | Cycle 1 (planned) |
+| Status | Done on `minor/poc-03-sqlite-vector`; see [POC-03-Result](../results/POC-03-Result.md) |
 | Appetite | 2 weeks, big batch |
 | Depends on | POC-2 |
 | Branch | `minor/poc-03-sqlite-vector` |

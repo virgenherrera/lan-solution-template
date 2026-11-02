@@ -1,4 +1,4 @@
-docs[60]:
+docs[62]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -17,6 +17,15 @@ docs[60]:
     status: current
     updated: 2026-10-31
     refs[17]: AC-31,REQ-BUILD-04,REQ-NET-01,REQ-RUNTIME-01,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-TEST-01,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09
+  - doc: docs/architecture/adr/ADR-003-config-and-db-strategy.md
+    title: ADR-003 Config singleton and database strategy
+    type: architecture
+    summary: "Records the POC-3 decisions: one resolved root, a Zod config with defaults, a DbAdapter strategy port, sqlite-vector as a SEA asset and a custom migrator."
+    ids: []
+    related[3]: docs/results/POC-03-Result.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/architecture/adr/ADR-002-single-sea-portability.md
+    status: current
+    updated: 2026-11-02
+    refs[7]: REQ-CFG-01,REQ-DB-01,REQ-DB-02,REQ-DB-06,REQ-DB-08,REQ-DB-09,REQ-STACK-07
   - doc: docs/architecture/overview.md
     title: Architecture overview
     type: architecture
@@ -169,7 +178,7 @@ docs[60]:
     related[3]: docs/backlog/README.md,docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-4-https-gateway-angular-pwa.md
     status: current
     updated: 2026-10-30
-    refs[22]: AC-07,AC-08,AC-10,REQ-CFG-01,REQ-CFG-02,REQ-CFG-03,REQ-CFG-04,REQ-CFG-05,REQ-CFG-06,REQ-DB-01,REQ-DB-02,REQ-DB-03,REQ-DB-04,REQ-DB-05,REQ-DB-06,REQ-DB-07,REQ-DB-08,REQ-DB-09,REQ-SEA-05,REQ-SEC-06,REQ-STACK-07,REQ-TEST-06
+    refs[23]: AC-07,AC-08,AC-10,REQ-CFG-01,REQ-CFG-02,REQ-CFG-03,REQ-CFG-04,REQ-CFG-05,REQ-CFG-06,REQ-DB-01,REQ-DB-02,REQ-DB-03,REQ-DB-04,REQ-DB-05,REQ-DB-06,REQ-DB-07,REQ-DB-08,REQ-DB-09,REQ-SEA-05,REQ-SEC-06,REQ-STACK-07,REQ-STACK-09,REQ-TEST-06
   - doc: docs/backlog/poc-4-https-gateway-angular-pwa.md
     title: POC-4 HTTPS gateway serving the Angular PWA
     type: backlog
@@ -494,6 +503,15 @@ docs[60]:
     status: current
     updated: 2026-10-31
     refs[9]: AC-18,AC-20,AC-28,AC-29,AC-34,REQ-RUNTIME-08,REQ-TEST-01,REQ-TEST-03,REQ-TEST-09
+  - doc: docs/results/POC-03-Result.md
+    title: POC-03 Result
+    type: backlog
+    summary: "Result of POC-3: paths library, Zod config singleton, DbAdapter strategy port, SQLite with sqlite-vector as a SEA asset, custom migrator and startup order."
+    ids: []
+    related[3]: docs/backlog/poc-3-config-sqlite-vector.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/results/POC-02-Result.md
+    status: current
+    updated: 2026-11-02
+    refs[2]: REQ-DB-07,REQ-STACK-09
   - doc: docs/results/SPIKE-spa-serving.md
     title: SPIKE SPA serving in the SEA
     type: backlog
