@@ -1,4 +1,3 @@
-import { getRawAsset } from 'node:sea';
 import { join, resolve } from 'node:path';
 import { catchError, concatMap, defer, from, map, type MonoTypeOperatorFunction, type Observable, tap, throwError, toArray } from 'rxjs';
 import {
@@ -12,6 +11,7 @@ import {
   type MigrationEvent,
 } from 'shared-core';
 import { writeAppMeta$ } from './app-meta.js';
+import type { AssetSource } from './asset-source.js';
 import { readBuildInfo } from './build-info.js';
 import { readEmbeddedMigrations } from './migrations-source.js';
 import { verifySchema$ } from './schema-check.js';
@@ -30,14 +30,14 @@ function closeOnError<T>(db: DbAdapter): MonoTypeOperatorFunction<T> {
   return catchError((error: unknown) => from(db.close()).pipe(concatMap(() => throwError(() => error))));
 }
 
-function openDatabase$(log: Log): Observable<PersistenceBoot> {
+function openDatabase$(log: Log, source: AssetSource, devAnchor?: string): Observable<PersistenceBoot> {
   return defer(() => {
-    const resolved = resolveRoot({ argv: process.argv.slice(2), env: process.env, execPath: process.execPath, platform: process.platform });
+    const resolved = resolveRoot({ argv: process.argv.slice(2), env: process.env, execPath: process.execPath, platform: process.platform, devAnchor });
     const paths = derivePaths(resolved, process.execPath);
     log(`root ${paths.root} (${resolved.source})`);
     const config = initConfig(paths);
     const db = createDbAdapter(config, paths, {
-      sqliteVector: new SqliteVector({ getAsset: (name) => getRawAsset(name), directory: join(paths.dataDir, 'native') }),
+      sqliteVector: new SqliteVector({ getAsset: (name) => source.readRaw(name), directory: join(paths.dataDir, 'native') }),
     });
     return from(db.connect()).pipe(
       map((): PersistenceBoot => ({ db, root: paths.root, location: resolve(paths.dataDir, config.db.sqlite.file) })),
@@ -52,12 +52,12 @@ function logMigration(log: Log, event: MigrationEvent): void {
   if (event.type === 'skipped') log(`migration ${event.version} ${event.name} already applied`);
 }
 
-function prepare$(boot: PersistenceBoot, log: Log): Observable<PersistenceBoot> {
+function prepare$(boot: PersistenceBoot, log: Log, source: AssetSource): Observable<PersistenceBoot> {
   const { db, location } = boot;
   return defer(() => {
-    const info = readBuildInfo();
+    const info = readBuildInfo(source);
     return from(db.verifyVector()).pipe(
-      concatMap(() => migrate$(db, readEmbeddedMigrations(), { runtimeVersion: info.runtime_version })),
+      concatMap(() => migrate$(db, readEmbeddedMigrations(source), { runtimeVersion: info.runtime_version })),
       tap((event) => logMigration(log, event)),
       toArray(),
       concatMap(() => verifySchema$(db, location, log)),
@@ -70,6 +70,7 @@ function prepare$(boot: PersistenceBoot, log: Log): Observable<PersistenceBoot> 
 
 // Startup order (REQ-DB-06): root, config, adapter, connection, vector check, migrations, schema check, app_meta, ready.
 // Any failure ends the stream with an error before a service is spawned. Nothing runs until someone subscribes.
-export function bootPersistence$(log: Log): Observable<PersistenceBoot> {
-  return openDatabase$(log).pipe(concatMap((boot) => prepare$(boot, log)));
+// `devAnchor` is set only by a dev launch, as the last root candidate (see resolveRoot).
+export function bootPersistence$(log: Log, source: AssetSource, devAnchor?: string): Observable<PersistenceBoot> {
+  return openDatabase$(log, source, devAnchor).pipe(concatMap((boot) => prepare$(boot, log, source)));
 }

@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { BUILD_INFO_ASSET, readTextAsset } from './assets.js';
+import type { AssetSource } from './asset-source.js';
+import { BUILD_INFO_ASSET } from './assets.js';
 
 // `name@exactVersion`: the pack step already rejects ranges, this guards a hand-edited asset.
 const versionedName = z.string().regex(/^@?[^@\s]+@\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?$/);
@@ -14,6 +15,6 @@ const buildInfoSchema = z.strictObject({
 
 export type BuildInfo = z.infer<typeof buildInfoSchema>;
 
-export function readBuildInfo(): BuildInfo {
-  return buildInfoSchema.parse(JSON.parse(readTextAsset(BUILD_INFO_ASSET)));
+export function readBuildInfo(source: AssetSource): BuildInfo {
+  return buildInfoSchema.parse(JSON.parse(source.readText(BUILD_INFO_ASSET)));
 }

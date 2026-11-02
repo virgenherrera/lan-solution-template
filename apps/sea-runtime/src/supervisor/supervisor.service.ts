@@ -14,7 +14,9 @@ import {
   stateMessageSchema,
   type AggregateState,
 } from 'service-registry';
+import { seaAssetSource } from '../persistence/asset-source.js';
 import { bootPersistence$, type PersistenceBoot } from '../persistence/boot.js';
+import { devAnchor, fsAssetSource } from '../persistence/dev-assets.js';
 import { hasWebBundle, loadWebBundle, type WebFile } from '../web/web-bundle.js';
 import { forwardLines, prefixed, spawnedMessage, stateMessage } from './log-lines.js';
 import { stopTree, treeSpawnOptions } from './process-tree.js';
@@ -37,7 +39,7 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit(): Promise<void> {
     if (!isSea()) {
-      this.log('not running as a SEA executable; spawning no services');
+      await this.bootDev();
       return;
     }
 
@@ -52,7 +54,7 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     this.log(web === undefined ? 'no web bundle embedded' : `web bundle loaded in memory: ${web.length} files`);
 
     // Invalid config or an incompatible database throws here, before any service is spawned and before ready (REQ-DB-06).
-    this.persistence = await lastValueFrom(bootPersistence$((text) => this.log(text)));
+    this.persistence = await lastValueFrom(bootPersistence$((text) => this.log(text), seaAssetSource));
 
     process.once('SIGINT', this.onSignal);
     process.once('SIGTERM', this.onSignal);
@@ -69,6 +71,14 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
       lifecycle.start();
     }
     this.update();
+  }
+
+  // Dev (`nest start`): same persistence path, assets read from disk. No service is spawned because there is no SEA binary to spawn.
+  private async bootDev(): Promise<void> {
+    this.persistence = await lastValueFrom(bootPersistence$((text) => this.log(text), fsAssetSource(), devAnchor()));
+    this.log('not running as a SEA executable; spawning no services');
+    process.once('SIGINT', this.onSignal);
+    process.once('SIGTERM', this.onSignal);
   }
 
   // Spawns one process with the IPC control channel. Its output is piped and re-emitted with the id prefix. The web bundle is sent again on every restart, from memory.
