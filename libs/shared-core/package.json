@@ -14,5 +14,8 @@
   "author": "",
   "license": "ISC",
   "type": "module",
-  "types": "dist/index.d.ts"
+  "types": "dist/index.d.ts",
+  "devDependencies": {
+    "@types/node": "24.19.2"
+  }
 }
