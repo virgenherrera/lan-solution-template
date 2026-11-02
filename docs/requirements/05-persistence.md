@@ -5,9 +5,9 @@ title: Persistence
 type: requirement
 summary: Defines persistence requirements for SQLite and PostgreSQL adapters and migrations.
 ids[9]: REQ-DB-01,REQ-DB-02,REQ-DB-03,REQ-DB-04,REQ-DB-05,REQ-DB-06,REQ-DB-07,REQ-DB-08,REQ-DB-09
-related[3]: docs/requirements/README.md,docs/requirements/04-configuration.md,docs/requirements/06-web-gateway-https-pwa.md
+related[5]: docs/requirements/README.md,docs/requirements/04-configuration.md,docs/requirements/06-web-gateway-https-pwa.md,docs/requirements/amendments-2026-11-02.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md
 status: current
-updated: 2026-10-30
+updated: 2026-11-02
 -->
 
 # Persistence (SRS §5)
@@ -32,8 +32,9 @@ Database adapters and startup order. Next: [web gateway, HTTPS and PWA](06-web-g
 | Adapters | SQLite (default) and PostgreSQL |
 | Vectors | `sqlite-vector` and `pgvector` |
 | Schemas | Own schemas and migrations per engine |
-| Migrator | In-house, at startup; no `drizzle-kit` |
+| Migrator | In-house, in the supervisor at startup; `drizzle-kit` runs at build time only |
 | Order | config → adapter → connection → vector → migrations → DB ready → gateway ready |
+| Decision | [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md) (proposed) |
 
 ## 5. Persistence, vectors and migrations
 
@@ -47,9 +48,9 @@ Database adapters and startup order. Next: [web gateway, HTTPS and PWA](06-web-g
 
 **REQ-DB-03.** Each engine **MUST** maintain its own SQL schemas and migrations. Do not assume that `sqliteTable` and `pgTable` are interchangeable. Vector operations **MUST** offer a shared contract, with dialect-specific SQL where appropriate.
 
-**REQ-DB-04.** `drizzle-kit` **MUST NOT** be installed or run in this template. Migrations **MUST** meet three conditions. They are versioned as SQL/TypeScript. The application packages them. They run automatically **during Nest initialization**, before readiness is published.
+**REQ-DB-04.** `drizzle-kit` **MUST** run only at build time and **MUST** be a `devDependency`. It generates SQL migrations for each engine. The SEA **MUST** contain only the generated SQL files. The SEA **MUST NOT** contain `drizzle-kit` or `drizzle-orm` code. The in-house migrator applies the SQL. It **MUST** run in the supervisor, before any service starts and before readiness is published.
 
-**REQ-DB-05.** The in-house migrator **MUST** do four things. It reads the persistent history (`version`, `checksum`, `applied_at`). It applies only pending migrations in order. It detects changes to migrations already applied. It fails explicitly on inconsistencies. It **MUST** define locking/concurrency and transactionality for each engine. Migrations **MUST NOT** be considered applied before they are confirmed.
+**REQ-DB-05.** The in-house migrator **MUST** do four things. It reads the persistent history (`version`, `checksum`, `applied_at`, `runtime_version`, `duration_ms`). It applies only pending migrations in order. It detects changes to migrations already applied. It fails explicitly on inconsistencies. The history lives in one table, `schema_migrations`. Each migration and its history row **MUST** share one transaction. It **MUST** define locking/concurrency and transactionality for each engine. Migrations **MUST NOT** be considered applied before they are confirmed.
 
 **REQ-DB-06.** The startup dependency order **MUST** be: `validated config → resolve adapter → open connection/handshake → load/verify vector capability → verify/apply migrations → publish DB ready → publish gateway ready`.
 

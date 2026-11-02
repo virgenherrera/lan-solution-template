@@ -4,18 +4,18 @@ doc: docs/architecture/adr/ADR-003-config-and-db-strategy.md
 title: "ADR-003 Config singleton and database strategy"
 type: architecture
 summary: "Records the POC-3 decisions: one resolved root, a Zod config with defaults, a DbAdapter strategy port, sqlite-vector as a SEA asset and a custom migrator."
-related[3]: docs/results/POC-03-Result.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/architecture/adr/ADR-002-single-sea-portability.md
+related[4]: docs/results/POC-03-Result.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md
 status: current
 updated: 2026-11-02
 -->
 
 # ADR-003: Config singleton and database strategy
 
-[Overview](../overview.md) | [Roadmap](../../roadmap/PROPOSAL.md) | [POC-3 result](../../results/POC-03-Result.md) | [ADR-002](ADR-002-single-sea-portability.md)
+[Overview](../overview.md) | [Roadmap](../../roadmap/PROPOSAL.md) | [POC-3 result](../../results/POC-03-Result.md) | [ADR-002](ADR-002-single-sea-portability.md) | [ADR-004](ADR-004-drizzle-build-time-migrations.md)
 
 ## Status
 
-Accepted as the record of what POC-3 built. Recorded 2026-11-02. The Drizzle question is open.
+Accepted as the record of what POC-3 built. Recorded 2026-11-02. POC-3 left the Drizzle question open. [ADR-004](ADR-004-drizzle-build-time-migrations.md) answers it (status proposed).
 
 ## Context
 
@@ -33,7 +33,9 @@ Accepted as the record of what POC-3 built. Recorded 2026-11-02. The Drizzle que
 
 ## Drizzle
 
-The backlog asked to install the current stable `drizzle-orm` tag and verify SQLite vector support. This was not done. The adapter and the migrator use `node:sqlite` and plain SQL. No Drizzle package is installed. [REQ-STACK-07](../../requirements/02-technology-baseline.md) and [OQ15](../../roadmap/PROPOSAL.md#open-questions) stay open. Not verified: whether Drizzle's SQLite driver works with `sqlite-vector` through this port.
+POC-3 did not install Drizzle. The adapter and the migrator use `node:sqlite` and plain SQL. [REQ-STACK-07](../../requirements/02-technology-baseline.md) and [OQ15](../../roadmap/PROPOSAL.md#open-questions) stayed open when POC-3 closed.
+
+[ADR-004](ADR-004-drizzle-build-time-migrations.md) records the later decision. `drizzle-kit` runs only at build time and generates SQL. The SEA carries only that SQL. The migrator described above applies it. The runtime never imports Drizzle. ADR-004 stays proposed until its code exists. Until then, the tag choice and the compatibility check are not verified in the product.
 
 ## Consequences
 

@@ -39,7 +39,7 @@ flowchart LR
 |---|---|
 | Read a requirement | [Reading order](#reading-order) |
 | Find the POC of an id | [Traceability](traceability.md) |
-| See edits to the v1.6 text | [Amendments 2026-10-30](amendments-2026-10-30.md) |
+| See edits to the v1.6 text | [Amendments 2026-10-30](amendments-2026-10-30.md), [Amendments 2026-11-02](amendments-2026-11-02.md) |
 | See decisions and their state | [ADR index](../roadmap/PROPOSAL.md#adr-index) |
 | Open an epic | [Backlog](../backlog/README.md) |
 
@@ -72,6 +72,7 @@ REQ and AC columns count the ids each page defines.
 | Page | Role |
 |---|---|
 | [Amendments 2026-10-30](amendments-2026-10-30.md) | Changes applied to the v1.6 text |
+| [Amendments 2026-11-02](amendments-2026-11-02.md) | Drizzle at build time and the migrations REQ changes |
 | [Traceability](traceability.md) | Maps each REQ and AC id to its file and POC |
 | [Architecture](../architecture/overview.md) | Overview |
 | [Standards](../standards/README.md) | Doc standards |

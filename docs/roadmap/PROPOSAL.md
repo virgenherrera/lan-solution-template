@@ -6,7 +6,7 @@ type: roadmap
 summary: "Roadmap proposal with cycles, POC pitches, coverage matrix and open questions."
 related[2]: README.md,docs/backlog/README.md
 status: proposed
-updated: 2026-10-31
+updated: 2026-11-02
 -->
 
 # Roadmap Proposal: lan-solution-template (SRS v1.6)
@@ -264,7 +264,7 @@ Ordering rationale:
   - Oxlint, angular-eslint and Clippy coverage of Angular templates (REQ-ECO-05).
   - The Rust audit tool is undefined (A9).
   - The Tauri 2 OS list against the Node pin and the WebView2 minimums. Not verified.
-- **No-gos**: no Nx Cloud, no drizzle-kit, no `bumpDependencies` or `test:doctor` (REQ-DEPS-01). Also no unit or integration suites, no `^` or `~` ranges.
+- **No-gos**: no Nx Cloud, no drizzle-kit at run time (build-time only, see [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md)), no `bumpDependencies` or `test:doctor` (REQ-DEPS-01). Also no unit or integration suites, no `^` or `~` ranges.
 - **Circuit breaker**: document a missing version. Add a technical link and a minimal substitution (NFR-15, NFR-VER-01, D-06). Do not invent APIs. If the toolchain cannot install, stop and report.
 - **Acceptance criteria**: AC-01, AC-02 (host-checkable part), AC-13, AC-19, AC-22. Also AC-23, AC-24, AC-32, AC-33 (host OS only), AC-34. Also NFR-01..15, REQ-ECO-01, REQ-ECO-02, REQ-BUILD-02..05, REQ-TEST-02, REQ-REF-01.
 - **Deliverable**: one branch and one PR per slice (table below). Each slice writes its own result page, `POC-01a-Result.md` to `POC-01d-Result.md`. The last slice writes `docs/results/POC-01-Result.md`. That page consolidates them and holds a version-verification table and the OS/Node matrix. It also holds `ADR-001` if a substitution happens. PR titles are not fixed yet (not verified).
@@ -334,7 +334,7 @@ Backlog epics: [2a](../backlog/poc-2a-launcher-cwd-spike.md), [2b](../backlog/po
 [Back to navigation](#navigation)
 
 - **Scope**: config (`config.json`) and SQLite vector persistence.
-- **Problem**: Persistence must work from inside the SEA. The native vector extension comes from an asset (R-03, REQ-DB-09). The custom migrator replaces drizzle-kit (R-06). The SRS pins Drizzle to a release candidate (R-01, R-07).
+- **Problem**: Persistence must work from inside the SEA. The native vector extension comes from an asset (R-03, REQ-DB-09). The custom migrator applies the SQL that drizzle-kit generates at build time (R-06, [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md)). The SRS pins Drizzle to a release candidate (R-01, R-07).
 - **Appetite**: 2 weeks, big batch.
 - **Solution sketch**:
   - Zod 4 persisted, namespaced config as an immutable DI singleton (REQ-CFG-01, REQ-CFG-02, REQ-CFG-04, REQ-CFG-06).
@@ -365,7 +365,7 @@ Backlog epics: [2a](../backlog/poc-2a-launcher-cwd-spike.md), [2b](../backlog/po
   - The cwd differs per launcher. Its value per launch shape is not verified, except a Windows service (secondary source only).
   - How the dev anchor finds the repo root without the cwd: not verified.
   - Migration owner and locking (R9, REQ-RUNTIME-07).
-- **No-gos**: no drizzle-kit, no silent non-vector fallback (REQ-DB-08), no client-supplied extensions. Also no secrets in CLI args (REQ-CFG-06), no mocks of persistence (REQ-TEST-04).
+- **No-gos**: no drizzle-kit at run time (build-time only, see [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md)), no silent non-vector fallback (REQ-DB-08), no client-supplied extensions. Also no secrets in CLI args (REQ-CFG-06), no mocks of persistence (REQ-TEST-04).
 - **Circuit breaker** when the vector extension cannot load from the SEA on the host OS:
   - Stop. Publish the findings and reshape the extraction approach.
   - Document the Drizzle tag decision in both cases (D-05).
@@ -594,7 +594,7 @@ Global, from the SRS:
 | No-go | Source |
 |---|---|
 | No Nx Cloud | REQ-BUILD-01 |
-| No drizzle-kit | REQ-DB-04 |
+| No drizzle-kit at run time | REQ-DB-04 |
 | No Express or Fastify | REQ-NET-01, REQ-STACK-04 |
 | No postject unless a documented need exists | REQ-SEA-02 |
 | No fake `auth-ms` | D-03 |
@@ -667,7 +667,7 @@ Items 11-15, OQ6 and OQ12 are human decisions. The other resolutions are agent p
 
 - Rows: 17.
 - Owner: 2 human, 9 agent:builder, 5 agent:researcher, 1 agent:verifier.
-- Status: 2 `decided (human)`. 1 `decided (human decision 11)`. 1 `decided (human decision 12)`. 1 `decided (human decision 13): pending spike`. 1 `decided (human decision 14): pending spike`. 1 `decided (human decision 15)`. 10 `proposed`.
+- Status: 3 `decided (human)`. 1 `decided (human decision 11)`. 1 `decided (human decision 12)`. 1 `decided (human decision 13): pending spike`. 1 `decided (human decision 14): pending spike`. 1 `decided (human decision 15)`. 9 `proposed`.
 - Blocking: 17 `no`. No open question blocks. No row has status `needs human decision`.
 
 Claims marked "not verified" stay unverified until a spike or a primary source confirms them.
@@ -688,7 +688,7 @@ Claims marked "not verified" stay unverified until a spike or a primary source c
 | OQ12 | Autostart default: on or opt-in (A7). | Decided by the human: autostart is opt-in and off by default. The user enables it with a checkbox in the tray menu. The MSI checkbox appears unchecked on Windows. The app persists the choice. This matches REQ-DESK-04. The Tauri autostart plugin needs Rust 1.90 or later (not independently verified). | agent:builder | no | decided (human) |
 | OQ13 | Rust audit tool and threshold (A9). | Run `cargo deny check advisories` in CI and before release. Set yanked to deny. Keep the defaults for unmaintained and unsound. Any vulnerability fails: the cargo-deny docs list `severity-threshold` as removed. Each ignore needs a reason and a 90-day expiry. Run weekly and on `Cargo.lock` change. Noise from transitive Tauri deps is not verified. | agent:builder | no (CI on HOLD) | proposed |
 | OQ14 | Persisted config bootstrap before the DB exists (A-01), with decision 11 in mind. | Use a file-based bootstrap config under the root, resolved by the paths library (decision 11). It has Zod validation, atomic write (tmp then rename) and restricted permissions. It holds only ports, data path, DB engine and TLS key location. The DB stores the rest. Start order: resolve root, read or create defaults, open DB, migrate. No secrets. OQ1 is decided, so this does not wait on it. A-01 is not present in the SRS. | agent:builder | no | proposed |
-| OQ15 | Does the fallback to `1.0.0-rc.5` need an SRS amendment (REQ-STACK-07)? | Yes, as a text fix. Rewrite REQ-STACK-07 to match decision 10. Use the latest stable Drizzle first, `1.0.0-rc.5` as fallback. Record the chosen tag. It matters only if the stable tag fails. The Decision Log source check lists no stable 1.0.x tag on 2026-10-30. | agent:builder | no | proposed; text applied in REQ-STACK-07; approval pending |
+| OQ15 | Does the fallback to `1.0.0-rc.5` need an SRS amendment (REQ-STACK-07)? | Yes, as a text fix. Closed by the 2026-11-02 amendment: REQ-STACK-07 now pins `drizzle-orm` `0.45.4` and `drizzle-kit` `0.31.11`, exact. `1.0.0-rc.5` stays the fallback for both. Record the chosen tags. See [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md) and [amendments-2026-11-02](../requirements/amendments-2026-11-02.md). | agent:builder | no | decided (human, 2026-11-02); text applied in REQ-STACK-07 |
 | OQ16 | Windows MSI scope: per-machine or per-user? | Draft: a per-machine MSI. The installer POC (POC-8) starts with a blocking spike on WiX and Tauri capabilities. It compares per-machine, dual and per-user installs, then decides. The gateway serves the LAN. The spikes decide the root folder (decision 11). Per-machine installs to Program Files, and writing there needs an administrator. Source: Microsoft Learn, MSI installation context (read 2026-10-30). WiX v4 scope names and folder ACLs are not verified. | agent:builder | no | proposed |
 | OQ17 | Install-time choice. Server mode installs gateway and app. Client mode installs app only and connects to an existing LAN server. | Proposed. It touches the installer (POC-8) and the Tauri shell (POC-5). It also touches TLS trust of the server certificate (POC-4). Not designed yet. No part is verified. | human | no | proposed |
 
