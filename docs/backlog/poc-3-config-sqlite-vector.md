@@ -22,6 +22,7 @@ updated: 2026-10-30
 - [Requirements](#requirements)
 - [Acceptance criteria](#acceptance-criteria)
 - [Tasks](#tasks)
+- [Slices](#slices)
 - [Open questions](#open-questions)
 
 ---
@@ -122,6 +123,32 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-3-config-and-sqlite-vector-p
 - [ ] Publish `POC-03-Result` and `ADR-003` (which Drizzle tag was used and why) under `docs/`. Source: [AC-08](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-3-config-and-sqlite-vector-persistence-inside-the-sea))
 
 Ids with no pitch task (none invented): [REQ-CFG-03](../requirements/04-configuration.md), [REQ-DB-03](../requirements/05-persistence.md), [REQ-SEC-06](../requirements/07-security.md).
+
+---
+
+## Slices
+
+[Back to navigation](#navigation)
+
+One branch, one PR (same delivery as POC-2). Seven slices, each with its own commit and result page under `docs/results/`.
+
+| Slice | Scope | Pitch tasks | Depends on |
+|---|---|---|---|
+| 3a | Paths library in `libs/shared-core`: one root, precedence, tests per launch shape | paths lib, paths tests | none |
+| 3b | Zod 4 config singleton with schema defaults, `config.json` under the root, first-start copy of `config.default.json` | config singleton, `config.json`, first start | 3a |
+| 3c | `DbAdapter` strategy port and SQLite adapter on `node:sqlite`; the adapter is chosen by a config discriminator | strategy port | 3b |
+| 3d | `sqlite-vector` native library extracted from a SEA asset, integrity check, offline vector insert and similarity query | SQLite with vector, offline vector test | 3c |
+| 3e | Custom migrator: version, checksum, `applied_at`, tamper detection, locking, one transaction per engine | migrator | 3c |
+| 3f | Startup order in `sea-runtime`, pragmas (`foreign_keys`, WAL decision, durability), packaged-binary smoke | startup order, pragmas | 3d, 3e |
+| 3g | `POC-03-Result` and `ADR-003` (Drizzle tag, strategy port, vector library) | result and ADR | 3f |
+
+Design rules for all slices:
+
+- Config is a Zod 4 schema. Defaults live in the schema, so a missing key never needs code. Validation runs once at startup and the result is frozen.
+- The database is reached only through the `DbAdapter` port. Consumers never import `node:sqlite`.
+- `sqliteAdapter` is the only adapter in POC-3. The port names vector operations (`insertVector`, `searchSimilar`) so a `pgvector` adapter can join later without a consumer change ([POC-6](poc-6-postgresql-adapter-parity.md)).
+- The adapter strategy is selected by `db.engine` in config. An unknown engine fails fast before readiness.
+- The vector library name is `sqlite-vector` 1.1.2, as in REQ-STACK-09. `sqlite-vec` is a different project and is not used.
 
 ---
 
