@@ -10,6 +10,29 @@ export interface VectorMatch {
   readonly distance: number;
 }
 
+// Live structure of a database, as read from the engine catalog. Structurally the same shape the schema comparator expects.
+export type LiveColumnType = 'text' | 'integer' | 'real' | 'blob';
+
+export interface LiveColumn {
+  readonly type: LiveColumnType;
+  readonly nullable: boolean;
+  readonly primaryKey: boolean;
+  readonly hasDefault: boolean;
+}
+
+export interface LiveIndex {
+  readonly columns: readonly string[];
+  readonly unique: boolean;
+}
+
+export interface LiveTable {
+  readonly columns: Readonly<Record<string, LiveColumn>>;
+  readonly indexes: readonly LiveIndex[];
+}
+
+// Table name to its live structure.
+export type LiveSchema = ReadonlyMap<string, LiveTable>;
+
 export interface DbAdapter {
   readonly engine: string;
   // Opens the connection and applies the engine pragmas. Fails fast.
@@ -22,6 +45,8 @@ export interface DbAdapter {
   transaction<T>(fn: () => Promise<T>): Promise<T>;
   insertVector(collection: string, id: number, vector: Float32Array): Promise<void>;
   searchSimilar(collection: string, query: Float32Array, k: number): Promise<readonly VectorMatch[]>;
+  // Reads the live schema. Each engine implements it from its own catalog (SQLite PRAGMA; PostgreSQL information_schema, pending).
+  introspectSchema(): Promise<LiveSchema>;
   close(): Promise<void>;
 }
 

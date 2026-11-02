@@ -3,7 +3,17 @@ import { DatabaseSync, type SQLInputValue } from 'node:sqlite';
 import { dirname, isAbsolute, join } from 'node:path';
 import type { AppConfig } from '../config.js';
 import type { AppPaths } from '../paths.js';
-import { VectorUnavailableError, type DbAdapter, type Row, type SqlValue, type VectorMatch } from './port.js';
+import {
+  VectorUnavailableError,
+  type DbAdapter,
+  type LiveColumnType,
+  type LiveIndex,
+  type LiveSchema,
+  type LiveTable,
+  type Row,
+  type SqlValue,
+  type VectorMatch,
+} from './port.js';
 
 // Vector backend of the SQLite engine: loads the native library into an open connection and runs vector SQL. Plugged in by POC-3d.
 export interface SqliteVectorBackend {
@@ -14,6 +24,17 @@ export interface SqliteVectorBackend {
 }
 
 type SqliteSettings = AppConfig['db']['sqlite'];
+
+const SQLITE_TYPES: Readonly<Record<string, LiveColumnType>> = { TEXT: 'text', INTEGER: 'integer', REAL: 'real', BLOB: 'blob' };
+
+// A type SQLite reports that has no logical name stays as written, so the diff shows it.
+function logicalTypeOfSqlite(declared: unknown): LiveColumnType {
+  const name = String(declared).toUpperCase();
+  return SQLITE_TYPES[name] ?? (name.toLowerCase() as LiveColumnType);
+}
+
+// PRAGMA arguments cannot be bound; table names come from sqlite_master, so quote them.
+const quoted = (name: string): string => `"${name.replaceAll('"', '""')}"`;
 
 export class SqliteAdapter implements DbAdapter {
   readonly engine = 'sqlite';
@@ -79,6 +100,36 @@ export class SqliteAdapter implements DbAdapter {
   async searchSimilar(collection: string, query: Float32Array, k: number): Promise<readonly VectorMatch[]> {
     if (this.vector === undefined) throw new VectorUnavailableError('no vector backend is configured');
     return this.vector.search(this.#open(), collection, query, k);
+  }
+
+  async #indexes(table: string): Promise<LiveIndex[]> {
+    const list = await this.all(`PRAGMA index_list(${quoted(table)})`);
+    // origin 'pk' is the implicit index behind a primary key; the descriptor does not list it.
+    const explicit = list.filter((index) => index.origin !== 'pk');
+    return Promise.all(
+      explicit.map(async (index) => {
+        const info = await this.all(`PRAGMA index_info(${quoted(String(index.name))})`);
+        return { columns: [...info].sort((a, b) => Number(a.seqno) - Number(b.seqno)).map((part) => String(part.name)), unique: index.unique === 1 };
+      }),
+    );
+  }
+
+  async introspectSchema(): Promise<LiveSchema> {
+    const names = await this.all(`SELECT name FROM sqlite_master WHERE type = 'table'`);
+    const schema = new Map<string, LiveTable>();
+    for (const { name } of names) {
+      const table = String(name);
+      if (table.startsWith('sqlite_')) continue;
+      const info = await this.all(`PRAGMA table_info(${quoted(table)})`);
+      const columns = Object.fromEntries(
+        info.map((column) => [
+          String(column.name),
+          { type: logicalTypeOfSqlite(column.type), nullable: column.notnull === 0, primaryKey: Number(column.pk) > 0, hasDefault: column.dflt_value !== null },
+        ]),
+      );
+      schema.set(table, { columns, indexes: await this.#indexes(table) });
+    }
+    return schema;
   }
 
   async close(): Promise<void> {

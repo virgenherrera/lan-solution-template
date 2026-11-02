@@ -5,62 +5,18 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import type { DbAdapter } from '../../libs/shared-core/dist/index.js';
-import type { IndexDescriptor, LiveSchema, LiveTable, LogicalType } from '../../libs/db-migrations/dist/contract/index.js';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const sharedCorePath = join(root, 'libs', 'shared-core', 'dist', 'index.js');
 const contractPath = join(root, 'libs', 'db-migrations', 'dist', 'contract', 'index.js');
 const DEFAULT_MIGRATIONS_DIR = join(root, 'libs', 'db-migrations', 'sqlite', 'migrations');
 
-type Introspector = (db: DbAdapter) => Promise<LiveSchema>;
-
-const SQLITE_TYPES: Readonly<Record<string, LogicalType>> = { TEXT: 'text', INTEGER: 'integer', REAL: 'real', BLOB: 'blob' };
+// Only sqlite has an adapter wired here; a new engine adds its adapter and the check itself does not change.
+const ENGINES: readonly string[] = ['sqlite'];
 
 function fail(message: string): never {
   throw new Error(message);
 }
-
-// A type SQLite reports that has no logical name stays as written, so the diff shows it.
-function logicalTypeOfSqlite(declared: unknown): LogicalType {
-  const name = String(declared).toUpperCase();
-  return SQLITE_TYPES[name] ?? (name.toLowerCase() as LogicalType);
-}
-
-// PRAGMA arguments cannot be bound; table names come from sqlite_master, so quote them.
-const quoted = (name: string): string => `"${name.replaceAll('"', '""')}"`;
-
-async function sqliteIndexes(db: DbAdapter, table: string): Promise<IndexDescriptor[]> {
-  const list = await db.all(`PRAGMA index_list(${quoted(table)})`);
-  // origin 'pk' is the implicit index behind a primary key; the descriptor does not list it.
-  const explicit = list.filter((index) => index.origin !== 'pk');
-  return Promise.all(
-    explicit.map(async (index) => {
-      const info = await db.all(`PRAGMA index_info(${quoted(String(index.name))})`);
-      return { columns: [...info].sort((a, b) => Number(a.seqno) - Number(b.seqno)).map((part) => String(part.name)), unique: index.unique === 1 };
-    }),
-  );
-}
-
-async function introspectSqlite(db: DbAdapter): Promise<LiveSchema> {
-  const names = await db.all(`SELECT name FROM sqlite_master WHERE type = 'table'`);
-  const schema = new Map<string, LiveTable>();
-  for (const { name } of names) {
-    const table = String(name);
-    const info = await db.all(`PRAGMA table_info(${quoted(table)})`);
-    const columns = Object.fromEntries(
-      info.map((column) => [
-        String(column.name),
-        { type: logicalTypeOfSqlite(column.type), nullable: column.notnull === 0, primaryKey: Number(column.pk) > 0, hasDefault: column.dflt_value !== null },
-      ]),
-    );
-    schema.set(table, { columns, indexes: await sqliteIndexes(db, table) });
-  }
-  return schema;
-}
-
-// A new engine (pg) plugs in here with an introspector over information_schema; the check itself does not change.
-const INTROSPECTORS: Readonly<Record<string, Introspector>> = { sqlite: introspectSqlite };
 
 // Same order and numbering as the migrator input: journal idx + 1 is the version.
 function readMigrations(dir: string): { version: number; name: string; sql: string }[] {
@@ -77,7 +33,7 @@ function option(name: string, fallback: string): string {
 
 async function main(): Promise<number> {
   const engine = option('engine', 'sqlite');
-  const introspect = INTROSPECTORS[engine] ?? fail(`no introspector for engine "${engine}" (known: ${Object.keys(INTROSPECTORS).join(', ')})`);
+  if (!ENGINES.includes(engine)) fail(`no introspector for engine "${engine}" (known: ${ENGINES.join(', ')})`);
   for (const path of [sharedCorePath, contractPath]) {
     if (!existsSync(path)) fail(`${path} missing; build shared-core and db-migrations first`);
   }
@@ -86,13 +42,12 @@ async function main(): Promise<number> {
   const migrations = readMigrations(resolve(option('migrations-dir', DEFAULT_MIGRATIONS_DIR)));
 
   const workDir = mkdtempSync(join(tmpdir(), 'db-parity-'));
-  // Only sqlite has an adapter wired here; a new engine adds its adapter next to its introspector.
   const db = new SqliteAdapter({ file: 'parity.db', foreignKeys: true, journalMode: 'DELETE', synchronous: 'NORMAL' }, workDir);
   try {
     await db.connect();
     await runMigrations(db, migrations);
     // Validate the descriptor itself first, then compare it exactly with what the real migrations built.
-    const diff = compareSchema(tablesSchema.parse(tables), await introspect(db), 'exact').problems;
+    const diff = compareSchema(tablesSchema.parse(tables), await db.introspectSchema(), 'exact').problems;
     if (diff.length === 0) {
       console.log(`parity ok: ${tables.length} table(s) match the descriptor (engine ${engine})`);
       return 0;
