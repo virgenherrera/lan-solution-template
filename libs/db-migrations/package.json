@@ -1,0 +1,27 @@
+{
+  "name": "db-migrations",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/contract/index.js",
+  "scripts": {
+    "test": "pnpm run test:static && pnpm run test:dynamic",
+    "build": "tsc -p tsconfig.build.json",
+    "generate": "cd sqlite && drizzle-kit generate --config drizzle.config.ts",
+    "test:static": "tsc --noEmit -p tsconfig.json",
+    "test:dynamic": "echo \"test:dynamic: not defined for this package\"",
+    "package": "echo \"package: not defined for this package\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "types": "dist/contract/index.d.ts",
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "drizzle-kit": "0.31.11",
+    "drizzle-orm": "0.45.4"
+  }
+}
