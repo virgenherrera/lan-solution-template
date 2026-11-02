@@ -5,7 +5,7 @@ title: "ADR-005 Live schema validation"
 type: architecture
 summary: "Proposes a startup gate that compares the live database structure with the descriptor in the binary."
 related[5]: docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/backlog/dbm-schema-gate.md,docs/requirements/05-persistence.md,docs/requirements/amendments-2026-11-02.md,docs/requirements/traceability.md
-status: proposed
+status: accepted
 updated: 2026-11-02
 -->
 
@@ -25,7 +25,7 @@ updated: 2026-11-02
 
 ## Status
 
-Proposed, 2026-11-02. It stays proposed until the code exists and a packaged run proves it. The human asked for the direction. The details below are agent proposals. [REQ-DB-10](../../requirements/05-persistence.md) is a proposal too. The human has not approved it.
+Accepted, 2026-11-02, as the record of what DBM-j to DBM-m built. A packaged run and an independent verification prove it (0 blockers). The human asked for the direction. The details below are agent proposals. [REQ-DB-10](../../requirements/05-persistence.md) is a proposal too. The human has not approved it.
 
 ## Context
 
@@ -139,6 +139,6 @@ A change only in one of these passes as valid. The gate gives no safety there. T
 - That Hibernate `validate` tolerates extra columns. This comes from memory, not from a read of the official docs.
 - That Room checks an `identityHash`. This also comes from memory, not from the official docs.
 - A PostgreSQL lock effect from reading `information_schema`.
-- That `ALTER TABLE ... ADD COLUMN ... NOT NULL` requires a default in SQLite. No test ran. If true, the `NOT NULL` extra case only appears after a table rebuild.
+- Verified on Node 26 SQLite: `ALTER TABLE ... ADD COLUMN ... NOT NULL` without a default works on an empty table and fails on a populated one ("Cannot add a NOT NULL column with default value NULL"). The extra `NOT NULL` case therefore also appears after a table rebuild or on an empty table.
 - That `is_identity` and `is_generated` count as a default in PostgreSQL.
 - The behavior of the gate on engines other than SQLite.

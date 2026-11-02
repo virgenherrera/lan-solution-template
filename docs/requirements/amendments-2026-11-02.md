@@ -50,7 +50,7 @@ Three requirement changes, one closed question, one amendment and one proposal. 
 | Downgrade guard from `runtime_version` | Proposed, not approved, not applied |
 | Text of [REQ-DB-06](05-persistence.md) (schema check step) | Agent proposal, applied in the doc only |
 | [REQ-DB-10](05-persistence.md) | Proposed, not approved. The human has not approved it |
-| [ADR-005](../architecture/adr/ADR-005-live-schema-validation.md) | Proposed until the code exists |
+| [ADR-005](../architecture/adr/ADR-005-live-schema-validation.md) | Accepted 2026-11-02, after the code and the packaged run (see DBM-Schema-Gate-Result) |
 | Slice names DBM-i to DBM-n | Assumption, not answered by the human |
 
 ## Amendments 2026-11-02

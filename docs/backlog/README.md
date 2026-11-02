@@ -62,7 +62,7 @@ Edges follow "Depends on" in [PROPOSAL.md](../roadmap/PROPOSAL.md#cycles-and-bet
 | Cycle 2 | POC-4, POC-5 | planned |
 | Cycle 3 | POC-7, POC-8 | planned |
 | After cycle 1 | DBM (slices DBM-a to DBM-h) | done on `minor/dbm-drizzle-migrations`; see [DBM-Result](../results/DBM-Result.md) |
-| After DBM | DBM schema gate (slices DBM-i to DBM-n) | proposed on `minor/dbm-schema-gate` |
+| After DBM | DBM schema gate (slices DBM-i to DBM-n) | done on `minor/dbm-schema-gate`, except DBM-n; see [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md) |
 | Outside the cycles | POC-6 | BACKLOG |
 | Outside the cycles | POC-9 | on hold (decision 9) |
 
@@ -92,7 +92,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | POC-2h | [POC-02 result and ADR-002](poc-2h-result-and-adr.md) | Done in the commit that adds [POC-02-Result](../results/POC-02-Result.md) and [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md), branch `minor/poc-02-supervisor` | AC-11, AC-29 |
 | POC-3 | [Config and SQLite vector persistence inside the SEA](poc-3-config-sqlite-vector.md) | Done on `minor/poc-03-sqlite-vector`, slices 3a to 3g; see [POC-03-Result](../results/POC-03-Result.md) | AC-07, AC-08, AC-10 |
 | DBM | [Drizzle build-time migrations](dbm-drizzle-migrations.md) | Done on `minor/dbm-drizzle-migrations`, slices DBM-a to DBM-h; see [DBM-Result](../results/DBM-Result.md); extends POC-3 | AC-07, AC-08, AC-10 (as POC-3) |
-| DBM schema gate | [Live schema validation at startup](dbm-schema-gate.md) | Proposed on `minor/dbm-schema-gate`, slices DBM-i to DBM-n; DBM-n is later; extends DBM | AC-07, AC-08, AC-10 (as POC-3) |
+| DBM schema gate | [Live schema validation at startup](dbm-schema-gate.md) | Done on `minor/dbm-schema-gate`, slices DBM-i to DBM-m; DBM-n is later; see [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md); extends DBM | AC-07, AC-08, AC-10 (as POC-3) |
 | POC-4 | [HTTPS gateway serving the Angular PWA](poc-4-https-gateway-angular-pwa.md) | Cycle 2 (planned) | AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17 |
 | POC-5 | [Tauri desktop shell with SEA sidecar](poc-5-tauri-sidecar-desktop-shell.md) | Cycle 2 (planned) | AC-03, AC-18, AC-20, AC-30 |
 | POC-6 | [PostgreSQL adapter parity (BACKLOG)](poc-6-postgresql-adapter-parity.md) | BACKLOG | AC-09 |

@@ -1,4 +1,4 @@
-docs[68]:
+docs[69]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -41,7 +41,7 @@ docs[68]:
     summary: Proposes a startup gate that compares the live database structure with the descriptor in the binary.
     ids: []
     related[5]: docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/backlog/dbm-schema-gate.md,docs/requirements/05-persistence.md,docs/requirements/amendments-2026-11-02.md,docs/requirements/traceability.md
-    status: proposed
+    status: accepted
     updated: 2026-11-02
     refs[3]: REQ-DB-05,REQ-DB-06,REQ-DB-10
   - doc: docs/architecture/overview.md
@@ -77,7 +77,7 @@ docs[68]:
     summary: Backlog item for a startup gate that compares the live database structure with the descriptor in the binary.
     ids: []
     related[5]: docs/backlog/README.md,docs/backlog/dbm-drizzle-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/requirements/amendments-2026-11-02.md,docs/requirements/05-persistence.md
-    status: proposed
+    status: current
     updated: 2026-11-02
     refs[6]: AC-07,AC-08,AC-10,REQ-DB-06,REQ-DB-10,REQ-TEST-01
   - doc: docs/backlog/poc-1a-monorepo-init.md
@@ -431,6 +431,15 @@ docs[68]:
     status: current
     updated: 2026-11-02
     refs[3]: REQ-DB-04,REQ-DB-05,REQ-STACK-07
+  - doc: docs/results/DBM-Schema-Gate-Result.md
+    title: DBM Schema Gate Result
+    type: backlog
+    summary: "Result of the schema gate: the runtime reads the live schema once after the migrations and exits 1 before any service starts if the structure is not what the build expects."
+    ids: []
+    related[4]: docs/backlog/dbm-schema-gate.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/results/DBM-Result.md,docs/requirements/amendments-2026-11-02.md
+    status: current
+    updated: 2026-11-02
+    refs[2]: REQ-DB-06,REQ-DB-10
   - doc: docs/results/POC-01-Result.md
     title: POC-1 Result
     type: backlog

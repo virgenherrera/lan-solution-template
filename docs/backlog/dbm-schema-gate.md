@@ -5,7 +5,7 @@ title: "DBM schema gate"
 type: backlog
 summary: "Backlog item for a startup gate that compares the live database structure with the descriptor in the binary."
 related[5]: docs/backlog/README.md,docs/backlog/dbm-drizzle-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/requirements/amendments-2026-11-02.md,docs/requirements/05-persistence.md
-status: proposed
+status: current
 updated: 2026-11-02
 -->
 
@@ -31,11 +31,11 @@ updated: 2026-11-02
 
 | Item | Value |
 |---|---|
-| Status | Proposed. Docs slice DBM-i only. No code yet |
+| Status | Done for DBM-i to DBM-m on `minor/dbm-schema-gate`; DBM-n is later. See [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md) |
 | Depends on | DBM ([DBM-Result](../results/DBM-Result.md)) |
 | Branch | `minor/dbm-schema-gate`, off `minor/dbm-drizzle-migrations` |
 | Delivery | One branch, one PR |
-| Decision | [ADR-005](../architecture/adr/ADR-005-live-schema-validation.md) (proposed) |
+| Decision | [ADR-005](../architecture/adr/ADR-005-live-schema-validation.md) (accepted) |
 | Requirements | REQ-DB-06 (amended), REQ-DB-10 (proposed, not approved) |
 | Acceptance criteria | AC-07, AC-08, AC-10 (same as POC-3); a gate-specific AC is not defined |
 
@@ -84,7 +84,7 @@ One branch, one PR. Slice names DBM-i to DBM-n are an assumption. DBM-n is a lat
 | DBM-i | Docs: amend REQ-DB-06, propose REQ-DB-10, ADR-005, this page, traceability, amendments | none | The metadata check from [Checks](../standards/README.md#checks) exits 0 |
 | DBM-j | Contract: `descriptor.ts` (Zod) and `compare.ts` (`exact` and `required`) in `libs/db-migrations/contract/`. `tables.ts` types come from `z.infer`. The parity check uses `compareSchema` in `exact` mode | DBM-i | Parity exits 0. With a column removed from a copied migrations directory, it exits 1 with the same text as before |
 | DBM-k | Port: `LiveSchema` and `DbAdapter.introspectSchema`. `SqliteAdapter` implements it and reports defaults. The parity check drops its own introspector | DBM-j | Parity stdout and exit code are identical to the base run |
-| DBM-l | Gate: `verifySchema$` in the boot pipeline, between the migrations and the `app_meta` write, using `required` mode | DBM-k | The packaged binary runs against 11 databases. The 10 cases from the earlier prototype and one rebuilt table with an extra `NOT NULL` column. 7 exit 1 with the message and no spawn. 4 exit 0 with a spawn |
+| DBM-l | Gate: `verifySchema$` in the boot pipeline, between the migrations and the `app_meta` write, using `required` mode | DBM-k | The packaged binary runs against 11 databases. The 10 cases from the earlier prototype and one rebuilt table with an extra `NOT NULL` column. 6 exit 1 with the message and no spawn. 5 exit 0 with a spawn |
 | DBM-m | Dev: an `AssetSource` with a `sea` and an `fs` implementation. `nest start` runs the same persistence path | DBM-l | `nest start` against a mutated database exits 1 with the same message. A valid database starts |
 | DBM-n | Later: a Nest database module with a one-time `SELECT 1` handshake for services. Optional `database` component in the service status indicator | DBM-l, the merge of `docs/service-status-indicator`, and a service that opens the database | A service against an unreachable database reports failed |
 
