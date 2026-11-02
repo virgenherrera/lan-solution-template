@@ -4,14 +4,14 @@ doc: docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md
 title: "ADR-004 Drizzle build-time migrations"
 type: architecture
 summary: "Records Drizzle as a build-time tool only: drizzle-kit generates SQL, the SEA carries the SQL, the in-house migrator applies it."
-related[5]: docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/backlog/dbm-drizzle-migrations.md,docs/requirements/amendments-2026-11-02.md,docs/requirements/05-persistence.md,docs/requirements/02-technology-baseline.md
+related[6]: docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/backlog/dbm-drizzle-migrations.md,docs/requirements/amendments-2026-11-02.md,docs/requirements/05-persistence.md,docs/requirements/02-technology-baseline.md,docs/architecture/adr/ADR-005-live-schema-validation.md
 status: accepted
 updated: 2026-11-02
 -->
 
 # ADR-004: Drizzle build-time migrations
 
-[Overview](../overview.md) | [Roadmap](../../roadmap/PROPOSAL.md) | [ADR-003](ADR-003-config-and-db-strategy.md) | [DBM backlog](../../backlog/dbm-drizzle-migrations.md) | [Amendments 2026-11-02](../../requirements/amendments-2026-11-02.md)
+[Overview](../overview.md) | [Roadmap](../../roadmap/PROPOSAL.md) | [ADR-003](ADR-003-config-and-db-strategy.md) | [DBM backlog](../../backlog/dbm-drizzle-migrations.md) | [ADR-005](ADR-005-live-schema-validation.md) | [Amendments 2026-11-02](../../requirements/amendments-2026-11-02.md)
 
 ## Status
 
@@ -50,6 +50,7 @@ The human asked for a way to declare tables as classes and build them to SQL fil
 - Limit 1: `implements` does not catch an extra column. A `NoExtra` type check closes that gap.
 - Limit 2: the type check does not cover primary keys or indexes.
 - Because of limit 2, a build script applies the migrations to a temporary database. It compares `PRAGMA table_info` and the index list with a declarative descriptor, `contract/tables.ts`. The descriptor states primary key, nullability, type and indexes.
+- [ADR-005](ADR-005-live-schema-validation.md) proposes a shared comparator for this check, in `exact` mode. The decisions in this section do not change.
 
 ### Statement separator and checksum
 
@@ -83,7 +84,7 @@ The human asked for a way to declare tables as classes and build them to SQL fil
 
 ### Run order
 
-Migrations run in the supervisor, in `apps/sea-runtime`, before any service spawns. A failure exits with code 1. The boot pipeline and the migrator event stream use RxJS 7.8.2, already a dependency of `sea-runtime`. Operators replace imperative loops.
+Migrations run in the supervisor, in `apps/sea-runtime`, before any service spawns. A failure exits with code 1. [ADR-005](ADR-005-live-schema-validation.md) proposes one more step after the migrations: a one-time check of the live schema structure. This ADR does not decide it. The boot pipeline and the migrator event stream use RxJS 7.8.2, already a dependency of `sea-runtime`. Operators replace imperative loops.
 
 ## Evidence
 
@@ -116,5 +117,6 @@ Not verified:
 - A schema change needs a generated migration in the same commit.
 - `drizzle-kit` is a build tool only. Supply-chain scope grows by two exact dev packages.
 - PostgreSQL adds `pg/` with its own class and descriptor. Engines do not share table definitions ([REQ-DB-03](../../requirements/05-persistence.md)).
+- [ADR-005](ADR-005-live-schema-validation.md) proposes a startup check of the live schema structure. It is not part of this decision.
 - A downgrade guard that reads `runtime_version` is proposed. The human has not approved it. It is not part of this decision.
 - The old line "the migrator splits SQL on `;`" in ADR-003 is superseded for generated files. The marker rule above applies.
