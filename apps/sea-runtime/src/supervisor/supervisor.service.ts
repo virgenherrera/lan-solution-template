@@ -13,6 +13,7 @@ import {
   stateMessageSchema,
   type AggregateState,
 } from 'service-registry';
+import { bootPersistence, type PersistenceBoot } from '../persistence/boot.js';
 import { hasWebBundle, loadWebBundle, type WebFile } from '../web/web-bundle.js';
 import { forwardLines, prefixed, spawnedMessage, stateMessage } from './log-lines.js';
 import { stopTree, treeSpawnOptions } from './process-tree.js';
@@ -23,6 +24,7 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
   private readonly services: ServiceLifecycle[] = [];
   private stopping = false;
   private state?: AggregateState;
+  private persistence?: PersistenceBoot;
   private readonly onSignal = (signal: NodeJS.Signals): void => {
     void this.shutdown(signal, 0);
   };
@@ -32,7 +34,7 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     process.stdout.write(`${prefixed(SUPERVISOR_CONFIG.id, text)}\n`);
   }
 
-  onModuleInit(): void {
+  async onModuleInit(): Promise<void> {
     if (!isSea()) {
       this.log('not running as a SEA executable; spawning no services');
       return;
@@ -47,6 +49,9 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     // The web bundle is read from the executable and sent to the api-gateway child over IPC; nothing is written to disk. No web bundle in the build means no --web flag.
     const web = hasWebBundle() ? loadWebBundle() : undefined;
     this.log(web === undefined ? 'no web bundle embedded' : `web bundle loaded in memory: ${web.length} files`);
+
+    // Invalid config or an incompatible database throws here, before any service is spawned and before ready (REQ-DB-06).
+    this.persistence = await bootPersistence((text) => this.log(text));
 
     process.once('SIGINT', this.onSignal);
     process.once('SIGTERM', this.onSignal);
@@ -115,6 +120,7 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
       service.stop();
       if (service.child !== undefined) await stopTree(service.id, service.child, SUPERVISOR_CONFIG, (text) => this.log(text));
     }
+    await this.persistence?.db.close();
     process.exit(exitCode);
   }
 }

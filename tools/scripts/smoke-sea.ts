@@ -2,8 +2,9 @@
 // Usage: `node tools/scripts/smoke-sea.ts [--artifacts <dir>]`; the default dir is artifacts/sea-runtime. One line per check; the first failed check prints the tail of the run output and exits 1.
 // Needs the built service-registry library (the same contract the assembler loads). Windows is not verified (decision D3): the executable lookup throws there.
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
-import { readFileSync, readdirSync, readlinkSync, realpathSync, statSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, readlinkSync, realpathSync, statSync } from 'node:fs';
 import { createServer } from 'node:net';
+import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { parseArgs } from 'node:util';
@@ -43,6 +44,8 @@ const BAD_SELECTORS: readonly (readonly string[])[] = [
 const { values } = parseArgs({ options: { artifacts: { type: 'string' } } });
 const artifactsDir = resolve(values.artifacts ?? join(root, 'artifacts', 'sea-runtime'));
 const sleep = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms));
+const smokeRoot = mkdtempSync(join(tmpdir(), 'lan-smoke-'));
+process.on('exit', () => rmSync(smokeRoot, { recursive: true, force: true }));
 const startedAt = Date.now();
 const knownPids = new Set<number>();
 let current: Run | undefined;
@@ -55,7 +58,8 @@ class Run {
   private readonly child: ChildProcess;
 
   constructor(binary: string, args: readonly string[]) {
-    this.child = spawn(binary, [...args], { stdio: ['ignore', 'pipe', 'pipe'], env: {} });
+    // APP_HOME points the paths library at a scratch root; the default OS root is not writable for a test run.
+    this.child = spawn(binary, [...args], { stdio: ['ignore', 'pipe', 'pipe'], env: { APP_HOME: smokeRoot } });
     for (const stream of [this.child.stdout, this.child.stderr]) {
       if (stream) createInterface({ input: stream }).on('line', (line) => this.lines.push(line));
     }
