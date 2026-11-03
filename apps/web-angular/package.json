@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "clean": "rimraf dist",
     "watch": "ng build --watch --configuration development",
     "test": "pnpm run test:static && pnpm run test:dynamic",
     "test:static": "tsc --noEmit -p tsconfig.app.json",
@@ -30,6 +31,7 @@
     "@tailwindcss/postcss": "4.3.3",
     "postcss": "8.5.32",
     "prettier": "3.9.10",
+    "rimraf": "catalog:",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3"
   }

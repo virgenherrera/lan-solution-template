@@ -6,6 +6,7 @@
   "scripts": {
     "test": "pnpm run test:static && pnpm run test:dynamic",
     "build": "tsc -p tsconfig.build.json",
+    "clean": "rimraf dist",
     "generate": "cd sqlite && drizzle-kit generate --config drizzle.config.ts",
     "drift": "pnpm run generate && git diff --exit-code -- sqlite/migrations && test -z \"$(git ls-files --others --exclude-standard -- sqlite/migrations)\"",
     "parity": "pnpm --filter shared-core run build && pnpm run build && node ../../tools/scripts/db-parity.ts",
@@ -24,6 +25,7 @@
   "devDependencies": {
     "@types/node": "24.19.2",
     "drizzle-kit": "0.31.11",
-    "drizzle-orm": "0.45.4"
+    "drizzle-orm": "0.45.4",
+    "rimraf": "catalog:"
   }
 }
