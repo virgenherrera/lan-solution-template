@@ -5,7 +5,7 @@ title: "Service status indicator"
 type: backlog
 summary: "Proposed backlog item: a supervisor-owned, XAMPP-style per-service status surface that stays up while services restart."
 related[4]: docs/backlog/README.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/results/POC-02d-readiness-logs.md,docs/results/POC-02e-bounded-restart.md
-status: proposed
+status: current
 updated: 2026-11-02
 -->
 
@@ -34,12 +34,12 @@ updated: 2026-11-02
 
 | Item | Value |
 |---|---|
-| Status | Proposed. Not scheduled. No POC id yet. |
+| Status | Supervisor status endpoint built on `minor/service-status-indicator`. Tray and web UI consumers are not built. No POC id. |
 | Origin | Human request: "un estado (estilo xampp) mostrando que el servicio esta iniciando o reiniciando" |
 | Depends on | [POC-2d](poc-2d-supervisor-readiness-logs.md) and [POC-2e](poc-2e-bounded-restart.md), both done |
 | Natural consumer | [POC-5](poc-5-tauri-sidecar-desktop-shell.md) tray |
 | Requirements | None cite this item. No REQ or AC id is invented. |
-| Branch | not decided |
+| Branch | `minor/service-status-indicator` |
 
 ---
 
@@ -136,9 +136,9 @@ Per-service status exists in code: `starting`, `ready`, `restarting`, `failed` (
 
 | Topic | Status |
 |---|---|
-| Transport: extend the stdout JSON line, add an IPC query, or add a supervisor-owned local endpoint | open |
-| Should `/api/health` stay gateway-owned or proxy the supervisor state | open |
-| Does the web UI read the surface directly or through the gateway | open |
-| Is `restarting` an aggregate state or only a per-service one | open |
+| Transport | Decided without a human answer: a supervisor-owned loopback HTTP endpoint, `GET http://127.0.0.1:<supervisor.statusPort>/status` (default 3001, key `supervisor.statusPort` in `config.json`). It answers `{"state", "services":[{"id","status"}]}` and 404 on any other route or method. A busy port is logged and skipped. |
+| `/api/health` | Decided without a human answer: stays gateway-owned and unchanged. |
+| Web UI | Open: reads the endpoint directly or through the gateway. Not built. |
+| `restarting` | Decided without a human answer: per-service only. The aggregate set is unchanged, so a restart still shows as `degraded` in `/api/health` and in the JSON line. |
 | Does the tray show `degraded` ([PROPOSAL](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar), rabbit hole A5) | open |
-| Which POC or cycle owns this item | open |
+| Owner POC | Open |
