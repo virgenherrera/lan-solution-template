@@ -2,8 +2,10 @@
 // Usage: `node tools/scripts/smoke-sea.ts [--artifacts <dir>]`; the default dir is artifacts/sea-runtime. One line per check; the first failed check prints the tail of the run output and exits 1.
 // Needs the built service-registry library (the same contract the assembler loads). Windows is not verified (decision D3): the executable lookup throws there.
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
-import { readFileSync, readdirSync, readlinkSync, realpathSync, statSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, readlinkSync, realpathSync, statSync } from 'node:fs';
 import { createServer } from 'node:net';
+import { DatabaseSync } from 'node:sqlite';
+import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { parseArgs } from 'node:util';
@@ -43,6 +45,8 @@ const BAD_SELECTORS: readonly (readonly string[])[] = [
 const { values } = parseArgs({ options: { artifacts: { type: 'string' } } });
 const artifactsDir = resolve(values.artifacts ?? join(root, 'artifacts', 'sea-runtime'));
 const sleep = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms));
+const smokeRoot = mkdtempSync(join(tmpdir(), 'lan-smoke-'));
+process.on('exit', () => rmSync(smokeRoot, { recursive: true, force: true }));
 const startedAt = Date.now();
 const knownPids = new Set<number>();
 let current: Run | undefined;
@@ -54,8 +58,9 @@ class Run {
   exitCode: number | null | undefined;
   private readonly child: ChildProcess;
 
-  constructor(binary: string, args: readonly string[]) {
-    this.child = spawn(binary, [...args], { stdio: ['ignore', 'pipe', 'pipe'], env: {} });
+  constructor(binary: string, args: readonly string[], home: string = smokeRoot) {
+    // APP_HOME points the paths library at a scratch root; the default OS root is not writable for a test run.
+    this.child = spawn(binary, [...args], { stdio: ['ignore', 'pipe', 'pipe'], env: { APP_HOME: home } });
     for (const stream of [this.child.stdout, this.child.stderr]) {
       if (stream) createInterface({ input: stream }).on('line', (line) => this.lines.push(line));
     }
@@ -195,6 +200,21 @@ await check('artifacts: one executable, no node copy', async () => {
   return entries[0];
 });
 
+// Module markers of Drizzle code (S7). The literal "drizzle-kit@x.y.z" in build-info.json is data, not code, and matches none of these.
+const DRIZZLE_MARKERS = ['drizzle-orm', 'drizzle-kit/', 'sqliteTable'];
+
+await check('no Drizzle code in the bundle or the executable', async () => {
+  const bundle = join(root, 'dist', 'sea-package', 'sea-app.mjs');
+  const scanned = [bundle, binary];
+  for (const file of scanned) {
+    const content = readFileSync(file);
+    for (const marker of DRIZZLE_MARKERS) {
+      expect(content.indexOf(marker) === -1, `marker "${marker}" found in ${file}`);
+    }
+  }
+  return `${DRIZZLE_MARKERS.length} markers, ${scanned.length} files`;
+});
+
 await check(`port ${PORT} is free`, async () => {
   expect(await portFree(), `port ${PORT} is in use; the gateway port is not configurable`);
 });
@@ -243,6 +263,37 @@ await check(`GET ${ROUTES.missing}`, async () => {
   expect(response?.status === EXPECTED_STATUS.notFound, `status ${response?.status}`);
 });
 
+// Keys the boot code writes to app_meta (S4). db_engine is deliberately absent.
+const APP_META_KEYS = [
+  'first_installed_runtime_version',
+  'gateway_version',
+  'last_started_at',
+  'drizzle_version',
+  'runtime_version',
+  'vector_lib_version',
+  'web_version',
+] as const;
+const VERSIONED_NAME = /^@?[^@\s]+@\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?$/;
+
+await check('database: app_meta keys and schema_migrations row', async () => {
+  const db = new DatabaseSync(join(smokeRoot, 'data', 'lan.db'), { readOnly: true });
+  try {
+    const meta = Object.fromEntries(db.prepare('SELECT key, value FROM app_meta').all().map((row) => [String(row.key), String(row.value)]));
+    expect(JSON.stringify(Object.keys(meta).sort()) === JSON.stringify([...APP_META_KEYS].sort()), `app_meta keys: ${Object.keys(meta).sort().join(', ')}`);
+    for (const key of APP_META_KEYS) {
+      if (key !== 'last_started_at') expect(VERSIONED_NAME.test(meta[key]), `app_meta.${key} "${meta[key]}" is not name@exactVersion`);
+    }
+    expect(!Number.isNaN(Date.parse(meta.last_started_at)), `app_meta.last_started_at "${meta.last_started_at}" is not a date`);
+    const history = db.prepare('SELECT version, runtime_version, duration_ms FROM schema_migrations').all();
+    expect(history.length === 1, `schema_migrations has ${history.length} rows`);
+    expect(history[0].runtime_version === meta.runtime_version, `history runtime_version "${history[0].runtime_version}" != app_meta "${meta.runtime_version}"`);
+    expect(typeof history[0].duration_ms === 'number', 'schema_migrations.duration_ms is not a number');
+    return `${APP_META_KEYS.length} keys, ${history.length} migration`;
+  } finally {
+    db.close();
+  }
+});
+
 await check(`child killed (SIGKILL) returns to ${AGGREGATE_STATE.ready}`, async () => {
   process.kill(childPid, 'SIGKILL');
   const next = await until(() => run.spawnedPids()[1], RESTART_WAIT_MS, 'second spawn');
@@ -260,6 +311,26 @@ await check('SIGTERM: exit 0, no process left', async () => {
   expect(code === 0, `supervisor exited ${code}`);
   await allGone([run.pid, ...knownPids], 'after SIGTERM');
   expect(await portFree(), `port ${PORT} still in use`);
+});
+
+// The shipped build expects app_meta.value (S1): a database without it must stop the start before any service spawns.
+await check('schema mismatch (app_meta.value missing): exit 1, no service spawned', async () => {
+  const home = mkdtempSync(join(smokeRoot, 'mismatch-'));
+  mkdirSync(join(home, 'data'));
+  copyFileSync(join(smokeRoot, 'data', 'lan.db'), join(home, 'data', 'lan.db'));
+  const db = new DatabaseSync(join(home, 'data', 'lan.db'));
+  try {
+    db.exec('ALTER TABLE app_meta DROP COLUMN value');
+  } finally {
+    db.close();
+  }
+  const broken = new Run(binary, [], home);
+  current = broken;
+  const code = await broken.exit(SLACK_MS, 'start on a mismatched schema');
+  expect(code === 1, `exited ${code}`);
+  expect(broken.lines.some((line) => line.includes('schema check FAILED')), 'no "schema check FAILED" line');
+  expect(broken.spawnedPids().length === 0, 'a service was spawned');
+  return 'exit 1';
 });
 
 await check(`restart budget (${SUPERVISOR_CONFIG.maxRestarts}) ends in ${AGGREGATE_STATE.error}, exit ${SUPERVISOR_CONFIG.errorExitCode}`, async () => {

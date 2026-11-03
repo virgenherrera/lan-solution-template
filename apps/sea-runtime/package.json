@@ -22,9 +22,11 @@
   "dependencies": {
     "@nestjs/common": "12.3.2",
     "@nestjs/core": "12.3.2",
+    "db-migrations": "workspace:*",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "service-registry": "workspace:*",
+    "shared-core": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -56,20 +58,26 @@
       "package": {
         "dependsOn": [
           "build",
-          "test"
+          "test",
+          {
+            "projects": "db-migrations",
+            "target": "build"
+          }
         ],
         "executor": "nx:run-commands",
         "outputs": [
           "{workspaceRoot}/artifacts/sea-runtime"
         ],
         "options": {
-          "command": "node tools/scripts/compile-sea.ts sea-runtime && node tools/scripts/smoke-sea.ts",
+          "command": "node tools/scripts/pack-migrations.ts && node tools/scripts/compile-sea.ts sea-runtime && node tools/scripts/smoke-sea.ts",
           "cwd": "{workspaceRoot}"
         },
         "inputs": [
           "default",
           "^default",
           "{workspaceRoot}/tools/scripts/compile-sea.ts",
+          "{workspaceRoot}/tools/scripts/pack-migrations.ts",
+          "{workspaceRoot}/libs/db-migrations/sqlite/migrations/**/*",
           "{workspaceRoot}/tools/scripts/smoke-sea.ts",
           "{workspaceRoot}/tools/rspack/**/*"
         ]

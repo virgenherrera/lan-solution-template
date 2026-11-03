@@ -7,4 +7,11 @@ async function bootstrap() {
     logger: false,
   });
 }
-await bootstrap();
+try {
+  await bootstrap();
+} catch (error) {
+  // A rejected top-level await makes Node print a line of the bundled source. The message, once and prefixed, plus exit code 1 is what the operator needs.
+  const lines = error instanceof Error ? error.message.split('\n') : [String(error)];
+  lines.forEach((line, index) => process.stderr.write(`[supervisor] ${index === 0 ? 'startup failed: ' : ''}${line}\n`));
+  process.exit(1);
+}

@@ -5,9 +5,9 @@ title: Technology Baseline
 type: requirement
 summary: Fixes technology versions and supply-chain rules for reproducible installs.
 ids[12]: REQ-STACK-01,REQ-STACK-02,REQ-STACK-03,REQ-STACK-04,REQ-STACK-05,REQ-STACK-06,REQ-STACK-07,REQ-STACK-08,REQ-STACK-09,REQ-STACK-10,REQ-SUPPLY-01,REQ-SUPPLY-02
-related[3]: docs/requirements/README.md,docs/requirements/01-purpose-and-scope.md,docs/requirements/03-file-structure.md
+related[4]: docs/requirements/README.md,docs/requirements/01-purpose-and-scope.md,docs/requirements/03-file-structure.md,docs/requirements/amendments-2026-11-02.md
 status: current
-updated: 2026-10-30
+updated: 2026-11-02
 -->
 
 # Technology Baseline (SRS §2)
@@ -33,6 +33,7 @@ Pins versions and supply-chain rules. Next: [file structure](03-file-structure.m
 | Vectors | `sqlite-vector` 1.1.2; `pgvector >=0.8.7` |
 | Pins | Exact direct versions; lockfile committed |
 | Supply chain | `minimumReleaseAge: 1440`, explicit `allowBuilds`, frozen-lockfile installs |
+| Drizzle | `drizzle-orm` `0.45.4` and `drizzle-kit` `0.31.11`, exact, `devDependencies` only |
 | Risk | Drizzle RC is a fallback only; flag it |
 
 ## 2. Technology baseline and reproducibility
@@ -47,7 +48,7 @@ Pins versions and supply-chain rules. Next: [file structure](03-file-structure.m
 | REQ-STACK-04 | NestJS | `12.3.2`; `@nestjs/platform-node` / `NodeAdapter`; no Express or Fastify |
 | REQ-STACK-05 | Angular | `>=22.2.5`, major 22; install a compatible exact version and demonstrate zoneless |
 | REQ-STACK-06 | Zod | `>=4.6.7`, major 4; declare the exact version in the catalog |
-| REQ-STACK-07 | Drizzle ORM | Stable tag preferred; `1.0.0-rc.5` is the fallback if the stable tag lacks vector support in SQLite or PostgreSQL (human decision 10, 2026-10-30), for `drizzle-orm/node-sqlite`. Record the chosen tag |
+| REQ-STACK-07 | Drizzle | `drizzle-orm` `0.45.4` (stable) and `drizzle-kit` `0.31.11`, both exact and in `devDependencies` only. Fallback: `1.0.0-rc.5` for both, only if a spike step fails (human decision 10, 2026-10-30). Record the chosen tags. See [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md) |
 | REQ-STACK-08 | pnpm Workspaces + Nx | Local Nx, no Nx Cloud; compatible version pinned after discovery |
 | REQ-STACK-09 | SQLite vector | `sqlite-vector` native extension `1.1.2`, per platform/architecture |
 | REQ-STACK-10 | PostgreSQL vector | `pgvector >=0.8.7`, verifying the version on the instance |

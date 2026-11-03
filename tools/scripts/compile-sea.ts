@@ -11,6 +11,15 @@ import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import * as rspackNamespace from '@rspack/core';
 import sharedNestConfig from '../rspack/nest.config.ts';
+import {
+  BUILD_INFO_FILE,
+  MANIFEST_FILE,
+  PACK_OUT_DIR,
+  buildInfoAssetName,
+  manifestAssetName,
+  migrationAssetName,
+  migrationsDir,
+} from './pack-migrations.ts';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const workDir = join(root, 'dist', 'sea-package');
@@ -19,6 +28,11 @@ const bundlePath = join(workDir, 'sea-app.mjs');
 const servicesPath = join(workDir, 'services.json');
 const configPath = join(workDir, 'sea-config.json');
 const manifestPath = join(workDir, 'web-manifest.json');
+const vectorPinPath = join(workDir, 'sqlite-vector-pin.json');
+// Versioned pin table of the sqlite-vector library (REQ-DB-09): source, version and sha256 per platform.
+const vectorTablePath = join(root, 'tools', 'vector', 'sqlite-vector-1.1.2.json');
+// Downloaded tarballs are cached here and re-verified on every build.
+const vectorCacheDir = join(root, 'dist', 'vector-cache');
 
 // Keys are "<process.platform> <process.arch>"; values are Rust target triples (the Tauri sidecar naming).
 const TARGET_TRIPLES: Record<string, string> = {
@@ -28,6 +42,15 @@ const TARGET_TRIPLES: Record<string, string> = {
   'linux arm64': 'aarch64-unknown-linux-gnu',
   'win32 x64': 'x86_64-pc-windows-msvc',
   'win32 arm64': 'aarch64-pc-windows-msvc',
+};
+
+// Target triple to the platform key of the pin table (the runtime key of sqlite-vector.ts). Linux triples here are glibc.
+const VECTOR_PLATFORM_KEYS: Record<string, string> = {
+  'aarch64-apple-darwin': 'darwin-arm64',
+  'x86_64-apple-darwin': 'darwin-x64',
+  'x86_64-unknown-linux-gnu': 'linux-x64-glibc',
+  'aarch64-unknown-linux-gnu': 'linux-arm64-glibc',
+  'x86_64-pc-windows-msvc': 'win32-x64',
 };
 
 type Version = [number, number, number];
@@ -307,12 +330,70 @@ function webAssets(web: WebBundle | undefined): Record<string, string> {
   return assets;
 }
 
+// The sqlite-vector variant of the target becomes SEA assets "sqlite-vector/<file>" and "sqlite-vector/pin.json" (names mirror libs/shared-core/src/db/sqlite-vector.ts).
+// The tarball comes from the pinned npm URL, is checked against the pinned sha512 integrity, and its binary against the pinned sha256. A platform without a pin fails the build.
+async function vectorAssets(target: BuildTarget): Promise<Record<string, string>> {
+  const table = JSON.parse(readFileSync(vectorTablePath, 'utf8')) as {
+    version: string;
+    unavailable: string[];
+    platforms: Record<string, { tarball: string; tarballIntegrity: string; file: string; librarySha256: string }>;
+  };
+  const key = VECTOR_PLATFORM_KEYS[target.triple];
+  const entry = key === undefined ? undefined : table.platforms[key];
+  if (key === undefined || entry === undefined) {
+    throw new Error(
+      `sqlite-vector ${table.version} has no pinned binary for ${target.triple}; unavailable upstream: ${table.unavailable.join(', ')}`,
+    );
+  }
+  mkdirSync(vectorCacheDir, { recursive: true });
+  const tarball = join(vectorCacheDir, `${key}-${table.version}.tgz`);
+  const integrityOf = (file: string): string => `sha512-${createHash('sha512').update(readFileSync(file)).digest('base64')}`;
+  if (!existsSync(tarball) || integrityOf(tarball) !== entry.tarballIntegrity) {
+    const response = await fetch(entry.tarball);
+    if (!response.ok) throw new Error(`download ${entry.tarball} failed: HTTP ${response.status}`);
+    writeFileSync(tarball, Buffer.from(await response.arrayBuffer()));
+  }
+  if (integrityOf(tarball) !== entry.tarballIntegrity) throw new Error(`sqlite-vector tarball integrity mismatch for ${key}`);
+  const extractDir = join(vectorCacheDir, `${key}-${table.version}`);
+  rmSync(extractDir, { recursive: true, force: true });
+  mkdirSync(extractDir, { recursive: true });
+  execFileSync('tar', ['-xzf', tarball, '-C', extractDir, `package/${entry.file}`]);
+  const binary = join(extractDir, 'package', entry.file);
+  const sha256 = createHash('sha256').update(readFileSync(binary)).digest('hex');
+  if (sha256 !== entry.librarySha256) throw new Error(`sqlite-vector binary sha256 mismatch for ${key}: expected ${entry.librarySha256}, got ${sha256}`);
+  writeFileSync(vectorPinPath, `${JSON.stringify({ version: table.version, platform: key, file: entry.file, sha256 }, null, 2)}\n`);
+  console.log(`sqlite-vector ${table.version}: ${key} ${entry.file} sha256 ${sha256}`);
+  return { 'sqlite-vector/pin.json': vectorPinPath, [`sqlite-vector/${entry.file}`]: binary };
+}
+
+// The packed migrations (pack-migrations.ts, run before this script) become SEA assets "db-migrations/manifest.json", "db-migrations/build-info.json" and "db-migrations/<tag>.sql".
+// Asset names come from the constants shared with the pack step; only SQL and JSON travel, never Drizzle (S7).
+function migrationAssets(): Record<string, string> {
+  const manifestPath = join(PACK_OUT_DIR, MANIFEST_FILE);
+  const buildInfoPath = join(PACK_OUT_DIR, BUILD_INFO_FILE);
+  for (const path of [manifestPath, buildInfoPath]) {
+    if (!existsSync(path)) throw new Error(`${path} missing; run "node tools/scripts/pack-migrations.ts" first`);
+  }
+  const { migrations } = JSON.parse(readFileSync(manifestPath, 'utf8')) as { migrations: { file: string; sha256: string }[] };
+  const assets: Record<string, string> = { [manifestAssetName]: manifestPath, [buildInfoAssetName]: buildInfoPath };
+  for (const { file, sha256 } of migrations) {
+    const path = join(migrationsDir, file);
+    if (createHash('sha256').update(readFileSync(path, 'utf8')).digest('hex') !== sha256) {
+      throw new Error(`${file}: differs from the packed manifest; run "node tools/scripts/pack-migrations.ts" again`);
+    }
+    assets[migrationAssetName(file)] = path;
+  }
+  console.log(`db migrations: ${migrations.length} sql file(s) plus manifest and build info`);
+  return assets;
+}
+
 // REQ-SEA-03 baseline from ASSEMBLER_CONFIG; the code cache follows the native/cross rule; a cross build names the target's Node as the SEA base.
 function writeSeaConfig(
   binaryPath: string,
   web: WebBundle | undefined,
   contract: Registry,
   target: BuildTarget,
+  vector: Record<string, string>,
 ): void {
   const { ASSEMBLER_CONFIG, DISPATCHER_CONFIG } = contract;
   const config = {
@@ -324,7 +405,7 @@ function writeSeaConfig(
     useSnapshot: ASSEMBLER_CONFIG.useSnapshot,
     useCodeCache: contract.useCodeCache(hostTriple(), target.triple),
     execArgvExtension: ASSEMBLER_CONFIG.execArgvExtension,
-    assets: { [DISPATCHER_CONFIG.servicesAsset]: servicesPath, ...webAssets(web) },
+    assets: { [DISPATCHER_CONFIG.servicesAsset]: servicesPath, ...webAssets(web), ...vector, ...migrationAssets() },
   };
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 }
@@ -368,7 +449,8 @@ async function main(): Promise<void> {
     `${JSON.stringify(contract.servicesAssetSchema.parse({ services: serviceIds }), null, 2)}\n`,
   );
   await bundle();
-  writeSeaConfig(binaryPath, web, contract, target);
+  const vector = await vectorAssets(target);
+  writeSeaConfig(binaryPath, web, contract, target, vector);
   buildSea(binaryPath, target);
 
   console.log(`sea executable: ${binaryPath} (${statSync(binaryPath).size} bytes)`);

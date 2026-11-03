@@ -14,7 +14,7 @@ updated: 2026-10-31
 
 [Home](../../README.md) | [Requirements](README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](../roadmap/PROPOSAL.md) | [Traceability](traceability.md) | [Backlog](../backlog/README.md)
 
-[Previous](12-agent-delivery.md) | [Up](README.md) | [Next](traceability.md)
+[Previous](12-agent-delivery.md) | [Up](README.md) | [Next](amendments-2026-11-02.md)
 
 ## Navigation
 

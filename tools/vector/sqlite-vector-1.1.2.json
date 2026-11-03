@@ -1,0 +1,59 @@
+{
+  "library": "sqlite-vector",
+  "version": "1.1.2",
+  "source": "npm registry, @sqliteai/sqlite-vector-<package>@1.1.2 (upstream https://github.com/sqliteai/sqlite-vector, release 1.1.2); tarballIntegrity is the registry dist.integrity, librarySha256 is the sha256 of the extracted binary",
+  "platforms": {
+    "darwin-arm64": {
+      "package": "@sqliteai/sqlite-vector-darwin-arm64",
+      "tarball": "https://registry.npmjs.org/@sqliteai/sqlite-vector-darwin-arm64/-/sqlite-vector-darwin-arm64-1.1.2.tgz",
+      "tarballIntegrity": "sha512-9BkSBlrTPylyVSw8IaqNRwfFzBpWFQMRFqcngLZz1TtMxqIaxddgem3OKA1RMGaE1wQnA4+/4KFBB1Zd8XmrbQ==",
+      "file": "vector.dylib",
+      "librarySha256": "51e3346eddac1bc7196764de291120361b1967ddd2679a997d173f5e8afd1848"
+    },
+    "darwin-x64": {
+      "package": "@sqliteai/sqlite-vector-darwin-x86_64",
+      "tarball": "https://registry.npmjs.org/@sqliteai/sqlite-vector-darwin-x86_64/-/sqlite-vector-darwin-x86_64-1.1.2.tgz",
+      "tarballIntegrity": "sha512-K8iWY1dmCLnk8ZuEhSzPJn+t3jVk2PX+lNbKiF1IE63aQEr9sC2IiX5hRzO7nidWUrrJcu1ecFxZUvdWdY8d2Q==",
+      "file": "vector.dylib",
+      "librarySha256": "3ab7ec5ebe0a7358b0bc2885cf77048e8d39a673a71d38c2cbf91a099aabd953"
+    },
+    "linux-arm64-glibc": {
+      "package": "@sqliteai/sqlite-vector-linux-arm64",
+      "tarball": "https://registry.npmjs.org/@sqliteai/sqlite-vector-linux-arm64/-/sqlite-vector-linux-arm64-1.1.2.tgz",
+      "tarballIntegrity": "sha512-waRqD9OevfhuknZn9mVue7+YIFiu2ayozwD2tX1SWETUEOrfg3Kz8RlzQIk4Qst7a69Qjx+jBTbq6hTmaBrH4A==",
+      "file": "vector.so",
+      "librarySha256": "3c485977eca0cd52c664b31ccf0a5c80af66ade16b0a2921f1413bac3f4f5668"
+    },
+    "linux-x64-glibc": {
+      "package": "@sqliteai/sqlite-vector-linux-x86_64",
+      "tarball": "https://registry.npmjs.org/@sqliteai/sqlite-vector-linux-x86_64/-/sqlite-vector-linux-x86_64-1.1.2.tgz",
+      "tarballIntegrity": "sha512-dIvF3i+L6lsrP37Y6GilHOdkpFzInRIeKXvneF2KAribkZTlhlYZ6NZ1p2ZYOyVDMM5SjDYk9nUVeY5wC/g3zw==",
+      "file": "vector.so",
+      "librarySha256": "0ce75607b5f5e973f0a1482c848c124ef6ae240677c4b7293446f1f73721d51b"
+    },
+    "linux-arm64-musl": {
+      "package": "@sqliteai/sqlite-vector-linux-arm64-musl",
+      "tarball": "https://registry.npmjs.org/@sqliteai/sqlite-vector-linux-arm64-musl/-/sqlite-vector-linux-arm64-musl-1.1.2.tgz",
+      "tarballIntegrity": "sha512-ewjSj4dm+/0Z6y+3pKVQI+LBKVAj1/3ZdMuEdufUkuO99NRcml+4wv0KrK5IDy1jfg4dU28FpLnUOczLS/1SuQ==",
+      "file": "vector.so",
+      "librarySha256": "b7fd52354263d6a0217b78e9a29901831207c337b531d29dc59fd0901154f269"
+    },
+    "linux-x64-musl": {
+      "package": "@sqliteai/sqlite-vector-linux-x86_64-musl",
+      "tarball": "https://registry.npmjs.org/@sqliteai/sqlite-vector-linux-x86_64-musl/-/sqlite-vector-linux-x86_64-musl-1.1.2.tgz",
+      "tarballIntegrity": "sha512-SgOHLRBrcS7QLSRJrUDUMWd3LmulV0azig0/r+TuAfzQRHV42NSKe6AS1l+qU1jkE+l+A1eXpTPwLZtby/NMmA==",
+      "file": "vector.so",
+      "librarySha256": "252259c40abff3b7b1ac8325532f3d89f18ea2fcb794e5afb91dc1861eac4230"
+    },
+    "win32-x64": {
+      "package": "@sqliteai/sqlite-vector-win32-x86_64",
+      "tarball": "https://registry.npmjs.org/@sqliteai/sqlite-vector-win32-x86_64/-/sqlite-vector-win32-x86_64-1.1.2.tgz",
+      "tarballIntegrity": "sha512-x4u92ICYFrp9HYxPBsgF61+gtJJ11kgfp68lSJwIsHXDYSgsB+h/dI3037XmBbdXHxXLMc7ZNtu3fUP/b9ZQEQ==",
+      "file": "vector.dll",
+      "librarySha256": "a704e28c5e77f26c72293d9864557fcef51ec10df2ae232e1ce462bbd966edb7"
+    }
+  },
+  "unavailable": [
+    "win32-arm64"
+  ]
+}

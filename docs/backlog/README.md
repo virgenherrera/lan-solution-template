@@ -4,9 +4,9 @@ doc: docs/backlog/README.md
 title: "Backlog index"
 type: backlog
 summary: "Backlog index of POC epics mapped to acceptance criteria and cycles."
-related[1]: docs/roadmap/PROPOSAL.md
+related[4]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/service-status-indicator.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-02
 -->
 
 # Backlog
@@ -58,11 +58,14 @@ Edges follow "Depends on" in [PROPOSAL.md](../roadmap/PROPOSAL.md#cycles-and-bet
 
 | Group | Epics | State |
 |---|---|---|
-| Cycle 1 | POC-1 (slices 1a to 1e), POC-2 (slices 2a to 2h), POC-3 | POC-1 and POC-2 slices 2a to 2h done (branch `minor/poc-02-supervisor`, draft PR pending); POC-3 planned |
+| Cycle 1 | POC-1 (slices 1a to 1e), POC-2 (slices 2a to 2h), POC-3 | POC-1, POC-2 and POC-3 done (POC-3 on branch `minor/poc-03-sqlite-vector`) |
 | Cycle 2 | POC-4, POC-5 | planned |
 | Cycle 3 | POC-7, POC-8 | planned |
+| After cycle 1 | DBM (slices DBM-a to DBM-h) | done on `minor/dbm-drizzle-migrations`; see [DBM-Result](../results/DBM-Result.md) |
+| After DBM | DBM schema gate (slices DBM-i to DBM-n) | done on `minor/dbm-schema-gate`; DBM-n done in the same branch (api-gateway database module); see [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md) |
 | Outside the cycles | POC-6 | BACKLOG |
 | Outside the cycles | POC-9 | on hold (decision 9) |
+| Unscheduled | Service status indicator | proposed |
 
 ---
 
@@ -88,13 +91,16 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | POC-2f | [Coordinated shutdown and orphan checks](poc-2f-coordinated-shutdown.md) | Done in commit `85a8ed3` on `minor/poc-02-supervisor` | AC-30 |
 | POC-2g | [Real-binary smoke test and Linux run](poc-2g-real-binary-smoke.md) | Done in commit `d5e8b04` on `minor/poc-02-supervisor` | AC-28, AC-29, AC-11 |
 | POC-2h | [POC-02 result and ADR-002](poc-2h-result-and-adr.md) | Done in the commit that adds [POC-02-Result](../results/POC-02-Result.md) and [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md), branch `minor/poc-02-supervisor` | AC-11, AC-29 |
-| POC-3 | [Config and SQLite vector persistence inside the SEA](poc-3-config-sqlite-vector.md) | Cycle 1 (planned) | AC-07, AC-08, AC-10 |
+| POC-3 | [Config and SQLite vector persistence inside the SEA](poc-3-config-sqlite-vector.md) | Done on `minor/poc-03-sqlite-vector`, slices 3a to 3g; see [POC-03-Result](../results/POC-03-Result.md) | AC-07, AC-08, AC-10 |
+| DBM | [Drizzle build-time migrations](dbm-drizzle-migrations.md) | Done on `minor/dbm-drizzle-migrations`, slices DBM-a to DBM-h; see [DBM-Result](../results/DBM-Result.md); extends POC-3 | AC-07, AC-08, AC-10 (as POC-3) |
+| DBM schema gate | [Live schema validation at startup](dbm-schema-gate.md) | Done on `minor/dbm-schema-gate`, slices DBM-i to DBM-n; see [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md); extends DBM | AC-07, AC-08, AC-10 (as POC-3) |
 | POC-4 | [HTTPS gateway serving the Angular PWA](poc-4-https-gateway-angular-pwa.md) | Cycle 2 (planned) | AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17 |
 | POC-5 | [Tauri desktop shell with SEA sidecar](poc-5-tauri-sidecar-desktop-shell.md) | Cycle 2 (planned) | AC-03, AC-18, AC-20, AC-30 |
 | POC-6 | [PostgreSQL adapter parity (BACKLOG)](poc-6-postgresql-adapter-parity.md) | BACKLOG | AC-09 |
 | POC-7 | [Auth and roles](poc-7-auth-roles.md) | Cycle 3 (planned) | AC-06 |
 | POC-8 | [MSI credential dialog, platform matrix and lockstep versioning](poc-8-msi-matrix-versioning.md) | Cycle 3 (planned) | AC-21, AC-25, AC-33 |
 | POC-9 | [GitHub Actions CI/CD and releases (HOLD)](poc-9-ci-cd-releases.md) | HOLD (decision 9) | AC-26, AC-27, AC-35, AC-36, AC-02, AC-32 |
+| none | [Service status indicator](service-status-indicator.md) | Proposed, unscheduled | none |
 
 ---
 
@@ -107,6 +113,6 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | AC definitions | [11-nx-quality-testing.md](../requirements/11-nx-quality-testing.md) |
 | Open question status | Table in PROPOSAL.md |
 | OQ1, OQ2, OQ4, OQ5, OQ8 | Decided (decisions 11 to 15) |
-| OQ6, OQ12 | Decided by the human |
+| OQ6, OQ12, OQ15 | Decided by the human |
 | OQ16, OQ17 | Proposed (OQ16 is a draft; a spike decides it) |
 | Blocking open questions | None |
