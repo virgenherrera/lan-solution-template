@@ -11,6 +11,10 @@
     "./sqlite": {
       "types": "./dist/db/sqlite/index.d.ts",
       "default": "./dist/db/sqlite/index.js"
+    },
+    "./tls": {
+      "types": "./dist/tls/index.d.ts",
+      "default": "./dist/tls/index.js"
     }
   },
   "scripts": {
