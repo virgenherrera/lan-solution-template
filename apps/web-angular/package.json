@@ -1,6 +1,6 @@
 {
   "name": "web-angular",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -13,26 +13,26 @@
     "package": "echo \"package: not defined for this package\""
   },
   "private": true,
-  "packageManager": "pnpm@12.16.1",
   "dependencies": {
-    "@angular/common": "22.2.4",
-    "@angular/compiler": "22.2.4",
-    "@angular/core": "22.2.4",
-    "@angular/forms": "22.2.4",
-    "@angular/platform-browser": "22.2.4",
-    "@angular/router": "22.2.4",
-    "rxjs": "7.8.2",
-    "tslib": "2.9.1"
+    "@angular/common": "catalog:angular",
+    "@angular/compiler": "catalog:angular",
+    "@angular/core": "catalog:angular",
+    "@angular/forms": "catalog:angular",
+    "@angular/platform-browser": "catalog:angular",
+    "@angular/router": "catalog:angular",
+    "rxjs": "catalog:",
+    "tslib": "catalog:"
   },
   "devDependencies": {
-    "@angular/build": "22.2.5",
-    "@angular/cli": "22.2.5",
-    "@angular/compiler-cli": "22.2.4",
-    "@tailwindcss/postcss": "4.3.3",
-    "postcss": "8.5.32",
-    "prettier": "3.9.10",
+    "@angular/build": "catalog:angular",
+    "@angular/cli": "catalog:angular",
+    "@angular/compiler-cli": "catalog:angular",
+    "@tailwindcss/postcss": "catalog:",
+    "postcss": "catalog:",
+    "prettier": "catalog:",
     "rimraf": "catalog:",
-    "tailwindcss": "4.3.3",
-    "typescript": "6.0.3"
-  }
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
+  },
+  "license": "PostgreSQL"
 }

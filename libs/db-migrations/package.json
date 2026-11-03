@@ -1,6 +1,6 @@
 {
   "name": "db-migrations",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "dist/contract/index.js",
   "scripts": {
@@ -16,16 +16,17 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "PostgreSQL",
   "type": "module",
   "types": "dist/contract/index.d.ts",
   "dependencies": {
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "24.19.2",
-    "drizzle-kit": "0.31.11",
-    "drizzle-orm": "0.45.4",
+    "@types/node": "catalog:",
+    "drizzle-kit": "catalog:",
+    "drizzle-orm": "catalog:",
     "rimraf": "catalog:"
-  }
+  },
+  "private": true
 }
