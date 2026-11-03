@@ -5,7 +5,7 @@ title: "SPIKE third-party license notices"
 type: backlog
 summary: "Spike: which third-party licenses ship in the SEA and Tauri artifacts, what they require, and how to bundle notices."
 ids[0]:
-related[3]: docs/results/SPIKE-spa-serving.md,docs/requirements/10-node-sea-distribution.md,docs/standards/README.md
+related[5]: docs/backlog/third-party-licenses.md,docs/results/SPIKE-spa-serving.md,docs/requirements/10-node-sea-distribution.md,docs/roadmap/PROPOSAL.md,docs/standards/README.md
 status: current
 updated: 2026-11-03
 -->
@@ -218,7 +218,7 @@ Follow-up slices (rough sizes are guesses, not measured):
 | E | Tauri: `cargo-about`, once the sidecar wiring is final | M, needs Rust tooling |
 | F | Requirement text and a CI allowlist check | S, human decision |
 
-Open questions for the human:
+Open questions for the human (tracked as [OQ18 to OQ22](../roadmap/PROPOSAL.md#open-questions); backlog item: [Third-party license notices](../backlog/third-party-licenses.md)):
 
 1. Is there a distribution plan (who receives the binaries) so the obligations apply? Internal-only use changes the analysis. Not verified.
 2. Add a requirement for third-party notices, and an allowlist policy (fail the build on copyleft)?
