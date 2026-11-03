@@ -25,7 +25,7 @@ updated: 2026-11-02
 
 ## Status
 
-Accepted, 2026-11-02, as the record of what DBM-j to DBM-m built. A packaged run and an independent verification prove it (0 blockers). The human asked for the direction. The details below are agent proposals. [REQ-DB-10](../../requirements/05-persistence.md) is a proposal too. The human has not approved it.
+Accepted, 2026-11-02, as the record of what DBM-j to DBM-m built. A packaged run and an independent verification prove it (0 blockers). The human asked for the direction. The details below are agent proposals. [REQ-DB-10](../../requirements/05-persistence.md) was approved by the human on 2026-11-02.
 
 ## Context
 
@@ -127,7 +127,7 @@ A change only in one of these passes as valid. The gate gives no safety there. T
 ## Consequences
 
 - [REQ-DB-06](../../requirements/05-persistence.md) gains a schema check between the migrations and DB ready.
-- [REQ-DB-10](../../requirements/05-persistence.md) is proposed. It is not approved.
+- [REQ-DB-10](../../requirements/05-persistence.md) is approved (2026-11-02).
 - `DbAdapter` gains `introspectSchema`. PostgreSQL implements it in POC-6.
 - On PostgreSQL, type names such as `varchar`, `bigint` and `vector` may give a false failure. The adapter maps them per engine. An unknown type shows raw in the message.
 - On SQLite in `DELETE` journal mode, a read inside an open transaction blocks writers. The gate uses `PRAGMA` without a transaction. It runs before any service spawns. `WAL` is the default.

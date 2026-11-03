@@ -65,7 +65,7 @@ Edges follow "Depends on" in [PROPOSAL.md](../roadmap/PROPOSAL.md#cycles-and-bet
 | After DBM | DBM schema gate (slices DBM-i to DBM-n) | done on `minor/dbm-schema-gate`; DBM-n done in the same branch (api-gateway database module); see [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md) |
 | Outside the cycles | POC-6 | BACKLOG |
 | Outside the cycles | POC-9 | on hold (decision 9) |
-| Unscheduled | Service status indicator | proposed |
+| Unscheduled | Service status indicator | supervisor endpoint done; consumers open |
 
 ---
 
@@ -100,7 +100,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | POC-7 | [Auth and roles](poc-7-auth-roles.md) | Cycle 3 (planned) | AC-06 |
 | POC-8 | [MSI credential dialog, platform matrix and lockstep versioning](poc-8-msi-matrix-versioning.md) | Cycle 3 (planned) | AC-21, AC-25, AC-33 |
 | POC-9 | [GitHub Actions CI/CD and releases (HOLD)](poc-9-ci-cd-releases.md) | HOLD (decision 9) | AC-26, AC-27, AC-35, AC-36, AC-02, AC-32 |
-| none | [Service status indicator](service-status-indicator.md) | Proposed, unscheduled | none |
+| none | [Service status indicator](service-status-indicator.md) | Supervisor endpoint done on `minor/service-status-indicator`; tray and web UI consumers open | none |
 
 ---
 

@@ -7,6 +7,7 @@ import {
   initConfig,
   migrate$,
   resolveRoot,
+  type AppConfig,
   type DbAdapter,
   type MigrationEvent,
 } from 'shared-core';
@@ -19,6 +20,7 @@ import { verifySchema$ } from './schema-check.js';
 export interface PersistenceBoot {
   readonly db: DbAdapter;
   readonly root: string;
+  readonly config: AppConfig;
   // Where the database lives, for operator messages.
   readonly location: string;
 }
@@ -43,7 +45,7 @@ function openDatabase$(log: Log, source: AssetSource, devAnchor?: string): Obser
     return from(db.connect()).pipe(
       // "file is not a database" alone does not say which file; the operator needs the path.
       catchError((error: unknown) => throwError(() => new Error(`cannot open the database at ${location}: ${error instanceof Error ? error.message : String(error)}`))),
-      map((): PersistenceBoot => ({ db, root: paths.root, location })),
+      map((): PersistenceBoot => ({ db, root: paths.root, config, location })),
       closeOnError(db),
     );
   });

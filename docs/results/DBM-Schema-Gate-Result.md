@@ -72,7 +72,7 @@ One verifier read `6ce1b2d..HEAD` and ran probes on a clean copy. It found 0 blo
 ## Decisions without a human answer
 
 - Slice names `DBM-i` to `DBM-m` are assumptions.
-- REQ-DB-10 stays a proposal until the human approves it.
+- REQ-DB-10 was approved by the human on 2026-11-02.
 - DBM-n: the api-gateway has a Nest database module. It opens one connection per service, does a one-time `SELECT 1` handshake while Nest builds the module, and closes it on shutdown. A failed handshake ends the start with exit 1. The supervisor passes its resolved root to services through `APP_HOME`. The module has no vector backend yet; the first service that needs vectors wires it. The `database` component of the status indicator is not built (a failed handshake aborts the start, so it would never show down).
 
 ## Gaps

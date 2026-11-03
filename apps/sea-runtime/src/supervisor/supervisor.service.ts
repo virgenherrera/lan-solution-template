@@ -13,12 +13,14 @@ import {
   startupOrder,
   stateMessageSchema,
   type AggregateState,
+  type StatusSnapshot,
 } from 'service-registry';
 import { seaAssetSource } from '../persistence/asset-source.js';
 import { bootPersistence$, type PersistenceBoot } from '../persistence/boot.js';
 import { devAnchor, fsAssetSource } from '../persistence/dev-assets.js';
 import { hasWebBundle, loadWebBundle, type WebFile } from '../web/web-bundle.js';
 import { forwardLines, prefixed, spawnedMessage, stateMessage } from './log-lines.js';
+import { StatusServer } from '../status/status-server.js';
 import { stopTree, treeSpawnOptions } from './process-tree.js';
 import { ServiceLifecycle } from './service-lifecycle.js';
 
@@ -28,6 +30,7 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
   private stopping = false;
   private state?: AggregateState;
   private persistence?: PersistenceBoot;
+  private readonly statusServer = new StatusServer(() => this.snapshot());
   private readonly onSignal = (signal: NodeJS.Signals): void => {
     void this.shutdown(signal, 0);
   };
@@ -70,6 +73,7 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
       this.services.push(lifecycle);
       lifecycle.start();
     }
+    await this.openStatusEndpoint();
     this.update();
   }
 
@@ -103,6 +107,20 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
     return child;
   }
 
+  // Per-service view for the status endpoint. Built on demand from the lifecycles, so it can never drift from them.
+  private snapshot(): StatusSnapshot {
+    const state = this.state ?? aggregateState(this.services.map(({ status }) => status), this.stopping);
+    return { state, services: this.services.map(({ id, status }) => ({ id, status })) };
+  }
+
+  // A busy port is logged and skipped: the indicator must not stop the runtime.
+  private async openStatusEndpoint(): Promise<void> {
+    const port = this.persistence?.config.supervisor.statusPort;
+    if (port === undefined) return;
+    const failure = await this.statusServer.listen(port);
+    this.log(failure === undefined ? `status endpoint on 127.0.0.1:${port}/status` : `status endpoint unavailable on port ${port}: ${failure.message}`);
+  }
+
   // Recomputes the aggregate state; on a change logs it, prints one JSON line for the desktop shell and forwards it to the children.
   private update(): void {
     const next = aggregateState(this.services.map(({ status }) => status), this.stopping);
@@ -133,6 +151,7 @@ export class SupervisorService implements OnModuleInit, OnModuleDestroy {
       service.stop();
       if (service.child !== undefined) await stopTree(service.id, service.child, SUPERVISOR_CONFIG, (text) => this.log(text));
     }
+    await this.statusServer.close();
     await this.persistence?.db.close();
     process.exit(exitCode);
   }

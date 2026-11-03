@@ -275,7 +275,7 @@ docs[70]:
     summary: "Proposed backlog item: a supervisor-owned, XAMPP-style per-service status surface that stays up while services restart."
     ids: []
     related[4]: docs/backlog/README.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/results/POC-02d-readiness-logs.md,docs/results/POC-02e-bounded-restart.md
-    status: proposed
+    status: current
     updated: 2026-11-02
     refs[1]: REQ-DESK-03
   - doc: docs/requirements/01-purpose-and-scope.md
