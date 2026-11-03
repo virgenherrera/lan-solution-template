@@ -5,9 +5,9 @@ title: Architecture overview
 type: architecture
 summary: Mermaid architecture diagrams citing SRS sections for runtime and desktop topology.
 ids[0]:
-related[1]: README.md
+related[2]: README.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # Architecture overview
@@ -123,9 +123,10 @@ sequenceDiagram
     T->>S: start sidecar once, no args (REQ-DESK-01, REQ-RUNTIME-03)
     S->>G: spawn same execPath with --service gateway (REQ-RUNTIME-03)
     G-->>S: IPC READY + health (SRS 9.1 sequence)
-    S-->>T: aggregate state starting/ready/degraded/error/stopping (REQ-RUNTIME-05)
+    S-->>T: stdout: one JSON status event per change, state starting/ready/degraded/error/stopping (REQ-RUNTIME-05, ADR-006)
+    S-->>T: stderr: log lines prefixed [id] (ADR-006)
     T->>V: show Angular served by the gateway (REQ-DESK-02)
-    T->>S: Quit: controlled shutdown (REQ-DESK-03, REQ-RUNTIME-06)
+    T->>S: Quit: stdin shutdown command (REQ-DESK-03, REQ-RUNTIME-06, ADR-006)
     S->>G: IPC SHUTDOWN, then app.close() (REQ-RUNTIME-06)
 ```
 
@@ -135,6 +136,7 @@ Sources:
 - Tauri/Rust starts, monitors and stops only the supervisor. The supervisor manages the Nest processes. Source: SRS section 9, [REQ-DESK-02](../requirements/09-desktop-tauri.md) and [REQ-DESK-05](../requirements/09-desktop-tauri.md).
 - The WebView shows the same Angular served from the gateway process: SRS section 9, [REQ-DESK-02](../requirements/09-desktop-tauri.md).
 - The host stays operable from LAN clients with the window hidden: SRS section 9, [REQ-DESK-06](../requirements/09-desktop-tauri.md).
+- Sidecar channels: stdout carries `status` events (JSON, one per line), stderr carries the logs, stdin carries host commands. The supervisor opens no HTTP listener. Contract and Tauri facts: [ADR-006](adr/ADR-006-sidecar-status-contract.md). The host side is not verified (POC-5).
 - Shutdown over IPC on `stdio`, then timeout and forced termination: SRS section 9.1, [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md).
 
 ---
@@ -143,7 +145,7 @@ Sources:
 
 [Back to navigation](#navigation)
 
-The [roadmap proposal](../roadmap/PROPOSAL.md#pitches) defines ADR numbering once. Each POC deliverable names its ADR. The numbers are proposals, not SRS requirements. ADR-001 is written. Each other entry below is a placeholder. Topics come from SRS v1.6 text.
+The [roadmap proposal](../roadmap/PROPOSAL.md#pitches) defines ADR numbering once. Each POC deliverable names its ADR. The numbers are proposals, not SRS requirements. [ADR-006: Sidecar status contract](adr/ADR-006-sidecar-status-contract.md) exists as a file under that number. This list is not renumbered. ADR-001 is written. Each other entry below is a placeholder. Topics come from SRS v1.6 text.
 
 ### ADR-001: Toolchain substitution
 
