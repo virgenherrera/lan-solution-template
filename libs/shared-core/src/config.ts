@@ -21,12 +21,6 @@ export const configSchema = z.object({
         .prefault({}),
     })
     .prefault({}),
-  supervisor: z
-    .object({
-      // Loopback port of the supervisor status endpoint, separate from the gateway so it keeps answering while the gateway restarts.
-      statusPort: z.number().int().min(1).max(65535).default(3001),
-    })
-    .prefault({}),
 });
 
 export type AppConfig = DeepReadonly<z.infer<typeof configSchema>>;
