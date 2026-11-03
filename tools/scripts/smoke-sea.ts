@@ -9,11 +9,10 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { parseArgs } from 'node:util';
-import { SPAWNED_PATTERN, stateMessage } from '../../apps/sea-runtime/src/supervisor/log-lines.ts';
 import { serverConfigSchema } from '../../apps/api-gateway/src/server-config.ts';
 
 const root = resolve(import.meta.dirname, '..', '..');
-const { AGGREGATE_STATE, DISPATCHER_CONFIG, SUPERVISOR_CONFIG } = (await import(
+const { AGGREGATE_STATE, DISPATCHER_CONFIG, SIDECAR_KIND, SPAWNED_PATTERN, SUPERVISOR_CONFIG, sidecarEventSchema, stateMessage } = (await import(
   join(root, 'libs', 'service-registry', 'dist', 'index.js')
 )) as typeof import('service-registry');
 
@@ -44,6 +43,7 @@ const BAD_SELECTORS: readonly (readonly string[])[] = [
 
 const { values } = parseArgs({ options: { artifacts: { type: 'string' } } });
 const artifactsDir = resolve(values.artifacts ?? join(root, 'artifacts', 'sea-runtime'));
+type SidecarEvent = import('service-registry').SidecarEvent;
 const sleep = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms));
 const smokeRoot = mkdtempSync(join(tmpdir(), 'lan-smoke-'));
 process.on('exit', () => rmSync(smokeRoot, { recursive: true, force: true }));
@@ -52,18 +52,21 @@ const knownPids = new Set<number>();
 let current: Run | undefined;
 let passed = 0;
 
+// The host sees stdout (machine events) and stderr (log lines) apart, so a Run keeps them apart too.
 class Run {
   readonly lines: string[] = [];
+  readonly stdoutLines: string[] = [];
   readonly exited: Promise<number | null>;
   exitCode: number | null | undefined;
   private readonly child: ChildProcess;
 
   constructor(binary: string, args: readonly string[], home: string = smokeRoot) {
     // APP_HOME points the paths library at a scratch root; the default OS root is not writable for a test run.
-    this.child = spawn(binary, [...args], { stdio: ['ignore', 'pipe', 'pipe'], env: { APP_HOME: home } });
-    for (const stream of [this.child.stdout, this.child.stderr]) {
-      if (stream) createInterface({ input: stream }).on('line', (line) => this.lines.push(line));
-    }
+    this.child = spawn(binary, [...args], { stdio: ['pipe', 'pipe', 'pipe'], env: { APP_HOME: home } });
+    // stdin stays open: EOF on it shuts the supervisor down.
+    this.child.stdin?.on('error', () => undefined);
+    if (this.child.stdout) createInterface({ input: this.child.stdout }).on('line', (line) => this.stdoutLines.push(line));
+    if (this.child.stderr) createInterface({ input: this.child.stderr }).on('line', (line) => this.lines.push(line));
     this.exited = new Promise((done) =>
       this.child.on('exit', (code) => {
         this.exitCode = code;
@@ -75,6 +78,29 @@ class Run {
 
   get pid(): number {
     return this.child.pid ?? -1;
+  }
+
+  send(line: string): void {
+    this.child.stdin?.write(`${line}\n`);
+  }
+
+  // Every stdout line must be a valid sidecar event; the first one that is not fails the check.
+  events(): SidecarEvent[] {
+    return this.stdoutLines.map((line, index) => {
+      let json: unknown;
+      try {
+        json = JSON.parse(line);
+      } catch {
+        throw new Error(`stdout line ${index + 1} is not JSON: ${line.slice(0, TAIL_WIDTH)}`);
+      }
+      const parsed = sidecarEventSchema.safeParse(json);
+      if (!parsed.success) throw new Error(`stdout line ${index + 1} is not a sidecar event: ${parsed.error.message}`);
+      return parsed.data;
+    });
+  }
+
+  hasState(state: string): boolean {
+    return this.events().some((event) => event.state === state);
   }
 
   signal(name: NodeJS.Signals): void {
@@ -162,7 +188,9 @@ async function check(name: string, body: () => Promise<string | void>): Promise<
     console.log(`ok   ${TAG} ${name}${detail ? ` (${detail})` : ''} [${Date.now() - begun} ms]`);
   } catch (error) {
     console.log(`FAIL ${TAG} ${name}: ${error instanceof Error ? error.message : String(error)}`);
-    for (const line of (current?.lines ?? []).slice(-TAIL_LINES)) console.log(`     | ${line.slice(0, TAIL_WIDTH)}`);
+    for (const [stream, lines] of [['stderr', current?.lines ?? []], ['stdout', current?.stdoutLines ?? []]] as const) {
+      for (const line of lines.slice(-TAIL_LINES)) console.log(`     ${stream} | ${line.slice(0, TAIL_WIDTH)}`);
+    }
     current?.signal('SIGKILL');
     for (const pid of knownPids) if (alive(pid)) process.kill(pid, 'SIGKILL');
     process.exit(1);
@@ -234,7 +262,8 @@ let childPid = -1;
 
 await check(`no arguments: supervisor ${AGGREGATE_STATE.ready}`, async () => {
   run = await startReady(binary);
-  expect(run.lines.some((line) => line.includes(stateMessage(AGGREGATE_STATE.ready))), `no supervisor line "${stateMessage(AGGREGATE_STATE.ready)}"`);
+  expect(run.lines.some((line) => line.includes(stateMessage(AGGREGATE_STATE.ready))), `no stderr line "${stateMessage(AGGREGATE_STATE.ready)}"`);
+  expect(run.hasState(AGGREGATE_STATE.ready), `no ${SIDECAR_KIND.status} event with state ${AGGREGATE_STATE.ready} on stdout`);
   const pids = run.spawnedPids();
   expect(pids.length === 1, `expected 1 spawned service, saw ${pids.length}`);
   childPid = pids[0];
@@ -294,6 +323,22 @@ await check('database: app_meta keys and schema_migrations row', async () => {
   }
 });
 
+await check('stdout carries only valid sidecar events', async () => {
+  const events = run.events();
+  expect(events.length > 0, 'stdout is empty');
+  expect(events.every((event) => event.kind === SIDECAR_KIND.status), 'unexpected event kind');
+  return `${events.length} events`;
+});
+
+await check('invalid stdin line is ignored', async () => {
+  run.send('not json');
+  run.send(JSON.stringify({ kind: 'nope' }));
+  await sleep(SLACK_MS / 5);
+  expect(run.exitCode === undefined, `supervisor exited ${run.exitCode}`);
+  expect((await healthState()) === AGGREGATE_STATE.ready, `${ROUTES.health} is not ${AGGREGATE_STATE.ready}`);
+  run.events();
+});
+
 await check(`child killed (SIGKILL) returns to ${AGGREGATE_STATE.ready}`, async () => {
   process.kill(childPid, 'SIGKILL');
   const next = await until(() => run.spawnedPids()[1], RESTART_WAIT_MS, 'second spawn');
@@ -310,6 +355,16 @@ await check('SIGTERM: exit 0, no process left', async () => {
   const code = await run.exit(STOP_WAIT_MS, 'supervisor after SIGTERM');
   expect(code === 0, `supervisor exited ${code}`);
   await allGone([run.pid, ...knownPids], 'after SIGTERM');
+  expect(await portFree(), `port ${PORT} still in use`);
+});
+
+await check('stdin shutdown command: exit 0, no process left', async () => {
+  knownPids.clear();
+  const stopping = await startReady(binary);
+  stopping.send(JSON.stringify({ kind: SIDECAR_KIND.shutdown }));
+  const code = await stopping.exit(STOP_WAIT_MS, 'supervisor after the shutdown command');
+  expect(code === 0, `supervisor exited ${code}`);
+  await allGone([stopping.pid, ...knownPids], 'after the shutdown command');
   expect(await portFree(), `port ${PORT} still in use`);
 });
 
@@ -346,7 +401,8 @@ await check(`restart budget (${SUPERVISOR_CONFIG.maxRestarts}) ends in ${AGGREGA
   process.kill(budget.spawnedPids()[SUPERVISOR_CONFIG.maxRestarts], 'SIGKILL');
   const code = await budget.exit(STOP_WAIT_MS, 'supervisor after the budget');
   expect(code === SUPERVISOR_CONFIG.errorExitCode, `supervisor exited ${code}`);
-  expect(budget.lines.some((line) => line.includes(stateMessage(AGGREGATE_STATE.error))), `no supervisor line "${stateMessage(AGGREGATE_STATE.error)}"`);
+  expect(budget.lines.some((line) => line.includes(stateMessage(AGGREGATE_STATE.error))), `no stderr line "${stateMessage(AGGREGATE_STATE.error)}"`);
+  expect(budget.hasState(AGGREGATE_STATE.error), `no ${SIDECAR_KIND.status} event with state ${AGGREGATE_STATE.error} on stdout`);
   expect(budget.spawnedPids().length === SUPERVISOR_CONFIG.maxRestarts + 1, `spawned ${budget.spawnedPids().length} times`);
   await allGone(knownPids, 'after the budget');
   return `${budget.spawnedPids().length} spawns`;
