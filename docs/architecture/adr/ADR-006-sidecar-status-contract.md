@@ -6,7 +6,7 @@ type: architecture
 summary: "Defines the stdio contract with the host, no HTTP listener, and one typed array that declares the services."
 ids[0]:
 related[5]: docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/overview.md,docs/backlog/service-status-indicator.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/requirements/traceability.md
-status: proposed
+status: current
 updated: 2026-11-03
 -->
 
@@ -25,7 +25,7 @@ updated: 2026-11-03
 
 ## Status
 
-Proposed, 2026-11-03. The human asked for this direction in the `sea-runtime-nest` request: "no veo porque esta app deba ser http, en serio" and "el status que sea-runtime debe pasar a tauri DEBE SER lo que tauri espera de su sidecar y este es totalmente independiente del /api/health que entrega el api gateway". The details below are agent proposals. The contract is implemented in `libs/service-registry/src` and `apps/sea-runtime`, merged in PR #15.
+Accepted, 2026-11-03 (merged in PR #15). The human asked for this direction in the `sea-runtime-nest` request: "no veo porque esta app deba ser http, en serio" and "el status que sea-runtime debe pasar a tauri DEBE SER lo que tauri espera de su sidecar y este es totalmente independiente del /api/health que entrega el api gateway". The details below are agent proposals. The contract is implemented in `libs/service-registry/src` and `apps/sea-runtime`, merged in PR #15.
 
 This ADR reverses one decision of PR #13. That PR added a supervisor-owned HTTP `GET /status` endpoint. The agent took that decision without a human answer (see the [indicator page](../../backlog/service-status-indicator.md#open-questions)). The human now rejects it.
 

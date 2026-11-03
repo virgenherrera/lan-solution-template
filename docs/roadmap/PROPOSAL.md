@@ -95,8 +95,8 @@ flowchart LR
 
 ```mermaid
 stateDiagram-v2
-    state "proposed (8 rows)" as proposed
-    state "decided by human (14 rows)" as human_decision
+    state "proposed (7 rows)" as proposed
+    state "decided by human (15 rows)" as human_decision
     state "decided by human - pending spike (2 rows)" as pending_spike
     state "open (1 row)" as open_q
     open_q --> human_decision : human decision
@@ -649,13 +649,13 @@ Acceptance criteria coverage:
 
 Decision Log items 1-10 are not in the table. Items 11-15 settle OQ1, OQ2, OQ4, OQ5 and OQ8.
 
-Items 11-15, OQ6, OQ12, OQ18 to OQ22, OQ23 and OQ25 are human decisions. The other resolutions are agent proposals.
+Items 11-15, OQ6, OQ12, OQ14, OQ18 to OQ23 and OQ25 are human decisions. The other resolutions are agent proposals.
 
 **Ownership summary** (the command in [Checks](../standards/README.md#checks) prints these counts)
 
 - Rows: 25.
 - Owner: 10 human, 9 agent:builder, 5 agent:researcher, 1 agent:verifier.
-- Status: 9 `decided (human)`. 1 each of `decided (human decision 11)`, `decided (human decision 12)`, `decided (human decision 15)`, `decided (human decision, POC-2 D2)` and `decided (human, 2026-11-02); text applied in REQ-STACK-07`. 2 pending spike (decisions 13 and 14). 8 `proposed`. 1 `open` (OQ24).
+- Status: 10 `decided (human)`. 1 each of `decided (human decision 11)`, `decided (human decision 12)`, `decided (human decision 15)`, `decided (human decision, POC-2 D2)` and `decided (human, 2026-11-02); text applied in REQ-STACK-07`. 2 pending spike (decisions 13 and 14). 7 `proposed`. 1 `open` (OQ24).
 - Blocking: 25 `no`. No row has status `needs human decision`.
 
 Claims marked "not verified" stay unverified until a spike or a primary source confirms them.
@@ -675,7 +675,7 @@ Claims marked "not verified" stay unverified until a spike or a primary source c
 | OQ11 | Restart, backoff and readiness values (A3). | Constants in `SUPERVISOR_CONFIG` (Zod defaults): readiness timeout 30 s. Backoff 1 s, doubling, capped at 30 s, with 20 percent jitter. At most 5 restarts in 300 s. Counter reset after 60 s stable. Graceful stop 10 s. After exhaustion: state `error`, no more restarts, shown to Tauri. Measured in POC-2: [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md). | agent:builder | no | decided (human decision, POC-2 D2) |
 | OQ12 | Autostart default: on or opt-in (A7). | Decided by the human: autostart is opt-in and off by default. The user enables it with a checkbox in the tray menu. The MSI checkbox appears unchecked on Windows. The app persists the choice. This matches REQ-DESK-04. The Tauri autostart plugin needs Rust 1.90 or later (not independently verified). | agent:builder | no | decided (human) |
 | OQ13 | Rust audit tool and threshold (A9). | Run `cargo deny check advisories` in CI and before release. Set yanked to deny. Keep the defaults for unmaintained and unsound. Any vulnerability fails: the cargo-deny docs list `severity-threshold` as removed. Each ignore needs a reason and a 90-day expiry. Run weekly and on `Cargo.lock` change. Noise from transitive Tauri deps is not verified. | agent:builder | no (CI on HOLD) | proposed |
-| OQ14 | Persisted config bootstrap before the DB exists (A-01). | Settled by OQ23 and OQ25: the bootstrap config is `config/config.json` under the base directory. Zod validates it. The runtime never creates it and never defaults it. It holds the DB engine and its block. A-01 is not present in the SRS. | agent:builder | no | proposed |
+| OQ14 | Persisted config bootstrap before the DB exists (A-01). | Settled by OQ23 and OQ25: the bootstrap config is `config/config.json` under the base directory. Zod validates it. The runtime never creates it and never defaults it. It holds the DB engine and its block. A-01 is not present in the SRS. | agent:builder | no | decided (human) |
 | OQ15 | Does the fallback to `1.0.0-rc.5` need an SRS amendment (REQ-STACK-07)? | Yes, as a text fix. Closed by the 2026-11-02 amendment: REQ-STACK-07 now pins `drizzle-orm` `0.45.4` and `drizzle-kit` `0.31.11`, exact. `1.0.0-rc.5` stays the fallback for both. Record the chosen tags. See [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md) and [amendments-2026-11-02](../requirements/amendments-2026-11-02.md). | agent:builder | no | decided (human, 2026-11-02); text applied in REQ-STACK-07 |
 | OQ16 | Windows MSI scope: per-machine or per-user? | Draft: a per-machine MSI. The installer POC (POC-8) starts with a blocking spike on WiX and Tauri capabilities. It compares per-machine, dual and per-user installs, then decides. The gateway serves the LAN. The spike also decides the install folder. Per-machine installs to Program Files, and writing there needs an administrator. Source: Microsoft Learn, MSI installation context (read 2026-10-30). WiX v4 scope names and folder ACLs are not verified. | agent:builder | no | proposed |
 | OQ17 | Install-time choice. Server mode installs gateway and app. Client mode installs app only and connects to an existing LAN server. | Proposed. It touches the installer (POC-8) and the Tauri shell (POC-5). It also touches TLS trust of the server certificate (POC-4). Not designed yet. No part is verified. | human | no | proposed |
