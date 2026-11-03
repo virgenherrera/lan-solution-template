@@ -12,6 +12,8 @@ updated: 2026-11-03
 
 # SPIKE third-party license notices
 
+Superseded 2026-11-03: the recommendation to generate and embed `THIRD-PARTY-NOTICES.txt` is not built. The template ships documentation only. See [Third-party license notices](../backlog/third-party-licenses.md).
+
 [Home](../../README.md) | [Requirements](../requirements/README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](../roadmap/PROPOSAL.md) | [Traceability](../requirements/traceability.md) | [Backlog](../backlog/README.md)
 
 Branch: `chore/third-party-licenses`. Question: should the repo bundle the licenses of its dependencies with what it ships, and how? This page is engineering research. It is not legal advice. Ask a lawyer before you rely on it.

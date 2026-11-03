@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { jsonText } from 'service-registry';
 import { z } from 'zod';
 import type { AssetSource } from './asset-source.js';
 
@@ -12,7 +13,7 @@ const SEA_CONFIG = join('dist', 'sea-package', 'sea-config.json');
 
 // Walks up from this file until the workspace marker. The root comes from the file's location, never the cwd,
 // because `pnpm --filter` changes the cwd to the app folder. No fixed depth: the bundler may report the source or the dist path.
-export function devAnchor(): string {
+export function repoRoot(): string {
   let dir = dirname(fileURLToPath(import.meta.url));
   while (!existsSync(join(dir, WORKSPACE_MARKER))) {
     const parent = dirname(dir);
@@ -24,10 +25,10 @@ export function devAnchor(): string {
 
 const seaConfigSchema = z.object({ assets: z.record(z.string(), z.string()) });
 
-function readAssetMap(repoRoot: string): Record<string, string> {
-  const configPath = join(repoRoot, SEA_CONFIG);
+function readAssetMap(base: string): Record<string, string> {
+  const configPath = join(base, SEA_CONFIG);
   if (!existsSync(configPath)) throw new Error(`${configPath} not found: ${PACKAGE_HINT}`);
-  return seaConfigSchema.parse(JSON.parse(readFileSync(configPath, 'utf8'))).assets;
+  return jsonText(seaConfigSchema).parse(readFileSync(configPath, 'utf8')).assets;
 }
 
 function readFile(name: string, path: string): Buffer {
@@ -36,8 +37,8 @@ function readFile(name: string, path: string): Buffer {
 }
 
 // Same name list the SEA embeds: the assets map of sea-config.json maps each name to its file.
-export function fsAssetSource(repoRoot: string = devAnchor()): AssetSource {
-  const assets = readAssetMap(repoRoot);
+export function fsAssetSource(base: string = repoRoot()): AssetSource {
+  const assets = readAssetMap(base);
   return {
     readText(name) {
       const path = assets[name];

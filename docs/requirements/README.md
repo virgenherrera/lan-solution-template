@@ -7,7 +7,7 @@ summary: Index of the SRS split into requirement pages with REQ and AC counts.
 ids[0]:
 related[0]:
 status: current
-updated: 2026-10-30
+updated: 2026-11-03
 -->
 
 # Requirements
@@ -18,7 +18,6 @@ updated: 2026-10-30
 
 - [At a glance](#at-a-glance)
 - [Reading order](#reading-order)
-- [Related pages](#related-pages)
 
 ## At a glance
 
@@ -29,7 +28,7 @@ One page per SRS section. Pick a page below.
 ```mermaid
 flowchart LR
   SRS["SRS v1.6"] --> PG["Pages 01 to 12"]
-  AM["Amendments 2026-10-30"] -.-> PG
+  AM["Amendments"] -.-> PG
   PG --> TR["Traceability"]
   TR --> RM["Roadmap proposal"]
   RM --> BK["Backlog epics"]
@@ -55,7 +54,7 @@ REQ and AC columns count the ids each page defines.
 | [02-technology-baseline.md](02-technology-baseline.md) | Technology baseline and reproducibility | 2 | 12 | 0 |
 | [03-file-structure.md](03-file-structure.md) | File structure | 3 | 5 | 0 |
 | [04-configuration.md](04-configuration.md) | Configuration | 4 | 6 | 0 |
-| [05-persistence.md](05-persistence.md) | Persistence, vectors and migrations | 5 | 9 | 0 |
+| [05-persistence.md](05-persistence.md) | Persistence, vectors and migrations | 5 | 10 | 0 |
 | [06-web-gateway-https-pwa.md](06-web-gateway-https-pwa.md) | Dev, web packaging, LAN gateway, HTTPS and PWA | 6 | 20 | 0 |
 | [07-security.md](07-security.md) | Default security | 7 | 6 | 0 |
 | [08-web-angular.md](08-web-angular.md) | Angular web | 8 | 4 | 0 |
@@ -63,16 +62,4 @@ REQ and AC columns count the ids each page defines.
 | [10-node-sea-distribution.md](10-node-sea-distribution.md) | Node SEA and distribution | 10 | 6 | 0 |
 | [11-nx-quality-testing.md](11-nx-quality-testing.md) | Nx, quality and testing | 11 | 42 | 36 |
 | [12-agent-delivery.md](12-agent-delivery.md) | Delivery instructions for the agent | 12 | 0 | 0 |
-| **Total** | | | 124 | 36 |
-
-## Related pages
-
-[Back to navigation](#navigation)
-
-| Page | Role |
-|---|---|
-| [Amendments 2026-10-30](amendments-2026-10-30.md) | Changes applied to the v1.6 text |
-| [Amendments 2026-11-02](amendments-2026-11-02.md) | Drizzle at build time and the migrations REQ changes |
-| [Traceability](traceability.md) | Maps each REQ and AC id to its file and POC |
-| [Architecture](../architecture/overview.md) | Overview |
-| [Standards](../standards/README.md) | Doc standards |
+| **Total** | | | 125 | 36 |

@@ -3,10 +3,10 @@ fmt: TOON
 doc: docs/architecture/adr/ADR-001-version-substitutions.md
 title: "ADR-001 Version substitutions in POC-1"
 type: architecture
-summary: "Records the version and tool substitutions made in POC-1 where the SRS pins or the registry policy did not allow the baseline."
+summary: "Records the POC-1 version and tool substitutions where SRS pins or the registry policy blocked the baseline."
 related[3]: docs/architecture/overview.md,docs/roadmap/PROPOSAL.md,docs/results/POC-01-Result.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # ADR-001: Version substitutions in POC-1

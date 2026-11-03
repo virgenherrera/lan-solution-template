@@ -1,0 +1,11 @@
+{
+  "db": {
+    "engine": "sqlite",
+    "sqlite": {
+      "file": "lan.db",
+      "foreignKeys": true,
+      "journalMode": "WAL",
+      "synchronous": "FULL"
+    }
+  }
+}

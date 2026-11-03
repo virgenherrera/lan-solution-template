@@ -1,3 +1,4 @@
+import type { Engine } from './engines.js';
 import type { ColumnDescriptor, IndexDescriptor } from './descriptor.js';
 import type { AppMetaRow } from './domain.js';
 
@@ -23,5 +24,7 @@ export const appMetaTable: TableDescriptor<AppMetaRow> = {
   indexes: [],
 };
 
-// Every table the migrations are expected to create. A new table is added here and to the engine schemas.
-export const tables: readonly TableDescriptor<any>[] = [appMetaTable];
+// Every table each engine's migrations are expected to create. A new table is added here and to the engine schemas; a new engine adds a key.
+export const tablesByEngine: Readonly<Record<Engine, readonly TableDescriptor<any>[]>> = {
+  sqlite: [appMetaTable],
+};

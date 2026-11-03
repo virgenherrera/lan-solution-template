@@ -7,7 +7,7 @@ summary: "Result of the schema gate: the runtime reads the live schema once afte
 ids[0]:
 related[4]: docs/backlog/dbm-schema-gate.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/results/DBM-Result.md,docs/requirements/amendments-2026-11-02.md
 status: current
-updated: 2026-11-02
+updated: 2026-11-03
 -->
 
 # DBM Schema Gate Result
@@ -73,7 +73,7 @@ One verifier read `6ce1b2d..HEAD` and ran probes on a clean copy. It found 0 blo
 
 - Slice names `DBM-i` to `DBM-m` are assumptions.
 - REQ-DB-10 was approved by the human on 2026-11-02.
-- DBM-n: the api-gateway has a Nest database module. It opens one connection per service, does a one-time `SELECT 1` handshake while Nest builds the module, and closes it on shutdown. A failed handshake ends the start with exit 1. The supervisor passes its resolved root to services through `APP_HOME`. The module has no vector backend yet; the first service that needs vectors wires it. The `database` component of the status indicator is not built (a failed handshake aborts the start, so it would never show down).
+- DBM-n: the api-gateway has a Nest database module. It opens one connection per service, does a one-time `SELECT 1` handshake while Nest builds the module, and closes it on shutdown. A failed handshake ends the start with exit 1. The supervisor passes its resolved root to services through `APP_HOME`. The module has no vector backend yet; the first service that needs vectors wires it. The `database` component of the status indicator is not built (a failed handshake aborts the start, so it would never show down). Superseded 2026-11-03: `APP_HOME` is removed. The base directory is `process.cwd()` in dev and the executable directory when packaged ([ADR-007](../architecture/adr/ADR-007-persistence-system.md#one-base-directory)).
 
 ## Gaps
 

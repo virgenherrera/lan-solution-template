@@ -9,6 +9,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
+import { z } from 'zod';
 import * as rspackNamespace from '@rspack/core';
 import sharedNestConfig from '../rspack/nest.config.ts';
 import {
@@ -18,10 +19,47 @@ import {
   buildInfoAssetName,
   manifestAssetName,
   migrationAssetName,
-  migrationsDir,
+  packOutDirFor,
 } from './pack-migrations.ts';
 
 const root = resolve(import.meta.dirname, '..', '..');
+// The pack step wrote the migration manifest with this schema, so it is read back with it (pack-migrations.ts runs first and builds nothing here).
+const { manifestSchema } = (await import(join(root, 'libs', 'db-migrations', 'dist', 'contract', 'index.js'))) as typeof import('db-migrations');
+// The assembler loads the contract library from its build output, as it does for db-migrations above.
+const { jsonText } = (await import(join(root, 'libs', 'service-registry', 'dist', 'json-text.js'))) as typeof import('../../libs/service-registry/dist/json-text.js');
+
+// Only the fields this script reads. Files other tools own (package.json, angular.json, nx output) stay loose; the vector pin table is ours and stays strict.
+const rootPackageSchema = z.looseObject({ engines: z.looseObject({ node: z.string().optional() }).optional() });
+const mainPackageSchema = z.looseObject({ main: z.string().optional() });
+const dependencyPackageSchema = z.looseObject({
+  dependencies: z.record(z.string(), z.string()).optional(),
+  devDependencies: z.record(z.string(), z.string()).optional(),
+});
+const nxProjectSchema = z.looseObject({ root: z.string() });
+const angularJsonSchema = z.looseObject({
+  architect: z.looseObject({ build: z.looseObject({ options: z.looseObject({ outputPath: z.string().optional() }).optional() }).optional() }).optional(),
+});
+const vectorTableSchema = z.strictObject({
+  library: z.string(),
+  version: z.string(),
+  source: z.string(),
+  platforms: z.record(
+    z.string(),
+    z.strictObject({ package: z.string(), tarball: z.string(), tarballIntegrity: z.string(), file: z.string(), librarySha256: z.string() }),
+  ),
+  unavailable: z.array(z.string()),
+});
+
+function readJson<S extends z.ZodType>(path: string, schema: S): z.output<S> {
+  return parseJson(path, readFileSync(path, 'utf8'), schema);
+}
+
+function parseJson<S extends z.ZodType>(label: string, text: string, schema: S): z.output<S> {
+  const parsed = jsonText(schema).safeParse(text);
+  if (!parsed.success) throw new Error(`${label}: ${z.prettifyError(parsed.error)}`);
+  return parsed.data;
+}
+
 const workDir = join(root, 'dist', 'sea-package');
 const entryPath = join(workDir, 'entry.mjs');
 const bundlePath = join(workDir, 'sea-app.mjs');
@@ -102,9 +140,7 @@ function satisfiesEngine(version: Version, range: string): boolean {
 }
 
 function assertBuildNodeMatchesEngine(): void {
-  const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
-    engines?: { node?: string };
-  };
+  const pkg = readJson(join(root, 'package.json'), rootPackageSchema);
   const range = pkg.engines?.node;
   if (!range) throw new Error('root package.json has no engines.node');
   const version = parseVersion(process.version);
@@ -153,9 +189,11 @@ function resolveTarget(argv: readonly string[]): { supervisor: string; target: B
 
 // Asks Nx where a project lives; the project name is the package name.
 function projectRoot(name: string): string {
-  const project = JSON.parse(
+  const project = parseJson(
+    `nx project ${name}`,
     execFileSync('pnpm', ['exec', 'nx', 'show', 'project', name, '--json'], { cwd: root, encoding: 'utf8' }),
-  ) as { root: string };
+    nxProjectSchema,
+  );
   return join(root, project.root);
 }
 
@@ -163,9 +201,7 @@ function projectRoot(name: string): string {
 function webBrowserDir(name: string, projectDir: string): string {
   const angularJson = join(projectDir, 'angular.json');
   const config = existsSync(angularJson)
-    ? (JSON.parse(readFileSync(angularJson, 'utf8')) as {
-        architect?: { build?: { options?: { outputPath?: string } } };
-      })
+    ? readJson(angularJson, angularJsonSchema)
     : undefined;
   const outputPath = config?.architect?.build?.options?.outputPath ?? join('dist', name);
   return join(projectDir, outputPath, 'browser');
@@ -180,7 +216,7 @@ type ServiceRoute = import('service-registry').ServiceRoute;
 // Loads the built contract library; every other literal of the assembler comes from its ASSEMBLER_CONFIG.
 async function loadRegistry(): Promise<{ lib: LibEntry; contract: Registry }> {
   const dir = projectRoot(REGISTRY_LIB);
-  const main = (JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { main?: string }).main;
+  const main = readJson(join(dir, 'package.json'), mainPackageSchema).main;
   if (main === undefined || !existsSync(join(dir, main))) {
     throw new Error(`${REGISTRY_LIB}: missing built "main" under ${dir}; run the ${REGISTRY_LIB} build target first`);
   }
@@ -198,7 +234,7 @@ function classify(
   if (existsSync(entry)) return { kind: 'service', entry: { service: name, entryPath: entry } };
   const browser = webBrowserDir(name, dir);
   if (existsSync(join(browser, 'index.html'))) return { kind: 'web', bundle: { name, dir: browser } };
-  const main = (JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { main?: string }).main;
+  const main = readJson(join(dir, 'package.json'), mainPackageSchema).main;
   if (main !== undefined && existsSync(join(dir, main))) return { kind: 'lib', lib: { name, entryPath: join(dir, main) } };
   throw new Error(
     `${name}: neither a service (missing ${entry}), a web bundle (missing ${join(browser, 'index.html')}) nor a library (missing package.json "main" output); run the ${name} build target first`,
@@ -211,10 +247,7 @@ function discoverDependencies(
   supervisorDir: string,
   serviceEntry: string,
 ): { services: ServiceEntry[]; web: WebBundle | undefined } {
-  const manifest = JSON.parse(readFileSync(join(supervisorDir, 'package.json'), 'utf8')) as {
-    dependencies?: Record<string, string>;
-    devDependencies?: Record<string, string>;
-  };
+  const manifest = readJson(join(supervisorDir, 'package.json'), dependencyPackageSchema);
   const dependencies = { ...manifest.dependencies, ...manifest.devDependencies };
   const names = Object.keys(dependencies)
     .filter((name) => dependencies[name]?.startsWith('workspace:'))
@@ -334,11 +367,7 @@ function webAssets(web: WebBundle | undefined): Record<string, string> {
 // The sqlite-vector variant of the target becomes SEA assets "sqlite-vector/<file>" and "sqlite-vector/pin.json" (names mirror libs/shared-core/src/db/sqlite-vector.ts).
 // The tarball comes from the pinned npm URL, is checked against the pinned sha512 integrity, and its binary against the pinned sha256. A platform without a pin fails the build.
 async function vectorAssets(target: BuildTarget): Promise<Record<string, string>> {
-  const table = JSON.parse(readFileSync(vectorTablePath, 'utf8')) as {
-    version: string;
-    unavailable: string[];
-    platforms: Record<string, { tarball: string; tarballIntegrity: string; file: string; librarySha256: string }>;
-  };
+  const table = readJson(vectorTablePath, vectorTableSchema);
   const key = VECTOR_PLATFORM_KEYS[target.triple];
   const entry = key === undefined ? undefined : table.platforms[key];
   if (key === undefined || entry === undefined) {
@@ -367,25 +396,33 @@ async function vectorAssets(target: BuildTarget): Promise<Record<string, string>
   return { 'sqlite-vector/pin.json': vectorPinPath, [`sqlite-vector/${entry.file}`]: binary };
 }
 
-// The packed migrations (pack-migrations.ts, run before this script) become SEA assets "db-migrations/manifest.json", "db-migrations/build-info.json" and "db-migrations/<tag>.sql".
-// Asset names come from the constants shared with the pack step; only SQL and JSON travel, never Drizzle (S7).
-function migrationAssets(): Record<string, string> {
-  const manifestPath = join(PACK_OUT_DIR, MANIFEST_FILE);
-  const buildInfoPath = join(PACK_OUT_DIR, BUILD_INFO_FILE);
+// The packed migrations (pack-migrations.ts, run before this script) become SEA assets "db-migrations/<engine>/manifest.json", "db-migrations/<engine>/build-info.json" and "db-migrations/<engine>/<tag>.sql".
+// Every packed engine is embedded and the runtime reads only the selected one. Asset names come from the constants shared with the pack step; only SQL and JSON travel, never Drizzle (S7).
+function engineMigrationAssets(engine: string): Record<string, string> {
+  const outDir = packOutDirFor(engine);
+  const manifestPath = join(outDir, MANIFEST_FILE);
+  const buildInfoPath = join(outDir, BUILD_INFO_FILE);
   for (const path of [manifestPath, buildInfoPath]) {
-    if (!existsSync(path)) throw new Error(`${path} missing; run "node tools/scripts/pack-migrations.ts" first`);
+    if (!existsSync(path)) throw new Error(`${path} missing; run "node tools/scripts/pack-migrations.ts --engine ${engine}" first`);
   }
-  const { migrations } = JSON.parse(readFileSync(manifestPath, 'utf8')) as { migrations: { file: string; sha256: string }[] };
-  const assets: Record<string, string> = { [manifestAssetName]: manifestPath, [buildInfoAssetName]: buildInfoPath };
+  const { migrations, engine: packedEngine } = readJson(manifestPath, manifestSchema);
+  if (packedEngine !== engine) throw new Error(`${manifestPath}: packed for engine "${packedEngine}", expected "${engine}"`);
+  const assets: Record<string, string> = { [manifestAssetName(engine)]: manifestPath, [buildInfoAssetName(engine)]: buildInfoPath };
   for (const { file, sha256 } of migrations) {
-    const path = join(migrationsDir, file);
-    if (createHash('sha256').update(readFileSync(path, 'utf8')).digest('hex') !== sha256) {
-      throw new Error(`${file}: differs from the packed manifest; run "node tools/scripts/pack-migrations.ts" again`);
+    const path = join(outDir, file);
+    if (!existsSync(path) || createHash('sha256').update(readFileSync(path, 'utf8')).digest('hex') !== sha256) {
+      throw new Error(`${path}: missing or differs from the packed manifest; run "node tools/scripts/pack-migrations.ts --engine ${engine}" again`);
     }
-    assets[migrationAssetName(file)] = path;
+    assets[migrationAssetName(engine, file)] = path;
   }
-  console.log(`db migrations: ${migrations.length} sql file(s) plus manifest and build info`);
+  console.log(`db migrations (${engine}): ${migrations.length} sql file(s) plus manifest and build info`);
   return assets;
+}
+
+function migrationAssets(): Record<string, string> {
+  const engines = existsSync(PACK_OUT_DIR) ? readdirSync(PACK_OUT_DIR, { withFileTypes: true }).filter((entry) => entry.isDirectory()) : [];
+  if (engines.length === 0) throw new Error(`${PACK_OUT_DIR}: no packed engine; run "node tools/scripts/pack-migrations.ts" first`);
+  return Object.assign({}, ...engines.map((entry) => engineMigrationAssets(entry.name)));
 }
 
 // REQ-SEA-03 baseline from ASSEMBLER_CONFIG; the code cache follows the native/cross rule; a cross build names the target's Node as the SEA base.

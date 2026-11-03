@@ -7,7 +7,7 @@ summary: "Defines dev proxy, SEA static serving, LAN TLS and PWA caching require
 ids[20]: REQ-DEV-01,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-DEV-05,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-PWA-01,REQ-PWA-02,REQ-PWA-03
 related[3]: docs/requirements/README.md,docs/requirements/05-persistence.md,docs/requirements/07-security.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # Web Gateway, HTTPS and PWA (SRS §6)
@@ -40,6 +40,7 @@ This page covers the development proxy, SEA serving, LAN TLS and PWA caching. Ne
 | HTTP | Port `8080` redirects to HTTPS with `308` | [6.2](#62-production-a-single-sea-serves-both-compiled-artifacts) |
 | LAN TLS | Local CA and gateway certificate; clients install CA trust | [6.3](#63-local-lan-tls-no-cost-and-no-internet-dependency) |
 | PWA | Installable; `index.html` and service worker revalidate; hashed files are immutable | [6.4](#64-pwa-and-caching-strategy) |
+| Today | The gateway listens on plain HTTP at `127.0.0.1:3000`. TLS, `8443` and `8080` arrive with [POC-4](../backlog/poc-4-https-gateway-angular-pwa.md) | [6.2](#62-production-a-single-sea-serves-both-compiled-artifacts) |
 
 ---
 
@@ -77,6 +78,7 @@ sequenceDiagram
     A->>N: HTTPS /api/session (proxy)
     N-->>A: 200/401 + JSON
     A-->>B: API response (same origin :4200)
+```
 
 **Conceptual Angular proxy example.** The agent **MUST** adapt the format to the real builder and certify the result. Do not fix this sample as its own API:
 
@@ -94,13 +96,13 @@ sequenceDiagram
 
 ### 6.2 Production: a single SEA serves both compiled artifacts
 
-- **REQ-NET-01.** NestJS **MUST** use `NodeAdapter` from `@nestjs/platform-node`, without Express or Fastify. The API and the SPA **MUST** share process and HTTPS origin in production. *(Premise `NodeAdapter` without Express/Fastify: not verified. The former `ServeStaticModule` premise is replaced by POC-1f.)*
+- **REQ-NET-01.** NestJS **MUST** use `NodeAdapter` from `@nestjs/platform-node`, without Express or Fastify. The API and the SPA **MUST** share process and HTTPS origin in production. *(The former `ServeStaticModule` premise is replaced by POC-1f.)*
 - **REQ-NET-02.** The `api-gateway` **MUST** serve the web bundle from memory **only when started with `--web ipc`**. `--web` takes `none` (default) or `ipc`, is parsed with `node:util` and validated with Zod. It **MUST NOT** check `node:sea.isSea()`, read `process.env`, or use `@nestjs/serve-static`. Without `--web ipc`, as in a development run, no static serving is mounted.
   *Replaces the `ServeStaticModule` + `--web-root` design of human decision 17. Source: [POC-1f result](../results/POC-01f-web-from-memory.md). Not verified against the SRS owner.*
 - **REQ-NET-03.** Before the gateway starts, the **`sea-runtime` supervisor** **MUST** read the packaged Angular files from the SEA assets with `getRawAsset`, verify each sha256 against the manifest, and send all files to `api-gateway` in one IPC message. Nothing is written to disk.
   *Replaces the extraction to a directory of human decision 17.*
 - **REQ-NET-04.** The gateway **MUST** validate the IPC message (`Uint8Array` bytes, relative path, no `..`, no leading `/`). A missing channel, an invalid message, a closed channel or a 10 s timeout **MUST** stop the process before the port opens. It **MUST** serve GET and HEAD only, from an immutable map: exact file first, then `index.html` for any other path outside `/api`. `/api/**` and other methods **MUST NOT** receive `index.html`.
-  *Not met: a missing `.js` returns `index.html` with 200 until POC-4 applies REQ-NET-07. Not verified.*
+  *Not met today: a missing `.js` returns `index.html` with 200 until POC-4 applies REQ-NET-07.*
 - **REQ-NET-05.** Hashed file names (`-XXXXXXXX.ext`) **MUST** get `public, max-age=31536000, immutable`. `index.html` and unhashed files **MUST** get `no-cache`. The content type comes from an extension table with an `application/octet-stream` fallback.
   *Replaces the `AppModule.register(config)` composition of human decision 17.*
 - **REQ-NET-06.** The HTTPS listener **MUST** use `8443` by default, configurable from the singleton; `0.0.0.0` LAN exposure is configured on the installed server and the API is served under `/api/**`. SPA, manifest, service worker and API use the same origin.

@@ -6,7 +6,7 @@ type: backlog
 summary: "Backlog slice 2h of POC-2: consolidated POC-02 result, ADR-002 and the closing of inherited items."
 related[3]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2g-real-binary-smoke.md,docs/backlog/poc-3-config-sqlite-vector.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # POC-2h: POC-02 result and ADR-002
@@ -34,12 +34,9 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Done in the commit that adds the result page and ADR-002, see [result](../results/POC-02-Result.md) and [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md) |
+| Status | Done in the commit that adds the result page and ADR-002 (merged in PR #11), see [result](../results/POC-02-Result.md) and [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md) |
 | Slice | 2h of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
-| Size | ~200 authored lines, documentation only (ASSUMPTION) |
 | Depends on | [2a](poc-2a-launcher-cwd-spike.md) to [2g](poc-2g-real-binary-smoke.md) |
-| Branch (decided, D1) | `minor/poc-02-supervisor`, one commit or commit group per slice, one draft PR for all of POC-2 |
-| Result page | `docs/results/POC-02-Result.md` |
 | Decision record | `docs/architecture/adr/ADR-002-single-sea-portability.md`  |
 | Acceptance criteria | AC-11, AC-29 |
 
@@ -115,7 +112,7 @@ Observable:
 
 - The result can overstate. Every claim carries `verified` or `not verified` and its command. Windows stays unverified.
 - Editing requirement files and OQ rows changes shared contracts of the SRS set. Those edits wait for the human.
-- ADR numbering: the ADR index says ADR-001 to ADR-007 are the per-POC results. ADR-002 matches the pitch.
+- ADR numbering: the ADR index said ADR-001 to ADR-007 were the per-POC results. ADR-002 matches the pitch. Later numbering: placeholders start at ADR-008.
 
 ---
 

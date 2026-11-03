@@ -4,9 +4,9 @@ doc: docs/backlog/poc-6-postgresql-adapter-parity.md
 title: "POC-6 PostgreSQL adapter parity (BACKLOG)"
 type: backlog
 summary: "Backlog item for PostgreSQL adapter parity, parked in backlog."
-related[3]: docs/backlog/README.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/backlog/poc-7-auth-roles.md
+related[4]: docs/backlog/README.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/persistence-system.md
 status: current
-updated: 2026-10-30
+updated: 2026-11-03
 -->
 
 # POC-6: PostgreSQL adapter parity (BACKLOG)
@@ -42,7 +42,7 @@ updated: 2026-10-30
 
 Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-6-postgresql-adapter-parity-backlog) and [PROPOSAL backlog entry](../roadmap/PROPOSAL.md#backlog).
 
-PostgreSQL adapter parity behind the same port. Decision 8 deferred it. Gap: the SRS marks REQ-TEST-06 as MUST. REQ-TEST-06 and AC-09 stay unmet until this item runs.
+PostgreSQL adapter parity behind the same port. Decision 8 deferred it. PostgreSQL is out of scope (TBD) and declared nowhere in code or config today. Gap: the SRS marks REQ-TEST-06 as MUST. REQ-TEST-06 and AC-09 stay unmet until this item runs.
 
 ## Requirements
 
@@ -63,14 +63,15 @@ Pitch Acceptance criteria line ([PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-6-po
 
 - [AC-09](../requirements/11-nx-quality-testing.md)
 
-Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-6-postgresql-adapter-parity-backlog). [AC-09](../requirements/11-nx-quality-testing.md) and the PostgreSQL part of [REQ-TEST-06](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-6-postgresql-adapter-parity-backlog)).
+Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-6-postgresql-adapter-parity-backlog). [AC-09](../requirements/11-nx-quality-testing.md) and the PostgreSQL part of [REQ-TEST-06](../requirements/11-nx-quality-testing.md).
 
 ## Tasks
 
 [Back to navigation](#navigation)
 
-- [ ] Add the PostgreSQL adapter (`pg` + pgvector >=0.8.7) behind the same port. Source: [REQ-DB-01](../requirements/05-persistence.md), [REQ-DB-02](../requirements/05-persistence.md), [REQ-DB-03](../requirements/05-persistence.md), [AC-09](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-6-postgresql-adapter-parity-backlog))
-- [ ] Dialect-specific migrations through the same custom migrator contract. Source: [REQ-DB-05](../requirements/05-persistence.md), [AC-09](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-6-postgresql-adapter-parity-backlog))
-- [ ] Vector adapter without silent non-vector fallback on PostgreSQL. Source: [REQ-DB-08](../requirements/05-persistence.md), [AC-09](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-6-postgresql-adapter-parity-backlog))
-- [ ] Run the PostgreSQL part of the persistence APP. If pgvector is not installable, status is blocked-by-environment. Source: [REQ-TEST-06](../requirements/11-nx-quality-testing.md), [AC-09](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-6-postgresql-adapter-parity-backlog))
-- [ ] Apply the stable-first Drizzle rule. Test the stable tag for PostgreSQL vector support. Then fall back to `1.0.0-rc.5` (decision 10). Source: [AC-09](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-6-postgresql-adapter-parity-backlog))
+- [ ] Add the PostgreSQL adapter (`pg` + pgvector >=0.8.7) behind the same port. Source: [REQ-DB-01](../requirements/05-persistence.md), [REQ-DB-02](../requirements/05-persistence.md), [REQ-DB-03](../requirements/05-persistence.md), [AC-09](../requirements/11-nx-quality-testing.md)
+- [ ] Add PostgreSQL as one more variant of the `db.engine` union ([ADR-007](../architecture/adr/ADR-007-persistence-system.md)): an engine module behind `shared-core/pg`, assets under `db-migrations/pg/` and a `pack-migrations --engine pg` run.
+- [ ] Dialect-specific migrations through the same custom migrator contract. Source: [REQ-DB-05](../requirements/05-persistence.md), [AC-09](../requirements/11-nx-quality-testing.md)
+- [ ] Vector adapter without silent non-vector fallback on PostgreSQL. Source: [REQ-DB-08](../requirements/05-persistence.md), [AC-09](../requirements/11-nx-quality-testing.md)
+- [ ] Run the PostgreSQL part of the persistence APP. If pgvector is not installable, status is blocked-by-environment. Source: [REQ-TEST-06](../requirements/11-nx-quality-testing.md), [AC-09](../requirements/11-nx-quality-testing.md)
+- [ ] Apply the stable-first Drizzle rule. Test the stable tag for PostgreSQL vector support. Then fall back to `1.0.0-rc.5` (decision 10). Source: [AC-09](../requirements/11-nx-quality-testing.md)

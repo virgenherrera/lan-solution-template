@@ -6,7 +6,7 @@ type: backlog
 summary: "Umbrella for POC-2: slices 2a to 2h, order, inherited POC-1 items, and decisions that need the human."
 related[10]: docs/backlog/README.md,docs/backlog/poc-1e-hardening-desktop-skeleton.md,docs/backlog/poc-2a-launcher-cwd-spike.md,docs/backlog/poc-2b-dispatcher-service-registry.md,docs/backlog/poc-2c-assembler-registry-build.md,docs/backlog/poc-2d-supervisor-readiness-logs.md,docs/backlog/poc-2e-bounded-restart.md,docs/backlog/poc-2f-coordinated-shutdown.md,docs/backlog/poc-2g-real-binary-smoke.md,docs/backlog/poc-2h-result-and-adr.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # POC-2: Single SEA and runtime supervisor
@@ -36,10 +36,10 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Done on 2026-10-31: slices 2a to 2h delivered on `minor/poc-02-supervisor` (commits `a606db3`, `48987d4`, `0f7a834`, `97b5f01`, `06ab764`, `85a8ed3`, `d5e8b04`, and the 2h documentation commit). Result: [POC-02-Result](../results/POC-02-Result.md), decision: [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md). Draft PR not opened (needs the human) |
+| Status | Done on 2026-10-31 and merged in PR #11: slices 2a to 2h delivered on `minor/poc-02-supervisor` (commits `a606db3`, `48987d4`, `0f7a834`, `97b5f01`, `06ab764`, `85a8ed3`, `d5e8b04`, and the 2h documentation commit). Result: [POC-02-Result](../results/POC-02-Result.md), decision: [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md). Draft PR not opened (needs the human) |
 | Appetite | 2 weeks, big batch, highest uncertainty |
 | Depends on | POC-1 (slices 1a to 1e) and the POC-1f in-memory web serving (PR #9, merged) |
-| Branches | one branch `minor/poc-02-supervisor` for all of POC-2, one commit or commit group per slice, one draft PR against `main` (decided, human decision D1). The old branch `minor/poc-02-sea-supervisor` is not used |
+| Branches | one branch `minor/poc-02-supervisor` for all of POC-2, one commit or commit group per slice, one PR against `main` (#11) (decided, human decision D1). The old branch `minor/poc-02-sea-supervisor` is not used |
 | Requirements | 13 REQ ids |
 | Acceptance criteria | AC-11, AC-28, AC-29, AC-30, AC-31 |
 | Rule | Start a slice only when the human says so, and only on branch `minor/poc-02-supervisor` ([AGENTS.md](../../AGENTS.md)) |
@@ -85,7 +85,7 @@ Circuit breaker, from the pitch: if the SEA cannot bundle the dispatcher and the
 | 2g | [Real-binary smoke test and Linux run](poc-2g-real-binary-smoke.md) | `minor/poc-02-supervisor` | 2e, 2f | ~300 | REQ-RUNTIME-08, REQ-TEST-07, AC-28 |
 | 2h | [POC-02 result and ADR-002](poc-2h-result-and-adr.md) | `minor/poc-02-supervisor` | 2a to 2g | ~200, docs only | AC-11, AC-29 |
 
-Total estimate: about 1800 authored lines on one branch and one draft PR, one commit or commit group per slice (decided, human decision D1). Branch prefixes follow [REQ-VERSION-02](../requirements/11-nx-quality-testing.md): `minor/` where a CLI or internal contract changes, `docs/` for documentation only.
+Total estimate: about 1800 authored lines on one branch and one PR (#11), one commit or commit group per slice (decided, human decision D1). Branch prefixes follow [REQ-VERSION-02](../requirements/11-nx-quality-testing.md): `minor/` where a CLI or internal contract changes, `docs/` for documentation only.
 
 ---
 
@@ -217,7 +217,7 @@ Decided by the human. Each row below is binding. The recommendation column keeps
 
 | Id | Decision | Decided (human decision) and original recommendation | Needed by |
 |---|---|---|---|
-| D1 | PR layout: one PR per slice (8 PRs) against `main`, in order; or one PR for the whole POC-2. | **decided (human decision):** one branch `minor/poc-02-supervisor` for all of POC-2, one commit or commit group per slice, and one draft PR against `main`. Supersedes the original one-PR-per-slice recommendation. | Before 2b |
+| D1 | PR layout: one PR per slice (8 PRs) against `main`, in order; or one PR for the whole POC-2. | **decided (human decision):** one branch `minor/poc-02-supervisor` for all of POC-2, one commit or commit group per slice, and one PR against `main` (#11). Supersedes the original one-PR-per-slice recommendation. | Before 2b |
 | D2 | Accept the proposed restart, backoff and readiness values of [OQ11](../roadmap/PROPOSAL.md#open-questions) (readiness 30 s, backoff 1 to 16 s capped at 30 s with 20 percent jitter, 5 restarts in 300 s, reset after 60 s, graceful stop 10 s). | **decided (human decision):** the OQ11 values are accepted as constants that live in one Zod schema with `DEFAULTS`, not as loose values. Measure them in 2e and 2f, and report real numbers in `POC-02-Result`. Configuration moves to the POC-3 singleton. | Before 2d |
 | D3 | Windows: no Windows host exists. Close POC-2 with host macOS plus Linux in Docker, and mark Windows (process tree, `taskkill /T`, SEA run) `blocked-by-environment`, carried to POC-8. Or pause POC-2 until a Windows VM or runner exists. | **decided (human decision):** Windows is halted, marked `blocked-by-environment` (process tree, `taskkill /T`, SEA run), until the human tests it on his Windows computer on Monday. Code for the Windows branch of shutdown stays labelled not verified. [REQ-TEST-09](../requirements/11-nx-quality-testing.md) forbids claiming Windows support. | Before 2f |
 | D4 | systemd evidence for 2a: a systemd container in Docker (privileged, Debian), a Linux VM, or leave systemd as not verified and verify only launchd. | **decided (human decision):** systemd and Linux evidence comes from Docker (a privileged systemd container, best effort, labelled "container, not a real host"). On Monday the human tries a VM (VMware) on the Windows computer. AGENTS.md still forbids `brew` and `apt` on the host. | Before 2a |

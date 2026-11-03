@@ -6,7 +6,7 @@ type: backlog
 summary: "Backlog slice 2b of POC-2: Zod-validated dispatcher, closed service registry and the auth-ms registry design."
 related[4]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2a-launcher-cwd-spike.md,docs/backlog/poc-2c-assembler-registry-build.md,docs/backlog/poc-1c-sea-build.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # POC-2b: Dispatcher and service registry
@@ -24,7 +24,6 @@ updated: 2026-10-31
 - [Tasks](#tasks)
 - [Files and how they are written](#files-and-how-they-are-written)
 - [Risks](#risks)
-- [Open questions](#open-questions)
 
 ---
 
@@ -34,12 +33,9 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Done in commit `48987d4` on `minor/poc-02-supervisor`, see [result](../results/POC-02b-dispatcher-registry.md) |
+| Status | Done in commit `48987d4` on `minor/poc-02-supervisor` (merged in PR #11), see [result](../results/POC-02b-dispatcher-registry.md) |
 | Slice | 2b of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
-| Size | ~250 authored lines (ASSUMPTION) |
 | Depends on | none. POC-1c supplies the `--service <id>` entry that this slice replaces |
-| Branch (decided, D1) | `minor/poc-02-supervisor`, one commit or commit group per slice, one draft PR for all of POC-2 |
-| Result page | `docs/results/POC-02b-dispatcher-registry.md` |
 | Requirements | REQ-RUNTIME-03, REQ-RUNTIME-04 |
 | Acceptance criteria | AC-28 (start), AC-29 (unknown roles), AC-31 |
 
@@ -96,13 +92,13 @@ Observable checks, run on the packaged binary in a clean directory:
 
 [Back to navigation](#navigation)
 
-- [ ] Create the contract package (working name `libs/service-registry`; not verified, see the file table): the `ServiceDefinition` Zod schema (`id`, `entry`, `dependsOn`, `enabled`) and the id parser. It imports only `zod`. Source: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md), [REQ-REP-02](../requirements/03-file-structure.md).
-- [ ] Write the dispatcher over `process.argv`: parse with `node:util` `parseArgs`, validate with Zod, reject unknown, repeated or empty ids with exit 2. Source: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md), [AC-29](../requirements/11-nx-quality-testing.md).
-- [ ] Make no selector mean supervisor mode and keep `createApplicationContext(RuntimeModule)` as the supervisor bootstrap. Source: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md), [AC-28](../requirements/11-nx-quality-testing.md).
-- [ ] Change the supervisor to read its service list from the registry type instead of an ad hoc `services.json` shape. The asset name and fields stay as they are until 2c. Source: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md).
-- [ ] Document the registry design for a future `auth-ms`: the three registration points and what stays untouched (no sidecar, no `apps/desktop` edit). Run the dry run in a `mktemp -d` copy and quote the result. Source: [AC-31](../requirements/11-nx-quality-testing.md), [REQ-RUNTIME-04](../requirements/09-desktop-tauri.md).
-- [ ] Record the supervisor and gateway bootstrap contract: `api-gateway` keeps `NestFactory.create()` plus `NodeAdapter`. Source: [REQ-RUNTIME-04](../requirements/09-desktop-tauri.md), [REQ-NET-01](../requirements/06-web-gateway-https-pwa.md).
-- [ ] Publish `docs/results/POC-02b-dispatcher-registry.md`. Source: [AC-29](../requirements/11-nx-quality-testing.md), [AC-31](../requirements/11-nx-quality-testing.md).
+- [x] Create the contract package (working name `libs/service-registry`; not verified, see the file table): the `ServiceDefinition` Zod schema (`id`, `entry`, `dependsOn`, `enabled`) and the id parser. It imports only `zod`. Source: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md), [REQ-REP-02](../requirements/03-file-structure.md).
+- [x] Write the dispatcher over `process.argv`: parse with `node:util` `parseArgs`, validate with Zod, reject unknown, repeated or empty ids with exit 2. Source: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md), [AC-29](../requirements/11-nx-quality-testing.md).
+- [x] Make no selector mean supervisor mode and keep `createApplicationContext(RuntimeModule)` as the supervisor bootstrap. Source: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md), [AC-28](../requirements/11-nx-quality-testing.md).
+- [x] Change the supervisor to read its service list from the registry type instead of an ad hoc `services.json` shape. The asset name and fields stay as they are until 2c. Source: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md).
+- [x] Document the registry design for a future `auth-ms`: the three registration points and what stays untouched (no sidecar, no `apps/desktop` edit). Run the dry run in a `mktemp -d` copy and quote the result. Source: [AC-31](../requirements/11-nx-quality-testing.md), [REQ-RUNTIME-04](../requirements/09-desktop-tauri.md).
+- [x] Record the supervisor and gateway bootstrap contract: `api-gateway` keeps `NestFactory.create()` plus `NodeAdapter`. Source: [REQ-RUNTIME-04](../requirements/09-desktop-tauri.md), [REQ-NET-01](../requirements/06-web-gateway-https-pwa.md).
+- [x] Publish `docs/results/POC-02b-dispatcher-registry.md`. Source: [AC-29](../requirements/11-nx-quality-testing.md), [AC-31](../requirements/11-nx-quality-testing.md).
 
 No unit or integration suite is added ([REQ-TEST-01](../requirements/11-nx-quality-testing.md)). The checks above run on the real binary.
 
@@ -131,13 +127,3 @@ No unit or integration suite is added ([REQ-TEST-01](../requirements/11-nx-quali
 - Changing the entry changes the CLI contract of the binary (`--service`). Only the supervisor calls it today, but the branch prefix is `minor/`.
 - `sea-runtime` is not a registrable service in this proposal. If the SRS wants it addressable, the rule changes. Not verified against the SRS owner.
 - Premise not verified: that a plain Node library package builds under the present `nx.json` without a plugin.
-
----
-
-## Open questions
-
-[Back to navigation](#navigation)
-
-| OQ | Topic | Status |
-|---|---|---|
-| none | No open question touches this slice | none |

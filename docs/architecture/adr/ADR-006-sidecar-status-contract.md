@@ -3,10 +3,10 @@ fmt: TOON
 doc: docs/architecture/adr/ADR-006-sidecar-status-contract.md
 title: "ADR-006 Sidecar status contract and typed service array"
 type: architecture
-summary: "Proposes the stdio contract between the supervisor and its host, no HTTP listener, and one typed array that declares the services."
+summary: "Defines the stdio contract with the host, no HTTP listener, and one typed array that declares the services."
 ids[0]:
 related[5]: docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/overview.md,docs/backlog/service-status-indicator.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/requirements/traceability.md
-status: proposed
+status: current
 updated: 2026-11-03
 -->
 
@@ -25,11 +25,11 @@ updated: 2026-11-03
 
 ## Status
 
-Proposed, 2026-11-03. The human asked for this direction in the `sea-runtime-nest` request: "no veo porque esta app deba ser http, en serio" and "el status que sea-runtime debe pasar a tauri DEBE SER lo que tauri espera de su sidecar y este es totalmente independiente del /api/health que entrega el api gateway". The details below are agent proposals. The contract is implemented in `libs/service-registry/src` on this branch.
+Accepted, 2026-11-03 (merged in PR #15). The human asked for this direction in the `sea-runtime-nest` request: "no veo porque esta app deba ser http, en serio" and "el status que sea-runtime debe pasar a tauri DEBE SER lo que tauri espera de su sidecar y este es totalmente independiente del /api/health que entrega el api gateway". The details below are agent proposals. The contract is implemented in `libs/service-registry/src` and `apps/sea-runtime`, merged in PR #15.
 
 This ADR reverses one decision of PR #13. That PR added a supervisor-owned HTTP `GET /status` endpoint. The agent took that decision without a human answer (see the [indicator page](../../backlog/service-status-indicator.md#open-questions)). The human now rejects it.
 
-The ADR number follows the files in `adr/`. The placeholder list in the [overview](../overview.md#architecture-decisions) uses older numbers and is not renumbered here.
+The ADR number follows the files in `adr/`. The [overview](../overview.md#architecture-decisions) lists the current numbers.
 
 ## Context
 
@@ -129,7 +129,6 @@ The supervisor becomes Nest modules: persistence, supervisor, sidecar stdio and 
 
 - No port, no listener and no `supervisor.statusPort` key in the supervisor. A web UI that wants status needs a new owner and a new decision. See [Service status indicator](../../backlog/service-status-indicator.md).
 - The one JSON line per state change that [ADR-002](ADR-002-single-sea-portability.md) described moves into a schema and gets a `kind` field. Log lines move from stdout to stderr. A consumer that read the old unprefixed stdout lines must change.
-- `tools/scripts/smoke-sea.ts` has to follow the new channels.
 - Adding a service is a one-entry change. The dependency order is checked before the code runs.
 - The tray can show per-service status from stdout. Whether it shows `degraded` stays open (rabbit hole A5 in the [roadmap](../../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar)).
 

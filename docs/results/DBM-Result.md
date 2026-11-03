@@ -7,7 +7,7 @@ summary: "Result of DBM: Drizzle generates SQL at build time, only the SQL trave
 ids[0]:
 related[4]: docs/backlog/dbm-drizzle-migrations.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/results/POC-03-Result.md,docs/requirements/amendments-2026-11-02.md
 status: current
-updated: 2026-11-02
+updated: 2026-11-03
 -->
 
 # DBM Result
@@ -61,7 +61,7 @@ One verifier read `ee02cd2..HEAD` and ran probes on a clean copy. It found 0 blo
 
 ## Gaps
 
-- Dev (`nest start`) does not run persistence yet.
+- Dev (`nest start`) does not run persistence yet. Superseded 2026-11-03: dev now runs the persistence boot (DBM-m, see [dbm-schema-gate](../backlog/dbm-schema-gate.md)).
 - A `vector` column has no SQLite mapping in the parity check. The first vector table defines it.
 - `drizzle-kit` 0.31.11 pulls deprecated `@esbuild-kit/*` packages. They are devDependencies only.
 - PostgreSQL is not implemented. The contract, the class pattern and the introspector registry are the extension points.

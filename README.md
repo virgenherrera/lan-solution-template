@@ -24,8 +24,8 @@
 | --- | --- |
 | What | A LAN-first, offline-capable GitHub Template Repository. |
 | For whom | Template authors, reviewers and delivering AI agents. |
-| Where we are | Documentation only. No application code. Roadmap is a proposal. |
-| What comes next | The [roadmap](docs/roadmap/PROPOSAL.md) plans POC-1 to POC-9. The [backlog](docs/backlog/README.md) drafts one epic per POC; POC-1 is split into five slices (1a to 1e). |
+| Where we are | POC-1 to POC-3 are built. The persistence system is in review (PR #17, draft). POC-4 to POC-9 are plans. The roadmap is a proposal. |
+| What comes next | The [roadmap](docs/roadmap/PROPOSAL.md) plans POC-1 to POC-9. The [backlog](docs/backlog/README.md) holds one epic per POC. |
 
 ---
 
@@ -59,10 +59,9 @@ The full production diagram is in [Architecture overview](docs/architecture/over
 
 [Back to navigation](#navigation)
 
-- Phase: documentation only. No application code. Nothing is installed.
-- Branch: `docs/split-srs`. It splits the original SRS into English pages. No commits yet.
-- The [roadmap](docs/roadmap/PROPOSAL.md) is a proposal, not approved. The [backlog](docs/backlog/README.md) holds local drafts.
-- Many component versions are marked "not verified". Source: roadmap risks R-02 and R11 in the [roadmap context](docs/roadmap/PROPOSAL.md#context). The SRS itself does not make that claim.
+- Phase: documentation plus incremental POC slices ([backlog](docs/backlog/README.md)).
+- Built: POC-1 (toolchain and workspace), POC-2 (single SEA and supervisor), POC-3 (config and SQLite persistence). PR #17 (persistence system) is open as a draft.
+- The [roadmap](docs/roadmap/PROPOSAL.md) is a proposal, not approved.
 
 ---
 
@@ -96,13 +95,14 @@ flowchart LR
 ```
 
 - [Requirements](docs/requirements/README.md): one page per SRS section, with the REQ and AC ids.
-- [Architecture](docs/architecture/overview.md): diagrams and ADR placeholders.
+- [Architecture](docs/architecture/overview.md): diagrams and the ADRs.
 - [Standards](docs/standards/README.md): technical and normative references.
 - [Traceability](docs/requirements/traceability.md): each REQ and AC id mapped to its page and to a POC.
 - [Roadmap](docs/roadmap/PROPOSAL.md): proposal of POCs and open questions.
 - [Backlog](docs/backlog/README.md): draft epics derived from the roadmap.
 - [Third-party licenses](docs/backlog/third-party-licenses.md): backlog item for license notices, with the [spike](docs/results/SPIKE-third-party-licenses.md).
-- [Page metadata](docs/meta.toon): machine-readable metadata of every page except `AGENTS.md` and `README.md`. Generated from the toon-meta blocks and the file bodies. Never edit it by hand. Regeneration command: [Metadata block v1](docs/standards/README.md#metadata-block-v1).
+- [Persistence system](docs/backlog/persistence-system.md): strict config and lazy engine loading, with [ADR-007](docs/architecture/adr/ADR-007-persistence-system.md). Dev setup: [How to run in dev](docs/backlog/persistence-system.md#how-to-run-in-dev).
+- [Page metadata](docs/meta.toon): generated from the toon-meta blocks. Never edit it by hand. Regeneration: [Metadata block v1](docs/standards/README.md#metadata-block-v1).
 
 Versions and stack constraints live in [Technology baseline](docs/requirements/02-technology-baseline.md).
 
@@ -113,9 +113,9 @@ Versions and stack constraints live in [Technology baseline](docs/requirements/0
 [Back to navigation](#navigation)
 
 - Name branches with one of these prefixes ([REQ-VERSION-02](docs/requirements/11-nx-quality-testing.md)): `major/`, `minor/`, `fix/`, `docs/`, `chore/`.
-- Follow [AGENTS.md](AGENTS.md). This phase is documentation only. Do not invent requirements the SRS does not state.
+- Follow [AGENTS.md](AGENTS.md). Do not invent requirements the SRS does not state.
 - Mark unverified claims "not verified".
-- Do not commit, push or write to GitHub without approval from the repository owner.
+- Commit on a feature branch, never on `main`. Push, pull requests and GitHub writes need approval from the repository owner.
 
 ---
 
@@ -135,4 +135,4 @@ Versions and stack constraints live in [Technology baseline](docs/requirements/0
 
 [PostgreSQL License](LICENSE) (SPDX: `PostgreSQL`). Every workspace `package.json` declares the same `license`.
 
-Third-party licenses of the shipped artifacts: see the [spike](docs/results/SPIKE-third-party-licenses.md) and the [backlog item](docs/backlog/third-party-licenses.md). Documentation only; nothing is built. Decisions: [OQ18 to OQ22](docs/roadmap/PROPOSAL.md#open-questions).
+Third-party notices are documentation only: no generator, no flag. See the [backlog item](docs/backlog/third-party-licenses.md), the [spike](docs/results/SPIKE-third-party-licenses.md) and [OQ18 to OQ22](docs/roadmap/PROPOSAL.md#open-questions).

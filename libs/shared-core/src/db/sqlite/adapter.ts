@@ -1,8 +1,8 @@
 import { mkdirSync } from 'node:fs';
 import { DatabaseSync, type SQLInputValue } from 'node:sqlite';
 import { dirname, isAbsolute, join } from 'node:path';
-import type { AppConfig } from '../config.js';
-import type { AppPaths } from '../paths.js';
+import type { AppConfig } from '../../config.js';
+import type { AppPaths } from '../../paths.js';
 import {
   VectorUnavailableError,
   type DbAdapter,
@@ -13,7 +13,7 @@ import {
   type Row,
   type SqlValue,
   type VectorMatch,
-} from './port.js';
+} from '../port.js';
 
 // Vector backend of the SQLite engine: loads the native library into an open connection and runs vector SQL. Plugged in by POC-3d.
 export interface SqliteVectorBackend {

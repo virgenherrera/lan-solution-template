@@ -6,7 +6,7 @@ type: backlog
 summary: "Backlog slice 2d of POC-2: IPC control channel, readiness timeout, per-service logs, aggregate state and gateway health."
 related[4]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2c-assembler-registry-build.md,docs/backlog/poc-2e-bounded-restart.md,docs/results/POC-01f-web-from-memory.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # POC-2d: Supervisor readiness, logs and aggregate state
@@ -34,12 +34,10 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Done in commit `97b5f01` on `minor/poc-02-supervisor`, see [result](../results/POC-02d-readiness-logs.md) |
+| Status | Done in commit `97b5f01` on `minor/poc-02-supervisor` (merged in PR #11), see [result](../results/POC-02d-readiness-logs.md) |
 | Slice | 2d of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
 | Size | ~380 authored lines (ASSUMPTION); the largest slice, split off first if it grows |
 | Depends on | [2c](poc-2c-assembler-registry-build.md) |
-| Branch (decided, D1) | `minor/poc-02-supervisor`, one commit or commit group per slice, one draft PR for all of POC-2 |
-| Result page | `docs/results/POC-02d-readiness-logs.md` |
 | Requirements | REQ-RUNTIME-05, REQ-RUNTIME-07, REQ-NET-01 |
 | Acceptance criteria | none new. Serves AC-28 |
 
@@ -92,16 +90,16 @@ Values come from [OQ11](../roadmap/PROPOSAL.md#open-questions) (proposed, decisi
 
 [Back to navigation](#navigation)
 
-- [ ] Define the control-channel messages as Zod schemas in the 2b registry package: `ready`, `state`, `shutdown` (used by 2f), `web-bundle` (exists). Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md), [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md).
-- [ ] Spawn every service with the IPC channel, not only the web-receiving gateway. Keep the POC-1f `--web ipc` path unchanged. Source: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md), [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
-- [ ] Send `ready` from the gateway after `listen` resolves. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
-- [ ] Add the readiness timeout and the aggregate state machine in the supervisor. Add the startup order from `dependsOn`; with one enabled service it is exercised by a pure function only (not verified with two services). Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
-- [ ] Prefix child stdout and stderr per service and keep stdout line-oriented. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
-- [ ] Publish the aggregate state to Tauri: one JSON line per state change on the supervisor stdout. This is a design; the Tauri side is POC-5 and not verified as a pattern. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
-- [ ] Make `/api/health` report the aggregate state (the supervisor forwards it to the gateway over IPC). The unauthenticated body stays minimal; whether detail may be exposed is not verified. Source: [REQ-NET-01](../requirements/06-web-gateway-https-pwa.md).
-- [ ] Bind the gateway to loopback in the supervised run. Source: [REQ-RUNTIME-07](../requirements/09-desktop-tauri.md).
-- [ ] Record the 10 s web receive timeout against a slow start and the resident memory. Source: [REQ-NET-04](../requirements/06-web-gateway-https-pwa.md).
-- [ ] Publish `docs/results/POC-02d-readiness-logs.md`. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
+- [x] Define the control-channel messages as Zod schemas in the 2b registry package: `ready`, `state`, `shutdown` (used by 2f), `web-bundle` (exists). Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md), [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md).
+- [x] Spawn every service with the IPC channel, not only the web-receiving gateway. Keep the POC-1f `--web ipc` path unchanged. Source: [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md), [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
+- [x] Send `ready` from the gateway after `listen` resolves. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
+- [x] Add the readiness timeout and the aggregate state machine in the supervisor. Add the startup order from `dependsOn`; with one enabled service it is exercised by a pure function only (not verified with two services). Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
+- [x] Prefix child stdout and stderr per service and keep stdout line-oriented. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
+- [x] Publish the aggregate state to Tauri: one JSON line per state change on the supervisor stdout. This is a design; the Tauri side is POC-5 and not verified as a pattern. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
+- [x] Make `/api/health` report the aggregate state (the supervisor forwards it to the gateway over IPC). The unauthenticated body stays minimal; whether detail may be exposed is not verified. Source: [REQ-NET-01](../requirements/06-web-gateway-https-pwa.md).
+- [x] Bind the gateway to loopback in the supervised run. Source: [REQ-RUNTIME-07](../requirements/09-desktop-tauri.md).
+- [x] Record the 10 s web receive timeout against a slow start and the resident memory. Source: [REQ-NET-04](../requirements/06-web-gateway-https-pwa.md).
+- [x] Publish `docs/results/POC-02d-readiness-logs.md`. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
 
 ---
 
@@ -124,7 +122,7 @@ Delete any `*.spec.ts` a generator creates in the same commit ([REQ-TEST-01](../
 
 [Back to navigation](#navigation)
 
-- Tauri sidecar output is stdout and exit events, not Node IPC. The stdout JSON line is a design for POC-5 and may change. Not verified.
+- Tauri sidecar output is stdout and exit events, not Node IPC. The stdout line became the `status` event of [ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md). The Tauri side is not verified.
 - The readiness of a service that never announces `ready` can only be judged by timeout. The 30 s value is a proposal.
 - Dependency ordering cannot be proven with one service. The result page says so.
 - Loopback binding conflicts with the LAN requirement of [REQ-NET-06](../requirements/06-web-gateway-https-pwa.md) if left in. The binding is a supervised-run default, and POC-4 sets the LAN value.

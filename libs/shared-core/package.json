@@ -3,6 +3,16 @@
   "version": "0.0.1",
   "description": "",
   "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./sqlite": {
+      "types": "./dist/db/sqlite/index.d.ts",
+      "default": "./dist/db/sqlite/index.js"
+    }
+  },
   "scripts": {
     "test": "pnpm run test:static && pnpm run test:dynamic",
     "build": "tsc -p tsconfig.json --rootDir src --outDir dist",
@@ -22,6 +32,7 @@
   },
   "dependencies": {
     "rxjs": "catalog:",
+    "service-registry": "workspace:*",
     "zod": "catalog:"
   },
   "private": true

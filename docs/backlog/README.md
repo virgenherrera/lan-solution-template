@@ -4,7 +4,7 @@ doc: docs/backlog/README.md
 title: "Backlog index"
 type: backlog
 summary: "Backlog index of POC epics mapped to acceptance criteria and cycles."
-related[6]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md
+related[7]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md
 status: current
 updated: 2026-11-03
 -->
@@ -25,7 +25,7 @@ updated: 2026-11-03
 
 [Back to navigation](#navigation)
 
-Local epics from the roadmap pitches. Start at [POC-1a](poc-1a-monorepo-init.md). POC-1 is the umbrella id of five sequential slices, 1a to 1e. POC-2 is the umbrella id of eight slices, 2a to 2h.
+Local epics from the roadmap pitches. Start at [POC-1a](poc-1a-monorepo-init.md). POC-1 is the umbrella id of slices 1a to 1e. POC-2 is the umbrella id of slices 2a to 2h. Merged: PRs #4 to #6 (POC-1), #11 (POC-2), #12 and #13 (persistence stack), #14, #15, #16. PR #17 (persistence system) is open as a draft.
 
 ```mermaid
 flowchart LR
@@ -56,53 +56,42 @@ flowchart LR
 
 Edges follow "Depends on" in [PROPOSAL.md](../roadmap/PROPOSAL.md#cycles-and-bets).
 
-| Group | Epics | State |
-|---|---|---|
-| Cycle 1 | POC-1 (slices 1a to 1e), POC-2 (slices 2a to 2h), POC-3 | POC-1, POC-2 and POC-3 done (POC-3 on branch `minor/poc-03-sqlite-vector`) |
-| Cycle 2 | POC-4, POC-5 | planned |
-| Cycle 3 | POC-7, POC-8 | planned |
-| After cycle 1 | DBM (slices DBM-a to DBM-h) | done on `minor/dbm-drizzle-migrations`; see [DBM-Result](../results/DBM-Result.md) |
-| After DBM | DBM schema gate (slices DBM-i to DBM-n) | done on `minor/dbm-schema-gate`; DBM-n done in the same branch (api-gateway database module); see [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md) |
-| Outside the cycles | POC-6 | BACKLOG |
-| Outside the cycles | POC-9 | on hold (decision 9) |
-| Unscheduled | Service status indicator | supervisor endpoint done; consumers open |
-| Unscheduled | Third-party license notices | decided 2026-11-03: documentation only, no code; see [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md) |
-
 ---
 
 ## Epics
 
 [Back to navigation](#navigation)
 
-Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-22, AC-23, AC-24, AC-32, AC-33, AC-34). Draft backlog derived only from `docs/roadmap/PROPOSAL.md` pitches. Local drafts: no GitHub issues exist for these files. Status values come from PROPOSAL.md (cycle table, `HOLD`, `BACKLOG`).
+Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-22, AC-23, AC-24, AC-32, AC-33, AC-34). The files derive from the pitches in `docs/roadmap/PROPOSAL.md`. No GitHub issues exist for them.
 
 | POC | Epic file | Status | AC ids (pitch) |
 |---|---|---|---|
 | POC-1a | [Monorepo init](poc-1a-monorepo-init.md) | Delivered in PR #4 (commit `2c815c9`, slices 1a to 1c) | AC-01, AC-22, AC-23, AC-24 |
-| POC-1b | [Nest apps](poc-1b-nest-apps.md) | Delivered on branch `minor/poc-01b-nest` (PR 3, draft) | AC-13 |
-| POC-1c | [SEA build](poc-1c-sea-build.md) | Delivered on branch `minor/poc-01b-nest` (PR 3, draft) | none cited by its tasks |
-| POC-1d | [Angular and link](poc-1d-angular-link.md) | Delivered on branch `minor/poc-01d-angular-link` (same PR as the spike and decision 17 docs) | AC-13 |
-| POC-1e | [Hardening and desktop skeleton](poc-1e-hardening-desktop-skeleton.md) | Delivered on branch `minor/poc-01e-hardening` (one PR, human decision) | AC-01, AC-02, AC-13, AC-19, AC-22, AC-32, AC-33, AC-34 |
-| POC-2 | [Single SEA and runtime supervisor (umbrella)](poc-2-single-sea-runtime-supervisor.md) | Done on `minor/poc-02-supervisor`, eight slices 2a to 2h; see [POC-02-Result](../results/POC-02-Result.md) | AC-11, AC-28, AC-29, AC-30, AC-31 |
-| POC-2a | [Launcher cwd spike](poc-2a-launcher-cwd-spike.md) | Done in commit `a606db3` on `minor/poc-02-supervisor` | none cited |
-| POC-2b | [Dispatcher and service registry](poc-2b-dispatcher-service-registry.md) | Done in commit `48987d4` on `minor/poc-02-supervisor` | AC-28, AC-29, AC-31 |
-| POC-2c | [Assembler driven by the registry](poc-2c-assembler-registry-build.md) | Done in commit `0f7a834` on `minor/poc-02-supervisor` | AC-11 |
-| POC-2d | [Supervisor readiness, logs and aggregate state](poc-2d-supervisor-readiness-logs.md) | Done in commit `97b5f01` on `minor/poc-02-supervisor` | none new |
-| POC-2e | [Bounded restart](poc-2e-bounded-restart.md) | Done in commit `06ab764` on `minor/poc-02-supervisor` | AC-29 |
-| POC-2f | [Coordinated shutdown and orphan checks](poc-2f-coordinated-shutdown.md) | Done in commit `85a8ed3` on `minor/poc-02-supervisor` | AC-30 |
-| POC-2g | [Real-binary smoke test and Linux run](poc-2g-real-binary-smoke.md) | Done in commit `d5e8b04` on `minor/poc-02-supervisor` | AC-28, AC-29, AC-11 |
-| POC-2h | [POC-02 result and ADR-002](poc-2h-result-and-adr.md) | Done in the commit that adds [POC-02-Result](../results/POC-02-Result.md) and [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md), branch `minor/poc-02-supervisor` | AC-11, AC-29 |
-| POC-3 | [Config and SQLite vector persistence inside the SEA](poc-3-config-sqlite-vector.md) | Done on `minor/poc-03-sqlite-vector`, slices 3a to 3g; see [POC-03-Result](../results/POC-03-Result.md) | AC-07, AC-08, AC-10 |
-| DBM | [Drizzle build-time migrations](dbm-drizzle-migrations.md) | Done on `minor/dbm-drizzle-migrations`, slices DBM-a to DBM-h; see [DBM-Result](../results/DBM-Result.md); extends POC-3 | AC-07, AC-08, AC-10 (as POC-3) |
-| DBM schema gate | [Live schema validation at startup](dbm-schema-gate.md) | Done on `minor/dbm-schema-gate`, slices DBM-i to DBM-n; see [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md); extends DBM | AC-07, AC-08, AC-10 (as POC-3) |
+| POC-1b | [Nest apps](poc-1b-nest-apps.md) | Delivered in PR #4 | AC-13 |
+| POC-1c | [SEA build](poc-1c-sea-build.md) | Delivered in PR #4 | none cited by its tasks |
+| POC-1d | [Angular and link](poc-1d-angular-link.md) | Delivered in PR #5 | AC-13 |
+| POC-1e | [Hardening and desktop skeleton](poc-1e-hardening-desktop-skeleton.md) | Delivered in PR #6 | AC-01, AC-02, AC-13, AC-19, AC-22, AC-32, AC-33, AC-34 |
+| POC-2 | [Single SEA and runtime supervisor (umbrella)](poc-2-single-sea-runtime-supervisor.md) | Done and merged in PR #11, slices 2a to 2h; see [POC-02-Result](../results/POC-02-Result.md) | AC-11, AC-28, AC-29, AC-30, AC-31 |
+| POC-2a | [Launcher cwd spike](poc-2a-launcher-cwd-spike.md) | Done in commit `a606db3` | none cited |
+| POC-2b | [Dispatcher and service registry](poc-2b-dispatcher-service-registry.md) | Done in commit `48987d4` | AC-28, AC-29, AC-31 |
+| POC-2c | [Assembler driven by the registry](poc-2c-assembler-registry-build.md) | Done in commit `0f7a834` | AC-11 |
+| POC-2d | [Supervisor readiness, logs and aggregate state](poc-2d-supervisor-readiness-logs.md) | Done in commit `97b5f01` | none new |
+| POC-2e | [Bounded restart](poc-2e-bounded-restart.md) | Done in commit `06ab764` | AC-29 |
+| POC-2f | [Coordinated shutdown and orphan checks](poc-2f-coordinated-shutdown.md) | Done in commit `85a8ed3` | AC-30 |
+| POC-2g | [Real-binary smoke test and Linux run](poc-2g-real-binary-smoke.md) | Done in commit `d5e8b04` | AC-28, AC-29, AC-11 |
+| POC-2h | [POC-02 result and ADR-002](poc-2h-result-and-adr.md) | Done in the commit that adds [POC-02-Result](../results/POC-02-Result.md) and [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md) | AC-11, AC-29 |
+| POC-3 | [Config and SQLite vector persistence inside the SEA](poc-3-config-sqlite-vector.md) | Done and merged in PR #12, slices 3a to 3g; see [POC-03-Result](../results/POC-03-Result.md); config and paths later changed by the persistence system | AC-07, AC-08, AC-10 |
+| DBM | [Drizzle build-time migrations](dbm-drizzle-migrations.md) | Done and merged in PR #12, slices DBM-a to DBM-h; see [DBM-Result](../results/DBM-Result.md); extends POC-3 | AC-07, AC-08, AC-10 (as POC-3) |
+| DBM schema gate | [Live schema validation at startup](dbm-schema-gate.md) | Done and merged in PR #12, slices DBM-i to DBM-n (DBM-n is the api-gateway database module); see [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md); extends DBM | AC-07, AC-08, AC-10 (as POC-3) |
 | POC-4 | [HTTPS gateway serving the Angular PWA](poc-4-https-gateway-angular-pwa.md) | Cycle 2 (planned) | AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17 |
 | POC-5 | [Tauri desktop shell with SEA sidecar](poc-5-tauri-sidecar-desktop-shell.md) | Cycle 2 (planned) | AC-03, AC-18, AC-20, AC-30 |
 | POC-6 | [PostgreSQL adapter parity (BACKLOG)](poc-6-postgresql-adapter-parity.md) | BACKLOG | AC-09 |
 | POC-7 | [Auth and roles](poc-7-auth-roles.md) | Cycle 3 (planned) | AC-06 |
 | POC-8 | [MSI credential dialog, platform matrix and lockstep versioning](poc-8-msi-matrix-versioning.md) | Cycle 3 (planned) | AC-21, AC-25, AC-33 |
 | POC-9 | [GitHub Actions CI/CD and releases (HOLD)](poc-9-ci-cd-releases.md) | HOLD (decision 9) | AC-26, AC-27, AC-35, AC-36, AC-02, AC-32 |
-| none | [Service status indicator](service-status-indicator.md) | HTTP endpoint removed; status contract moved to supervisor stdio ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)); tray and web UI consumers open | none |
-| none | [Third-party license notices](third-party-licenses.md) | Decided 2026-11-03: documentation only, no code; spike: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md). OQ18 to OQ22 decided | none (no REQ or AC id exists for licenses) |
+| none | [Service status indicator](service-status-indicator.md) | Supervisor side done: `status` events on stdout ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)); tray and web UI consumers open | none |
+| none | [Third-party license notices](third-party-licenses.md) | Done: guide merged in PR #16, documentation only (decided 2026-11-03, OQ18 to OQ22); spike: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md) | none (no REQ or AC id exists for licenses) |
+| none | [Persistence system](persistence-system.md) | T1 to T6 built on `minor/persistence-system` (PR #17, draft); T7 open; decision: [ADR-007](../architecture/adr/ADR-007-persistence-system.md) | AC-07, AC-08, AC-10 (as POC-3) |
 
 ---
 
@@ -118,4 +107,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | OQ6, OQ12, OQ15 | Decided by the human |
 | OQ16, OQ17 | Proposed (OQ16 is a draft; a spike decides it) |
 | OQ18 to OQ22 | Decided by the human, 2026-11-03 (third-party licenses; see [Third-party license notices](third-party-licenses.md#decisions)) |
+| OQ23 | Decided by the human, 2026-11-03 (persistence system: one base directory) |
+| OQ24 | Open (installer assistant defines the install path and creates `config/config.json`; owner human; TBD with POC-8) |
+| OQ25 | Decided by the human, 2026-11-03 (amendment of REQ-CFG-05 approved) |
 | Blocking open questions | None |

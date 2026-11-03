@@ -6,7 +6,7 @@ type: backlog
 summary: "Backlog item for build-time Drizzle migrations applied by the in-house migrator in the supervisor."
 related[4]: docs/backlog/README.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/requirements/amendments-2026-11-02.md
 status: current
-updated: 2026-11-02
+updated: 2026-11-03
 -->
 
 # DBM: Drizzle build-time migrations
@@ -32,7 +32,7 @@ updated: 2026-11-02
 
 | Item | Value |
 |---|---|
-| Status | Done on `minor/dbm-drizzle-migrations`; see [DBM-Result](../results/DBM-Result.md) |
+| Status | Done and merged in PR #12 (branch `minor/dbm-drizzle-migrations`); see [DBM-Result](../results/DBM-Result.md) |
 | Depends on | POC-3 |
 | Branch | `minor/dbm-drizzle-migrations` |
 | Delivery | One branch, one PR |
@@ -51,7 +51,7 @@ This is not a POC from the roadmap pitches. It extends POC-3 on a human request 
 - Declare tables as classes. Build them to SQL files with `drizzle-kit`.
 - Keep `drizzle-kit` out of the final build. Only the generated SQL travels in the SEA.
 - Apply the SQL with the in-house migrator, in the supervisor, before any service starts.
-- Start with SQLite. Keep the design open for PostgreSQL and a later engine.
+- Start with SQLite. Keep the design open for another engine (PostgreSQL is TBD, [POC-6](poc-6-postgresql-adapter-parity.md)).
 
 | No-gos |
 |---|
@@ -106,7 +106,7 @@ One branch, one PR. Slice names DBM-a to DBM-h are an assumption.
 | DBM-c | `libs/db-migrations`: `contract/`, `sqlite/schema.ts`, `drizzle.config.ts`, first migration for `app_meta` | DBM-a |
 | DBM-d | Migrator: marker split, checksum over full text, `runtime_version` and `duration_ms` in `schema_migrations`, manifest check, RxJS event stream | DBM-c |
 | DBM-e | Pack step that rejects an unmarked multi-statement file, `manifest.json`, SEA assets, drift target with `git diff --exit-code` | DBM-c |
-| DBM-f | Boot pipeline in `apps/sea-runtime`: migrations, `app_meta` upserts, packaged-binary smoke that finds no Drizzle code. Dev (`nest start`) does not run persistence yet | DBM-d, DBM-e |
+| DBM-f | Boot pipeline in `apps/sea-runtime`: migrations, `app_meta` upserts, packaged-binary smoke that finds no Drizzle code. Dev runs it from DBM-m ([dbm-schema-gate](dbm-schema-gate.md)) | DBM-d, DBM-e |
 | DBM-g | Parity check: temporary database, `PRAGMA table_info` and indexes against `contract/tables.ts` | DBM-c, DBM-d |
 | DBM-h | Result page, ADR-004 set to accepted, `docs/meta.toon`, independent verification | DBM-f, DBM-g |
 

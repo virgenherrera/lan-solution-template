@@ -6,7 +6,7 @@ type: backlog
 summary: "Backlog slice 2f of POC-2: IPC shutdown, timeout, force-kill of descendants and orphan checks on the host OS."
 related[4]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2d-supervisor-readiness-logs.md,docs/backlog/poc-2e-bounded-restart.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # POC-2f: Coordinated shutdown and orphan checks
@@ -34,12 +34,9 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Done in commit `85a8ed3` on `minor/poc-02-supervisor`, see [result](../results/POC-02f-coordinated-shutdown.md) |
+| Status | Done in commit `85a8ed3` on `minor/poc-02-supervisor` (merged in PR #11), see [result](../results/POC-02f-coordinated-shutdown.md) |
 | Slice | 2f of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
-| Size | ~350 authored lines (ASSUMPTION) |
 | Depends on | [2d](poc-2d-supervisor-readiness-logs.md); the no-restart-while-stopping rule needs [2e](poc-2e-bounded-restart.md) if that lands first |
-| Branch (decided, D1) | `minor/poc-02-supervisor`, one commit or commit group per slice, one draft PR for all of POC-2 |
-| Result page | `docs/results/POC-02f-coordinated-shutdown.md` |
 | Requirements | REQ-RUNTIME-06 |
 | Acceptance criteria | AC-30 (host OS only, others pending) |
 
@@ -87,15 +84,15 @@ Observable checks (graceful stop 10 s, decision D2):
 
 [Back to navigation](#navigation)
 
-- [ ] Implement the stop sequence in the supervisor: state `stopping`, send `shutdown`, await exit per child in dependency reverse order, timeout, force-kill. Source: [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md).
-- [ ] Make the gateway handle `shutdown` (`app.close()`, then exit 0) and handle `disconnect` as a stop when the supervisor dies. Source: [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md).
-- [ ] Spawn children so their descendants can be killed: a process group on POSIX; on Windows `taskkill /T /F`. The Windows branch is written but labelled not verified. Source: [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md), [REQ-TEST-09](../requirements/11-nx-quality-testing.md).
-- [ ] Route `SIGINT` and `SIGTERM` of the supervisor through the same sequence. Source: [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md).
-- [ ] Stay quiet on the restart rule: a service stopping on purpose is not restarted (shared with 2e). Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
-- [ ] Define the Quit contract for Tauri as text only: `SIGTERM` on POSIX; on Windows a control message or stdin close. The wiring is POC-5 ([REQ-DESK-02](../requirements/09-desktop-tauri.md)); the contract is not verified against Tauri sidecar behaviour. Source: [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md).
-- [ ] Check the process tree on macOS arm64 and in Debian bookworm (arm64, amd64). Record `ps` before and after. Source: [AC-30](../requirements/11-nx-quality-testing.md).
-- [ ] Mark Windows `blocked-by-environment` in the result page and hand it to POC-8. Source: [REQ-TEST-09](../requirements/11-nx-quality-testing.md), [OQ7](../roadmap/PROPOSAL.md#open-questions).
-- [ ] Publish `docs/results/POC-02f-coordinated-shutdown.md`. Source: [AC-30](../requirements/11-nx-quality-testing.md).
+- [x] Implement the stop sequence in the supervisor: state `stopping`, send `shutdown`, await exit per child in dependency reverse order, timeout, force-kill. Source: [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md).
+- [x] Make the gateway handle `shutdown` (`app.close()`, then exit 0) and handle `disconnect` as a stop when the supervisor dies. Source: [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md).
+- [x] Spawn children so their descendants can be killed: a process group on POSIX; on Windows `taskkill /T /F`. The Windows branch is written but labelled not verified. Source: [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md), [REQ-TEST-09](../requirements/11-nx-quality-testing.md).
+- [x] Route `SIGINT` and `SIGTERM` of the supervisor through the same sequence. Source: [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md).
+- [x] Stay quiet on the restart rule: a service stopping on purpose is not restarted (shared with 2e). Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
+- [x] Define the Quit contract for Tauri as text only: `SIGTERM` on POSIX; on Windows a control message or stdin close. [ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md) later made it a stdin `shutdown` command (EOF also shuts down). The wiring is POC-5 ([REQ-DESK-02](../requirements/09-desktop-tauri.md)); the contract is not verified against Tauri sidecar behaviour. Source: [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md).
+- [x] Check the process tree on macOS arm64 and in Debian bookworm (arm64, amd64). Record `ps` before and after. Source: [AC-30](../requirements/11-nx-quality-testing.md).
+- [x] Mark Windows `blocked-by-environment` in the result page and hand it to POC-8. Source: [REQ-TEST-09](../requirements/11-nx-quality-testing.md), [OQ7](../roadmap/PROPOSAL.md#open-questions).
+- [x] Publish `docs/results/POC-02f-coordinated-shutdown.md`. Source: [AC-30](../requirements/11-nx-quality-testing.md).
 
 ---
 

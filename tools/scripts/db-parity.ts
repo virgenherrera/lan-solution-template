@@ -5,11 +5,14 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { z } from 'zod';
 
 const root = resolve(import.meta.dirname, '..', '..');
+const { jsonText } = (await import(join(root, 'libs', 'service-registry', 'dist', 'json-text.js'))) as typeof import('../../libs/service-registry/dist/json-text.js');
 const sharedCorePath = join(root, 'libs', 'shared-core', 'dist', 'index.js');
+const sqliteEnginePath = join(root, 'libs', 'shared-core', 'dist', 'db', 'sqlite', 'index.js');
 const contractPath = join(root, 'libs', 'db-migrations', 'dist', 'contract', 'index.js');
-const DEFAULT_MIGRATIONS_DIR = join(root, 'libs', 'db-migrations', 'sqlite', 'migrations');
+const defaultMigrationsDir = (engine: string): string => join(root, 'libs', 'db-migrations', engine, 'migrations');
 
 // Only sqlite has an adapter wired here; a new engine adds its adapter and the check itself does not change.
 const ENGINES: readonly string[] = ['sqlite'];
@@ -18,9 +21,15 @@ function fail(message: string): never {
   throw new Error(message);
 }
 
+// Drizzle owns the journal file, so only the fields read here are checked.
+const journalSchema = z.looseObject({ entries: z.array(z.looseObject({ idx: z.number(), tag: z.string() })) });
+
 // Same order and numbering as the migrator input: journal idx + 1 is the version.
 function readMigrations(dir: string): { version: number; name: string; sql: string }[] {
-  const journal = JSON.parse(readFileSync(join(dir, 'meta', '_journal.json'), 'utf8')) as { entries: { idx: number; tag: string }[] };
+  const journalPath = join(dir, 'meta', '_journal.json');
+  const parsed = jsonText(journalSchema).safeParse(readFileSync(journalPath, 'utf8'));
+  if (!parsed.success) fail(`${journalPath}: ${z.prettifyError(parsed.error)}`);
+  const journal = parsed.data;
   return [...journal.entries]
     .sort((a, b) => a.idx - b.idx)
     .map((entry) => ({ version: entry.idx + 1, name: entry.tag, sql: readFileSync(join(dir, `${entry.tag}.sql`), 'utf8') }));
@@ -34,18 +43,20 @@ function option(name: string, fallback: string): string {
 async function main(): Promise<number> {
   const engine = option('engine', 'sqlite');
   if (!ENGINES.includes(engine)) fail(`no introspector for engine "${engine}" (known: ${ENGINES.join(', ')})`);
-  for (const path of [sharedCorePath, contractPath]) {
+  for (const path of [sharedCorePath, sqliteEnginePath, contractPath]) {
     if (!existsSync(path)) fail(`${path} missing; build shared-core and db-migrations first`);
   }
-  const { SqliteAdapter, runMigrations } = (await import(sharedCorePath)) as typeof import('../../libs/shared-core/dist/index.js');
-  const { tables, tablesSchema, compareSchema } = (await import(contractPath)) as typeof import('../../libs/db-migrations/dist/contract/index.js');
-  const migrations = readMigrations(resolve(option('migrations-dir', DEFAULT_MIGRATIONS_DIR)));
+  const { runMigrations } = (await import(sharedCorePath)) as typeof import('../../libs/shared-core/dist/index.js');
+  const { SqliteAdapter } = (await import(sqliteEnginePath)) as typeof import('../../libs/shared-core/dist/db/sqlite/index.js');
+  const { tablesByEngine, tablesSchema, compareSchema } = (await import(contractPath)) as typeof import('../../libs/db-migrations/dist/contract/index.js');
+  const migrations = readMigrations(resolve(option('migrations-dir', defaultMigrationsDir(engine))));
 
   const workDir = mkdtempSync(join(tmpdir(), 'db-parity-'));
   const db = new SqliteAdapter({ file: 'parity.db', foreignKeys: true, journalMode: 'DELETE', synchronous: 'NORMAL' }, workDir);
   try {
     await db.connect();
     await runMigrations(db, migrations);
+    const tables = tablesByEngine[engine as keyof typeof tablesByEngine];
     // Validate the descriptor itself first, then compare it exactly with what the real migrations built.
     const diff = compareSchema(tablesSchema.parse(tables), await db.introspectSchema(), 'exact').problems;
     if (diff.length === 0) {

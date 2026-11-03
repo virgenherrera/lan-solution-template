@@ -6,7 +6,7 @@ type: backlog
 summary: "Backlog slice 2c of POC-2: assembler bundles dispatcher and services from the registry and invalidates on change."
 related[3]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2b-dispatcher-service-registry.md,docs/backlog/poc-2d-supervisor-readiness-logs.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # POC-2c: Assembler driven by the registry
@@ -24,7 +24,6 @@ updated: 2026-10-31
 - [Tasks](#tasks)
 - [Files and how they are written](#files-and-how-they-are-written)
 - [Risks](#risks)
-- [Open questions](#open-questions)
 
 ---
 
@@ -34,12 +33,9 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Done in commit `0f7a834` on `minor/poc-02-supervisor`, see [result](../results/POC-02c-assembler-registry.md) |
+| Status | Done in commit `0f7a834` on `minor/poc-02-supervisor` (merged in PR #11), see [result](../results/POC-02c-assembler-registry.md) |
 | Slice | 2c of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
-| Size | ~250 authored lines (ASSUMPTION) |
 | Depends on | [2b](poc-2b-dispatcher-service-registry.md) |
-| Branch (decided, D1) | `minor/poc-02-supervisor`, one commit or commit group per slice, one draft PR for all of POC-2 |
-| Result page | `docs/results/POC-02c-assembler-registry.md` |
 | Requirements | REQ-SEA-01, REQ-SEA-02, REQ-SEA-03, REQ-BUILD-04 |
 | Acceptance criteria | AC-11 (partial) |
 
@@ -95,14 +91,14 @@ Observable checks:
 
 [Back to navigation](#navigation)
 
-- [ ] Read the registered services from the `sea-runtime` workspace dependencies and validate each one against the 2b registry schema. A service whose entrypoint is missing fails the build. Source: [REQ-SEA-01](../requirements/10-node-sea-distribution.md), [REQ-BUILD-04](../requirements/11-nx-quality-testing.md).
-- [ ] Generate the entry from the registry and bundle dispatcher, supervisor and services as one bundle with the existing rspack route. Source: [REQ-SEA-01](../requirements/10-node-sea-distribution.md).
-- [ ] Keep `node --build-sea` and prove with the build log that no postject is invoked. Source: [REQ-SEA-02](../requirements/10-node-sea-distribution.md).
-- [ ] Declare the invalidation: the `package` target inputs include the service projects, the registry package and the assembler. Prove it with the sha256 checks above. Note that `package` is never cached today, so the observable proof is the bundle hash, not a cache miss. Source: [REQ-BUILD-04](../requirements/11-nx-quality-testing.md).
-- [ ] Audit the SEA configuration against [REQ-SEA-03](../requirements/10-node-sea-distribution.md). Disable the code cache when the target architecture differs from the host, and document the cross-build rule. Investigate the amd64 `Code cache data rejected` warning from POC-1c. Source: [REQ-SEA-03](../requirements/10-node-sea-distribution.md).
-- [ ] Verify AC-11: run the binary from an empty directory with no Node on `PATH`, on macOS and in the Debian bookworm images used in POC-1c. Source: [AC-11](../requirements/11-nx-quality-testing.md), [REQ-RUNTIME-01](../requirements/09-desktop-tauri.md).
-- [ ] Record that the SEA binary is not reproducible and `package` is not cached, with the measured size. Reproducibility itself is not claimed. Source: not verified (no REQ in the pitch).
-- [ ] Publish `docs/results/POC-02c-assembler-registry.md`. Source: [REQ-BUILD-04](../requirements/11-nx-quality-testing.md), [AC-11](../requirements/11-nx-quality-testing.md).
+- [x] Read the registered services from the `sea-runtime` workspace dependencies and validate each one against the 2b registry schema. A service whose entrypoint is missing fails the build. Source: [REQ-SEA-01](../requirements/10-node-sea-distribution.md), [REQ-BUILD-04](../requirements/11-nx-quality-testing.md).
+- [x] Generate the entry from the registry and bundle dispatcher, supervisor and services as one bundle with the existing rspack route. Source: [REQ-SEA-01](../requirements/10-node-sea-distribution.md).
+- [x] Keep `node --build-sea` and prove with the build log that no postject is invoked. Source: [REQ-SEA-02](../requirements/10-node-sea-distribution.md).
+- [x] Declare the invalidation: the `package` target inputs include the service projects, the registry package and the assembler. Prove it with the sha256 checks above. Note that `package` is never cached today, so the observable proof is the bundle hash, not a cache miss. Source: [REQ-BUILD-04](../requirements/11-nx-quality-testing.md).
+- [x] Audit the SEA configuration against [REQ-SEA-03](../requirements/10-node-sea-distribution.md). Disable the code cache when the target architecture differs from the host, and document the cross-build rule. Investigate the amd64 `Code cache data rejected` warning from POC-1c. Source: [REQ-SEA-03](../requirements/10-node-sea-distribution.md).
+- [x] Verify AC-11: run the binary from an empty directory with no Node on `PATH`, on macOS and in the Debian bookworm images used in POC-1c. Source: [AC-11](../requirements/11-nx-quality-testing.md), [REQ-RUNTIME-01](../requirements/09-desktop-tauri.md).
+- [x] Record that the SEA binary is not reproducible and `package` is not cached, with the measured size. Reproducibility itself is not claimed. Source: not verified (no REQ in the pitch).
+- [x] Publish `docs/results/POC-02c-assembler-registry.md`. Source: [REQ-BUILD-04](../requirements/11-nx-quality-testing.md), [AC-11](../requirements/11-nx-quality-testing.md).
 
 ---
 
@@ -127,13 +123,3 @@ Observable checks:
 - `node:sea` asset limits (R-04) are not measured. Record the largest asset and the binary size.
 - The code-cache warning cause is unknown (POC-1c, not verified). It may be an emulation artefact of Docker on arm64.
 - Invalidation proof is a hash check, because `package` is not cached. Nx cache behaviour for the `build` target is not exercised here.
-
----
-
-## Open questions
-
-[Back to navigation](#navigation)
-
-| OQ | Topic | Status |
-|---|---|---|
-| none | No open question touches this slice | none |

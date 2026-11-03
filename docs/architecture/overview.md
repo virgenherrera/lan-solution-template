@@ -5,7 +5,7 @@ title: Architecture overview
 type: architecture
 summary: Mermaid architecture diagrams citing SRS sections for runtime and desktop topology.
 ids[0]:
-related[2]: README.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md
+related[10]: README.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
 status: current
 updated: 2026-11-03
 -->
@@ -22,13 +22,6 @@ updated: 2026-11-03
 - [Production topology](#production-topology)
 - [Tauri sidecar](#tauri-sidecar)
 - [Architecture decisions](#architecture-decisions)
-  - [ADR-001: Toolchain substitution](#adr-001-toolchain-substitution)
-  - [ADR-002: Single-SEA portability](#adr-002-single-sea-portability)
-  - [ADR-003: Drizzle tag choice](#adr-003-drizzle-tag-choice)
-  - [ADR-004: TLS trust model](#adr-004-tls-trust-model)
-  - [ADR-005: Desktop process model](#adr-005-desktop-process-model)
-  - [ADR-006: Auth mechanism](#adr-006-auth-mechanism)
-  - [ADR-007: Release flow](#adr-007-release-flow)
   - [Topics without an ADR number](#topics-without-an-adr-number)
 
 ---
@@ -42,7 +35,7 @@ updated: 2026-11-03
 | Development | Separate apps behind a dev proxy | [Development topology](#development-topology) |
 | Production | One SEA, a supervisor, a gateway, one HTTPS origin | [Production topology](#production-topology) |
 | Desktop | Tauri starts the SEA supervisor as a sidecar | [Tauri sidecar](#tauri-sidecar) |
-| Decisions | Seven ADR entries. ADR-001 is written; six are placeholders. | [Architecture decisions](#architecture-decisions) |
+| Decisions | ADR-001 to ADR-007 are written. ADR-008 to ADR-011 are placeholders. | [Architecture decisions](#architecture-decisions) |
 
 ---
 
@@ -50,7 +43,7 @@ updated: 2026-11-03
 
 [Back to navigation](#navigation)
 
-This page holds the architecture diagrams required by NFR-DOC-01 (Mermaid diagrams). Every node cites the SRS v1.6 section that states it. The SRS is the reference for scope and behavior. Per SRS section 12 item 8, keep these diagrams in sync with the build. Nothing is implemented yet (documentation phase).
+This page holds the architecture diagrams required by NFR-DOC-01 (Mermaid diagrams). Every node cites the SRS v1.6 section that states it. The SRS is the reference for scope and behavior. Per SRS section 12 item 8, keep these diagrams in sync with the build. The diagrams show the target design; the [README](../../README.md#current-status) lists what is built.
 
 ---
 
@@ -145,39 +138,25 @@ Sources:
 
 [Back to navigation](#navigation)
 
-The [roadmap proposal](../roadmap/PROPOSAL.md#pitches) defines ADR numbering once. Each POC deliverable names its ADR. The numbers are proposals, not SRS requirements. [ADR-006: Sidecar status contract](adr/ADR-006-sidecar-status-contract.md) exists as a file under that number. This list is not renumbered. ADR-001 is written. Each other entry below is a placeholder. Topics come from SRS v1.6 text.
+The [ADR index](../roadmap/PROPOSAL.md#adr-index) in the roadmap proposal lists the decisions. The ADR numbers are proposals, not SRS requirements. ADR-008 to ADR-011 are numbered in the order the POCs write them.
 
-### ADR-001: Toolchain substitution
-
-Status: accepted by human decision, recorded 2026-10-31. Written by POC-1e because version substitutions happened ([POC-1](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)). Full record: [ADR-001](adr/ADR-001-version-substitutions.md).
-
-### ADR-002: Single-SEA portability
-
-Status: placeholder. Written by POC-2 ([POC-2](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor)). Topic here: a single SEA executable per OS/architecture (SRS 9.1, [REQ-RUNTIME-01](../requirements/09-desktop-tauri.md)).
-
-### ADR-003: Drizzle tag choice
-
-Status: placeholder. Written by POC-3 ([POC-3](../roadmap/PROPOSAL.md#poc-3-config-and-sqlite-vector-persistence-inside-the-sea)). Topic here: Drizzle version choice and the RC fallback. Sources: SRS section 12 item 5. Also the amendment to SRS v1.6 L95.
-
-### ADR-004: TLS trust model
-
-Status: placeholder. Written by POC-4 ([POC-4](../roadmap/PROPOSAL.md#poc-4-https-gateway-serving-the-angular-pwa)). No topic in this page.
-
-### ADR-005: Desktop process model
-
-Status: placeholder. Written by POC-5 ([POC-5](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar)). Topic here: Tauri v2 sidecar through `bundle.externalBin` (SRS 9, [REQ-DESK-01](../requirements/09-desktop-tauri.md)).
-
-### ADR-006: Auth mechanism
-
-Status: placeholder. Written by POC-7 ([POC-7](../roadmap/PROPOSAL.md#poc-7-auth-and-roles)). No topic in this page.
-
-### ADR-007: Release flow
-
-Status: placeholder. Written by POC-9, which is on HOLD ([POC-9](../roadmap/PROPOSAL.md#poc-9-github-actions-cicd-and-releases-hold)). No topic in this page.
+| ADR | Topic | Status | Written by |
+| --- | --- | --- | --- |
+| [ADR-001](adr/ADR-001-version-substitutions.md) | Toolchain substitution | accepted | [POC-1](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton) |
+| [ADR-002](adr/ADR-002-single-sea-portability.md) | Single-SEA portability | accepted (record) | [POC-2](../roadmap/PROPOSAL.md#poc-2-single-sea-and-runtime-supervisor) |
+| [ADR-003](adr/ADR-003-config-and-db-strategy.md) | Config and database strategy | accepted (record); root and defaults rules superseded by ADR-007 | [POC-3](../roadmap/PROPOSAL.md#poc-3-config-and-sqlite-vector-persistence-inside-the-sea) |
+| [ADR-004](adr/ADR-004-drizzle-build-time-migrations.md) | Drizzle build-time migrations | accepted | DBM |
+| [ADR-005](adr/ADR-005-live-schema-validation.md) | Live schema validation | accepted | DBM |
+| [ADR-006](adr/ADR-006-sidecar-status-contract.md) | Sidecar status contract | proposed; implemented in PR #15 | PR #15 |
+| [ADR-007](adr/ADR-007-persistence-system.md) | Persistence system | proposed; implemented in PR #17 (draft) | PR #17 |
+| ADR-008 | TLS trust model | placeholder | [POC-4](../roadmap/PROPOSAL.md#poc-4-https-gateway-serving-the-angular-pwa) |
+| ADR-009 | Desktop process model | placeholder | [POC-5](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar) |
+| ADR-010 | Auth mechanism | placeholder | [POC-7](../roadmap/PROPOSAL.md#poc-7-auth-and-roles) |
+| ADR-011 | Release flow | placeholder | [POC-9](../roadmap/PROPOSAL.md#poc-9-github-actions-cicd-and-releases-hold), on HOLD |
 
 ### Topics without an ADR number
 
-The proposal assigns no ADR id to these topics. They stay unnumbered until a human records them.
+These topics have no ADR id yet.
 
 - Angular, gateway and supervisor as sibling apps, joined only at build/distribution (SRS 1.1).
 - `sea-runtime` as a Nest standalone supervisor without listeners (SRS 9.1, [REQ-RUNTIME-02](../requirements/09-desktop-tauri.md)).

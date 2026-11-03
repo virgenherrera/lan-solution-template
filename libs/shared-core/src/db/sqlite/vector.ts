@@ -2,9 +2,10 @@ import { createHash } from 'node:crypto';
 import { chmodSync, lstatSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
+import { jsonText } from 'service-registry';
 import { z } from 'zod';
-import { VectorUnavailableError, type VectorMatch } from './port.js';
-import type { SqliteVectorBackend } from './sqlite-adapter.js';
+import { VectorUnavailableError, type VectorMatch } from '../port.js';
+import type { SqliteVectorBackend } from './adapter.js';
 
 // REQ-DB-08 and REQ-DB-09. The sqlite-vector library (sqliteai, https://github.com/sqliteai/sqlite-vector, NOT sqlite-vec) travels as SEA assets.
 // compile-sea embeds exactly one variant: the binary "sqlite-vector/<file>" and its pin "sqlite-vector/pin.json". These names mirror tools/scripts/compile-sea.ts.
@@ -41,7 +42,7 @@ function readAsset(getAsset: AssetReader, name: string): Uint8Array {
 
 function parsePin(getAsset: AssetReader): VectorPin {
   const text = Buffer.from(readAsset(getAsset, VECTOR_PIN_ASSET)).toString('utf8');
-  const parsed = pinSchema.safeParse(JSON.parse(text));
+  const parsed = jsonText(pinSchema).safeParse(text);
   if (!parsed.success) throw new VectorUnavailableError(`invalid ${VECTOR_PIN_ASSET}: ${parsed.error.message}`);
   return parsed.data;
 }

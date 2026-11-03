@@ -2,16 +2,18 @@
 // Usage: `node tools/scripts/smoke-sea.ts [--artifacts <dir>]`; the default dir is artifacts/sea-runtime. One line per check; the first failed check prints the tail of the run output and exits 1.
 // Needs the built service-registry library (the same contract the assembler loads). Windows is not verified (decision D3): the executable lookup throws there.
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, readlinkSync, realpathSync, statSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, readlinkSync, realpathSync, statSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { DatabaseSync } from 'node:sqlite';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { basename, join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { parseArgs } from 'node:util';
+import { z } from 'zod';
 import { serverConfigSchema } from '../../apps/api-gateway/src/server-config.ts';
 
 const root = resolve(import.meta.dirname, '..', '..');
+const { jsonText } = (await import(join(root, 'libs', 'service-registry', 'dist', 'json-text.js'))) as typeof import('../../libs/service-registry/dist/json-text.js');
 const { AGGREGATE_STATE, DISPATCHER_CONFIG, SIDECAR_KIND, SPAWNED_PATTERN, SUPERVISOR_CONFIG, sidecarEventSchema, stateMessage } = (await import(
   join(root, 'libs', 'service-registry', 'dist', 'index.js')
 )) as typeof import('service-registry');
@@ -47,6 +49,21 @@ type SidecarEvent = import('service-registry').SidecarEvent;
 const sleep = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms));
 const smokeRoot = mkdtempSync(join(tmpdir(), 'lan-smoke-'));
 process.on('exit', () => rmSync(smokeRoot, { recursive: true, force: true }));
+// Like the installer: a valid config exists next to the executable before the first start, because the app never creates one.
+const EXAMPLE_CONFIG = join(root, 'libs', 'shared-core', 'config.example.json');
+const CONFIG_FILE = 'config.json';
+function writeConfig(installDir: string, text: string = readFileSync(EXAMPLE_CONFIG, 'utf8')): void {
+  mkdirSync(join(installDir, 'config'), { recursive: true });
+  writeFileSync(join(installDir, 'config', CONFIG_FILE), text);
+}
+// The executable resolves its base from its own folder, so each run gets a fresh install dir holding a copy of it.
+function install(source: string, withConfig: boolean = true, text?: string): { dir: string; binary: string } {
+  const dir = mkdtempSync(join(smokeRoot, 'install-'));
+  const binary = join(dir, basename(source));
+  copyFileSync(source, binary);
+  if (withConfig) writeConfig(dir, text);
+  return { dir, binary };
+}
 const startedAt = Date.now();
 const knownPids = new Set<number>();
 let current: Run | undefined;
@@ -60,9 +77,8 @@ class Run {
   exitCode: number | null | undefined;
   private readonly child: ChildProcess;
 
-  constructor(binary: string, args: readonly string[], home: string = smokeRoot) {
-    // APP_HOME points the paths library at a scratch root; the default OS root is not writable for a test run.
-    this.child = spawn(binary, [...args], { stdio: ['pipe', 'pipe', 'pipe'], env: { APP_HOME: home } });
+  constructor(binary: string, args: readonly string[]) {
+    this.child = spawn(binary, [...args], { stdio: ['pipe', 'pipe', 'pipe'] });
     // stdin stays open: EOF on it shuts the supervisor down.
     this.child.stdin?.on('error', () => undefined);
     if (this.child.stdout) createInterface({ input: this.child.stdout }).on('line', (line) => this.stdoutLines.push(line));
@@ -87,14 +103,8 @@ class Run {
   // Every stdout line must be a valid sidecar event; the first one that is not fails the check.
   events(): SidecarEvent[] {
     return this.stdoutLines.map((line, index) => {
-      let json: unknown;
-      try {
-        json = JSON.parse(line);
-      } catch {
-        throw new Error(`stdout line ${index + 1} is not JSON: ${line.slice(0, TAIL_WIDTH)}`);
-      }
-      const parsed = sidecarEventSchema.safeParse(json);
-      if (!parsed.success) throw new Error(`stdout line ${index + 1} is not a sidecar event: ${parsed.error.message}`);
+      const parsed = jsonText(sidecarEventSchema).safeParse(line);
+      if (!parsed.success) throw new Error(`stdout line ${index + 1} is not a sidecar event (${line.slice(0, TAIL_WIDTH)}): ${parsed.error.message}`);
       return parsed.data;
     });
   }
@@ -149,14 +159,14 @@ async function get(path: string): Promise<{ status: number; body: string } | und
   }
 }
 
+// Only the status field is read from the health body.
+const healthBodySchema = z.looseObject({ status: z.string().optional() });
+
 async function healthState(): Promise<string | undefined> {
   const response = await get(ROUTES.health);
   if (response?.status !== EXPECTED_STATUS.ok) return undefined;
-  try {
-    return (JSON.parse(response.body) as { status?: string }).status;
-  } catch {
-    return undefined;
-  }
+  const parsed = jsonText(healthBodySchema).safeParse(response.body);
+  return parsed.success ? parsed.data.status : undefined;
 }
 
 const waitReady = (timeoutMs: number): Promise<true> =>
@@ -217,14 +227,14 @@ async function startReady(binary: string): Promise<Run> {
   return run;
 }
 
-let binary = '';
+let artifact = '';
 
 await check('artifacts: one executable, no node copy', async () => {
   const entries = readdirSync(artifactsDir);
   expect(entries.length === 1, `expected exactly 1 entry in ${artifactsDir}, found ${entries.length}: ${entries.join(', ')}`);
   expect(!FORBIDDEN_NAMES.includes(entries[0]), `${entries[0]} is a node copy`);
-  binary = join(artifactsDir, entries[0]);
-  expect(statSync(binary).isFile(), `${binary} is not a file`);
+  artifact = join(artifactsDir, entries[0]);
+  expect(statSync(artifact).isFile(), `${artifact} is not a file`);
   return entries[0];
 });
 
@@ -233,7 +243,7 @@ const DRIZZLE_MARKERS = ['drizzle-orm', 'drizzle-kit/', 'sqliteTable'];
 
 await check('no Drizzle code in the bundle or the executable', async () => {
   const bundle = join(root, 'dist', 'sea-package', 'sea-app.mjs');
-  const scanned = [bundle, binary];
+  const scanned = [bundle, artifact];
   for (const file of scanned) {
     const content = readFileSync(file);
     for (const marker of DRIZZLE_MARKERS) {
@@ -242,6 +252,9 @@ await check('no Drizzle code in the bundle or the executable', async () => {
   }
   return `${DRIZZLE_MARKERS.length} markers, ${scanned.length} files`;
 });
+
+// The main run, installed like a packaged app: the executable, with config/ and (once started) data/ beside it.
+const { dir: installDir, binary } = install(artifact);
 
 await check(`port ${PORT} is free`, async () => {
   expect(await portFree(), `port ${PORT} is in use; the gateway port is not configurable`);
@@ -305,7 +318,7 @@ const APP_META_KEYS = [
 const VERSIONED_NAME = /^@?[^@\s]+@\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?$/;
 
 await check('database: app_meta keys and schema_migrations row', async () => {
-  const db = new DatabaseSync(join(smokeRoot, 'data', 'lan.db'), { readOnly: true });
+  const db = new DatabaseSync(join(installDir, 'data', 'lan.db'), { readOnly: true });
   try {
     const meta = Object.fromEntries(db.prepare('SELECT key, value FROM app_meta').all().map((row) => [String(row.key), String(row.value)]));
     expect(JSON.stringify(Object.keys(meta).sort()) === JSON.stringify([...APP_META_KEYS].sort()), `app_meta keys: ${Object.keys(meta).sort().join(', ')}`);
@@ -370,21 +383,50 @@ await check('stdin shutdown command: exit 0, no process left', async () => {
 
 // The shipped build expects app_meta.value (S1): a database without it must stop the start before any service spawns.
 await check('schema mismatch (app_meta.value missing): exit 1, no service spawned', async () => {
-  const home = mkdtempSync(join(smokeRoot, 'mismatch-'));
-  mkdirSync(join(home, 'data'));
-  copyFileSync(join(smokeRoot, 'data', 'lan.db'), join(home, 'data', 'lan.db'));
-  const db = new DatabaseSync(join(home, 'data', 'lan.db'));
+  const mismatched = install(artifact);
+  mkdirSync(join(mismatched.dir, 'data'));
+  copyFileSync(join(installDir, 'data', 'lan.db'), join(mismatched.dir, 'data', 'lan.db'));
+  const db = new DatabaseSync(join(mismatched.dir, 'data', 'lan.db'));
   try {
     db.exec('ALTER TABLE app_meta DROP COLUMN value');
   } finally {
     db.close();
   }
-  const broken = new Run(binary, [], home);
+  const broken = new Run(mismatched.binary, []);
   current = broken;
   const code = await broken.exit(SLACK_MS, 'start on a mismatched schema');
   expect(code === 1, `exited ${code}`);
   expect(broken.lines.some((line) => line.includes('schema check FAILED')), 'no "schema check FAILED" line');
   expect(broken.spawnedPids().length === 0, 'a service was spawned');
+  return 'exit 1';
+});
+
+// A missing or invalid config must stop the start before any service spawns and before anything reaches stdout.
+await check('config missing: exit 1, no service spawned', async () => {
+  const bare = new Run(install(artifact, false).binary, []);
+  current = bare;
+  const code = await bare.exit(SLACK_MS, 'start without a config');
+  expect(code === 1, `exited ${code}`);
+  expect(bare.lines.some((line) => line.includes('is missing')), 'no "is missing" line');
+  expect(bare.spawnedPids().length === 0, 'a service was spawned');
+  expect(bare.stdoutLines.length === 0, `stdout is not empty: ${bare.stdoutLines.length} lines`);
+  return 'exit 1';
+});
+
+// The example config is copied back out whole, so only the db block shape is checked here.
+const exampleConfigSchema = z.looseObject({ db: z.record(z.string(), z.unknown()) });
+
+await check('config with an unknown key: exit 1, the key is named', async () => {
+  const parsedConfig = jsonText(exampleConfigSchema).safeParse(readFileSync(EXAMPLE_CONFIG, 'utf8'));
+  if (!parsedConfig.success) throw new Error(`${EXAMPLE_CONFIG}: ${z.prettifyError(parsedConfig.error)}`);
+  const config = parsedConfig.data;
+  config.db['bogusKey'] = true;
+  const bad = new Run(install(artifact, true, JSON.stringify(config)).binary, []);
+  current = bad;
+  const code = await bad.exit(SLACK_MS, 'start with an invalid config');
+  expect(code === 1, `exited ${code}`);
+  expect(bad.lines.some((line) => line.includes('bogusKey')), 'stderr does not name "bogusKey"');
+  expect(bad.spawnedPids().length === 0, 'a service was spawned');
   return 'exit 1';
 });
 
