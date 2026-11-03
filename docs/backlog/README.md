@@ -120,6 +120,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | OQ6, OQ12, OQ15 | Decided by the human |
 | OQ16, OQ17 | Proposed (OQ16 is a draft; a spike decides it) |
 | OQ18 to OQ22 | Decided by the human, 2026-11-03 (third-party licenses; see [Third-party license notices](third-party-licenses.md#decisions)) |
-| OQ23, OQ24 | Open (persistence system; owner human) |
+| OQ23 | Decided by the human, 2026-11-03 (persistence system: one base directory) |
+| OQ24 | Open (persistence system; owner human) |
 | OQ25 | Proposed (amendment of REQ-CFG-05 waits for the human) |
 | Blocking open questions | None |

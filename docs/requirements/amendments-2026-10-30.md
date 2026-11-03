@@ -71,7 +71,8 @@ Status: proposed on 2026-11-03. It waits for the human ([OQ25](../roadmap/PROPOS
 
 - Current text. The install path holds only read-only defaults. The defaults contain no secrets. The real `config.json` lives under the root that the paths library resolves.
 - Cause. The persistence system uses a strict config with no defaults ([ADR-007](../architecture/adr/ADR-007-persistence-system.md)). A missing or invalid config always throws. The runtime never creates it.
-- Proposed change. The install path holds no config copy. The shipped `config.default.json` copy path is removed. The real `config.json` still lives under the resolved root. Who creates it on a host is TBD with the installer ([OQ24](../roadmap/PROPOSAL.md#open-questions)).
-- Unchanged. The root is resolved once by the paths library. The code does not use the current working directory as the anchor. Directory and file permissions stay as the requirement states.
+- Proposed change. The install path holds no config copy. The shipped `config.default.json` copy path is removed. The real `config.json` still lives under the resolved root. The install path is the base directory and the installer assistant defines it. Who creates the file on a host is TBD with the installer ([OQ24](../roadmap/PROPOSAL.md#open-questions)).
+- Unchanged. The root is resolved once by the paths library. Directory and file permissions stay as the requirement states.
+- Extra proposed point. REQ-CFG-05 forbids using the cwd as an anchor: "It MUST NOT use the current working directory as the anchor". Decision S11 ([OQ23](../roadmap/PROPOSAL.md#open-questions)) uses `process.cwd()` as the dev base directory. The requirement would need a text fix for dev. The exact wording is not drafted. The text is not edited here.
 - Effect. The sentence about read-only defaults in the install path, and the matching sentence in [REQ-SEA-05](10-node-sea-distribution.md), would need a text fix if the human approves. The exact wording is not drafted. Not verified: which other pages repeat the sentence.
 - Slices. See the [persistence system backlog](../backlog/persistence-system.md).

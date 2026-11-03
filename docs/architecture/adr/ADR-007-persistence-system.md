@@ -3,7 +3,7 @@ fmt: TOON
 doc: docs/architecture/adr/ADR-007-persistence-system.md
 title: "ADR-007 Persistence system"
 type: architecture
-summary: "Proposes a strict engine-keyed config that always throws, lazy engine loading, a barrel split and engine-keyed migration assets."
+summary: "Proposes a strict engine-keyed config that always throws, one base directory (cwd in dev, executable directory in prod), lazy engine loading, a barrel split and engine-keyed migration assets."
 ids[0]:
 related[7]: docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/backlog/persistence-system.md,docs/requirements/04-configuration.md,docs/requirements/05-persistence.md,docs/requirements/amendments-2026-10-30.md
 status: proposed
@@ -25,7 +25,7 @@ updated: 2026-11-03
 
 ## Status
 
-Proposed, 2026-11-03. The human asked for the direction. The details below are agent proposals and the code does not exist yet. This page is written first, so the docs say what the code will do. The slices are on the [backlog page](../../backlog/persistence-system.md).
+Proposed, 2026-11-03. The human asked for the direction and decided the base directory rule. The other details below are agent proposals and the code does not exist yet. This page is written first, so the docs say what the code will do. The slices are on the [backlog page](../../backlog/persistence-system.md).
 
 Numbering note: the [architecture overview](../overview.md#architecture-decisions) listed an older placeholder set in which "ADR-007" meant "Release flow". That placeholder is now ADR-011. The file number of this record is the one in its file name.
 
@@ -37,7 +37,7 @@ The human also said the config "SIEMPRE TRUENA si esta invalida o falta". The ca
 
 Facts found before this decision:
 
-- `paths.ts` resolves the root through a chain.
+- `paths.ts` resolves the root through a chain. It is replaced by one base directory (see below).
 - `ensureConfigFile` in `config.ts` creates the file when it is absent.
 - `z.object` strips unknown keys.
 - The barrel `libs/shared-core/src/index.ts` re-exports `sqlite-adapter`, so any import of the barrel pulls the engine in.
@@ -90,15 +90,46 @@ The root of `libs/shared-core` stops re-exporting `sqlite-adapter` and `sqlite-v
 
 Migration assets move to `db-migrations/<engine>/...`. Only `sqlite` exists. No pg folder is created. [REQ-DB-03](../../requirements/05-persistence.md) already says each engine keeps its own schemas and migrations.
 
-### Dev root
+### One base directory
 
-- Assumption: the dev root is `.local/` at the repo root, ignored by git. It holds `config/`, `data/`, `logs/` and `certs/`.
-- The dev config is created by an explicit command, `pnpm run dev:config`. Nothing creates it silently at startup. This is an assumption ([OQ23](../../roadmap/PROPOSAL.md#open-questions)).
-- The packaged smoke writes a valid config into its scratch root before it starts the binary.
+Decided by the human (2026-11-03, [OQ23](../../roadmap/PROPOSAL.md#open-questions)). The human said: "lo unico que cambia entre dev y prod es el CWD en dev (es lo que diga pnpm) y en built/prod/deploy es el installPath que haya definido el asistente de instalacion".
+
+One parameter changes between dev and prod: the base directory.
+
+| Run | Base directory |
+|---|---|
+| Dev | `process.cwd()`, whatever pnpm gives |
+| Built, prod, deploy | the install path: the directory of the executable, defined by the installer assistant |
+
+Under the base directory the layout is identical in dev and prod:
+
+- `config/config.json`
+- `data/`
+- `logs/`
+- `certs/`
+
+Rules:
+
+- There is no `--root` flag, no `APP_HOME`, no marker file, no OS default root, no `.local/` folder and no `dev:config` script.
+- `config/config.json` MUST exist. A missing file throws. Nothing creates it.
+- A `config.example.json` documents the file. A developer copies it to `<cwd>/config/config.json`. The human said: "bastaria un .example file (sin scripts, solo documentando que ese archivo TIENE que existir y dejar que truene sino)".
+- The packaged smoke writes a valid config into its scratch base directory before it starts the binary.
+
+Why:
+
+- Occam: one parameter changes, the rest is equal. Fewer switches means fewer states to test and to explain.
+- Professional layouts do the same: a program finds its config, data and logs relative to one base.
+
+Consequence, stated plainly:
+
+- In dev, each app started with its own cwd resolves its own base. `pnpm --filter` changes the cwd to the app folder.
+- To share one dev base, start every app from the same cwd.
 
 ### Install path and the default copy
 
-[REQ-CFG-05](../../requirements/04-configuration.md) says the install path holds only read-only defaults. Strict config has no defaults. So the shipped `config.default.json` copy path is removed. This needs a requirement text change. It is a proposed amendment in [Amendments 2026-10-30](../../requirements/amendments-2026-10-30.md#proposed-amendment-req-cfg-05-no-default-config-copy). It waits for the human. The REQ text is not edited here.
+[REQ-CFG-05](../../requirements/04-configuration.md) says the install path holds only read-only defaults. Strict config has no defaults. So the shipped `config.default.json` copy path is removed. The install path is now the base directory. The installer assistant creates `config/config.json` there ([OQ24](../../roadmap/PROPOSAL.md#open-questions)). The removal needs a requirement text change. It is a proposed amendment in [Amendments 2026-10-30](../../requirements/amendments-2026-10-30.md#proposed-amendment-req-cfg-05-no-default-config-copy). It waits for the human. The REQ text is not edited here.
+
+The amendment also notes a conflict: REQ-CFG-05 forbids the current working directory as an anchor. This decision uses the cwd as the dev base. That point waits for the human too.
 
 ## Options rejected
 
@@ -111,7 +142,7 @@ Migration assets move to `db-migrations/<engine>/...`. Only `sqlite` exists. No 
 
 ## Consequences
 
-- A start without a valid config exits with an error. A developer runs `pnpm run dev:config` once per checkout.
+- A start without a valid config exits with an error. A developer copies `config.example.json` to `<cwd>/config/config.json` once.
 - [REQ-CFG-04](../../requirements/04-configuration.md) still holds. Persistence initialization depends on the validated config through async DI.
 - [REQ-DB-02](../../requirements/05-persistence.md) still holds. The engine comes from the config singleton.
 - [REQ-CFG-05](../../requirements/04-configuration.md) conflicts with the removed default copy until the human decides on the amendment.
@@ -122,6 +153,6 @@ Migration assets move to `db-migrations/<engine>/...`. Only `sqlite` exists. No 
 
 - The zod probe and the lazy-load measurements come from the task logbook, taken on a scratch setup. They were not re-run for this page.
 - That the heap and blob numbers hold on other Node versions, on other rspack versions, or on Windows.
-- That `.local/` is the final dev root name and that `pnpm run dev:config` is the final command (assumptions).
-- Where the installer creates `config.json`, and with which tool: TBD.
+- That `process.cwd()` is the same for every app in a dev run: it depends on how pnpm starts each app.
+- How the installer assistant defines the install path and creates `config/config.json` there, and with which tool: TBD.
 - Any PostgreSQL behavior: no pg engine, driver or config block exists in this work.

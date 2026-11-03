@@ -56,7 +56,7 @@ docs[75]:
   - doc: docs/architecture/adr/ADR-007-persistence-system.md
     title: ADR-007 Persistence system
     type: architecture
-    summary: "Proposes a strict engine-keyed config that always throws, lazy engine loading, a barrel split and engine-keyed migration assets."
+    summary: "Proposes a strict engine-keyed config that always throws, one base directory (cwd in dev, executable directory in prod), lazy engine loading, a barrel split and engine-keyed migration assets."
     ids: []
     related[7]: docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/backlog/persistence-system.md,docs/requirements/04-configuration.md,docs/requirements/05-persistence.md,docs/requirements/amendments-2026-10-30.md
     status: proposed

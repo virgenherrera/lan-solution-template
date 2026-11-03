@@ -21,6 +21,7 @@ updated: 2026-11-03
 - [At a glance](#at-a-glance)
 - [Goal](#goal)
 - [Requirements](#requirements)
+- [How to run in dev](#how-to-run-in-dev)
 - [Slices](#slices)
 - [Open questions](#open-questions)
 
@@ -76,6 +77,18 @@ Proof is by real runs of the build, the static checks and the packaged binary.
 
 ---
 
+## How to run in dev
+
+[Back to navigation](#navigation)
+
+The base directory in dev is `process.cwd()`, whatever pnpm gives ([ADR-007](../architecture/adr/ADR-007-persistence-system.md#one-base-directory)).
+
+- Copy `libs/shared-core/config.example.json` to `<cwd>/config/config.json`.
+- A missing file makes the service throw. Nothing creates it.
+- `pnpm --filter` changes the cwd to the app folder. To share one dev base, start every app from the same cwd.
+
+---
+
 ## Slices
 
 [Back to navigation](#navigation)
@@ -89,7 +102,7 @@ One branch, one PR. Slice names T1 to T7 are an assumption.
 | T3 | Nest wiring: an async `DATABASE_ADAPTER` provider in `sea-runtime` and `api-gateway` | T2 | `pnpm build` passes. Both apps start with a valid config and exit non-zero without one |
 | T4 | Engine-keyed migration assets under `db-migrations/<engine>/`, with sqlite only: `pack-migrations`, `assets.ts`, migrations source, schema check, tables list | T2 | The parity check exits 0. The packed assets list the sqlite folder only. No pg folder exists |
 | T5 | Docs: [ADR-007](../architecture/adr/ADR-007-persistence-system.md), this page, open questions, the proposed amendment, the README map, `docs/meta.toon` | none | The Checks commands of [Standards](../standards/README.md#checks) exit 0 |
-| T6 | Dev root: `.local/` ignored by git, `.gitignore`, `tools/scripts/init-dev-config.ts`, the command `pnpm run dev:config`. The package smoke writes a valid config | T1 | Services and the migration script throw without a config. After `pnpm run dev:config` they start. The smoke passes |
+| T6 | Base directory: one function returns `process.cwd()` in dev and the executable directory in a built binary. Layout `config/config.json`, `data/`, `logs/`, `certs/` under it. No `.local/`, no dev script. The package smoke writes a valid config into its scratch base directory | T1 | Services and the migration script throw without `config/config.json`. With the file copied from `config.example.json` they start. The smoke passes |
 | T7 | Integration: `pnpm build`, lint and static tests per app, `pnpm package` with the smoke, and an independent verification (contract change) | T1 to T6 | `pnpm package` exits 0. The verifier reports no blocker |
 
 Design rules for all slices:
@@ -106,8 +119,8 @@ Design rules for all slices:
 
 | Topic | Status |
 |---|---|
-| Dev root location (`.local/`) and how the dev config is provisioned: [OQ23](../roadmap/PROPOSAL.md#open-questions) | open, assumption in the meantime |
-| Where the installer assistant creates `config.json`: [OQ24](../roadmap/PROPOSAL.md#open-questions) | open, TBD with the installer (POC-8) |
+| One base directory (cwd in dev, executable directory in prod) and the dev config: [OQ23](../roadmap/PROPOSAL.md#open-questions) | decided (human), 2026-11-03 |
+| Where the installer assistant defines the install path and creates `config/config.json`: [OQ24](../roadmap/PROPOSAL.md#open-questions) | open, TBD with the installer (POC-8) |
 | Remove the shipped `config.default.json` copy ([REQ-CFG-05](../requirements/04-configuration.md)): [OQ25](../roadmap/PROPOSAL.md#open-questions) | proposed amendment, waits for the human |
 | PostgreSQL variant of the config union | TBD, belongs to POC-6 |
 | Measurements in [ADR-007](../architecture/adr/ADR-007-persistence-system.md) on other Node, rspack versions and Windows | not verified |
