@@ -4,7 +4,7 @@ doc: docs/backlog/README.md
 title: "Backlog index"
 type: backlog
 summary: "Backlog index of POC epics mapped to acceptance criteria and cycles."
-related[6]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md
+related[7]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md
 status: current
 updated: 2026-11-03
 -->
@@ -66,6 +66,7 @@ Edges follow "Depends on" in [PROPOSAL.md](../roadmap/PROPOSAL.md#cycles-and-bet
 | Outside the cycles | POC-6 | BACKLOG |
 | Outside the cycles | POC-9 | on hold (decision 9) |
 | Unscheduled | Service status indicator | supervisor endpoint done; consumers open |
+| Unscheduled | Persistence system | proposed 2026-11-03; docs first (T5), code slices T1 to T4, T6, T7 open on `minor/persistence-system`; see [ADR-007](../architecture/adr/ADR-007-persistence-system.md) |
 | Unscheduled | Third-party license notices | decided 2026-11-03: documentation only, no code; see [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md) |
 
 ---
@@ -103,6 +104,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | POC-9 | [GitHub Actions CI/CD and releases (HOLD)](poc-9-ci-cd-releases.md) | HOLD (decision 9) | AC-26, AC-27, AC-35, AC-36, AC-02, AC-32 |
 | none | [Service status indicator](service-status-indicator.md) | HTTP endpoint removed; status contract moved to supervisor stdio ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)); tray and web UI consumers open | none |
 | none | [Third-party license notices](third-party-licenses.md) | Decided 2026-11-03: documentation only, no code; spike: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md). OQ18 to OQ22 decided | none (no REQ or AC id exists for licenses) |
+| none | [Persistence system](persistence-system.md) | Proposed 2026-11-03, branch `minor/persistence-system`, slices T1 to T7; decision: [ADR-007](../architecture/adr/ADR-007-persistence-system.md) (proposed) | AC-07, AC-08, AC-10 (as POC-3) |
 
 ---
 
@@ -118,4 +120,6 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | OQ6, OQ12, OQ15 | Decided by the human |
 | OQ16, OQ17 | Proposed (OQ16 is a draft; a spike decides it) |
 | OQ18 to OQ22 | Decided by the human, 2026-11-03 (third-party licenses; see [Third-party license notices](third-party-licenses.md#decisions)) |
+| OQ23, OQ24 | Open (persistence system; owner human) |
+| OQ25 | Proposed (amendment of REQ-CFG-05 waits for the human) |
 | Blocking open questions | None |

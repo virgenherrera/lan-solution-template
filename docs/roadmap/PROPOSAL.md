@@ -54,7 +54,7 @@ Why this page exists: it orders the SRS v1.6 POCs and logs 17 human decisions. N
 | Method | Shape Up. 6 weeks of build, then 2 weeks of cooldown. | [Method](#method) |
 | Bets | 3 cycles. 8 active POCs (POC-9 on hold) and POC-6 in the backlog. | [Cycles and bets](#cycles-and-bets) |
 | ADR index | 14 rows: 10 approved, 1 proposed, 3 pending spike. | [ADR index](#adr-index) |
-| Open questions | 22 rows. None blocks. | [Open questions](#open-questions) |
+| Open questions | 25 rows. None blocks. | [Open questions](#open-questions) |
 | Coverage | 13 SRS sections and 36 acceptance criteria map to POCs. | [SRS coverage matrix](#srs-coverage-matrix) |
 
 **Cycles and bets** (appetite per POC, from the table in [Cycles and bets](#cycles-and-bets))
@@ -665,10 +665,10 @@ Items 11-15, OQ6, OQ12 and OQ18 to OQ22 are human decisions. The other resolutio
 
 **Ownership summary** (the command in [Checks](../standards/README.md#checks) prints these counts)
 
-- Rows: 22.
-- Owner: 7 human, 9 agent:builder, 5 agent:researcher, 1 agent:verifier.
-- Status: 7 `decided (human)`. 1 `decided (human decision 11)`. 1 `decided (human decision 12)`. 1 `decided (human decision 13): pending spike`. 1 `decided (human decision 14): pending spike`. 1 `decided (human decision 15)`. 1 `decided (human, 2026-11-02); text applied in REQ-STACK-07`. 1 `decided (human decision, POC-2 D2)`. 8 `proposed`. No row has status `open`. OQ18 to OQ22 (third-party licenses) are `decided (human)`.
-- Blocking: 22 `no`. No open question blocks. No row has status `needs human decision`.
+- Rows: 25.
+- Owner: 10 human, 9 agent:builder, 5 agent:researcher, 1 agent:verifier.
+- Status: 7 `decided (human)`. 1 `decided (human decision 11)`. 1 `decided (human decision 12)`. 1 `decided (human decision 13): pending spike`. 1 `decided (human decision 14): pending spike`. 1 `decided (human decision 15)`. 1 `decided (human, 2026-11-02); text applied in REQ-STACK-07`. 1 `decided (human decision, POC-2 D2)`. 9 `proposed`. 2 `open`. OQ18 to OQ22 (third-party licenses) are `decided (human)`. OQ23 and OQ24 (persistence system) are `open`. OQ25 is `proposed` and waits for the human.
+- Blocking: 25 `no`. No open question blocks. No row has status `needs human decision`.
 
 Claims marked "not verified" stay unverified until a spike or a primary source confirms them.
 
@@ -696,6 +696,9 @@ Claims marked "not verified" stay unverified until a spike or a primary source c
 | OQ20 | Add a `--licenses` CLI flag that prints the notices, or only ship the file? | Decided by the human (2026-11-03): no flag. A flag would be argv handled by `dispatch()` in `libs/service-registry`. It would be a third mode that prints an embedded notices file and exits 0. It would change the CLI surface, the exit code contract and the smoke bad-selector check, and it has nothing to print without an embedded file. The human states that other products usually offer no such option and place the bundled licenses in one file in the install path. A derived product may add the flag. Source: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md#q5-options-to-produce-the-notices), design notes, and [Q6](../results/SPIKE-third-party-licenses.md#q6-recommendation), question 3. | human | no | decided (human) |
 | OQ21 | Which file name and location next to the artifact for the notices file? | Decided by the human (2026-11-03) as a documented convention only ("solo ideas documentadas por ahora"). Nothing is built. The convention is in [Third-party license notices](../backlog/third-party-licenses.md#future-ideas): one plain-text file `THIRD-PARTY-NOTICES.txt`, placed in the install path. Per-OS placement via Tauri `bundle.resources`: not verified. Source: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md#q6-recommendation), question 4. | human | no | decided (human) |
 | OQ22 | Replace the empty `license = ""` in `apps/desktop/src-tauri/Cargo.toml` with `PostgreSQL`? | Decided by the human (2026-11-03): yes. Set `license = "PostgreSQL"`. Cargo accepts the value: `cargo metadata` check recorded in the commit that sets it. Source: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md#q6-recommendation), question 5. | human | no | decided (human) |
+| OQ23 | Where is the dev root, and how is the dev config provisioned? The human asked: "no deberiamos tener un path gitignorado para la configuracion de la db y que si no "se lo damos" al servicio o el script de migraciones truene alv?" | Assumption, not decided: the dev root is `.local/` at the repo root, ignored by git, with `config/`, `data/`, `logs/` and `certs/`. Services and migration scripts throw without a valid config. An explicit command, `pnpm run dev:config`, creates the dev config. Nothing creates it silently at startup. See [ADR-007](../architecture/adr/ADR-007-persistence-system.md). The folder name and the command name are not verified. | human | no | open |
+| OQ24 | Where does the installer assistant create the valid `config.json`? | TBD with the installer (POC-8). The human said the installer assistant should create the valid json and that this stays TBD. Until then the runtime never auto-creates the config: a missing config throws. The folder per OS follows the root of decision 11 and OQ16. Not designed. Not verified. | human | no | open |
+| OQ25 | Does REQ-CFG-05 lose the read-only defaults copy at the install path? | Proposed amendment, waits for the human. Strict config has no defaults, so the shipped `config.default.json` copy path is removed. Text: [Amendments 2026-10-30](../requirements/amendments-2026-10-30.md#proposed-amendment-req-cfg-05-no-default-config-copy). The REQ text is not edited. | human | no | proposed |
 
 ---
 
