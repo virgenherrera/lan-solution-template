@@ -53,7 +53,7 @@ Why this page exists: it orders the SRS v1.6 POCs and logs 18 human decisions. N
 | Status | Proposal v2. Not approved. | [Decision Log](#decision-log) |
 | Method | Shape Up. 6 weeks of build, then 2 weeks of cooldown. | [Method](#method) |
 | Bets | 3 cycles. 8 active POCs (POC-9 on hold) and POC-6 in the backlog. | [Cycles and bets](#cycles-and-bets) |
-| ADR index | 14 rows: 11 approved, 1 proposed, 2 pending spike. | [ADR index](#adr-index) |
+| ADR index | 14 rows: 12 approved, 1 proposed, 1 pending spike. | [ADR index](#adr-index) |
 | Open questions | 25 rows. None blocks. | [Open questions](#open-questions) |
 | Coverage | 13 SRS sections and 36 acceptance criteria map to POCs. | [SRS coverage matrix](#srs-coverage-matrix) |
 
@@ -96,8 +96,8 @@ flowchart LR
 ```mermaid
 stateDiagram-v2
     state "proposed (5 rows)" as proposed
-    state "decided by human (17 rows)" as human_decision
-    state "decided by human - pending spike (2 rows)" as pending_spike
+    state "decided by human (18 rows)" as human_decision
+    state "decided by human - pending spike (1 row)" as pending_spike
     state "open (1 row)" as open_q
     open_q --> human_decision : human decision
     proposed --> human_decision : human decision
@@ -152,7 +152,7 @@ Each row summarizes one decision. The written ADR files are listed in the [archi
 | Auth and first admin | Development seeds a self-destructing `dev-admin` data row, and production never seeds. POC-7 implements the seeding. The design is approved; ASVS citations stay `not verified`. | 12 | approved |
 | Auth and first admin | The database is the only identity source. The user creates the first real admin in a setup wizard. The POC-5 spike defines the path. The MSI credential dialog is the fallback. | 5, 12, 13 | pending spike |
 | Config and paths | One base directory: the cwd in dev, the executable directory when packaged. Layout: `config/config.json`, `data/`, `logs/`, `certs/`. A missing or invalid config stops the start ([ADR-007](../architecture/adr/ADR-007-persistence-system.md#one-base-directory)). | 11, OQ23, OQ25 | approved |
-| TLS and keys | TLS follows the `dotnet dev-certs` style. The CA key stays outside the database, encrypted in `dataDir`. | 7, 14 | pending spike |
+| TLS and keys | A local CA and a leaf built with Node built-ins only. Keys are plain PKCS#8 files, mode 0600, under `<base>/certs`, outside the database ([ADR-008](../architecture/adr/ADR-008-tls-trust-model.md)). | 7, 14, OQ8 | approved |
 | Database | SQLite plus vector is the engine. PostgreSQL is TBD (backlog). | 8 | approved |
 | Database | We install the current stable Drizzle tag first and use `1.0.0-rc.5` only if it fails. | 10 | approved |
 | Release | Release automation is on HOLD until all POCs are ready. | 9 | approved |
@@ -655,7 +655,7 @@ Items 11-15, OQ3, OQ6, OQ7, OQ12, OQ14, OQ18 to OQ23 and OQ25 are human decision
 
 - Rows: 25.
 - Owner: 10 human, 9 agent:builder, 5 agent:researcher, 1 agent:verifier.
-- Status: 12 `decided (human)`. 1 each of `decided (human decision 11)`, `decided (human decision 12)`, `decided (human decision 15)`, `decided (human decision, POC-2 D2)` and `decided (human, 2026-11-02); text applied in REQ-STACK-07`. 2 pending spike (decisions 13 and 14). 5 `proposed`. 1 `open` (OQ24).
+- Status: 13 `decided (human)`. 1 each of `decided (human decision 11)`, `decided (human decision 12)`, `decided (human decision 15)`, `decided (human decision, POC-2 D2)` and `decided (human, 2026-11-02); text applied in REQ-STACK-07`. 1 pending spike (decision 13). 5 `proposed`. 1 `open` (OQ24).
 - Blocking: 25 `no`. No row has status `needs human decision`.
 
 Claims marked "not verified" stay unverified until a spike or a primary source confirms them.
@@ -669,7 +669,7 @@ Claims marked "not verified" stay unverified until a spike or a primary source c
 | OQ5 | First-run setup on Linux and macOS without MSI: is a loopback setup flow acceptable? | Decided by human decision 13: pending spike. The first-run flow for Linux and macOS is the setup wizard. The POC-5 spike defines it. The mechanism stays open. The spike decides the wizard role. It either replaces the MSI credential dialog or complements it. The candidate design is a spike input. Its parts are loopback only, a single-use token, and Host and Origin checks. It also has an attempt limit and a headless CLI `setup` alternative. It also sets a 15-character minimum with a blocklist. It is practice, not verified against primary sources. Circuit breaker: after 2 days without a clear path, keep the MSI dialog on Windows. Keep the CLI `setup` command on Linux and macOS. | agent:researcher | no | decided (human decision 13): pending spike |
 | OQ6 | Does the POC-9 HOLD also hold pushes and PRs of each POC? | Decided by the human, option A: the hold covers only CI/CD and release publishing (POC-9): release workflow, tags, binary publish and release bot. Local work, branches and commits continue. Push, PR and `gh` writes still need explicit human approval per AGENTS.md. | agent:researcher | no | decided (human) |
 | OQ7 | Minimum verified-OS set that closes a micro-POC (Q-08, NFR-PORT-01). | Decided 2026-11-03: a micro-POC closes as `verified-on-<os>-<arch>` only where its acceptance command ran natively and was logged. macOS arm64 closes macOS checks. Linux x64 in Docker closes gateway smoke tests only (REQ-TEST-09). Windows x64 stays blocked-by-environment until a native runner exists. Installer, tray, WebView and autostart checks stay blocked there. Today the package smoke runs natively on the host in `sea-runtime:package`. Windows is not verified. Decided by the agent under the human's delegation of ownership (2026-11-03). | agent:verifier | no | decided (human) |
-| OQ8 | TLS crypto library and key storage per OS (A-04, Q-07). | Decided by human decision 14: pending spike. Prefer zero dependencies: `node:crypto` plus a minimal own DER builder. It builds the CA and the leaf with SAN, IPs included. Fallback: a pure-JS dependency such as `@peculiar/x509`. Never native modules. The CA private key stays outside the database, encrypted in a `dataDir` file. A NestJS provider contract hides the storage. See Decision Log item 14. Not verified: that `node:crypto` lacks an X.509 build-and-sign API. Not verified: SAN support in `@peculiar/x509`. Not verified: the Windows ACL recipe. | agent:researcher | no | decided (human decision 14): pending spike |
+| OQ8 | TLS crypto library and key storage per OS (A-04, Q-07). | Decided 2026-11-03 by the agent under the human's delegation ("trata de hacer auto-gen solo con built-ins de node"): built-ins of Node suffice; no pure-JS dependency. A probe built the CA and the leaf with `node:crypto` and a minimal DER builder. `X509Certificate` parsed and verified them. `openssl verify` accepted the chain as an external checker. A `node:https` client with `ca:` connected by name, IP and SNI. Failures were `UNABLE_TO_VERIFY_LEAF_SIGNATURE` and `ERR_TLS_CERT_ALTNAME_INVALID`. Keys are plain PKCS#8 files in `<base>/certs`, mode 0600, outside the database. No key-storage provider and no AES-GCM key file. Rationale and unverified items: [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md). | agent:researcher | no | decided (human) |
 | OQ9 | Release through a bot commit or a release PR (Q-03). | Use a release PR as the default, in line with REQ-CI-04. Publish after merge by tagging the merged SHA, idempotent per REQ-CI-06. Use a bot commit only if branch protection allows it and the human approves. Branch protection bypass for personal repos is not verified. Nx release support for a PR flow is not verified. | agent:researcher | no (HOLD) | proposed |
 | OQ10 | Nx release group membership, including sea-runtime (Q-01). | Use one fixed group: web-angular, api-gateway, shared-core, desktop and sea-runtime. REQ-SEA-01 packs sea-runtime into the single SEA, so its version must match. REQ-VERSION-01 does not list sea-runtime, so this is an inference. Exclude test libs and tooling. Run `nx release --dry-run` to verify. | agent:builder | no | proposed |
 | OQ11 | Restart, backoff and readiness values (A3). | Constants in `SUPERVISOR_CONFIG` (Zod defaults): readiness timeout 30 s. Backoff 1 s, doubling, capped at 30 s, with 20 percent jitter. At most 5 restarts in 300 s. Counter reset after 60 s stable. Graceful stop 10 s. After exhaustion: state `error`, no more restarts, shown to Tauri. Measured in POC-2: [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md). | agent:builder | no | decided (human decision, POC-2 D2) |
