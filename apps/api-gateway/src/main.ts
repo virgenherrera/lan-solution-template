@@ -37,6 +37,8 @@ async function bootstrap() {
   // The one config read of this process: the TLS identity must exist before Nest builds the HTTPS server. A missing or invalid config stops the start here.
   const paths = derivePaths(resolveBase({ sea: isSea(), execPath: process.execPath, cwd: process.cwd() }));
   const config = initConfig(paths);
+  // Both listeners bind the same address: equal ports could only fail later with EADDRINUSE, so name the keys now.
+  if (config.net.httpPort === config.net.httpsPort) throw new Error('config net.httpPort must differ from net.httpsPort');
   const identity = ensureTlsIdentity({
     paths,
     config,

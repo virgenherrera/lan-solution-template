@@ -3,8 +3,8 @@ import type { WebBundle } from './web-bundle.js';
 
 const INDEX = 'index.html';
 const API_PREFIX = '/api';
-// Angular names built files "<name>-<8 upper-case alphanumerics>.<ext>"; such a name changes whenever the content does. Assumption: this build tool only.
-const CONTENT_HASHED = /-[A-Z0-9]{8}\.[A-Za-z0-9]+$/;
+// Angular names built files "<name>-<8 character hash>.<ext>" (letters of both cases, digits, `_` and `-`); such a name changes whenever the content does.
+const CONTENT_HASHED = /-[A-Za-z0-9_-]{8}\.[A-Za-z0-9]+$/;
 // Entry points the browser must revalidate on every load, or an update (or a stale service worker) would stick.
 const NEVER_CACHED = new Set([INDEX, 'ngsw-worker.js', 'ngsw.json', 'manifest.webmanifest', 'safety-worker.js', 'worker-basic.min.js']);
 // A last path segment with a dot names a file, not an SPA route.
@@ -33,7 +33,9 @@ export function createWebHandler(bundle: WebBundle) {
       res.writeHead(400).end();
       return;
     }
-    if (pathname === API_PREFIX || pathname.startsWith(`${API_PREFIX}/`)) return next();
+    // Lower-cased: the router matches /API/x as an API route too, so it must not get index.html.
+    const route = pathname.toLowerCase();
+    if (route === API_PREFIX || route.startsWith(`${API_PREFIX}/`)) return next();
 
     const requested = pathname.slice(1);
     const hit = bundle.get(requested);

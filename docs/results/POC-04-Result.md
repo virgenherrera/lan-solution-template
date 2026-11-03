@@ -97,6 +97,12 @@ Deviations from the plan:
 - The 8443 and 8080 values live in `config.example.json`, not in code. The persisted config has no defaults ([ADR-007](../architecture/adr/ADR-007-persistence-system.md)). [REQ-NET-06](../requirements/06-web-gateway-https-pwa.md) is corrected (see [amendments](../requirements/amendments-2026-10-30.md#editorial-corrections-2026-11-03)).
 - The OQ8 spike became the T0 probe. The pure-JS dependency path was not needed.
 
+Independent verification (read-only, adversarial, against the packaged binary; ports 48443 and 48080) found no defect in the certificate profile, the identity storage, the 25-case config matrix, the 40 raw-socket redirect probes (no unknown Host is ever redirected, no CR or LF reaches `Location`) or the three environments (dev, SEA, sidecar simulation). It found one defect and two edge cases, all fixed here:
+
+- Hashed `chunk-*.js` files got `no-cache` because the hash pattern accepted only upper-case characters. Angular chunk hashes mix cases and can hold `_` and `-`. The pattern now accepts them.
+- `/API/x` (upper case) got `index.html`. The router treats it as an API route, so the web handler now compares the prefix in lower case.
+- `net.httpPort` equal to `net.httpsPort` passed the schema and made the supervisor loop on `EADDRINUSE`. The gateway now stops at start with `config net.httpPort must differ from net.httpsPort` (exit 1).
+
 ## Not verified
 
 - Chrome, Firefox and Safari accepting the CA and an IP SAN leaf.
