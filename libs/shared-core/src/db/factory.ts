@@ -1,21 +1,30 @@
 import type { AppConfig } from '../config.js';
 import type { AppPaths } from '../paths.js';
 import type { DbAdapter } from './port.js';
-import { SqliteAdapter, type SqliteVectorBackend } from './sqlite-adapter.js';
+import type { SqliteOptions } from './sqlite/index.js';
 
+type Engine = AppConfig['db']['engine'];
+
+// Per-engine options, keyed by engine. Type-only: nothing engine specific is loaded by importing this file.
 export interface AdapterDeps {
-  readonly sqliteVector?: SqliteVectorBackend;
+  readonly sqlite?: SqliteOptions;
 }
 
-type EngineFactory = (config: AppConfig, paths: AppPaths, deps: AdapterDeps) => DbAdapter;
+interface EngineModule {
+  createAdapter(config: AppConfig, paths: AppPaths, deps: AdapterDeps): DbAdapter;
+}
 
-// Strategy registry keyed by `db.engine`. A new engine adds one entry here and one value to the config enum.
-const ENGINES: Readonly<Record<AppConfig['db']['engine'], EngineFactory>> = {
-  sqlite: (config, paths, deps) => new SqliteAdapter(config.db.sqlite, paths.dataDir, deps.sqliteVector),
+// Strategy registry keyed by `db.engine`. Each value is a literal dynamic import so the bundler can resolve it,
+// and an engine module is evaluated only when it is selected. A new engine adds one entry here and one value to the config enum.
+const ENGINES: Readonly<Record<Engine, () => Promise<EngineModule>>> = {
+  sqlite: async () => {
+    const { createAdapter } = await import('./sqlite/index.js');
+    return { createAdapter: (config, paths, deps) => createAdapter(config, paths, deps.sqlite) };
+  },
 };
 
-export function createDbAdapter(config: AppConfig, paths: AppPaths, deps: AdapterDeps = {}): DbAdapter {
-  const factory = ENGINES[config.db.engine];
-  if (factory === undefined) throw new Error(`unknown db engine: ${String(config.db.engine)}`);
-  return factory(config, paths, deps);
+export async function createDbAdapter(config: AppConfig, paths: AppPaths, deps: AdapterDeps = {}): Promise<DbAdapter> {
+  const load = ENGINES[config.db.engine];
+  if (load === undefined) throw new Error(`unknown db engine: ${String(config.db.engine)}`);
+  return (await load()).createAdapter(config, paths, deps);
 }

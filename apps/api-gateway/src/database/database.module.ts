@@ -19,13 +19,16 @@ function open$(): Observable<DbAdapter> {
     // The supervisor passes its root through APP_HOME, so both processes use the same database.
     const resolved = resolveRoot({ argv: process.argv.slice(2), env: process.env, execPath: process.execPath, platform: process.platform });
     const paths = derivePaths(resolved, process.execPath);
-    const db = createDbAdapter(initConfig(paths), paths);
-    return from(db.connect()).pipe(
-      concatMap(() => handshake$(db)),
-      map(() => db),
-      catchError((error: unknown) =>
-        from(db.close()).pipe(
-          concatMap(() => throwError(() => new Error(`database handshake failed (${db.engine}): ${error instanceof Error ? error.message : String(error)}`))),
+    return from(createDbAdapter(initConfig(paths), paths)).pipe(
+      concatMap((db) =>
+        from(db.connect()).pipe(
+          concatMap(() => handshake$(db)),
+          map(() => db),
+          catchError((error: unknown) =>
+            from(db.close()).pipe(
+              concatMap(() => throwError(() => new Error(`database handshake failed (${db.engine}): ${error instanceof Error ? error.message : String(error)}`))),
+            ),
+          ),
         ),
       ),
     );
