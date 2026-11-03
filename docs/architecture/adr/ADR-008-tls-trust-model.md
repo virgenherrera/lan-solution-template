@@ -5,7 +5,7 @@ title: "ADR-008 TLS trust model"
 type: architecture
 summary: "Local CA and leaf built with Node built-ins only, strict net and tls config, HTTPS 8443 with a 308 redirect."
 ids[0]:
-related[6]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/requirements/06-web-gateway-https-pwa.md,docs/roadmap/PROPOSAL.md,docs/architecture/overview.md
+related[8]: docs/architecture/device-trust-guide.md,docs/results/POC-04-Result.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/requirements/06-web-gateway-https-pwa.md,docs/roadmap/PROPOSAL.md,docs/architecture/overview.md
 status: current
 updated: 2026-11-03
 -->
@@ -20,12 +20,14 @@ updated: 2026-11-03
 - [Context](#context)
 - [Decision](#decision)
 - [Options rejected](#options-rejected)
+- [Known gap](#known-gap)
 - [Consequences](#consequences)
+- [Measured](#measured)
 - [Not verified](#not-verified)
 
 ## Status
 
-Accepted for the design, 2026-11-03. The human delegated the choice ([OQ8](../../roadmap/PROPOSAL.md#open-questions)) with this instruction: "trata de hacer auto-gen solo con built-ins de node. y que funcionee en todos los ambientes (dev, sea, sidecar tauri)". The details below are agent decisions. The code lands on `minor/poc-04-https-gateway`. The tasks are on the [backlog page](../../backlog/poc-4-https-gateway-angular-pwa.md).
+Accepted, 2026-11-03. Implemented on `minor/poc-04-https-gateway`. Evidence: the [POC-4 result](../../results/POC-04-Result.md). The human delegated the choice ([OQ8](../../roadmap/PROPOSAL.md#open-questions)) with this instruction: "trata de hacer auto-gen solo con built-ins de node. y que funcionee en todos los ambientes (dev, sea, sidecar tauri)". The details below are agent decisions. The tasks are on the [backlog page](../../backlog/poc-4-https-gateway-angular-pwa.md).
 
 ## Context
 
@@ -131,7 +133,7 @@ POC-5 owns those.
 
 ### Out of scope
 
-- Installing the CA in the system trust store ([REQ-TLS-02](../../requirements/06-web-gateway-https-pwa.md) says "SHOULD facilitate"). A device-trust guide meets it.
+- Installing the CA in the system trust store ([REQ-TLS-02](../../requirements/06-web-gateway-https-pwa.md) says "SHOULD facilitate"). The [device-trust guide](../device-trust-guide.md) meets it.
 - Windows ACL.
 - Real Tauri and PostgreSQL.
 
@@ -143,6 +145,13 @@ POC-5 owns those.
 - An encrypted CA key (PKCS#8 with AES-GCM) behind a NestJS key-storage provider. The key file sits beside the encryption key, so it adds code and no protection. No requirement asks for it.
 - Reflecting `Host` in the redirect. It is an open redirect.
 
+## Known gap
+
+The identity writes `leaf.key` and then `leaf.crt`, each with an atomic rename. A crash between the two leaves a key that does not match the certificate. The next start throws `<leaf.key> does not belong to <leaf.crt>` and stops.
+
+- Option, not implemented: reissue the leaf when the leaf pair is inconsistent. A leaf has no trust implication, because devices trust the CA. The CA pair must keep throwing, because a new CA breaks the trust of every device.
+- Today the operator deletes `leaf.key` and `leaf.crt` and restarts.
+
 ## Consequences
 
 - No new dependency. The SEA stays one file.
@@ -151,10 +160,25 @@ POC-5 owns those.
 - The leaf is reissued when the network changes. A mobile client that trusts the CA needs nothing.
 - `net` and `tls` are required in `config.json`. An existing config without them stops the start.
 
+## Measured
+
+From the packaged smoke (28 checks, 4 of them the sidecar simulation) and the dev smoke (3 checks). Details: [POC-4 result](../../results/POC-04-Result.md#evidence).
+
+- Modes: `certs/` is `0700`, key files are `0600`.
+- A second start reuses the identity. A changed `tls.extraNames` gives a new leaf and the same `ca.crt`.
+- HTTPS with the CA answers 200. Without the CA the client fails with `UNABLE_TO_VERIFY_LEAF_SIGNATURE`.
+- The redirect answers 308 for a known host, 400 for an unknown host and 405 for a method other than GET and HEAD.
+- A taken port stops the start with exit 1.
+- The sidecar simulation passes from an unrelated cwd, with a shutdown line on stdin and exit 0.
+
 ## Not verified
 
-- Chrome, Firefox and Safari acceptance of the CA and an IP SAN leaf.
+Same list as the [POC-4 result](../../results/POC-04-Result.md#not-verified).
+
+- Chrome, Firefox and Safari accepting the CA and an IP SAN leaf.
+- Any device following the [device-trust guide](../device-trust-guide.md).
 - The WebView of Tauri trusting the CA.
-- A Windows ACL recipe. Windows ignores 0600.
-- A base directory inside an app bundle may be read-only, so `certs/` could not be written. POC-5 and [OQ16](../../roadmap/PROPOSAL.md#open-questions) own it.
-- Behavior on Windows.
+- Real Tauri `CommandEvent` handling, the tray and the supervisor ending on stdin EOF.
+- Windows: ACLs on `certs/`, shells and any packaged run. Windows ignores 0600.
+- A base directory inside a read-only app bundle, so `certs/` could not be written. POC-5 and [OQ16](../../roadmap/PROPOSAL.md#open-questions) own it.
+- macOS code signing of the sidecar.

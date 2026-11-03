@@ -4,7 +4,7 @@ doc: docs/roadmap/PROPOSAL.md
 title: "Roadmap Proposal: lan-solution-template (SRS v1.6)"
 type: roadmap
 summary: "Roadmap proposal with cycles, POC pitches, coverage matrix and open questions."
-related[3]: README.md,docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md
+related[4]: README.md,docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md
 status: proposed
 updated: 2026-11-03
 -->
@@ -213,7 +213,7 @@ flowchart LR
 | POC-1 | Toolchain viability + OS matrix + workspace skeleton, delivered as slices 1a to 1e (see [POC-1 Slices](#poc-1-slices)) | 1 week (slice appetites are ASSUMPTION) | small | none | `minor/poc-01a-monorepo`, `minor/poc-01b-nest` (carries 1b and 1c), `minor/poc-01d-angular-link`, `minor/poc-01e-hardening` |
 | POC-2 | Single SEA + runtime supervisor | 2 weeks | big | POC-1 | `minor/poc-02-supervisor` for all slices, one commit or commit group per slice (see [POC-2 Slices](#poc-2-slices)) |
 | POC-3 | Config (`config.json`) + SQLite vector inside SEA | 2 weeks | big | POC-2 | `minor/poc-03-sqlite-vector` |
-| POC-4 | HTTPS gateway (dev-certs-style TLS) serving Angular PWA + dev loop | 2 weeks | big | POC-2 (POC-3 not blocking) | `minor/poc-04-https-spa` |
+| POC-4 | HTTPS gateway (dev-certs-style TLS) serving Angular PWA + dev loop | 2 weeks | big | POC-2 (POC-3 not blocking) | `minor/poc-04-https-gateway` |
 | POC-5 | Tauri desktop shell with SEA sidecar + CA install + first-run setup | 2 weeks | big | POC-2, POC-4 | `minor/poc-05-tauri-sidecar` |
 | POC-6 | PostgreSQL adapter parity | n/a | n/a | n/a | BACKLOG (see [Backlog](#backlog)) |
 | POC-7 | Auth (user:password) + roles + protected UI | 1-2 weeks | small | POC-4, POC-5 | `minor/poc-07-auth-roles` |
@@ -375,6 +375,7 @@ Backlog epics: [2a](../backlog/poc-2a-launcher-cwd-spike.md), [2b](../backlog/po
 - **Solution sketch**:
   - Configure the `web-angular` app generated in POC-1d as Angular 22, zoneless, strict TypeScript, Signals, Tailwind and PWA (REQ-WEB-01, REQ-PWA-01).
   - `ng serve` on 4200 with `proxyConfig` `/api/**` to 8443. It uses a trusted dev CA and never `secure:false` (REQ-DEV-01..04).
+  - Superseded 2026-11-03: the first-task spike, the key-storage provider and the encrypted CA key file are replaced by built-ins only and plain PKCS#8 files. See [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md) and the [POC-4 result](../results/POC-04-Result.md). The spike and TLS design bullets below are history.
   - First task, a spike (decision 14, [OQ8](#open-questions)). Budget: 2 days at most, inside the appetite.
     - Inputs: a hand-built DER writer on `node:crypto`, against a pure-JS dependency.
     - Checks and circuit breaker: see [Decision Log](#decision-log) item 14.
@@ -404,7 +405,7 @@ Backlog epics: [2a](../backlog/poc-2a-launcher-cwd-spike.md), [2b](../backlog/po
   - Publish the mobile trust findings.
   - Reshape the PWA install part as a new pitch.
 - **Acceptance criteria**: AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17. Also REQ-NET-01..08, REQ-TLS-01..04, REQ-PWA-01..03, REQ-DEV-01..05, REQ-WEB-01, REQ-TEST-05 (dev :4200 and :8443 smoke subset).
-- **Deliverable**: branch `minor/poc-04-https-spa`. PR title: `feat: HTTPS gateway serving Angular PWA from SEA`. Results under `docs/`: `POC-04-Result`, `ADR-008` (TLS trust model) and a device-trust guide.
+- **Deliverable**: branch `minor/poc-04-https-gateway`. PR title: `feat: HTTPS gateway serving Angular PWA from SEA`. Results under `docs/`: `POC-04-Result`, `ADR-008` (TLS trust model) and a device-trust guide.
 
 ### POC-5: Tauri desktop shell with SEA sidecar
 
@@ -767,7 +768,7 @@ Human decisions (source: plan `optimized-wondering-waffle.md`, section "Recorded
       - Evaluate a CLI alternative for headless environments.
     - ASVS stays not verified.
 
-14. (2026-10-30) TLS crypto library and CA key storage. Resolves OQ8 as intent with a spike first. Human answer: "Prefer zero dependencies: node:crypto is enough if possible; if it is not, install the dependency, but avoid native modules. Store the CA private key outside the database and do not depend on OS specifics. Since we are in NestJS, declare a service behind a contract (an abstraction), so that in the future anyone who needs a more powerful or remote abstraction, or another storage that is not the VFS, can implement it. Just leave that noted."
+14. (2026-10-30) TLS crypto library and CA key storage. Superseded 2026-11-03 by [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md): built-ins only, plain PKCS#8 files, no key-storage provider and no AES-GCM key file; the text below is history. Resolves OQ8 as intent with a spike first. Human answer: "Prefer zero dependencies: node:crypto is enough if possible; if it is not, install the dependency, but avoid native modules. Store the CA private key outside the database and do not depend on OS specifics. Since we are in NestJS, declare a service behind a contract (an abstraction), so that in the future anyone who needs a more powerful or remote abstraction, or another storage that is not the VFS, can implement it. Just leave that noted."
     - Agreed design. It is an unreviewed research summary:
       - (a) Prefer zero dependencies. Use `node:crypto` for keys and signatures, plus a minimal own DER builder for the CA and the leaf with SAN, IPs included.
       - Alternative: a pure-JS dependency (`@peculiar/x509`) if the own path fails. Never native modules.

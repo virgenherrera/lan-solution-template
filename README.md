@@ -101,7 +101,8 @@ flowchart LR
 - [Roadmap](docs/roadmap/PROPOSAL.md): proposal of POCs and open questions.
 - [Backlog](docs/backlog/README.md): draft epics derived from the roadmap.
 - [Third-party licenses](docs/backlog/third-party-licenses.md): backlog item for license notices, with the [spike](docs/results/SPIKE-third-party-licenses.md).
-- [Persistence system](docs/backlog/persistence-system.md): strict config and lazy engine loading, with [ADR-007](docs/architecture/adr/ADR-007-persistence-system.md). Dev setup: [How to run in dev](docs/backlog/persistence-system.md#how-to-run-in-dev).
+- [Persistence system](docs/backlog/persistence-system.md): strict config and lazy engine loading, with [ADR-007](docs/architecture/adr/ADR-007-persistence-system.md). Dev setup (`pnpm dev:gateway`, `pnpm dev:web`): [How to run in dev](docs/backlog/persistence-system.md#how-to-run-in-dev).
+- [HTTPS gateway](docs/backlog/poc-4-https-gateway-angular-pwa.md): local CA built with Node built-ins, with [ADR-008](docs/architecture/adr/ADR-008-tls-trust-model.md), the [POC-4 result](docs/results/POC-04-Result.md) and the [device trust guide](docs/architecture/device-trust-guide.md).
 - [Page metadata](docs/meta.toon): generated from the toon-meta blocks. Never edit it by hand. Regeneration: [Metadata block v1](docs/standards/README.md#metadata-block-v1).
 
 Versions and stack constraints live in [Technology baseline](docs/requirements/02-technology-baseline.md).

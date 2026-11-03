@@ -1,4 +1,4 @@
-docs[76]:
+docs[78]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -67,16 +67,25 @@ docs[76]:
     type: architecture
     summary: "Local CA and leaf built with Node built-ins only, strict net and tls config, HTTPS 8443 with a 308 redirect."
     ids: []
-    related[6]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/requirements/06-web-gateway-https-pwa.md,docs/roadmap/PROPOSAL.md,docs/architecture/overview.md
+    related[8]: docs/architecture/device-trust-guide.md,docs/results/POC-04-Result.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/requirements/06-web-gateway-https-pwa.md,docs/roadmap/PROPOSAL.md,docs/architecture/overview.md
     status: current
     updated: 2026-11-03
     refs[16]: AC-12,AC-14,AC-17,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA-02,REQ-TEST-01,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04
+  - doc: docs/architecture/device-trust-guide.md
+    title: Device trust guide
+    type: architecture
+    summary: "How an operator makes a device trust the local CA of the gateway on iOS, Android, Windows and macOS."
+    ids: []
+    related[4]: docs/architecture/adr/ADR-008-tls-trust-model.md,docs/requirements/06-web-gateway-https-pwa.md,docs/results/POC-04-Result.md,docs/standards/README.md
+    status: current
+    updated: 2026-11-03
+    refs[2]: REQ-TLS-02,REQ-TLS-04
   - doc: docs/architecture/overview.md
     title: Architecture overview
     type: architecture
     summary: Mermaid architecture diagrams citing SRS sections for runtime and desktop topology.
     ids: []
-    related[11]: README.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
+    related[12]: README.md,docs/architecture/device-trust-guide.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
     status: current
     updated: 2026-11-03
     refs[10]: REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-05,REQ-DESK-06,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-05,REQ-RUNTIME-06
@@ -85,7 +94,7 @@ docs[76]:
     type: backlog
     summary: Backlog index of POC epics mapped to acceptance criteria and cycles.
     ids: []
-    related[7]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md
+    related[8]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md
     status: current
     updated: 2026-11-03
     refs[37]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36,REQ-CFG-05
@@ -256,7 +265,7 @@ docs[76]:
     type: backlog
     summary: "Backlog item for the HTTPS gateway with a built-in TLS identity, the Angular PWA and the dev loop."
     ids: []
-    related[5]: docs/backlog/README.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md
+    related[7]: docs/backlog/README.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/results/POC-04-Result.md,docs/architecture/device-trust-guide.md
     status: current
     updated: 2026-11-03
     refs[31]: AC-04,AC-05,AC-12,AC-14,AC-15,AC-16,AC-17,REQ-DEV-01,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-DEV-05,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA-01,REQ-PWA-02,REQ-PWA-03,REQ-SEA-04,REQ-TEST-01,REQ-TEST-05,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-WEB-01
@@ -265,7 +274,7 @@ docs[76]:
     type: backlog
     summary: Backlog item for the Tauri desktop shell with SEA sidecar.
     ids: []
-    related[5]: docs/backlog/README.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/backlog/poc-6-postgresql-adapter-parity.md,docs/backlog/service-status-indicator.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md
+    related[6]: docs/backlog/README.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/backlog/poc-6-postgresql-adapter-parity.md,docs/backlog/service-status-indicator.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-008-tls-trust-model.md
     status: current
     updated: 2026-11-03
     refs[15]: AC-03,AC-18,AC-20,AC-30,REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-04,REQ-DESK-05,REQ-DESK-06,REQ-ECO-06,REQ-SEC-05,REQ-TEST-08,REQ-TEST-09,REQ-TLS-02
@@ -292,7 +301,7 @@ docs[76]:
     type: backlog
     summary: Backlog item for MSI credential dialog platform matrix and lockstep versioning.
     ids: []
-    related[4]: docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md,docs/backlog/persistence-system.md
+    related[5]: docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md,docs/backlog/persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md
     status: current
     updated: 2026-11-03
     refs[10]: AC-21,AC-25,AC-33,REQ-CFG-05,REQ-SEA-05,REQ-TEST-09,REQ-TEST-10,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03
@@ -373,7 +382,7 @@ docs[76]:
     type: requirement
     summary: "Defines dev proxy, SEA static serving, LAN TLS and PWA caching requirements."
     ids[20]: REQ-DEV-01,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-DEV-05,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-PWA-01,REQ-PWA-02,REQ-PWA-03
-    related[3]: docs/requirements/README.md,docs/requirements/05-persistence.md,docs/requirements/07-security.md
+    related[4]: docs/requirements/README.md,docs/requirements/05-persistence.md,docs/requirements/07-security.md,docs/architecture/device-trust-guide.md
     status: current
     updated: 2026-11-03
     refs: []
@@ -448,7 +457,7 @@ docs[76]:
     related[7]: docs/requirements/README.md,docs/requirements/12-agent-delivery.md,docs/requirements/traceability.md,docs/requirements/04-configuration.md,docs/requirements/10-node-sea-distribution.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/persistence-system.md
     status: current
     updated: 2026-11-03
-    refs[13]: REQ-CFG-02,REQ-CFG-04,REQ-CFG-05,REQ-DB-01,REQ-DB-04,REQ-DB-10,REQ-NET-01,REQ-NET-04,REQ-RUNTIME-05,REQ-SEA-05,REQ-SEC-02,REQ-STACK-04,REQ-STACK-07
+    refs[18]: REQ-CFG-02,REQ-CFG-04,REQ-CFG-05,REQ-DB-01,REQ-DB-04,REQ-DB-10,REQ-DEV-01,REQ-NET-01,REQ-NET-04,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA-03,REQ-RUNTIME-05,REQ-SEA-05,REQ-SEC-02,REQ-STACK-04,REQ-STACK-07
   - doc: docs/requirements/amendments-2026-11-02.md
     title: Amendments 2026-11-02
     type: requirement
@@ -629,6 +638,15 @@ docs[76]:
     status: current
     updated: 2026-11-02
     refs[2]: REQ-DB-07,REQ-STACK-09
+  - doc: docs/results/POC-04-Result.md
+    title: POC-04 Result
+    type: backlog
+    summary: "Result of POC-4: built-in TLS identity, HTTPS gateway with safe redirect, installable PWA, dev loop and sidecar simulation."
+    ids: []
+    related[5]: docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/device-trust-guide.md,docs/results/POC-03-Result.md,docs/roadmap/PROPOSAL.md
+    status: current
+    updated: 2026-11-03
+    refs[2]: REQ-NET-06,REQ-TLS-02
   - doc: docs/results/SPIKE-spa-serving.md
     title: SPIKE SPA serving in the SEA
     type: backlog
@@ -652,7 +670,7 @@ docs[76]:
     type: roadmap
     summary: "Roadmap proposal with cycles, POC pitches, coverage matrix and open questions."
     ids: []
-    related[3]: README.md,docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md
+    related[4]: README.md,docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md
     status: proposed
     updated: 2026-11-03
     refs[146]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36,REQ-BUILD-01,REQ-BUILD-02,REQ-BUILD-04,REQ-CFG-01,REQ-CFG-02,REQ-CFG-03,REQ-CFG-04,REQ-CFG-05,REQ-CFG-06,REQ-CI-01,REQ-CI-02,REQ-CI-03,REQ-CI-04,REQ-CI-05,REQ-CI-06,REQ-CI-07,REQ-CI-09,REQ-CI-10,REQ-DB-01,REQ-DB-02,REQ-DB-04,REQ-DB-05,REQ-DB-06,REQ-DB-07,REQ-DB-08,REQ-DB-09,REQ-DEPS,REQ-DEPS-01,REQ-DEPS-02,REQ-DESK,REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-04,REQ-DESK-05,REQ-DESK-06,REQ-DEV,REQ-DEV-01,REQ-DEV-04,REQ-ECO-01,REQ-ECO-02,REQ-ECO-04,REQ-ECO-05,REQ-ECO-06,REQ-ECO-07,REQ-NET,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA,REQ-PWA-01,REQ-PWA-02,REQ-REF-01,REQ-REP-01,REQ-RUNTIME,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-SEA-04,REQ-SEA-05,REQ-SEA-06,REQ-SEC-01,REQ-SEC-02,REQ-SEC-03,REQ-SEC-04,REQ-SEC-05,REQ-SEC-06,REQ-SEC-CI-01,REQ-SEC-CI-02,REQ-SEC-CI-03,REQ-SEC-CI-04,REQ-STACK-01,REQ-STACK-04,REQ-STACK-07,REQ-SUPPLY-01,REQ-TEST-01,REQ-TEST-02,REQ-TEST-03,REQ-TEST-04,REQ-TEST-05,REQ-TEST-06,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09,REQ-TEST-10,REQ-TLS,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03,REQ-WEB-01,REQ-WEB-02,REQ-WEB-03,REQ-WEB-04
