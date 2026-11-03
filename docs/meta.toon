@@ -1,4 +1,4 @@
-docs[71]:
+docs[72]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -601,6 +601,15 @@ docs[71]:
     related[3]: docs/results/POC-01c-Result.md,docs/standards/README.md,docs/requirements/10-node-sea-distribution.md
     status: current
     updated: 2026-10-31
+    refs: []
+  - doc: docs/results/SPIKE-third-party-licenses.md
+    title: SPIKE third-party license notices
+    type: backlog
+    summary: "Spike: which third-party licenses ship in the SEA and Tauri artifacts, what they require, and how to bundle notices."
+    ids: []
+    related[3]: docs/results/SPIKE-spa-serving.md,docs/requirements/10-node-sea-distribution.md,docs/standards/README.md
+    status: current
+    updated: 2026-11-03
     refs: []
   - doc: docs/roadmap/PROPOSAL.md
     title: "Roadmap Proposal: lan-solution-template (SRS v1.6)"
