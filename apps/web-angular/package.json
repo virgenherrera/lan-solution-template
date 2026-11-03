@@ -20,6 +20,7 @@
     "@angular/forms": "catalog:angular",
     "@angular/platform-browser": "catalog:angular",
     "@angular/router": "catalog:angular",
+    "@angular/service-worker": "catalog:angular",
     "rxjs": "catalog:",
     "tslib": "catalog:"
   },
