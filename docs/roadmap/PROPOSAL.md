@@ -4,9 +4,9 @@ doc: docs/roadmap/PROPOSAL.md
 title: "Roadmap Proposal: lan-solution-template (SRS v1.6)"
 type: roadmap
 summary: "Roadmap proposal with cycles, POC pitches, coverage matrix and open questions."
-related[2]: README.md,docs/backlog/README.md
+related[3]: README.md,docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md
 status: proposed
-updated: 2026-11-02
+updated: 2026-11-03
 -->
 
 # Roadmap Proposal: lan-solution-template (SRS v1.6)
@@ -54,7 +54,7 @@ Why this page exists: it orders the SRS v1.6 POCs and logs 17 human decisions. N
 | Method | Shape Up. 6 weeks of build, then 2 weeks of cooldown. | [Method](#method) |
 | Bets | 3 cycles. 8 active POCs (POC-9 on hold) and POC-6 in the backlog. | [Cycles and bets](#cycles-and-bets) |
 | ADR index | 14 rows: 10 approved, 1 proposed, 3 pending spike. | [ADR index](#adr-index) |
-| Open questions | 17 rows. None blocks. | [Open questions](#open-questions) |
+| Open questions | 22 rows. None blocks. | [Open questions](#open-questions) |
 | Coverage | 13 SRS sections and 36 acceptance criteria map to POCs. | [SRS coverage matrix](#srs-coverage-matrix) |
 
 **Cycles and bets** (appetite per POC, from the table in [Cycles and bets](#cycles-and-bets))
@@ -95,8 +95,8 @@ flowchart LR
 
 ```mermaid
 stateDiagram-v2
-    state "proposed (10 rows)" as proposed
-    state "decided by human (5 rows)" as human_decision
+    state "proposed (8 rows)" as proposed
+    state "decided by human (12 rows)" as human_decision
     state "decided by human - pending spike (2 rows)" as pending_spike
     proposed --> human_decision : human decision
     proposed --> pending_spike : human decision, spike first
@@ -661,14 +661,14 @@ The human answered items 1-10 of the [Decision Log](#decision-log). The table om
 
 Decision Log items 11-15 settle OQ1, OQ2, OQ4, OQ5 and OQ8. Each row stays in the table.
 
-Items 11-15, OQ6 and OQ12 are human decisions. The other resolutions are agent proposals.
+Items 11-15, OQ6, OQ12 and OQ18 to OQ22 are human decisions. The other resolutions are agent proposals.
 
 **Ownership summary** (the command in [Checks](../standards/README.md#checks) prints these counts)
 
-- Rows: 17.
-- Owner: 2 human, 9 agent:builder, 5 agent:researcher, 1 agent:verifier.
-- Status: 3 `decided (human)`. 1 `decided (human decision 11)`. 1 `decided (human decision 12)`. 1 `decided (human decision 13): pending spike`. 1 `decided (human decision 14): pending spike`. 1 `decided (human decision 15)`. 9 `proposed`.
-- Blocking: 17 `no`. No open question blocks. No row has status `needs human decision`.
+- Rows: 22.
+- Owner: 7 human, 9 agent:builder, 5 agent:researcher, 1 agent:verifier.
+- Status: 7 `decided (human)`. 1 `decided (human decision 11)`. 1 `decided (human decision 12)`. 1 `decided (human decision 13): pending spike`. 1 `decided (human decision 14): pending spike`. 1 `decided (human decision 15)`. 1 `decided (human, 2026-11-02); text applied in REQ-STACK-07`. 1 `decided (human decision, POC-2 D2)`. 8 `proposed`. No row has status `open`. OQ18 to OQ22 (third-party licenses) are `decided (human)`.
+- Blocking: 22 `no`. No open question blocks. No row has status `needs human decision`.
 
 Claims marked "not verified" stay unverified until a spike or a primary source confirms them.
 
@@ -691,6 +691,11 @@ Claims marked "not verified" stay unverified until a spike or a primary source c
 | OQ15 | Does the fallback to `1.0.0-rc.5` need an SRS amendment (REQ-STACK-07)? | Yes, as a text fix. Closed by the 2026-11-02 amendment: REQ-STACK-07 now pins `drizzle-orm` `0.45.4` and `drizzle-kit` `0.31.11`, exact. `1.0.0-rc.5` stays the fallback for both. Record the chosen tags. See [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md) and [amendments-2026-11-02](../requirements/amendments-2026-11-02.md). | agent:builder | no | decided (human, 2026-11-02); text applied in REQ-STACK-07 |
 | OQ16 | Windows MSI scope: per-machine or per-user? | Draft: a per-machine MSI. The installer POC (POC-8) starts with a blocking spike on WiX and Tauri capabilities. It compares per-machine, dual and per-user installs, then decides. The gateway serves the LAN. The spikes decide the root folder (decision 11). Per-machine installs to Program Files, and writing there needs an administrator. Source: Microsoft Learn, MSI installation context (read 2026-10-30). WiX v4 scope names and folder ACLs are not verified. | agent:builder | no | proposed |
 | OQ17 | Install-time choice. Server mode installs gateway and app. Client mode installs app only and connects to an existing LAN server. | Proposed. It touches the installer (POC-8) and the Tauri shell (POC-5). It also touches TLS trust of the server certificate (POC-4). Not designed yet. No part is verified. | human | no | proposed |
+| OQ18 | Is there a distribution plan (who receives the binaries), so the third-party license obligations apply? Internal-only use changes the analysis. | Decided by the human (2026-11-03), option 2: "al ser solo un template el 2 es adecuado". Documentation only. The template ships guidance, no generator and no built-in notices file. Each derived product (for example a future ERP) implements notices when it distributes binaries. Reason: a template distributes source and `pnpm-lock.yaml`, not copies of dependencies. The notice obligation of the MIT, ISC, BSD and Apache-2.0 licenses applies when copies are redistributed, and that is the act of the derived product. General analysis, not legal advice. Source: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md#q6-recommendation), question 1. | human | no | decided (human) |
+| OQ19 | Add a requirement for third-party notices and an allowlist policy that fails the build on copyleft? | Decided by the human (2026-11-03): no for now. "al ser un template y que dependemos de puro sw mit creo que no aporta valor ahora mismo (como template)". No REQ, no AC, no check. The check design stays a documented future idea in [Third-party license notices](../backlog/third-party-licenses.md#future-ideas). The measured set is permissive but not only MIT: MIT 106, ISC 5, BSD-3-Clause 3, Apache-2.0 2, 0BSD 2. Source: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md#q5-options-to-produce-the-notices) and [Q6](../results/SPIKE-third-party-licenses.md#q6-recommendation), question 2. | human | no | decided (human) |
+| OQ20 | Add a `--licenses` CLI flag that prints the notices, or only ship the file? | Decided by the human (2026-11-03): no flag. A flag would be argv handled by `dispatch()` in `libs/service-registry`. It would be a third mode that prints an embedded notices file and exits 0. It would change the CLI surface, the exit code contract and the smoke bad-selector check, and it has nothing to print without an embedded file. The human states that other products usually offer no such option and place the bundled licenses in one file in the install path. A derived product may add the flag. Source: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md#q5-options-to-produce-the-notices), design notes, and [Q6](../results/SPIKE-third-party-licenses.md#q6-recommendation), question 3. | human | no | decided (human) |
+| OQ21 | Which file name and location next to the artifact for the notices file? | Decided by the human (2026-11-03) as a documented convention only ("solo ideas documentadas por ahora"). Nothing is built. The convention is in [Third-party license notices](../backlog/third-party-licenses.md#future-ideas): one plain-text file `THIRD-PARTY-NOTICES.txt`, placed in the install path. Per-OS placement via Tauri `bundle.resources`: not verified. Source: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md#q6-recommendation), question 4. | human | no | decided (human) |
+| OQ22 | Replace the empty `license = ""` in `apps/desktop/src-tauri/Cargo.toml` with `PostgreSQL`? | Decided by the human (2026-11-03): yes. Set `license = "PostgreSQL"`. Cargo accepts the value: `cargo metadata` check recorded in the commit that sets it. Source: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md#q6-recommendation), question 5. | human | no | decided (human) |
 
 ---
 

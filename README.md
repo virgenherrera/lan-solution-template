@@ -101,6 +101,7 @@ flowchart LR
 - [Traceability](docs/requirements/traceability.md): each REQ and AC id mapped to its page and to a POC.
 - [Roadmap](docs/roadmap/PROPOSAL.md): proposal of POCs and open questions.
 - [Backlog](docs/backlog/README.md): draft epics derived from the roadmap.
+- [Third-party licenses](docs/backlog/third-party-licenses.md): backlog item for license notices, with the [spike](docs/results/SPIKE-third-party-licenses.md).
 - [Page metadata](docs/meta.toon): machine-readable metadata of every page except `AGENTS.md` and `README.md`. Generated from the toon-meta blocks and the file bodies. Never edit it by hand. Regeneration command: [Metadata block v1](docs/standards/README.md#metadata-block-v1).
 
 Versions and stack constraints live in [Technology baseline](docs/requirements/02-technology-baseline.md).
@@ -133,3 +134,5 @@ Versions and stack constraints live in [Technology baseline](docs/requirements/0
 [Back to navigation](#navigation)
 
 [PostgreSQL License](LICENSE) (SPDX: `PostgreSQL`). Every workspace `package.json` declares the same `license`.
+
+Third-party licenses of the shipped artifacts: see the [spike](docs/results/SPIKE-third-party-licenses.md) and the [backlog item](docs/backlog/third-party-licenses.md). Documentation only; nothing is built. Decisions: [OQ18 to OQ22](docs/roadmap/PROPOSAL.md#open-questions).
