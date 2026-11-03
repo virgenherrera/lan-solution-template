@@ -7,5 +7,13 @@
       "journalMode": "WAL",
       "synchronous": "FULL"
     }
+  },
+  "net": {
+    "bind": "127.0.0.1",
+    "httpsPort": 8443,
+    "httpPort": 8080
+  },
+  "tls": {
+    "extraNames": []
   }
 }
