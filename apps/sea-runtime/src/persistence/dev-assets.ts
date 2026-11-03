@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { jsonText } from 'service-registry';
 import { z } from 'zod';
 import type { AssetSource } from './asset-source.js';
 
@@ -34,7 +35,7 @@ const seaConfigSchema = z.object({ assets: z.record(z.string(), z.string()) });
 function readAssetMap(base: string): Record<string, string> {
   const configPath = join(base, SEA_CONFIG);
   if (!existsSync(configPath)) throw new Error(`${configPath} not found: ${PACKAGE_HINT}`);
-  return seaConfigSchema.parse(JSON.parse(readFileSync(configPath, 'utf8'))).assets;
+  return jsonText(seaConfigSchema).parse(readFileSync(configPath, 'utf8')).assets;
 }
 
 function readFile(name: string, path: string): Buffer {

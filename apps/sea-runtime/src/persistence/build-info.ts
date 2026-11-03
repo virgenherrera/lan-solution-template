@@ -1,3 +1,4 @@
+import { jsonText } from 'service-registry';
 import { z } from 'zod';
 import type { AssetSource } from './asset-source.js';
 import { buildInfoAsset } from './assets.js';
@@ -16,5 +17,5 @@ const buildInfoSchema = z.strictObject({
 export type BuildInfo = z.infer<typeof buildInfoSchema>;
 
 export function readBuildInfo(source: AssetSource, engine: string): BuildInfo {
-  return buildInfoSchema.parse(JSON.parse(source.readText(buildInfoAsset(engine))));
+  return jsonText(buildInfoSchema).parse(source.readText(buildInfoAsset(engine)));
 }

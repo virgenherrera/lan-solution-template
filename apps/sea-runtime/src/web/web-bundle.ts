@@ -1,5 +1,6 @@
 import { getAsset, getRawAsset } from 'node:sea';
 import { createHash } from 'node:crypto';
+import { jsonText } from 'service-registry';
 import { z } from 'zod';
 
 // Written by compile-sea at build time: relative path to sha256 hex. Each file is embedded as the SEA asset "web/<path>".
@@ -27,7 +28,7 @@ export const hasWebBundle = (): boolean => getAsset(WEB_MANIFEST_ASSET, 'utf8') 
 export function loadWebBundle(): WebFile[] {
   const raw = getAsset(WEB_MANIFEST_ASSET, 'utf8');
   if (raw === undefined) throw new Error(`SEA asset "${WEB_MANIFEST_ASSET}" is missing`);
-  const { files } = manifestSchema.parse(JSON.parse(raw));
+  const { files } = jsonText(manifestSchema).parse(raw);
   return Object.entries(files).map(([path, want]) => {
     const bytes = new Uint8Array(getRawAsset(WEB_PREFIX + path));
     if (createHash('sha256').update(bytes).digest('hex') !== want) {
