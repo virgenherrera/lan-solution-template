@@ -40,3 +40,6 @@ interface RouteInput<Id extends string> {
 export function defineServices<const Id extends string>(routes: readonly RouteInput<Id>[]): readonly ServiceRoute[] {
   return routesSchema.parse(routes);
 }
+
+// Shape of the services asset written by the assembler: what the supervisor needs to start each service. `project` is a build-time detail and stays out.
+export const servicesAssetSchema = z.object({ services: z.array(serviceRouteSchema.omit({ project: true })) });
