@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { jsonText } from 'service-registry';
 import { z } from 'zod';
 import type { AppPaths } from './paths.js';
+import { HOST_NAME_PATTERN } from './tls/san.js';
 
 // Persisted, namespaced config (REQ-CFG-01). Nothing is defaulted: a missing or invalid key stops the start (ADR-007).
 // Secrets never live here: they sit in dataDir (decision 11) and never travel in CLI args.
@@ -22,7 +23,23 @@ const dbSchema = z.discriminatedUnion('engine', [
   }),
 ]);
 
-export const configSchema = z.strictObject({ db: dbSchema });
+const port = z.int().min(1).max(65535);
+
+// Network binding for the HTTPS listener and the plain-HTTP redirect listener.
+const netSchema = z.strictObject({
+  bind: z.union([z.ipv4(), z.ipv6()]),
+  httpsPort: port,
+  httpPort: port,
+});
+
+// Names added to the certificate on top of the detected ones: DNS names or IP addresses.
+const tlsSchema = z.strictObject({
+  extraNames: z.array(
+    z.union([z.ipv4(), z.ipv6(), z.string().max(253).regex(HOST_NAME_PATTERN, 'a DNS host name or an IP address')]),
+  ),
+});
+
+export const configSchema = z.strictObject({ db: dbSchema, net: netSchema, tls: tlsSchema });
 
 export type AppConfig = DeepReadonly<z.infer<typeof configSchema>>;
 
