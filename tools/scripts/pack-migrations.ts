@@ -50,17 +50,15 @@ function packageVersion(relativeDir: string): string {
   return exact(pkg.name ?? fail(`${path}: no name`), pkg.version, path);
 }
 
-// drizzle-kit as pinned in the library devDependencies; the installed copy must match the pin.
+// drizzle-kit as pinned for the library: a literal devDependency, or a `catalog:` reference whose version the lockfile resolves to the installed copy.
 function drizzleKit(): string {
   const path = join(libDir, 'package.json');
-  const pinned = readJson<{ devDependencies?: Record<string, string> }>(path).devDependencies?.['drizzle-kit'];
-  const id = exact('drizzle-kit', pinned, path);
+  const spec = readJson<{ devDependencies?: Record<string, string> }>(path).devDependencies?.['drizzle-kit'];
   const installedPath = join(libDir, 'node_modules', 'drizzle-kit', 'package.json');
-  if (existsSync(installedPath)) {
-    const installed = readJson<{ version?: string }>(installedPath).version;
-    if (installed !== pinned) fail(`${installedPath}: installed drizzle-kit ${installed} differs from the pin ${pinned}`);
-  }
-  return id;
+  const installed = existsSync(installedPath) ? readJson<{ version?: string }>(installedPath).version : undefined;
+  if (spec?.startsWith('catalog:')) return exact('drizzle-kit', installed ?? fail(`${installedPath}: run \`pnpm install\` first`), installedPath);
+  if (installed !== undefined && installed !== spec) fail(`${installedPath}: installed drizzle-kit ${installed} differs from the pin ${spec}`);
+  return exact('drizzle-kit', spec, path);
 }
 
 // A file with several statements needs the drizzle-kit marker; a plain file may hold one statement only.
