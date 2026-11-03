@@ -3,7 +3,7 @@ fmt: TOON
 doc: docs/backlog/third-party-licenses.md
 title: "Third-party license notices"
 type: backlog
-summary: "Backlog item: one documentation slice, the third-party license guide for derived products, plus documented future ideas."
+summary: "Backlog item: the third-party license guide for derived products and documented future ideas. Documentation only."
 ids[0]:
 related[4]: docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md,docs/roadmap/PROPOSAL.md,docs/requirements/10-node-sea-distribution.md
 status: current
@@ -23,7 +23,6 @@ updated: 2026-11-03
 - [At a glance](#at-a-glance)
 - [Problem](#problem)
 - [Decisions](#decisions)
-- [Slice](#slice)
 - [The guide](#the-guide)
 - [Future ideas](#future-ideas)
 - [Non-goals](#non-goals)
@@ -37,7 +36,7 @@ updated: 2026-11-03
 
 | Item | Value |
 |---|---|
-| Status | Decided on 2026-11-03: documentation only. No code slice remains. No POC id. |
+| Status | Decided on 2026-11-03: documentation only. The guide below is the deliverable. No POC id. |
 | Origin | Spike [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md) on branch `chore/third-party-licenses` |
 | Depends on | Nothing. |
 | Requirements | None. No REQ or AC id exists for this item, and this page invents none ([OQ19](../roadmap/PROPOSAL.md#open-questions)). |
@@ -77,20 +76,6 @@ The human decided on 2026-11-03. The repository is a template.
 Reasoning for OQ18. A template distributes source and `pnpm-lock.yaml`, not copies of dependencies. The notice obligation of the MIT, ISC, BSD and Apache-2.0 licenses applies when copies are redistributed. The derived product does that act. This is a general analysis, not legal advice.
 
 Reasoning for OQ20. A `--licenses` flag would be argv handled by `dispatch()` in `libs/service-registry`. It would be a third mode that prints an embedded notices file and exits 0. It would change the CLI surface, the exit code contract and the smoke bad-selector check. It has nothing to print without an embedded file.
-
----
-
-## Slice
-
-[Back to navigation](#navigation)
-
-One slice. No code.
-
-| Slice | Goal | Acceptance (observable) |
-|---|---|---|
-| A | Write [the guide](#the-guide) in this page. | The guide section exists and holds the neutral sentence about derived products. The metadata check exits 0. |
-
-Slice A is done by this page. The old slices A to F (generator, SEA embed, pinned license texts, `--licenses`, `cargo-about`, CI check) are dropped. Their ideas live in [Future ideas](#future-ideas).
 
 ---
 

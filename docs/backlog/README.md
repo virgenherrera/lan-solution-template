@@ -102,7 +102,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | POC-8 | [MSI credential dialog, platform matrix and lockstep versioning](poc-8-msi-matrix-versioning.md) | Cycle 3 (planned) | AC-21, AC-25, AC-33 |
 | POC-9 | [GitHub Actions CI/CD and releases (HOLD)](poc-9-ci-cd-releases.md) | HOLD (decision 9) | AC-26, AC-27, AC-35, AC-36, AC-02, AC-32 |
 | none | [Service status indicator](service-status-indicator.md) | HTTP endpoint removed; status contract moved to supervisor stdio ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)); tray and web UI consumers open | none |
-| none | [Third-party license notices](third-party-licenses.md) | Decided 2026-11-03: documentation only, one guide slice, no code; spike: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md). OQ18 to OQ22 decided | none (no REQ or AC id exists for licenses) |
+| none | [Third-party license notices](third-party-licenses.md) | Decided 2026-11-03: documentation only, no code; spike: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md). OQ18 to OQ22 decided | none (no REQ or AC id exists for licenses) |
 
 ---
 

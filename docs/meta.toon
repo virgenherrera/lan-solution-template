@@ -290,7 +290,7 @@ docs[73]:
   - doc: docs/backlog/third-party-licenses.md
     title: Third-party license notices
     type: backlog
-    summary: "Backlog item: one documentation slice, the third-party license guide for derived products, plus documented future ideas."
+    summary: "Backlog item: the third-party license guide for derived products and documented future ideas. Documentation only."
     ids: []
     related[4]: docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md,docs/roadmap/PROPOSAL.md,docs/requirements/10-node-sea-distribution.md
     status: current
