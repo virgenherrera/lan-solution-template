@@ -8,6 +8,7 @@ import { join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const sharedCorePath = join(root, 'libs', 'shared-core', 'dist', 'index.js');
+const sqliteEnginePath = join(root, 'libs', 'shared-core', 'dist', 'db', 'sqlite', 'index.js');
 const contractPath = join(root, 'libs', 'db-migrations', 'dist', 'contract', 'index.js');
 const DEFAULT_MIGRATIONS_DIR = join(root, 'libs', 'db-migrations', 'sqlite', 'migrations');
 
@@ -34,10 +35,11 @@ function option(name: string, fallback: string): string {
 async function main(): Promise<number> {
   const engine = option('engine', 'sqlite');
   if (!ENGINES.includes(engine)) fail(`no introspector for engine "${engine}" (known: ${ENGINES.join(', ')})`);
-  for (const path of [sharedCorePath, contractPath]) {
+  for (const path of [sharedCorePath, sqliteEnginePath, contractPath]) {
     if (!existsSync(path)) fail(`${path} missing; build shared-core and db-migrations first`);
   }
-  const { SqliteAdapter, runMigrations } = (await import(sharedCorePath)) as typeof import('../../libs/shared-core/dist/index.js');
+  const { runMigrations } = (await import(sharedCorePath)) as typeof import('../../libs/shared-core/dist/index.js');
+  const { SqliteAdapter } = (await import(sqliteEnginePath)) as typeof import('../../libs/shared-core/dist/db/sqlite/index.js');
   const { tables, tablesSchema, compareSchema } = (await import(contractPath)) as typeof import('../../libs/db-migrations/dist/contract/index.js');
   const migrations = readMigrations(resolve(option('migrations-dir', DEFAULT_MIGRATIONS_DIR)));
 
