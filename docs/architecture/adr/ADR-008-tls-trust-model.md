@@ -69,7 +69,7 @@ The leaf SAN is the union of:
 
 - `localhost`, `127.0.0.1`, `::1`.
 - The hostname of the machine.
-- The non-internal IPv4 addresses of `os.networkInterfaces()`.
+- The non-internal IPv4 and IPv6 addresses of `os.networkInterfaces()`, except link-local IPv6 (`fe80::/10`), which needs a zone id.
 - `tls.extraNames` from the config.
 
 At start the identity service compares the SAN of the stored leaf with this set. A difference is logged ([REQ-TLS-04](../../requirements/06-web-gateway-https-pwa.md)). The leaf is then reissued under the same CA. The CA never changes, so a device that trusts it keeps trusting the new leaf. An expired or unreadable leaf follows the same path.

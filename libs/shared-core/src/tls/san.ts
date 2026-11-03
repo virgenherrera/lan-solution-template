@@ -17,11 +17,13 @@ export interface WantedNames {
   readonly ipAddresses: string[];
 }
 
+const LINK_LOCAL_V6 = /^fe[89ab][0-9a-f]:/i;
+
 function sortedUnique(values: Iterable<string>): string[] {
   return [...new Set(values)].sort();
 }
 
-// The SAN set the leaf must cover (localhost, loopback, this host, its LAN IPv4 addresses, plus the configured extras).
+// The SAN set the leaf must cover (localhost, loopback, this host, its LAN IPv4 and IPv6 addresses, plus the configured extras).
 export function wantedNames({ hostname, interfaces, extraNames }: WantedNamesInput): WantedNames {
   const dns = new Set<string>(['localhost']);
   const ips = new Set<string>(['127.0.0.1', '::1']);
@@ -33,7 +35,9 @@ export function wantedNames({ hostname, interfaces, extraNames }: WantedNamesInp
     for (const info of addresses ?? []) {
       // Older Node versions report the family as a number.
       const isV4 = info.family === 'IPv4' || (info.family as unknown) === 4;
-      if (isV4 && !info.internal) ips.add(info.address);
+      if (info.internal) continue;
+      // A link-local IPv6 address (fe80::/10) needs a zone id, which browsers do not send in a certificate name: leave it out.
+      if (isV4 || !LINK_LOCAL_V6.test(info.address)) ips.add(info.address.toLowerCase());
     }
   }
 
