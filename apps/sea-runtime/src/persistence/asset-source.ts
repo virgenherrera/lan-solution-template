@@ -9,6 +9,8 @@ export interface AssetSource {
   readRaw(name: string): ArrayBuffer | Uint8Array | undefined;
 }
 
+export const ASSET_SOURCE = Symbol('ASSET_SOURCE');
+
 export const seaAssetSource: AssetSource = {
   readText(name) {
     const text = getAsset(name, 'utf8');
