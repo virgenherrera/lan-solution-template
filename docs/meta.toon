@@ -1,4 +1,4 @@
-docs[75]:
+docs[76]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -62,12 +62,21 @@ docs[75]:
     status: current
     updated: 2026-11-03
     refs[4]: REQ-CFG-04,REQ-CFG-05,REQ-DB-02,REQ-DB-03
+  - doc: docs/architecture/adr/ADR-008-tls-trust-model.md
+    title: ADR-008 TLS trust model
+    type: architecture
+    summary: "Local CA and leaf built with Node built-ins only, strict net and tls config, HTTPS 8443 with a 308 redirect."
+    ids: []
+    related[6]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/requirements/06-web-gateway-https-pwa.md,docs/roadmap/PROPOSAL.md,docs/architecture/overview.md
+    status: current
+    updated: 2026-11-03
+    refs[16]: AC-12,AC-14,AC-17,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA-02,REQ-TEST-01,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04
   - doc: docs/architecture/overview.md
     title: Architecture overview
     type: architecture
     summary: Mermaid architecture diagrams citing SRS sections for runtime and desktop topology.
     ids: []
-    related[10]: README.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
+    related[11]: README.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
     status: current
     updated: 2026-11-03
     refs[10]: REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-05,REQ-DESK-06,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-05,REQ-RUNTIME-06
@@ -245,12 +254,12 @@ docs[75]:
   - doc: docs/backlog/poc-4-https-gateway-angular-pwa.md
     title: POC-4 HTTPS gateway serving the Angular PWA
     type: backlog
-    summary: Backlog item for the HTTPS gateway serving the Angular PWA.
+    summary: "Backlog item for the HTTPS gateway with a built-in TLS identity, the Angular PWA and the dev loop."
     ids: []
-    related[3]: docs/backlog/README.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md
+    related[5]: docs/backlog/README.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md
     status: current
-    updated: 2026-10-31
-    refs[33]: AC-04,AC-05,AC-12,AC-14,AC-15,AC-16,AC-17,REQ-DB-01,REQ-DB-02,REQ-DEV-01,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-DEV-05,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA-01,REQ-PWA-02,REQ-PWA-03,REQ-SEA-04,REQ-SUPPLY-01,REQ-TEST-05,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-WEB-01
+    updated: 2026-11-03
+    refs[31]: AC-04,AC-05,AC-12,AC-14,AC-15,AC-16,AC-17,REQ-DEV-01,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-DEV-05,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA-01,REQ-PWA-02,REQ-PWA-03,REQ-SEA-04,REQ-TEST-01,REQ-TEST-05,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-WEB-01
   - doc: docs/backlog/poc-5-tauri-sidecar-desktop-shell.md
     title: POC-5 Tauri desktop shell with SEA sidecar
     type: backlog

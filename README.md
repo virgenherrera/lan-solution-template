@@ -24,7 +24,7 @@
 | --- | --- |
 | What | A LAN-first, offline-capable GitHub Template Repository. |
 | For whom | Template authors, reviewers and delivering AI agents. |
-| Where we are | POC-1 to POC-3 are built. The persistence system is in review (PR #17, draft). POC-4 to POC-9 are plans. The roadmap is a proposal. |
+| Where we are | POC-1 to POC-3 are built. The persistence system is in review (PR #17, draft). POC-4 is in progress on `minor/poc-04-https-gateway`. POC-5 to POC-9 are plans. The roadmap is a proposal. |
 | What comes next | The [roadmap](docs/roadmap/PROPOSAL.md) plans POC-1 to POC-9. The [backlog](docs/backlog/README.md) holds one epic per POC. |
 
 ---
