@@ -7,6 +7,8 @@
     "test": "node tools/scripts/test-filter.ts",
     "build": "nx run-many -t build --exclude=lan-solution-template",
     "package": "nx run-many -t package --exclude=lan-solution-template",
+    "clean": "nx run-many -t clean --exclude=lan-solution-template && rimraf artifacts dist",
+    "clean:all": "pnpm run clean && rimraf .nx/cache .nx/workspace-data \"apps/*/node_modules\" \"libs/*/node_modules\" node_modules",
     "securityCheck": "pnpm audit --audit-level=high"
   },
   "keywords": [],
@@ -27,6 +29,7 @@
   "devDependencies": {
     "@rspack/core": "catalog:",
     "nx": "24.0.2",
+    "rimraf": "catalog:",
     "tsconfig-paths-webpack-plugin": "catalog:",
     "typescript": "catalog:",
     "webpack-node-externals": "catalog:"
