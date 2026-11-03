@@ -3,10 +3,10 @@ fmt: TOON
 doc: docs/architecture/adr/ADR-005-live-schema-validation.md
 title: "ADR-005 Live schema validation"
 type: architecture
-summary: "Proposes a startup gate that compares the live database structure with the descriptor in the binary."
+summary: "Adds a startup gate that compares the live database structure with the descriptor in the binary."
 related[5]: docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/backlog/dbm-schema-gate.md,docs/requirements/05-persistence.md,docs/requirements/amendments-2026-11-02.md,docs/requirements/traceability.md
-status: accepted
-updated: 2026-11-02
+status: current
+updated: 2026-11-03
 -->
 
 # ADR-005: Live schema validation
@@ -130,7 +130,7 @@ A change only in one of these passes as valid. The gate gives no safety there. T
 - [REQ-DB-10](../../requirements/05-persistence.md) is approved (2026-11-02).
 - `DbAdapter` gains `introspectSchema`. PostgreSQL implements it in POC-6.
 - On PostgreSQL, type names such as `varchar`, `bigint` and `vector` may give a false failure. The adapter maps them per engine. An unknown type shows raw in the message.
-- On SQLite in `DELETE` journal mode, a read inside an open transaction blocks writers. The gate uses `PRAGMA` without a transaction. It runs before any service spawns. `WAL` is the default.
+- On SQLite in `DELETE` journal mode, a read inside an open transaction blocks writers. The gate uses `PRAGMA` without a transaction. It runs before any service spawns. The example config sets `WAL`.
 - A restore of an older backup now fails at start when its structure differs. The error text says what to do.
 - The slices are DBM-i to DBM-m. See the [backlog page](../../backlog/dbm-schema-gate.md).
 

@@ -17,6 +17,8 @@ updated: 2026-11-03
 
 Accepted as the record of what POC-2 built and measured. Recorded 2026-10-31 at the close of POC-2. The human decisions D1 to D5 it relies on are in the [umbrella](../../backlog/poc-2-single-sea-runtime-supervisor.md#decisions-for-the-human). It does not claim Windows support ([REQ-TEST-09](../../requirements/11-nx-quality-testing.md)). The SRS owner has not reviewed it: not verified.
 
+Update 2026-11-03: PR #15 rebuilt `sea-runtime` as Nest modules, removed any HTTP status listener and added the typed service array. The host contract is [ADR-006](ADR-006-sidecar-status-contract.md). The states, restart numbers and shutdown sequence below still hold.
+
 ## Context
 
 [REQ-RUNTIME-01](../../requirements/09-desktop-tauri.md) asks for one SEA executable per OS and architecture. The same file must run the supervisor and each service ([REQ-RUNTIME-03](../../requirements/09-desktop-tauri.md)). POC-1c built a minimal supervisor with a role selector written inside a template string. POC-2 had to make that reviewed code, add readiness, restart and shutdown, and prove it on the packaged binary. Evidence: [POC-2 result](../../results/POC-02-Result.md) and the slice pages 2a to 2g.
@@ -89,7 +91,7 @@ Accepted as the record of what POC-2 built and measured. Recorded 2026-10-31 at 
 - A force-kill after 10 s can cut a SQLite write once POC-3 exists.
 - A crash exit does not sweep the dead child's descendants.
 - Only one real service ran. Two services, dependency order and `degraded` with two services: not verified.
-- The cwd under launchd and systemd is `/` unless the operator sets `WorkingDirectory`. It cannot anchor the root. Recommended precedence for POC-3: `--root`, `APP_HOME`, a marker next to the executable, a dev anchor, the OS default ([2a](../../results/POC-02a-launcher-cwd.md)).
+- The cwd under launchd and systemd is `/` unless the operator sets `WorkingDirectory`, so a packaged run cannot use it ([2a](../../results/POC-02a-launcher-cwd.md)). Update 2026-11-03: the root chain this spike recommended was not built. [ADR-007](ADR-007-persistence-system.md#one-base-directory) uses the executable directory when packaged and the cwd in dev.
 
 ## Not verified
 
