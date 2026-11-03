@@ -12,6 +12,7 @@
 - [Documentation map](#documentation-map)
 - [How to contribute](#how-to-contribute)
 - [Identifiers and the original SRS](#identifiers-and-the-original-srs)
+- [License](#license)
 
 ---
 
@@ -124,3 +125,11 @@ Versions and stack constraints live in [Technology baseline](docs/requirements/0
 - The SRS defines the REQ and AC ids. The FR, NFR, D, R, A and Q ids come from files outside this repository. See the [identifier glossary](docs/standards/identifier-glossary.md).
 - [`lan-solution-template-SRS-v1.6.md`](lan-solution-template-SRS-v1.6.md) is the historical Spanish original, kept for reference. The canonical source is [`docs/requirements/`](docs/requirements/README.md).
 - Decisions and their state: [ADR index](docs/roadmap/PROPOSAL.md#adr-index).
+
+---
+
+## License
+
+[Back to navigation](#navigation)
+
+[PostgreSQL License](LICENSE) (SPDX: `PostgreSQL`). Every workspace `package.json` declares the same `license`.
