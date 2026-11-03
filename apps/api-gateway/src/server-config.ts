@@ -3,9 +3,8 @@ import { z } from 'zod';
 
 export const SERVER_CONFIG = Symbol('SERVER_CONFIG');
 
-export const serverConfigSchema = z.object({
-  port: z.number().int().min(1).max(65535).default(3000),
-  hostname: z.literal('127.0.0.1').default('127.0.0.1'),
+// Only what the supervisor passes. The address and ports come from the persisted config `net` block.
+export const serverConfigSchema = z.strictObject({
   // "none" (default, dev case) serves no web. "ipc": the parent process sends the web bundle over the IPC channel.
   web: z.enum(['none', 'ipc']).default('none'),
 });

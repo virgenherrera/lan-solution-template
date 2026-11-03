@@ -1,7 +1,7 @@
 import { Inject, Injectable, Module, type OnApplicationShutdown } from '@nestjs/common';
 import { isSea } from 'node:sea';
 import { catchError, concatMap, defer, firstValueFrom, from, map, type Observable, throwError } from 'rxjs';
-import { createDbAdapter, derivePaths, initConfig, resolveBase, type AppConfig, type AppPaths, type DbAdapter } from 'shared-core';
+import { createDbAdapter, derivePaths, getConfig, resolveBase, type AppConfig, type AppPaths, type DbAdapter } from 'shared-core';
 import { APP_CONFIG, APP_PATHS, DB_ADAPTER } from './tokens.js';
 
 export { DB_ADAPTER };
@@ -46,8 +46,8 @@ class DatabaseLifecycle implements OnApplicationShutdown {
       useFactory: (): AppPaths =>
         derivePaths(resolveBase({ sea: isSea(), execPath: process.execPath, cwd: process.cwd() })),
     },
-    // A missing or invalid config throws here and the application does not start.
-    { provide: APP_CONFIG, inject: [APP_PATHS], useFactory: (paths: AppPaths): AppConfig => initConfig(paths) },
+    // main.ts already loaded the config before Nest starts (the TLS identity needs it first), so this only hands it out.
+    { provide: APP_CONFIG, useFactory: (): AppConfig => getConfig() },
     {
       provide: DB_ADAPTER,
       inject: [APP_CONFIG, APP_PATHS],
