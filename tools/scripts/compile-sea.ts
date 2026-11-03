@@ -376,11 +376,11 @@ function engineMigrationAssets(engine: string): Record<string, string> {
   for (const path of [manifestPath, buildInfoPath]) {
     if (!existsSync(path)) throw new Error(`${path} missing; run "node tools/scripts/pack-migrations.ts --engine ${engine}" first`);
   }
-  const { migrations } = JSON.parse(readFileSync(manifestPath, utf8)) as { migrations: { file: string; sha256: string }[] };
+  const { migrations } = JSON.parse(readFileSync(manifestPath, 'utf8')) as { migrations: { file: string; sha256: string }[] };
   const assets: Record<string, string> = { [manifestAssetName(engine)]: manifestPath, [buildInfoAssetName(engine)]: buildInfoPath };
   for (const { file, sha256 } of migrations) {
     const path = join(outDir, file);
-    if (!existsSync(path) || createHash(sha256).update(readFileSync(path, utf8)).digest(hex) !== sha256) {
+    if (!existsSync(path) || createHash('sha256').update(readFileSync(path, 'utf8')).digest('hex') !== sha256) {
       throw new Error(`${path}: missing or differs from the packed manifest; run "node tools/scripts/pack-migrations.ts --engine ${engine}" again`);
     }
     assets[migrationAssetName(engine, file)] = path;

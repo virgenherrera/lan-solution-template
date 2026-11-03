@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { z } from 'zod';
 import type { AppPaths } from './paths.js';
 
-// Persisted, namespaced config (REQ-CFG-01). Nothing is defaulted: a missing or invalid key stops the start (decision S2).
+// Persisted, namespaced config (REQ-CFG-01). Nothing is defaulted: a missing or invalid key stops the start (ADR-007).
 // Secrets never live here: they sit in dataDir (decision 11) and never travel in CLI args.
 // `engine` selects exactly one block (REQ-DB-02); a new engine adds one strictObject variant here.
 const dbSchema = z.discriminatedUnion('engine', [
@@ -35,7 +35,7 @@ function deepFreeze<T>(value: T): T {
   return value;
 }
 
-// Reads the file and validates it; a missing or invalid config fails fast before readiness (REQ-DB-06). Never created here (S5).
+// Reads the file and validates it; a missing or invalid config fails fast before readiness (REQ-DB-06). Never created here: the installer creates it (ADR-007).
 export function loadConfig(paths: AppPaths): AppConfig {
   const file = join(paths.configDir, CONFIG_FILE);
   if (!existsSync(file)) {
