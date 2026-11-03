@@ -7,7 +7,7 @@ summary: Node SEA build rules and per-platform distribution validation requireme
 ids[6]: REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-SEA-04,REQ-SEA-05,REQ-SEA-06
 related[3]: docs/requirements/README.md,docs/requirements/09-desktop-tauri.md,docs/requirements/11-nx-quality-testing.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # 10. Node SEA and distribution
@@ -48,6 +48,6 @@ updated: 2026-10-31
 **REQ-SEA-04.** SQL migrations and **the compiled output `dist/web-angular`** **MUST** be embedded as SEA assets. Never embed its sources. The embedding uses `node:sea` and a manifest of paths/hashes. The **`sea-runtime` supervisor (not the backend)** **MUST** send the web tree to `api-gateway` over IPC from memory, without extraction (`--web ipc`, POC-1f). It **MUST NOT** treat `getAsset()` as a path/directory.
   *Human decision 17 (extraction and `--web-root`) is replaced by POC-1f: [result](../results/POC-01f-web-from-memory.md). Not verified against the SRS owner. The spike result is in [SPIKE-spa-serving](../results/SPIKE-spa-serving.md).*
 
-**REQ-SEA-05.** Databases, configurations, logs, certificates, extracted native extensions and models **MUST** reside outside the read-only executable. The install path holds only read-only defaults. The defaults contain no secrets. The paths library resolves the root once (see [REQ-CFG-05](04-configuration.md)). The real `config.json` **MUST** reside under that root, with `0700` directories and `0600` secrets. The code uses paths relative to that root (human decision 11). In a SEA the root anchor is the directory of `process.execPath`. The distribution **MUST** work without a connection at runtime.
+**REQ-SEA-05.** Databases, configurations, logs, certificates, extracted native extensions and models **MUST** reside outside the read-only executable. The base directory is resolved once (see [REQ-CFG-05](04-configuration.md)). In a SEA the base directory is the directory of `process.execPath`. The real `config.json` lives at `<base>/config/config.json`, with `0700` directories and `0600` secrets. The code uses paths relative to the base directory. A missing or invalid `config.json` **MUST** stop the start. The runtime never creates it and never falls back to defaults. The distribution **MUST** work without a connection at runtime.
 
 **REQ-SEA-06.** It **MUST** validate, per platform/architecture, both the standalone SEA binary and the Tauri package that contains it; a successful build **does not equal** a verified runtime. The builder **MUST** preserve `index.html`, hashed chunks, CSS, fonts, manifest, icons and the service worker as separate assets within the SEA manifest, with correct MIME types.

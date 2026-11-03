@@ -127,9 +127,9 @@ Consequence, stated plainly:
 
 ### Install path and the default copy
 
-[REQ-CFG-05](../../requirements/04-configuration.md) says the install path holds only read-only defaults. Strict config has no defaults. So the shipped `config.default.json` copy path is removed. The install path is now the base directory. The installer assistant creates `config/config.json` there ([OQ24](../../roadmap/PROPOSAL.md#open-questions)). The removal needs a requirement text change. It is a proposed amendment in [Amendments 2026-10-30](../../requirements/amendments-2026-10-30.md#proposed-amendment-req-cfg-05-no-default-config-copy). It waits for the human. The REQ text is not edited here.
+[REQ-CFG-05](../../requirements/04-configuration.md) said the install path holds only read-only defaults. Strict config has no defaults. So the shipped `config.default.json` copy path is removed. The install path is now the base directory. The installer assistant creates `config/config.json` there ([OQ24](../../roadmap/PROPOSAL.md#open-questions)). The removal needed a requirement text change. It is an amendment approved on 2026-11-03 in [Amendments 2026-10-30](../../requirements/amendments-2026-10-30.md#approved-amendment-req-cfg-05-no-default-config-copy). The REQ text is edited.
 
-The amendment also notes a conflict: REQ-CFG-05 forbids the current working directory as an anchor. This decision uses the cwd as the dev base. That point waits for the human too.
+REQ-CFG-05 used to forbid the current working directory as an anchor. This decision uses the cwd as the dev base. The human approved that on 2026-11-03, and REQ-CFG-05 now says so.
 
 ## Options rejected
 
@@ -145,7 +145,7 @@ The amendment also notes a conflict: REQ-CFG-05 forbids the current working dire
 - A start without a valid config exits with an error. A developer copies `config.example.json` to `<cwd>/config/config.json` once.
 - [REQ-CFG-04](../../requirements/04-configuration.md) still holds. Persistence initialization depends on the validated config through async DI.
 - [REQ-DB-02](../../requirements/05-persistence.md) still holds. The engine comes from the config singleton.
-- [REQ-CFG-05](../../requirements/04-configuration.md) conflicts with the removed default copy until the human decides on the amendment.
+- [REQ-CFG-05](../../requirements/04-configuration.md) was amended (approved on 2026-11-03) to match the removed default copy.
 - Adding PostgreSQL later means: one union variant, one engine module, one more literal in the `import()` ternary, one migrations folder.
 - The schema gate of [ADR-005](ADR-005-live-schema-validation.md) and the migrator of [ADR-004](ADR-004-drizzle-build-time-migrations.md) do not change.
 

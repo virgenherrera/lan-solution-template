@@ -348,7 +348,7 @@ docs[75]:
     ids[6]: REQ-CFG-01,REQ-CFG-02,REQ-CFG-03,REQ-CFG-04,REQ-CFG-05,REQ-CFG-06
     related[3]: docs/requirements/README.md,docs/requirements/03-file-structure.md,docs/requirements/05-persistence.md
     status: current
-    updated: 2026-10-30
+    updated: 2026-11-03
     refs: []
   - doc: docs/requirements/05-persistence.md
     title: Persistence
@@ -402,7 +402,7 @@ docs[75]:
     ids[6]: REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-SEA-04,REQ-SEA-05,REQ-SEA-06
     related[3]: docs/requirements/README.md,docs/requirements/09-desktop-tauri.md,docs/requirements/11-nx-quality-testing.md
     status: current
-    updated: 2026-10-31
+    updated: 2026-11-03
     refs[1]: REQ-CFG-05
   - doc: docs/requirements/11-nx-quality-testing.md
     title: "Nx, quality and testing"
@@ -434,9 +434,9 @@ docs[75]:
   - doc: docs/requirements/amendments-2026-10-30.md
     title: Amendments 2026-10-30
     type: requirement
-    summary: Records agent-applied amendments to SRS v1.6 pending human approval of open questions.
+    summary: Records agent-applied and human-approved amendments to SRS v1.6 and the open questions that gate them.
     ids: []
-    related[5]: docs/requirements/README.md,docs/requirements/12-agent-delivery.md,docs/requirements/traceability.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/persistence-system.md
+    related[7]: docs/requirements/README.md,docs/requirements/12-agent-delivery.md,docs/requirements/traceability.md,docs/requirements/04-configuration.md,docs/requirements/10-node-sea-distribution.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/persistence-system.md
     status: current
     updated: 2026-11-03
     refs[5]: REQ-CFG-05,REQ-NET-01,REQ-SEA-05,REQ-SEC-02,REQ-STACK-07

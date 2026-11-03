@@ -7,7 +7,7 @@ summary: "Describes how configuration is validated, injected and gates persisten
 ids[6]: REQ-CFG-01,REQ-CFG-02,REQ-CFG-03,REQ-CFG-04,REQ-CFG-05,REQ-CFG-06
 related[3]: docs/requirements/README.md,docs/requirements/03-file-structure.md,docs/requirements/05-persistence.md
 status: current
-updated: 2026-10-30
+updated: 2026-11-03
 -->
 
 # Configuration (SRS §4)
@@ -47,7 +47,7 @@ Configuration validation and injection. Next: [persistence](05-persistence.md).
 
 **REQ-CFG-04.** Persistence initialization **MUST** explicitly depend on the validated configuration. It uses the normal DI graph and asynchronous initialization (`DrizzleModule.forRootAsync` or an equivalent supported composition). An additional configuration/migrations orchestrator is **not** required. **The process supervisor is a distinct case.** It starts and watches Nest apps. It does not replace each app's own DI and lifecycle.
 
-**REQ-CFG-05.** Data, logs, certificates, secrets and configuration **MUST** be stored outside the executable. They belong in the appropriate Windows, macOS or Linux directories. They **MUST NOT** depend on `~/.lan-template/` as a universal path. The install path holds only read-only defaults. The defaults contain no secrets. The paths library resolves the root once. The real `config.json` **MUST** reside under that root (human decision 11). The application installs where each OS expects it. In the SEA and the dev server, the code uses paths relative to that root. It **MUST NOT** use the current working directory as the anchor. The Windows install scope is pending [OQ16](../roadmap/PROPOSAL.md#open-questions). Directories **MUST** be created with `0700` permissions and secret files with `0600` on POSIX. On Windows, use an owner-only ACL (recipe not verified). Secrets **SHOULD** use secure system mechanisms when available.
+**REQ-CFG-05.** Data, logs, certificates, secrets and configuration **MUST** be stored outside the executable. They belong in the appropriate Windows, macOS or Linux directories. They **MUST NOT** depend on `~/.lan-template/` as a universal path. The base directory is resolved once. In a packaged run it is the directory of the executable. In a dev run it is the current working directory. Every path (`config/`, `data/`, `logs/`, `certs/`) is relative to that base, with the same layout in both runs. The code **MUST NOT** use any other anchor. The real `config.json` lives at `<base>/config/config.json`. A missing or invalid `config.json` **MUST** stop the start. The runtime never creates it and never falls back to defaults. The Windows install scope is pending [OQ16](../roadmap/PROPOSAL.md#open-questions). Directories **MUST** be created with `0700` permissions and secret files with `0600` on POSIX. On Windows, use an owner-only ACL (recipe not verified). Secrets **SHOULD** use secure system mechanisms when available.
 
 **REQ-CFG-06.** The immutable configuration singleton is created **per process/DI container** (supervisor, gateway or microservice). It **MUST NOT** assume shared memory or a shared singleton between processes. Processes validate their namespace from the persisted configuration. They coordinate state exclusively through explicit contracts. The supervisor may validate the startup metadata. It must **not** carry secrets through CLI arguments.
 

@@ -96,7 +96,7 @@ flowchart LR
 ```mermaid
 stateDiagram-v2
     state "proposed (8 rows)" as proposed
-    state "decided by human (13 rows)" as human_decision
+    state "decided by human (14 rows)" as human_decision
     state "decided by human - pending spike (2 rows)" as pending_spike
     proposed --> human_decision : human decision
     proposed --> pending_spike : human decision, spike first
@@ -661,13 +661,13 @@ The human answered items 1-10 of the [Decision Log](#decision-log). The table om
 
 Decision Log items 11-15 settle OQ1, OQ2, OQ4, OQ5 and OQ8. Each row stays in the table.
 
-Items 11-15, OQ6, OQ12 and OQ18 to OQ22 are human decisions. The other resolutions are agent proposals.
+Items 11-15, OQ6, OQ12, OQ18 to OQ22, OQ23 and OQ25 are human decisions. The other resolutions are agent proposals.
 
 **Ownership summary** (the command in [Checks](../standards/README.md#checks) prints these counts)
 
 - Rows: 25.
 - Owner: 10 human, 9 agent:builder, 5 agent:researcher, 1 agent:verifier.
-- Status: 8 `decided (human)`. 1 `decided (human decision 11)`. 1 `decided (human decision 12)`. 1 `decided (human decision 13): pending spike`. 1 `decided (human decision 14): pending spike`. 1 `decided (human decision 15)`. 1 `decided (human, 2026-11-02); text applied in REQ-STACK-07`. 1 `decided (human decision, POC-2 D2)`. 9 `proposed`. 1 `open`. OQ18 to OQ22 (third-party licenses) are `decided (human)`. OQ23 (persistence system) is `decided (human)`. OQ24 (persistence system) is `open`. OQ25 is `proposed` and waits for the human.
+- Status: 9 `decided (human)`. 1 `decided (human decision 11)`. 1 `decided (human decision 12)`. 1 `decided (human decision 13): pending spike`. 1 `decided (human decision 14): pending spike`. 1 `decided (human decision 15)`. 1 `decided (human, 2026-11-02); text applied in REQ-STACK-07`. 1 `decided (human decision, POC-2 D2)`. 8 `proposed`. 1 `open`. OQ18 to OQ22 (third-party licenses) are `decided (human)`. OQ23 (persistence system) is `decided (human)`. OQ24 (persistence system) is `open`. OQ25 is `decided (human)` (2026-11-03).
 - Blocking: 25 `no`. No open question blocks. No row has status `needs human decision`.
 
 Claims marked "not verified" stay unverified until a spike or a primary source confirms them.
@@ -698,7 +698,7 @@ Claims marked "not verified" stay unverified until a spike or a primary source c
 | OQ22 | Replace the empty `license = ""` in `apps/desktop/src-tauri/Cargo.toml` with `PostgreSQL`? | Decided by the human (2026-11-03): yes. Set `license = "PostgreSQL"`. Cargo accepts the value: `cargo metadata` check recorded in the commit that sets it. Source: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md#q6-recommendation), question 5. | human | no | decided (human) |
 | OQ23 | Where is the dev root, and how is the dev config provisioned? The human asked: "no deberiamos tener un path gitignorado para la configuracion de la db y que si no "se lo damos" al servicio o el script de migraciones truene alv?" | Decided by the human, 2026-11-03: one parameter changes between dev and prod, the base directory. Dev: `process.cwd()`, whatever pnpm gives. Prod: the install path, the directory of the executable, defined by the installer assistant. Identical layout under it: `config/config.json`, `data/`, `logs/`, `certs/`. No `--root` flag, no `APP_HOME`, no marker file, no OS default root, no `.local/`, no `dev:config` script. A `config.example.json` documents that `config/config.json` MUST exist. A missing file throws. Human quotes: "no creo que en dev tenga caso complicarnos demasiado bastaria un .example file (sin scripts, solo documentando que ese archivo TIENE que existir y dejar que truene sino)" and "lo unico que cambia entre dev y prod es el CWD en dev (es lo que diga pnpm) y en built/prod/deploy es el installPath que haya definido el asistente de instalacion". See [ADR-007](../architecture/adr/ADR-007-persistence-system.md#one-base-directory). | human | no | decided (human) |
 | OQ24 | Where does the installer assistant create the valid `config.json`? | TBD with the installer (POC-8). The human said the installer assistant should create the valid json and that this stays TBD. The installer assistant defines the install path (the base directory of OQ23) and creates `config/config.json` there. Until then the runtime never auto-creates the config: a missing config throws. Not designed. Not verified. | human | no | open |
-| OQ25 | Does REQ-CFG-05 lose the read-only defaults copy at the install path? | Proposed amendment, waits for the human. Strict config has no defaults, so the shipped `config.default.json` copy path is removed. Text: [Amendments 2026-10-30](../requirements/amendments-2026-10-30.md#proposed-amendment-req-cfg-05-no-default-config-copy). The REQ text is not edited. | human | no | proposed |
+| OQ25 | Does REQ-CFG-05 lose the read-only defaults copy at the install path? | Decided by the human, 2026-11-03: the amendment is approved and applied in [REQ-CFG-05](../requirements/04-configuration.md) and [REQ-SEA-05](../requirements/10-node-sea-distribution.md). Human quotes: "SIEMPRE TRUENA si esta invalida o falta", "lo unico que cambia entre dev y prod es el CWD en dev (es lo que diga pnpm) y en built/prod/deploy es el installPath que haya definido el asistente de instalacion" and "usa tu pendjo ownership". The base directory is resolved once: the executable directory in a packaged run, the current working directory in a dev run. A missing or invalid `config.json` stops the start. The runtime never creates it and never falls back to defaults. Text: [Amendments 2026-10-30](../requirements/amendments-2026-10-30.md#approved-amendment-req-cfg-05-no-default-config-copy). | human | no | decided (human) |
 
 ---
 
@@ -746,7 +746,7 @@ Human decisions (source: plan `optimized-wondering-waffle.md`, section "Recorded
 9. Release automation on HOLD until all POCs are ready.
 10. (2026-10-30) Drizzle tag. The template is "prod ready". A production-ready (stable) Drizzle tag is preferred over `1.0.0-rc.5`. Do not assume the stable tag now. At POC time, install the current stable tag. If it does not work, bump to `1.0.0-rc.5`. Reason: vector DB compatibility for both SQLite and PostgreSQL.
     - Source check (read-only): `npm view drizzle-orm dist-tags --json` on 2026-10-30 lists `latest` as `0.45.4`, `rc` as `1.0.0-rc.5`, and no stable `1.0.x` tag. Its compatibility with the SRS API is not verified. The POC decides.
-11. (2026-10-30) Config and data paths. Resolves OQ1. Human answer, option A: "A: install where each OS expects it, so the code always uses paths relative to a resolved root (`./`), both for the built SEA and for the dev server."
+11. (2026-10-30) Config and data paths. Resolves OQ1. Human answer, option A: "A: install where each OS expects it, so the code always uses paths relative to a resolved root (`./`), both for the built SEA and for the dev server." Superseded for dev by the 2026-11-03 decision (OQ23, OQ25): the "no cwd" rule below no longer holds. The dev base is the current working directory.
     - Agreed design. It is an unreviewed research summary:
       - A paths library resolves one root, once. It never uses the cwd as the anchor.
       - Precedence: `--root` flag, `APP_HOME` variable, marker next to the executable, dev anchor, OS default.
