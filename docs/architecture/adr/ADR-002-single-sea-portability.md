@@ -4,9 +4,9 @@ doc: docs/architecture/adr/ADR-002-single-sea-portability.md
 title: "ADR-002 Single SEA portability and supervisor"
 type: architecture
 summary: "Records the POC-2 decisions: one SEA per platform, closed registry, IPC control channel, bounded restart, coordinated shutdown and package smoke."
-related[4]: docs/architecture/overview.md,docs/roadmap/PROPOSAL.md,docs/results/POC-02-Result.md,docs/architecture/adr/ADR-001-version-substitutions.md
+related[5]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/overview.md,docs/roadmap/PROPOSAL.md,docs/results/POC-02-Result.md,docs/architecture/adr/ADR-001-version-substitutions.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # ADR-002: Single SEA portability and supervisor
@@ -48,9 +48,9 @@ Accepted as the record of what POC-2 built and measured. Recorded 2026-10-31 at 
 
 - `libs/service-registry/src/states.ts` is the only place state words are spelled: `AGGREGATE_STATE` (`starting`, `ready`, `degraded`, `error`, `stopping`), `SERVICE_STATUS` (`starting`, `ready`, `restarting`, `failed`) and the control message kinds. The Zod enums and types derive from them (commit `ef5c429`).
 - `aggregateState` is a pure function: `stopping` wins; a failed service with no ready one is `error`, with a ready one `degraded`; all ready is `ready`; otherwise `starting`. `restarting` maps to `degraded`. `error` stops the others and ends the supervisor with `errorExitCode` 1.
-- Each state change prints one JSON line on the supervisor stdout, never prefixed, for the desktop shell. Not verified against Tauri (POC-5).
+- Each state change reaches the host as one JSON `status` event on the supervisor stdout, validated by zod. The supervisor opens no HTTP listener. The channel contract is in [ADR-006](ADR-006-sidecar-status-contract.md). Not verified against Tauri (POC-5).
 - `/api/health` returns `{"status":"<aggregate state>"}` with 200. The gateway child serves it, so it does not answer while the gateway is down (see Limits).
-- Logs: each child line is re-emitted as `[<id>] <line>`; supervisor lines are `[supervisor] <line>`. Internal services listen on `127.0.0.1` ([REQ-RUNTIME-07](../../requirements/09-desktop-tauri.md), [REQ-NET-01](../../requirements/06-web-gateway-https-pwa.md)).
+- Logs go to the supervisor stderr, never to stdout: each child line is re-emitted as `[<id>] <line>`; supervisor lines are `[supervisor] <line>`. Internal services listen on `127.0.0.1` ([REQ-RUNTIME-07](../../requirements/09-desktop-tauri.md), [REQ-NET-01](../../requirements/06-web-gateway-https-pwa.md)).
 
 ### Bounded restart and the D2 window
 
@@ -84,7 +84,7 @@ Accepted as the record of what POC-2 built and measured. Recorded 2026-10-31 at 
 
 ## Limits found
 
-- `/api/health` is unreachable while the `api-gateway` restarts: the endpoint lives in the child and `degraded` is visible only in the stdout JSON. Serving health from the supervisor is a future option and a human decision.
+- `/api/health` is unreachable while the `api-gateway` restarts: the endpoint lives in the child and `degraded` is visible only in the stdout `status` events. Serving health from the supervisor is a future option and a human decision.
 - Fixed gateway port 3000; a busy port burns the restart budget in 26 to 34 s.
 - A force-kill after 10 s can cut a SQLite write once POC-3 exists.
 - A crash exit does not sweep the dead child's descendants.
@@ -94,5 +94,5 @@ Accepted as the record of what POC-2 built and measured. Recorded 2026-10-31 at 
 ## Not verified
 
 - Windows (all of it), a real Linux host, systemd user units, real x64 hardware, macOS to Linux cross builds.
-- Tauri use of the stdout state line and of the quit contract (POC-5).
+- Tauri use of the stdout `status` events, of the stdin `shutdown` command and of the quit contract (POC-5).
 - The full pending list with owners: [POC-2 result](../../results/POC-02-Result.md#pending-items-inherited-and-new).

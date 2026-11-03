@@ -4,9 +4,9 @@ doc: docs/backlog/service-status-indicator.md
 title: "Service status indicator"
 type: backlog
 summary: "Proposed backlog item: a supervisor-owned, XAMPP-style per-service status surface that stays up while services restart."
-related[4]: docs/backlog/README.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/results/POC-02d-readiness-logs.md,docs/results/POC-02e-bounded-restart.md
+related[5]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/backlog/README.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/results/POC-02d-readiness-logs.md,docs/results/POC-02e-bounded-restart.md
 status: current
-updated: 2026-11-02
+updated: 2026-11-03
 -->
 
 # Service status indicator
@@ -34,7 +34,7 @@ updated: 2026-11-02
 
 | Item | Value |
 |---|---|
-| Status | Supervisor status endpoint built on `minor/service-status-indicator`. Tray and web UI consumers are not built. No POC id. |
+| Status | HTTP endpoint removed. The contract moved to the supervisor stdio ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)). Tray and web UI consumers are still open. No POC id. |
 | Origin | Human request: "un estado (estilo xampp) mostrando que el servicio esta iniciando o reiniciando" |
 | Depends on | [POC-2d](poc-2d-supervisor-readiness-logs.md) and [POC-2e](poc-2e-bounded-restart.md), both done |
 | Natural consumer | [POC-5](poc-5-tauri-sidecar-desktop-shell.md) tray |
@@ -54,7 +54,7 @@ Today the repository offers one aggregate state, not a per-service view.
 - The aggregate set is `starting`, `ready`, `degraded`, `error`, `stopping` (`libs/service-registry/src/states.ts:4-10`).
 - A pure function derives it from the service statuses (`libs/service-registry/src/aggregate-state.ts:8-13`).
 - A pending restart collapses into `degraded` (`aggregate-state.ts:11`). The reader cannot tell a restart from a failure with one ready service.
-- The supervisor prints one JSON line per aggregate change and forwards it to the children (`apps/sea-runtime/src/supervisor/supervisor.service.ts:88-94`).
+- The supervisor prints one JSON line per aggregate change and forwards it to the children (`apps/sea-runtime/src/supervisor/supervisor.service.ts:88-94`). That line is the origin of the stdout `status` event in [ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md).
 - `/api/health` returns only the aggregate state (`apps/api-gateway/src/health.controller.ts:9-13`; [POC-02d result](../results/POC-02d-readiness-logs.md), line 28).
 - The gateway serves `/api/health`. The gateway is a supervised child that the supervisor respawns ([POC-02e result](../results/POC-02e-bounded-restart.md), line 59).
 - So `/api/health` cannot answer while the gateway restarts. The human states this. It is inferred from the code above. A measurement of the gap: not verified.
@@ -113,7 +113,7 @@ Per-service status exists in code: `starting`, `ready`, `restarting`, `failed` (
 [Back to navigation](#navigation)
 
 - No change to the restart policy of [POC-2e](poc-2e-bounded-restart.md): backoff, budget and `error` stay.
-- No log viewer. Prefixed logs stay on the supervisor stdout.
+- No log viewer. Prefixed logs stay on the supervisor stderr.
 - No start, stop or restart buttons. XAMPP has them. This item shows state only.
 - No new requirement or acceptance criterion. This page proposes none.
 - No tray design. [POC-5](poc-5-tauri-sidecar-desktop-shell.md) owns it.
@@ -125,7 +125,7 @@ Per-service status exists in code: `starting`, `ready`, `restarting`, `failed` (
 [Back to navigation](#navigation)
 
 - A new state word reaches `/api/health`. The POC-02d result says nothing else reads it (line 93). Later consumers: not verified.
-- If the supervisor serves the surface itself, it adds a listener to a process that has none today. Port and security impact: not verified.
+- A supervisor HTTP listener was built in PR #13 and removed again (see [Open questions](#open-questions)). A future web UI consumer needs a new decision on how it reads status.
 - The unauthenticated body is minimal by design (`health.controller.ts:9`). Per-service detail may leak information. Exposure rules wait for POC-7.
 
 ---
@@ -136,9 +136,9 @@ Per-service status exists in code: `starting`, `ready`, `restarting`, `failed` (
 
 | Topic | Status |
 |---|---|
-| Transport | Decided without a human answer: a supervisor-owned loopback HTTP endpoint, `GET http://127.0.0.1:<supervisor.statusPort>/status` (default 3001, key `supervisor.statusPort` in `config.json`). It answers `{"state", "services":[{"id","status"}]}` and 404 on any other route or method. A busy port is logged and skipped. |
+| Transport | Decided by the human on 2026-11-03: stdio, no HTTP. The supervisor opens no listener. The key `supervisor.statusPort` and the `GET /status` endpoint are removed. This reverses the PR #13 decision, which the agent took without a human answer (a loopback `GET http://127.0.0.1:<supervisor.statusPort>/status`). Reasons: nothing consumes it, Tauri cannot use it better than stdio, and the web UI that motivated it does not exist. The host gets `status` events on stdout, logs on stderr and commands on stdin. See [ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md). |
 | `/api/health` | Decided without a human answer: stays gateway-owned and unchanged. |
-| Web UI | Open: reads the endpoint directly or through the gateway. Not built. |
+| Web UI | Open: there is no endpoint to read any more. A future web UI needs a new transport decision. Not built. |
 | `restarting` | Decided without a human answer: per-service only. The aggregate set is unchanged, so a restart still shows as `degraded` in `/api/health` and in the JSON line. |
 | Does the tray show `degraded` ([PROPOSAL](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar), rabbit hole A5) | open |
 | Owner POC | Open |

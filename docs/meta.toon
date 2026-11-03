@@ -1,4 +1,4 @@
-docs[70]:
+docs[71]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -13,9 +13,9 @@ docs[70]:
     type: architecture
     summary: "Records the POC-2 decisions: one SEA per platform, closed registry, IPC control channel, bounded restart, coordinated shutdown and package smoke."
     ids: []
-    related[4]: docs/architecture/overview.md,docs/roadmap/PROPOSAL.md,docs/results/POC-02-Result.md,docs/architecture/adr/ADR-001-version-substitutions.md
+    related[5]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/overview.md,docs/roadmap/PROPOSAL.md,docs/results/POC-02-Result.md,docs/architecture/adr/ADR-001-version-substitutions.md
     status: current
-    updated: 2026-10-31
+    updated: 2026-11-03
     refs[17]: AC-31,REQ-BUILD-04,REQ-NET-01,REQ-RUNTIME-01,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-TEST-01,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09
   - doc: docs/architecture/adr/ADR-003-config-and-db-strategy.md
     title: ADR-003 Config singleton and database strategy
@@ -44,14 +44,23 @@ docs[70]:
     status: accepted
     updated: 2026-11-02
     refs[3]: REQ-DB-05,REQ-DB-06,REQ-DB-10
+  - doc: docs/architecture/adr/ADR-006-sidecar-status-contract.md
+    title: ADR-006 Sidecar status contract and typed service array
+    type: architecture
+    summary: "Proposes the stdio contract between the supervisor and its host, no HTTP listener, and one typed array that declares the services."
+    ids: []
+    related[5]: docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/overview.md,docs/backlog/service-status-indicator.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/requirements/traceability.md
+    status: proposed
+    updated: 2026-11-03
+    refs[1]: REQ-RUNTIME-05
   - doc: docs/architecture/overview.md
     title: Architecture overview
     type: architecture
     summary: Mermaid architecture diagrams citing SRS sections for runtime and desktop topology.
     ids: []
-    related[1]: README.md
+    related[2]: README.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md
     status: current
-    updated: 2026-10-31
+    updated: 2026-11-03
     refs[10]: REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-05,REQ-DESK-06,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-05,REQ-RUNTIME-06
   - doc: docs/backlog/README.md
     title: Backlog index
@@ -60,7 +69,7 @@ docs[70]:
     ids: []
     related[4]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/service-status-indicator.md
     status: current
-    updated: 2026-11-02
+    updated: 2026-11-03
     refs[36]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36
   - doc: docs/backlog/dbm-drizzle-migrations.md
     title: DBM Drizzle build-time migrations
@@ -274,9 +283,9 @@ docs[70]:
     type: backlog
     summary: "Proposed backlog item: a supervisor-owned, XAMPP-style per-service status surface that stays up while services restart."
     ids: []
-    related[4]: docs/backlog/README.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/results/POC-02d-readiness-logs.md,docs/results/POC-02e-bounded-restart.md
+    related[5]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/backlog/README.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/results/POC-02d-readiness-logs.md,docs/results/POC-02e-bounded-restart.md
     status: current
-    updated: 2026-11-02
+    updated: 2026-11-03
     refs[1]: REQ-DESK-03
   - doc: docs/requirements/01-purpose-and-scope.md
     title: Purpose and Scope
