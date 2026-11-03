@@ -3,7 +3,7 @@ fmt: TOON
 doc: docs/architecture/adr/ADR-007-persistence-system.md
 title: "ADR-007 Persistence system"
 type: architecture
-summary: "Proposes a strict engine-keyed config that always throws, one base directory (cwd in dev, executable directory in prod), lazy engine loading, a barrel split and engine-keyed migration assets."
+summary: "Strict engine-keyed config, one base directory (cwd in dev, executable directory in prod), lazy engine loading, engine-keyed migrations."
 ids[0]:
 related[7]: docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/backlog/persistence-system.md,docs/requirements/04-configuration.md,docs/requirements/05-persistence.md,docs/requirements/amendments-2026-10-30.md
 status: proposed
@@ -25,9 +25,9 @@ updated: 2026-11-03
 
 ## Status
 
-Proposed, 2026-11-03. The human asked for the direction and decided the base directory rule. The other details below are agent proposals and the code does not exist yet. This page is written first, so the docs say what the code will do. The slices are on the [backlog page](../../backlog/persistence-system.md).
+Proposed, 2026-11-03. The human asked for the direction and decided the base directory rule. The other details below are agent proposals. The code is implemented in PR #17 (open, draft). The slices are on the [backlog page](../../backlog/persistence-system.md).
 
-Numbering note: the [architecture overview](../overview.md#architecture-decisions) listed an older placeholder set in which "ADR-007" meant "Release flow". That placeholder is now ADR-011. The file number of this record is the one in its file name.
+Update 2026-11-03: the lazy loading is `createDbAdapter` in `libs/shared-core/src/db/factory.ts`: an async function with a literal `import()`. The Nest providers `APP_PATHS`, `APP_CONFIG` and `DATABASE_ADAPTER` call it.
 
 ## Context
 

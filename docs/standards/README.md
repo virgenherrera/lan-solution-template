@@ -7,7 +7,7 @@ summary: "Technical and normative references, standards mapping, and the metadat
 ids[0]:
 related[2]: README.md,docs/standards/identifier-glossary.md
 status: current
-updated: 2026-10-30
+updated: 2026-11-03
 -->
 
 # Standards and references
@@ -130,11 +130,9 @@ Maps each standard to the requirement files that apply it. Two places state a us
 
 Note on `ADR index` and `Decision Log` (sources accessed 2026-10-30):
 
-- Baseline, ISO 10007:2017: a configuration baseline is approved information. It fixes a characteristic at a point in time. It serves as a lifecycle reference (https://iteh.es/catalog/standards/iso/a779c3ed-00ca-4798-9a60-8f07ee800b8f/iso-10007-2017). The clause wording is not verified, since the standard is paywalled.
-- Baseline, PMI Lexicon: the approved version of a work product. Only formal change control changes it (https://www.pmi.org/pmbok-guide-standards/lexicon). The current Lexicon edition wording is not verified.
-- Decisions and rationale: ISO/IEC/IEEE 42010:2022 has clauses on architecture decisions and rationale (https://quality.arc42.org/standards/iso-42010). That source is a secondary summary. The normative text is not verified.
-- ADR (architecture decision record) is an industry convention (Nygard), not an ISO term.
-- `Decision Log` is not verified as a defined PMBOK term. It is a common project practice (https://thedigitalprojectmanager.com/project-management/decision-log/), a secondary source.
+- Baseline: ISO 10007:2017 (https://iteh.es/catalog/standards/iso/a779c3ed-00ca-4798-9a60-8f07ee800b8f/iso-10007-2017) and the PMI Lexicon (https://www.pmi.org/pmbok-guide-standards/lexicon) define it as an approved reference point that only formal change control changes. Clause wording: not verified (paywalled).
+- Decisions and rationale: ISO/IEC/IEEE 42010:2022 has clauses on them (https://quality.arc42.org/standards/iso-42010, a secondary summary). Normative text: not verified.
+- ADR is an industry convention (Nygard), not an ISO term. `Decision Log` is common project practice (https://thedigitalprojectmanager.com/project-management/decision-log/), not a defined PMBOK term.
 - The roadmap uses both names in that practice sense. It claims no certification.
 
 ---
