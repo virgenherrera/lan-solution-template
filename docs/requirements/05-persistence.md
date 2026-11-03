@@ -7,7 +7,7 @@ summary: Defines persistence requirements for SQLite and PostgreSQL adapters and
 ids[10]: REQ-DB-01,REQ-DB-02,REQ-DB-03,REQ-DB-04,REQ-DB-05,REQ-DB-06,REQ-DB-07,REQ-DB-08,REQ-DB-09,REQ-DB-10
 related[6]: docs/requirements/README.md,docs/requirements/04-configuration.md,docs/requirements/06-web-gateway-https-pwa.md,docs/requirements/amendments-2026-11-02.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md
 status: current
-updated: 2026-11-02
+updated: 2026-11-03
 -->
 
 # Persistence (SRS §5)
@@ -29,20 +29,20 @@ Database adapters and startup order. Next: [web gateway, HTTPS and PWA](06-web-g
 
 | Topic | Point |
 |---|---|
-| Adapters | SQLite (default) and PostgreSQL |
+| Adapters | SQLite (default, built); PostgreSQL (alternative, TBD: [POC-6](../backlog/poc-6-postgresql-adapter-parity.md)) |
 | Vectors | `sqlite-vector` and `pgvector` |
 | Schemas | Own schemas and migrations per engine |
 | Migrator | In-house, in the supervisor at startup; `drizzle-kit` runs at build time only |
 | Order | config → adapter → connection → vector → migrations → schema check → DB ready → gateway ready |
-| Decision | [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md) (accepted); [ADR-005](../architecture/adr/ADR-005-live-schema-validation.md) (proposed) |
+| Decision | [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md) and [ADR-005](../architecture/adr/ADR-005-live-schema-validation.md), both accepted |
 
 ## 5. Persistence, vectors and migrations
 
 [Back to navigation](#navigation)
 
 **REQ-DB-01.** The gateway **MUST** provide two adapters through the Strategy Pattern:
-- **Default:** SQLite (`node:sqlite` + `drizzle-orm/node-sqlite`) with native `sqlite-vector`.
-- **Alternative:** PostgreSQL (`pg` + Drizzle) with `pgvector`.
+- **Default:** SQLite (`node:sqlite`) with native `sqlite-vector`.
+- **Alternative:** PostgreSQL (`pg`) with `pgvector`.
 
 **REQ-DB-02.** The selection **MUST** come from the validated configuration singleton. Domain consumers **MUST** depend on ports/contracts and **MUST NOT** import the chosen adapter directly.
 
@@ -60,13 +60,13 @@ Database adapters and startup order. Next: [web gateway, HTTPS and PWA](06-web-g
 
 **REQ-DB-09.** The SQLite native library **MUST** exist as a real file before `loadExtension()`. If it is packaged as a SEA asset, it **MUST** meet three conditions. Extract it to a controlled location. Validate its integrity. Load only the variant matching the OS/architecture. It **MUST NOT** run arbitrary extensions supplied by clients.
 
-**REQ-DB-10 (approved 2026-11-02).** The supervisor **MUST** compare the live database schema with the table descriptor that ships in the binary. It **MUST** fail startup when an expected table, column or index is missing, when a type, nullability or primary key differs, or when an extra column is `NOT NULL` without a default and is not a primary key. It **MUST** tolerate the other extras: tables, indexes, and nullable or defaulted columns. The check is structural. It **MUST NOT** depend on a schema version. Status: a proposal from the 2026-11-02 amendment. The human has not approved it. See [ADR-005](../architecture/adr/ADR-005-live-schema-validation.md).
+**REQ-DB-10 (approved 2026-11-02).** The supervisor **MUST** compare the live database schema with the table descriptor that ships in the binary. It **MUST** fail startup when an expected table, column or index is missing, when a type, nullability or primary key differs, or when an extra column is `NOT NULL` without a default and is not a primary key. It **MUST** tolerate the other extras: tables, indexes, and nullable or defaulted columns. The check is structural. It **MUST NOT** depend on a schema version. See [ADR-005](../architecture/adr/ADR-005-live-schema-validation.md).
 
 ```mermaid
 flowchart TD
     Config["Validated config: db.engine"] --> Select{Engine}
-    Select -->|sqlite| SQLite["node:sqlite + Drizzle"]
-    Select -->|postgres| PG[pg + Drizzle]
+    Select -->|sqlite| SQLite["node:sqlite"]
+    Select -->|postgres| PG[pg]
     SQLite --> SV[native sqlite-vector]
     PG --> PV[pgvector extension]
     SV --> SM[SQLite migrations]

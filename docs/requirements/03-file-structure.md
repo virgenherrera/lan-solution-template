@@ -7,7 +7,7 @@ summary: Defines the expected repository layout and allowed code dependencies.
 ids[5]: REQ-REP-01,REQ-REP-02,REQ-REP-03,REQ-REP-04,REQ-REP-05
 related[3]: docs/requirements/README.md,docs/requirements/02-technology-baseline.md,docs/requirements/04-configuration.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # File Structure (SRS §3)
@@ -44,30 +44,28 @@ Repository layout and code dependencies. Next: [configuration](04-configuration.
 
 ```text
 lan-solution-template/
-├── .github/workflows/ci-cd.yml    # Final phase: CI + release
+├── .github/workflows/ci-cd.yml    # Final phase: CI + release (not created yet)
 ├── apps/
 │   ├── desktop/                    # Tauri v2: src-tauri, supervision, tray
 │   ├── api-gateway/               # Nest: API, persistence, TLS, SEA serving
 │   ├── sea-runtime/               # Nest Standalone: SEA process supervisor
 │   └── web-angular/                # Angular standalone: SPA/PWA, dev proxy
 ├── libs/
-│   └── shared-core/
-│       └── src/
-│           ├── validation/
-│           └── index.ts
+│   ├── shared-core/                # Config, paths, database port and engines
+│   ├── service-registry/           # Service definitions, sidecar contract, state schemas
+│   └── db-migrations/              # Per-engine SQL migrations and table descriptors
 ├── artifacts/                      # Git-ignored build output (see note below)
 │   └── sea-runtime/
 │       └── sea-runtime-<target-triple>[.exe]
 ├── tools/
 │   ├── rspack/
 │   │   └── nest.config.ts          # One shared Nest rspack config
-│   └── scripts/
-│       └── compile-sea.ts
+│   ├── scripts/                    # compile-sea, pack-migrations, smoke-sea, test-filter, db-parity
+│   └── vector/                     # Pinned sqlite-vector release data
 ├── nx.json
 ├── pnpm-workspace.yaml
 ├── package.json
 ├── pnpm-lock.yaml                  # Reproducibility
-├── tsconfig.base.json
 └── README.md
 ```
 
@@ -84,9 +82,15 @@ Note (not a requirement; no REQ id added; human decision, Decision Log item 16).
 ```mermaid
 flowchart LR
     SC["libs/shared-core"]
+    SR["libs/service-registry"]
+    DM["libs/db-migrations"]
     WEB["apps/web-angular"] --> SC
     API["apps/api-gateway"] --> SC
     RT["apps/sea-runtime"] --> SC
+    RT --> SR
+    RT --> DM
+    API --> SR
+    SC --> SR
     DESK["apps/desktop"]
     WEB -.->|"HTTP /api in development"| API
     DESK -.->|"runs SEA, runtime supervises"| RT
@@ -95,7 +99,7 @@ flowchart LR
 
 | Interpretation | Meaning |
 |---|---|
-| Solid arrow | Allowed import into `shared-core` |
+| Solid arrow | Allowed import |
 | Dotted arrow | Runtime interaction, not an import between applications |
 | Moving `dist/web-angular` | **Nx task** dependency, not a source import |
 | Packaging Nest entrypoints into the SEA | **Nx task** dependency, not a source import |

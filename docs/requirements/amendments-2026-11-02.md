@@ -7,7 +7,7 @@ summary: Records agent-applied amendments for build-time Drizzle migrations, fol
 ids[0]:
 related[6]: docs/requirements/README.md,docs/requirements/amendments-2026-10-30.md,docs/requirements/traceability.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/backlog/dbm-schema-gate.md
 status: current
-updated: 2026-11-02
+updated: 2026-11-03
 -->
 
 # Amendments 2026-11-02
@@ -26,7 +26,7 @@ updated: 2026-11-02
 
 [Back to navigation](#navigation)
 
-Three requirement changes, one closed question, one amendment and one proposal. Cause: the human asked for Drizzle at build time only, then for a startup schema check. Next: the human reviews [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md) and [ADR-005](../architecture/adr/ADR-005-live-schema-validation.md).
+Five requirement changes and one closed question. Cause: the human asked for Drizzle at build time only, then for a startup schema check. [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md) and [ADR-005](../architecture/adr/ADR-005-live-schema-validation.md) are accepted.
 
 | Id | Change | Open question |
 |---|---|---|

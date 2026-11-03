@@ -7,7 +7,7 @@ summary: Tauri desktop shell and multiprocess runtime rules for the SEA supervis
 ids[14]: REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-04,REQ-DESK-05,REQ-DESK-06,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08
 related[3]: docs/requirements/README.md,docs/requirements/08-web-angular.md,docs/requirements/10-node-sea-distribution.md
 status: current
-updated: 2026-10-30
+updated: 2026-11-03
 -->
 
 # 9. Desktop Tauri and processes
@@ -85,7 +85,7 @@ stateDiagram-v2
 
 **REQ-RUNTIME-04 — Bootstrapping contracts.** Each Nest app **MUST** keep its own bootstrap and Nx build target. `api-gateway` starts `NestFactory.create()` + `NodeAdapter`. A future `auth-ms` may use `createMicroservice()` (gRPC/TCP) or `create()` (HTTP). This does not change how Tauri distributes the product. Business applications **MUST NOT** directly import the source code of `sea-runtime`. Reusable contracts go to `libs/`.
 
-**REQ-RUNTIME-05 — Readiness and health.** The supervisor **MUST** have a typed registry of enabled services, startup dependencies/priority when they exist, a readiness timeout, health, logs identified per service, and a bounded restart policy (*backoff* + maximum attempts). `sea-runtime` **MUST** report to Tauri an aggregate state `starting/ready/degraded/error/stopping`; the gateway **MUST NOT** announce readiness if mandatory processes that it depends on are not yet available. For the baseline only `api-gateway` is enabled; it **MUST NOT** invent a test `auth-ms`.
+**REQ-RUNTIME-05 — Readiness and health.** The supervisor **MUST** have a typed registry of enabled services, startup dependencies/priority when they exist, a readiness timeout, health, logs identified per service, and a bounded restart policy (*backoff* + maximum attempts). `sea-runtime` **MUST** report to Tauri an aggregate state `starting/ready/degraded/error/stopping` through the stdout `status` events of [ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md); the gateway **MUST NOT** announce readiness if mandatory processes that it depends on are not yet available. For the baseline only `api-gateway` is enabled; it **MUST NOT** invent a test `auth-ms`.
 
 **REQ-RUNTIME-06 — Cross-platform shutdown.** Use an explicit control channel, preferably **Node IPC over `stdio`**. Use it to order the child to run `app.close()` and wait for its termination. Then apply a timeout and forced termination. Also clean up descendants. Do not rely only on `SIGTERM` for a clean shutdown on **Windows**. The signal terminates the subprocess abruptly. The same sequence is triggered when Quit is chosen from Tauri. The system must tolerate an unexpected supervisor shutdown/crash without leaving orphan processes. It **MUST** verify the process tree on Windows, Linux and macOS.
 
@@ -98,7 +98,7 @@ flowchart TB
     T["Tauri v2: tray, autostart and window"] -->|spawn sidecar once| L["Single installed SEA — no args"]
     L --> D{"Zod CLI dispatcher"}
     D -->|default| R["sea-runtime: Nest Standalone"]
-    R -->|spawn process.execPath --service gateway| GW["Same SEA file: api-gateway process"]
+    R -->|spawn process.execPath --service api-gateway| GW["Same SEA file: api-gateway process"]
     R -.->|"future: --service auth"| AU["Same SEA file: auth-ms process"]
     R -.->|"future: --service others"| MS["Same SEA file: more MS"]
     GW --> W["HTTPS :8443 /api + Angular PWA"]
@@ -116,7 +116,7 @@ sequenceDiagram
     participant C as LAN client/PWA
     T->>L: Start sidecar (no arguments)
     L->>L: Validated configuration, service registry
-    L->>G: spawn(process.execPath, --service gateway)
+    L->>G: spawn(process.execPath, --service api-gateway)
     G->>G: Nest bootstrap + namespaced configuration
     G->>DB: Connect, vector, pending migrations
     DB-->>G: Persistence ready

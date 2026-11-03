@@ -7,7 +7,7 @@ summary: "Defines the template purpose, scope, installed topology and out-of-sco
 ids[0]:
 related[2]: docs/requirements/README.md,docs/requirements/02-technology-baseline.md
 status: current
-updated: 2026-10-30
+updated: 2026-11-03
 -->
 
 # Purpose and Scope (SRS §1)
@@ -55,7 +55,7 @@ This page states why the template exists and what it covers. It holds the docume
 | Type | Commercial, cross-platform, LAN-first and offline-capable GitHub Template Repository |
 | Document version | 1.6 — normative CI/CD sequence, reproducible ECOs and releases from a versioned SHA |
 | Reference date | 2026-10-29 |
-| Status | Bootstrap specification for an empty repository; implementation and acceptance contract |
+| Status | Implementation and acceptance contract |
 
 > **Conventions.** This document uses **MUST / MUST NOT / SHOULD / MAY** with the meaning given in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) and [RFC 8174](https://www.rfc-editor.org/rfc/rfc8174). Its organization follows [ISO/IEC/IEEE 29148:2018](https://www.iso.org/standard/72089.html), its quality attributes are inspired by [ISO/IEC 25010:2023](https://www.iso.org/standard/78176.html), and its application controls are drawn from [OWASP ASVS 5.0.0](https://owasp.org/projects/asvs). **These references are engineering guides, not a claim of certification or full compliance.**
 
@@ -179,4 +179,4 @@ Out of scope:
 
 In scope, as the final phase: **cross-platform CI, synchronized versioning and GitHub Releases**.
 
-They start only once the base of the applications is verified.
+This phase starts only once the base of the applications is verified.
