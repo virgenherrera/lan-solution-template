@@ -3,14 +3,15 @@
 // Needs the built service-registry library (the same contract the assembler loads). Windows is not verified (decision D3): the executable lookup throws there.
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, readlinkSync, realpathSync, statSync } from 'node:fs';
+import { request as httpRequest } from 'node:http';
+import { request as httpsRequest } from 'node:https';
 import { createServer } from 'node:net';
 import { DatabaseSync } from 'node:sqlite';
 import { tmpdir } from 'node:os';
-import { basename, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { parseArgs } from 'node:util';
 import { z } from 'zod';
-import { serverConfigSchema } from '../../apps/api-gateway/src/server-config.ts';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const { jsonText } = (await import(join(root, 'libs', 'service-registry', 'dist', 'json-text.js'))) as typeof import('../../libs/service-registry/dist/json-text.js');
@@ -20,9 +21,8 @@ const { AGGREGATE_STATE, DISPATCHER_CONFIG, SIDECAR_KIND, SPAWNED_PATTERN, SUPER
 
 const TAG = '@app';
 const SERVICE_ID = 'api-gateway';
-// The gateway reads no environment and the supervisor passes it no port flag, so the port is the schema default.
-const { port: PORT, hostname: HOST } = serverConfigSchema.parse({});
-const BASE = `http://${HOST}:${PORT}`;
+// High ports on loopback, written into the config like an installer would: a developer's real 8443 and 8080 are never touched.
+const SMOKE_NET = { bind: '127.0.0.1', httpsPort: 38443, httpPort: 38080 };
 const HTTP_TIMEOUT_MS = 5_000;
 const POLL_MS = 100;
 // Margin over the configured waits, for slow or emulated hosts.
@@ -50,9 +50,24 @@ const sleep = (ms: number): Promise<void> => new Promise((done) => setTimeout(do
 const smokeRoot = mkdtempSync(join(tmpdir(), 'lan-smoke-'));
 process.on('exit', () => rmSync(smokeRoot, { recursive: true, force: true }));
 // Like the installer: a valid config exists next to the executable before the first start, because the app never creates one.
+// Only the blocks the smoke touches are typed; the rest of the example is copied back out whole.
 const EXAMPLE_CONFIG = join(root, 'libs', 'shared-core', 'config.example.json');
 const CONFIG_FILE = 'config.json';
-function writeConfig(installDir: string, text: string = readFileSync(EXAMPLE_CONFIG, 'utf8')): void {
+const netSchema = z.strictObject({ bind: z.string(), httpsPort: z.number().int(), httpPort: z.number().int() });
+const exampleConfigSchema = z.looseObject({
+  db: z.record(z.string(), z.unknown()),
+  net: netSchema,
+  tls: z.looseObject({ extraNames: z.array(z.string()) }),
+});
+type ExampleConfig = z.infer<typeof exampleConfigSchema>;
+function smokeConfig(): ExampleConfig {
+  const parsed = jsonText(exampleConfigSchema).safeParse(readFileSync(EXAMPLE_CONFIG, 'utf8'));
+  if (!parsed.success) throw new Error(`${EXAMPLE_CONFIG}: ${z.prettifyError(parsed.error)}`);
+  return { ...parsed.data, net: SMOKE_NET };
+}
+// The ports the smoke uses are the ones read back from the config text it writes.
+const { bind: HOST, httpsPort: HTTPS_PORT, httpPort: HTTP_PORT } = jsonText(exampleConfigSchema).parse(JSON.stringify(smokeConfig())).net;
+function writeConfig(installDir: string, text: string = JSON.stringify(smokeConfig())): void {
   mkdirSync(join(installDir, 'config'), { recursive: true });
   writeFileSync(join(installDir, 'config', CONFIG_FILE), text);
 }
@@ -77,8 +92,8 @@ class Run {
   exitCode: number | null | undefined;
   private readonly child: ChildProcess;
 
-  constructor(binary: string, args: readonly string[]) {
-    this.child = spawn(binary, [...args], { stdio: ['pipe', 'pipe', 'pipe'] });
+  constructor(binary: string, args: readonly string[], cwd?: string) {
+    this.child = spawn(binary, [...args], { stdio: ['pipe', 'pipe', 'pipe'], ...(cwd === undefined ? {} : { cwd }) });
     // stdin stays open: EOF on it shuts the supervisor down.
     this.child.stdin?.on('error', () => undefined);
     if (this.child.stdout) createInterface({ input: this.child.stdout }).on('line', (line) => this.stdoutLines.push(line));
@@ -150,13 +165,51 @@ const alive = (pid: number): boolean => {
   }
 };
 
-async function get(path: string): Promise<{ status: number; body: string } | undefined> {
+// The install dir of the run being checked: the CA the binary created lives in its certs/ folder.
+let activeDir = '';
+const readCa = (dir: string): string | undefined => {
   try {
-    const response = await fetch(`${BASE}${path}`, { signal: AbortSignal.timeout(HTTP_TIMEOUT_MS) });
-    return { status: response.status, body: await response.text() };
+    return readFileSync(join(dir, 'certs', 'ca.crt'), 'utf8');
   } catch {
     return undefined;
   }
+};
+
+// HTTPS with an explicit trust anchor: without `ca` the request uses the system roots only, which never include the CA the binary made.
+function httpsGet(path: string, ca?: string): Promise<{ status: number; body: string }> {
+  return new Promise((done, fail) => {
+    const req = httpsRequest({ host: HOST, port: HTTPS_PORT, path, ...(ca === undefined ? {} : { ca }), timeout: HTTP_TIMEOUT_MS }, (res) => {
+      const chunks: Buffer[] = [];
+      res.on('data', (chunk: Buffer) => chunks.push(chunk));
+      res.on('end', () => done({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString('utf8') }));
+    });
+    req.on('timeout', () => req.destroy(new Error('timeout')));
+    req.on('error', fail);
+    req.end();
+  });
+}
+
+async function get(path: string, dir: string = activeDir): Promise<{ status: number; body: string } | undefined> {
+  const ca = readCa(dir);
+  if (ca === undefined) return undefined;
+  try {
+    return await httpsGet(path, ca);
+  } catch {
+    return undefined;
+  }
+}
+
+// One plain-HTTP request with an explicit Host header; the redirect listener must answer without following anything.
+function httpProbe(hostHeader: string, path: string): Promise<{ status: number; location: string | undefined }> {
+  return new Promise((done, fail) => {
+    const req = httpRequest({ host: HOST, port: HTTP_PORT, path, headers: { host: hostHeader }, timeout: HTTP_TIMEOUT_MS }, (res) => {
+      res.resume();
+      res.on('end', () => done({ status: res.statusCode ?? 0, location: res.headers.location }));
+    });
+    req.on('timeout', () => req.destroy(new Error('timeout')));
+    req.on('error', fail);
+    req.end();
+  });
 }
 
 // Only the status field is read from the health body.
@@ -211,15 +264,18 @@ function expect(condition: boolean, message: string): void {
   if (!condition) throw new Error(message);
 }
 
-async function portFree(): Promise<boolean> {
+function portFree(port: number): Promise<boolean> {
   return new Promise((done) => {
     const probe = createServer();
     probe.once('error', () => done(false));
-    probe.listen(PORT, HOST, () => probe.close(() => done(true)));
+    probe.listen(port, HOST, () => probe.close(() => done(true)));
   });
 }
 
+const portsFree = async (): Promise<boolean> => (await portFree(HTTPS_PORT)) && (await portFree(HTTP_PORT));
+
 async function startReady(binary: string): Promise<Run> {
+  activeDir = dirname(binary);
   const run = new Run(binary, []);
   current = run;
   await waitReady(READY_WAIT_MS);
@@ -256,8 +312,8 @@ await check('no Drizzle code in the bundle or the executable', async () => {
 // The main run, installed like a packaged app: the executable, with config/ and (once started) data/ beside it.
 const { dir: installDir, binary } = install(artifact);
 
-await check(`port ${PORT} is free`, async () => {
-  expect(await portFree(), `port ${PORT} is in use; the gateway port is not configurable`);
+await check(`ports ${HTTPS_PORT} and ${HTTP_PORT} are free`, async () => {
+  expect(await portsFree(), `port ${HTTPS_PORT} or ${HTTP_PORT} is in use`);
 });
 
 await check(`bad selectors exit ${DISPATCHER_CONFIG.rejectExitCode}`, async () => {
@@ -291,8 +347,34 @@ await check('child runs the same executable as the supervisor', async () => {
   expect(child.argv0 === realpathSync(binary), `${child.argv0} is not ${realpathSync(binary)}`);
 });
 
-await check(`GET ${ROUTES.health}`, async () => {
+await check('TLS identity created with private modes', async () => {
+  const certs = join(installDir, 'certs');
+  const modeOf = (path: string): number => statSync(path).mode & 0o777;
+  expect(modeOf(certs) === 0o700, `certs dir mode ${modeOf(certs).toString(8)}`);
+  for (const name of ['ca.key', 'leaf.key']) expect(modeOf(join(certs, name)) === 0o600, `${name} mode ${modeOf(join(certs, name)).toString(8)}`);
+  for (const name of ['ca.crt', 'leaf.crt']) expect(statSync(join(certs, name)).isFile(), `${name} is missing`);
+});
+
+await check(`GET ${ROUTES.health} over HTTPS with the CA`, async () => {
   expect((await healthState()) === AGGREGATE_STATE.ready, `${ROUTES.health} is not ${AGGREGATE_STATE.ready}`);
+});
+
+await check(`GET ${ROUTES.health} without the CA fails verification`, async () => {
+  const code = await httpsGet(ROUTES.health).then(
+    () => 'no error',
+    (error: NodeJS.ErrnoException) => error.code,
+  );
+  expect(code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE', `got ${code}`);
+  return code;
+});
+
+await check('HTTP redirect: known host gets 308, unknown host gets 400', async () => {
+  const known = await httpProbe(`${HOST}:${HTTP_PORT}`, ROUTES.health);
+  expect(known.status === 308, `status ${known.status}`);
+  expect(known.location === `https://${HOST}:${HTTPS_PORT}${ROUTES.health}`, `Location ${known.location}`);
+  const unknown = await httpProbe('evil.example', ROUTES.health);
+  expect(unknown.status === 400, `status ${unknown.status}`);
+  expect(unknown.location === undefined, `Location ${unknown.location}`);
 });
 
 await check(`GET ${ROUTES.index}`, async () => {
@@ -368,7 +450,7 @@ await check('SIGTERM: exit 0, no process left', async () => {
   const code = await run.exit(STOP_WAIT_MS, 'supervisor after SIGTERM');
   expect(code === 0, `supervisor exited ${code}`);
   await allGone([run.pid, ...knownPids], 'after SIGTERM');
-  expect(await portFree(), `port ${PORT} still in use`);
+  expect(await portsFree(), 'a gateway port is still in use');
 });
 
 await check('stdin shutdown command: exit 0, no process left', async () => {
@@ -378,7 +460,82 @@ await check('stdin shutdown command: exit 0, no process left', async () => {
   const code = await stopping.exit(STOP_WAIT_MS, 'supervisor after the shutdown command');
   expect(code === 0, `supervisor exited ${code}`);
   await allGone([stopping.pid, ...knownPids], 'after the shutdown command');
-  expect(await portFree(), `port ${PORT} still in use`);
+  expect(await portsFree(), 'a gateway port is still in use');
+});
+
+// Stops a run the way the host does and waits until nothing is left.
+async function stopClean(target: Run): Promise<void> {
+  target.send(JSON.stringify({ kind: SIDECAR_KIND.shutdown }));
+  const code = await target.exit(STOP_WAIT_MS, 'supervisor after the shutdown command');
+  expect(code === 0, `supervisor exited ${code}`);
+  await allGone([target.pid, ...knownPids], 'after the shutdown command');
+  expect(await portsFree(), 'a gateway port is still in use');
+}
+
+const certFile = (dir: string, name: string): Buffer => readFileSync(join(dir, 'certs', name));
+
+await check('second start reuses the TLS identity', async () => {
+  knownPids.clear();
+  const caBefore = certFile(installDir, 'ca.crt');
+  const leafBefore = certFile(installDir, 'leaf.crt');
+  const again = await startReady(binary);
+  expect(certFile(installDir, 'ca.crt').equals(caBefore), 'ca.crt changed');
+  expect(certFile(installDir, 'leaf.crt').equals(leafBefore), 'leaf.crt changed');
+  expect(again.lines.some((line) => line.includes('reusing')), 'no stderr line with "reusing"');
+  await stopClean(again);
+});
+
+await check('tls.extraNames: new leaf, same CA, new name redirects', async () => {
+  knownPids.clear();
+  const caBefore = certFile(installDir, 'ca.crt');
+  const leafBefore = certFile(installDir, 'leaf.crt');
+  const config = smokeConfig();
+  config.tls.extraNames = ['lan.test'];
+  writeConfig(installDir, JSON.stringify(config));
+  const renamed = await startReady(binary);
+  expect(certFile(installDir, 'ca.crt').equals(caBefore), 'ca.crt changed');
+  expect(!certFile(installDir, 'leaf.crt').equals(leafBefore), 'leaf.crt was not reissued');
+  const probe = await httpProbe(`lan.test:${HTTP_PORT}`, ROUTES.index);
+  expect(probe.status === 308, `status ${probe.status}`);
+  expect(probe.location === `https://lan.test:${HTTPS_PORT}${ROUTES.index}`, `Location ${probe.location}`);
+  await stopClean(renamed);
+});
+
+// SIDECAR SIMULATION. The Tauri shell starts the executable as a child with piped stdio, from whatever directory it happens to be in,
+// reads stdout lines as events, may write to stdin and sees the exit code. This group does exactly that from node.
+// It proves the sidecar contract: only valid events on stdout, logs on stderr, a shutdown line on stdin, exit code 0, and no dependence on cwd.
+// It does NOT prove the real thing: Tauri's CommandEvent handling, the tray, the WebView trusting the CA,
+// or what happens on stdin EOF when Tauri quits.
+const sidecar = install(artifact);
+let sim: Run;
+
+await check('sidecar simulation: spawn from an unrelated cwd, ready event on stdout', async () => {
+  knownPids.clear();
+  activeDir = dirname(sidecar.binary);
+  sim = new Run(sidecar.binary, [], tmpdir());
+  current = sim;
+  await until(() => (sim.hasState(AGGREGATE_STATE.ready) ? true : undefined), READY_WAIT_MS, `${SIDECAR_KIND.status} event ${AGGREGATE_STATE.ready}`);
+  for (const pid of sim.spawnedPids()) knownPids.add(pid);
+  expect(sim.lines.some((line) => line.includes('tls:')), 'no tls identity line on stderr');
+  return `cwd ${tmpdir()}`;
+});
+
+await check('sidecar simulation: stdout holds only valid events', async () => {
+  const events = sim.events();
+  expect(events.length > 0, 'stdout is empty');
+  expect(events.every((event) => event.kind === SIDECAR_KIND.status), 'unexpected event kind');
+  return `${events.length} events`;
+});
+
+await check('sidecar simulation: HTTPS with the CA from the install dir', async () => {
+  const response = await get(ROUTES.health, sidecar.dir);
+  expect(response?.status === EXPECTED_STATUS.ok, `status ${response?.status}`);
+  expect(readCa(sidecar.dir) !== undefined, 'certs were not created next to the executable');
+});
+
+await check('sidecar simulation: shutdown line on stdin, exit 0, no listener left', async () => {
+  await stopClean(sim);
+  sim.events();
 });
 
 // The shipped build expects app_meta.value (S1): a database without it must stop the start before any service spawns.
@@ -413,13 +570,8 @@ await check('config missing: exit 1, no service spawned', async () => {
   return 'exit 1';
 });
 
-// The example config is copied back out whole, so only the db block shape is checked here.
-const exampleConfigSchema = z.looseObject({ db: z.record(z.string(), z.unknown()) });
-
 await check('config with an unknown key: exit 1, the key is named', async () => {
-  const parsedConfig = jsonText(exampleConfigSchema).safeParse(readFileSync(EXAMPLE_CONFIG, 'utf8'));
-  if (!parsedConfig.success) throw new Error(`${EXAMPLE_CONFIG}: ${z.prettifyError(parsedConfig.error)}`);
-  const config = parsedConfig.data;
+  const config = smokeConfig();
   config.db['bogusKey'] = true;
   const bad = new Run(install(artifact, true, JSON.stringify(config)).binary, []);
   current = bad;
