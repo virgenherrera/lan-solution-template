@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { serviceIdSchema } from './service-definition.js';
+import { startupOrder } from './startup-order.js';
 
 // One entry of the typed service array, in the spirit of an Angular route: add an entry, the runtime supervises a new service.
 export const serviceRouteSchema = z.strictObject({
@@ -24,6 +25,12 @@ const routesSchema = z.array(serviceRouteSchema).superRefine((routes, ctx) => {
     for (const dependency of route.dependsOn) {
       if (!ids.has(dependency)) ctx.addIssue({ code: 'custom', path: [index, 'dependsOn'], message: `unknown dependency "${dependency}"` });
     }
+  }
+  if (ctx.issues.length > 0) return;
+  try {
+    startupOrder(routes);
+  } catch (error) {
+    ctx.addIssue({ code: 'custom', message: error instanceof Error ? error.message : String(error) });
   }
 });
 
