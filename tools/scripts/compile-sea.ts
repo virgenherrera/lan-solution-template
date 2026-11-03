@@ -22,6 +22,8 @@ import {
 } from './pack-migrations.ts';
 
 const root = resolve(import.meta.dirname, '..', '..');
+// The pack step wrote the migration manifest with this schema, so it is read back with it (pack-migrations.ts runs first and builds nothing here).
+const { manifestSchema } = (await import(join(root, 'libs', 'db-migrations', 'dist', 'contract', 'index.js'))) as typeof import('db-migrations');
 const workDir = join(root, 'dist', 'sea-package');
 const entryPath = join(workDir, 'entry.mjs');
 const bundlePath = join(workDir, 'sea-app.mjs');
@@ -376,7 +378,8 @@ function engineMigrationAssets(engine: string): Record<string, string> {
   for (const path of [manifestPath, buildInfoPath]) {
     if (!existsSync(path)) throw new Error(`${path} missing; run "node tools/scripts/pack-migrations.ts --engine ${engine}" first`);
   }
-  const { migrations } = JSON.parse(readFileSync(manifestPath, 'utf8')) as { migrations: { file: string; sha256: string }[] };
+  const { migrations, engine: packedEngine } = manifestSchema.parse(JSON.parse(readFileSync(manifestPath, 'utf8')));
+  if (packedEngine !== engine) throw new Error(`${manifestPath}: packed for engine "${packedEngine}", expected "${engine}"`);
   const assets: Record<string, string> = { [manifestAssetName(engine)]: manifestPath, [buildInfoAssetName(engine)]: buildInfoPath };
   for (const { file, sha256 } of migrations) {
     const path = join(outDir, file);
