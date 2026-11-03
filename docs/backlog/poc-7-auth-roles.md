@@ -100,7 +100,7 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-7-auth-and-roles).
 - [ ] Dependency task, first: wait for the POC-5 spike on the first-run setup wizard. POC-7 consumes its result and depends on it. Source: [decision 13](../roadmap/PROPOSAL.md#decision-log), [OQ5](../roadmap/PROPOSAL.md#open-questions), [REQ-SEC-02](../requirements/07-security.md).
   - Use the chosen path as input for the initial-credential flow. Use it for the dev super user hand-off.
   - Inputs: the POC-5 spike output and the list in Decision Log item 13. Security claims are not verified.
-  - Output: the path recorded in ADR-006 (auth mechanism) and in `POC-07-Result`.
+  - Output: the path recorded in ADR-010 (auth mechanism) and in `POC-07-Result`.
   - No own spike time. If the POC-5 spike hit its 2-day breaker, use the MSI credential dialog on Windows. Use the CLI `setup` command on Linux and macOS.
   - Source: [decision 13](../roadmap/PROPOSAL.md#decision-log), [OQ5](../roadmap/PROPOSAL.md#open-questions)
 - [ ] Server-side sessions in SQLite with the cookie `__Host-sid`. Scrypt hashing. 15+ character policy with blocklist. Exponential throttle per account and IP. CSRF via SameSite plus Origin check. The design notes are an unreviewed research summary. Source: [REQ-SEC-02](../requirements/07-security.md), [REQ-SEC-04](../requirements/07-security.md) ([pitch](../roadmap/PROPOSAL.md#poc-7-auth-and-roles))
@@ -115,7 +115,7 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-7-auth-and-roles).
 - [ ] Lazy-load role routes. Unauthorized views are not rendered in the DOM. The API still blocks them. Source: [REQ-WEB-03](../requirements/08-web-angular.md), [REQ-SEC-03](../requirements/07-security.md), [AC-06](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-7-auth-and-roles))
 - [ ] Strict payload validation, size limits and auth-abuse defenses. Source: [REQ-SEC-04](../requirements/07-security.md), [REQ-CFG-03](../requirements/04-configuration.md) ([pitch](../roadmap/PROPOSAL.md#poc-7-auth-and-roles))
 - [ ] Run Playwright on dev :4200 and distributed :8443. Source: [REQ-TEST-05](../requirements/11-nx-quality-testing.md), [AC-06](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-7-auth-and-roles))
-- [ ] Publish `POC-07-Result` and `ADR-006` (auth mechanism) under `docs/`. Source: [REQ-SEC-01](../requirements/07-security.md), [AC-06](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-7-auth-and-roles))
+- [ ] Publish `POC-07-Result` and `ADR-010` (auth mechanism) under `docs/`. Source: [REQ-SEC-01](../requirements/07-security.md), [AC-06](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-7-auth-and-roles))
 
 Ids with no pitch task (none invented): [REQ-SEC-06](../requirements/07-security.md), [REQ-WEB-04](../requirements/08-web-angular.md).
 

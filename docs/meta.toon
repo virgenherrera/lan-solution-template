@@ -67,10 +67,10 @@ docs[75]:
     type: architecture
     summary: Mermaid architecture diagrams citing SRS sections for runtime and desktop topology.
     ids: []
-    related[2]: README.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md
+    related[10]: README.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
     status: current
     updated: 2026-11-03
-    refs[10]: REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-05,REQ-DESK-06,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-05,REQ-RUNTIME-06
+    refs[11]: REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-05,REQ-DESK-06,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-STACK-07
   - doc: docs/backlog/README.md
     title: Backlog index
     type: backlog

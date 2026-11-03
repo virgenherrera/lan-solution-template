@@ -27,7 +27,7 @@ updated: 2026-11-03
 
 Proposed, 2026-11-03. The human asked for the direction. The details below are agent proposals and the code does not exist yet. This page is written first, so the docs say what the code will do. The slices are on the [backlog page](../../backlog/persistence-system.md).
 
-Numbering note: the [architecture overview](../overview.md#architecture-decisions) keeps an older placeholder list in which "ADR-007" means "Release flow". That list is not renumbered. The file number of this record is the one in its file name.
+Numbering note: the [architecture overview](../overview.md#architecture-decisions) listed an older placeholder set in which "ADR-007" meant "Release flow". That placeholder is now ADR-011. The file number of this record is the one in its file name.
 
 ## Context
 

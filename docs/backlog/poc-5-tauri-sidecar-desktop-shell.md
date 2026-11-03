@@ -110,7 +110,7 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-s
     - Permanent deactivation once the DB has an admin.
     - 15+ character policy with blocklist.
     - CLI alternative.
-  - Output: the chosen path in `POC-05-Result` and in ADR-006 (auth mechanism). It states whether the wizard replaces or complements the MSI dialog.
+  - Output: the chosen path in `POC-05-Result` and in ADR-010 (auth mechanism). It states whether the wizard replaces or complements the MSI dialog.
   - Circuit breaker: no clear path after 2 days. Then keep the MSI dialog on Windows. Keep the CLI `setup` command on Linux and macOS.
   - Source: [decision 13](../roadmap/PROPOSAL.md#decision-log), [OQ5](../roadmap/PROPOSAL.md#open-questions)
 - [ ] Ship the SEA as an `externalBin` sidecar, one per target triple. Source: [REQ-DESK-01](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
@@ -126,7 +126,7 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-s
 - [ ] Tauri installs `ca.crt` into the OS trust store with explicit consent. Key storage per OS: [OQ8](../roadmap/PROPOSAL.md#open-questions). Source: [REQ-TLS-02](../requirements/06-web-gateway-https-pwa.md), [OQ8](../roadmap/PROPOSAL.md#open-questions) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
 - [ ] Run native E2E with `@wdio/tauri-service` on an instrumented build; the commercial installer excludes it. Source: [REQ-TEST-08](../requirements/11-nx-quality-testing.md), [AC-20](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
 - [ ] Order Tauri `build`/`package` after SEA. Source: [REQ-ECO-06](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
-- [ ] Publish `POC-05-Result` and `ADR-005` (desktop process model) under `docs/`. Source: [REQ-DESK-02](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
+- [ ] Publish `POC-05-Result` and `ADR-009` (desktop process model) under `docs/`. Source: [REQ-DESK-02](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
 
 ---
 

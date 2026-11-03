@@ -99,7 +99,7 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-8-msi-credential-dialog-plat
 - [ ] Dependency task, first: wait for the POC-5 spike on the first-run setup wizard. POC-8 consumes its result and depends on it. Source: [decision 13](../roadmap/PROPOSAL.md#decision-log), [OQ5](../roadmap/PROPOSAL.md#open-questions). No REQ or AC id.
   - Decide whether the wizard replaces or complements the MSI credential dialog.
   - Inputs: the POC-5 spike output and the list in Decision Log item 13. Security claims are not verified.
-  - Output: the decision recorded in `POC-08-Result` and in ADR-006 (auth mechanism).
+  - Output: the decision recorded in `POC-08-Result` and in ADR-010 (auth mechanism).
   - No own spike time. If the POC-5 spike hit its 2-day breaker, keep the MSI credential dialog on Windows.
   - Source: [decision 13](../roadmap/PROPOSAL.md#decision-log), [OQ5](../roadmap/PROPOSAL.md#open-questions)
 - [ ] Spike, first task, blocking: test WiX and Tauri capabilities for per-machine, dual and per-user installs. Then decide the scope ([OQ16](../roadmap/PROPOSAL.md#open-questions)). Source: [OQ16](../roadmap/PROPOSAL.md#open-questions). No REQ or AC id.

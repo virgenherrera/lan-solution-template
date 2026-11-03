@@ -138,7 +138,7 @@ A-01 is not in the SRS.
 
 [Back to navigation](#navigation)
 
-Each row summarizes one architecture decision record (ADR, Nygard format). ADRs 001-007 are the per-POC results; later ones continue the numbering.
+Each row summarizes one architecture decision record (ADR, Nygard format). ADR-001 to ADR-007 are written files under `docs/architecture/adr/`. Placeholders continue from ADR-008.
 
 | Topic | Decision | Source | State |
 |---|---|---|---|
@@ -351,7 +351,7 @@ Backlog epics: [2a](../backlog/poc-2a-launcher-cwd-spike.md), [2b](../backlog/po
     - First install the current stable `drizzle-orm` tag (npm `latest`). Its exact version is not verified until the POC.
     - Verify vector support on SQLite.
     - If it fails, bump to `1.0.0-rc.5`.
-    - Record the result and the reason in `ADR-003`.
+    - Record the result and the reason in `ADR-004`.
   - Use SQLite through `node:sqlite`, sqlite-vector 1.1.2 (Drizzle is build time only, see ADR-004). Extract the native library from a SEA asset. Check its integrity per OS/arch (REQ-DB-09).
   - Build a custom migrator. It records version, checksum and applied_at. It detects tampering, locks, and uses a transaction per engine (REQ-DB-04, REQ-DB-05).
   - Startup order: config, adapter, connection, vector check, migrations, ready (REQ-DB-06).
@@ -371,7 +371,7 @@ Backlog epics: [2a](../backlog/poc-2a-launcher-cwd-spike.md), [2b](../backlog/po
   - Document the Drizzle tag decision in both cases (D-05).
   - Stable tag fails the SQLite vector check: bump to `1.0.0-rc.5` and retry once before stopping.
 - **Acceptance criteria**: AC-07, AC-08, AC-10 (persistence and vector part), REQ-CFG-01..06, REQ-DB-01..09, REQ-TEST-06 (SQLite part), REQ-SEC-06.
-- **Deliverable**: branch `minor/poc-03-sqlite-vector`. PR title: `feat: config singleton and SQLite vector persistence in SEA`. Results under `docs/`: `POC-03-Result` and `ADR-003` (Drizzle tag choice and compatibility).
+- **Deliverable**: branch `minor/poc-03-sqlite-vector`. PR title: `feat: config singleton and SQLite vector persistence in SEA`. Results under `docs/`: `POC-03-Result` and `ADR-003` (config and database strategy) and `ADR-004` (Drizzle tag choice and compatibility).
 
 ### POC-4: HTTPS gateway serving the Angular PWA
 
@@ -386,7 +386,7 @@ Backlog epics: [2a](../backlog/poc-2a-launcher-cwd-spike.md), [2b](../backlog/po
   - First task, a spike (decision 14, [OQ8](#open-questions)). Budget: 2 days at most, inside the appetite.
     - Inputs: a hand-built DER writer on `node:crypto`, against a pure-JS dependency.
     - Checks and circuit breaker: see [Decision Log](#decision-log) item 14.
-    - Output: the POC result page and `ADR-004` (TLS trust model).
+    - Output: the POC result page and `ADR-008` (TLS trust model).
   - Generate the TLS identity with SAN handling (REQ-TLS-01, REQ-TLS-04).
   - TLS design (decisions 7 and 14, `dotnet dev-certs` style; unreviewed research summary):
     - One local CA per installation. A renewable leaf is reissued when the SAN or IP changes. The spike picks the library (decision 14).
@@ -412,7 +412,7 @@ Backlog epics: [2a](../backlog/poc-2a-launcher-cwd-spike.md), [2b](../backlog/po
   - Publish the mobile trust findings.
   - Reshape the PWA install part as a new pitch.
 - **Acceptance criteria**: AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17. Also REQ-NET-01..08, REQ-TLS-01..04, REQ-PWA-01..03, REQ-DEV-01..05, REQ-WEB-01, REQ-TEST-05 (dev :4200 and :8443 smoke subset).
-- **Deliverable**: branch `minor/poc-04-https-spa`. PR title: `feat: HTTPS gateway serving Angular PWA from SEA`. Results under `docs/`: `POC-04-Result`, `ADR-004` (TLS trust model) and a device-trust guide.
+- **Deliverable**: branch `minor/poc-04-https-spa`. PR title: `feat: HTTPS gateway serving Angular PWA from SEA`. Results under `docs/`: `POC-04-Result`, `ADR-008` (TLS trust model) and a device-trust guide.
 
 ### POC-5: Tauri desktop shell with SEA sidecar
 
@@ -425,7 +425,7 @@ Backlog epics: [2a](../backlog/poc-2a-launcher-cwd-spike.md), [2b](../backlog/po
   - Pending spike (decision 13, [OQ5](#open-questions)). POC-5 owns it, as its first task. Budget: 2 days at most, inside the appetite.
     - Scope: define the first-run setup wizard path. The user creates the first real admin at install time. The seeded dev super user stays out of that path.
     - Inputs: the list in Decision Log item 13. None is a decision. Security claims about the wizard are not verified.
-    - Output: one chosen path with trade-offs, in `POC-05-Result` and ADR-006 (auth mechanism). POC-7 and POC-8 depend on it.
+    - Output: one chosen path with trade-offs, in `POC-05-Result` and ADR-010 (auth mechanism). POC-7 and POC-8 depend on it.
     - Circuit breaker: no clear path after 2 days. Keep the MSI credential dialog on Windows. Keep the CLI `setup` command on Linux and macOS.
   - Ship the SEA as an `externalBin` sidecar, one per target triple (REQ-DESK-01).
   - Tauri only starts, monitors and stops the supervisor (REQ-DESK-02).
@@ -470,7 +470,7 @@ sequenceDiagram
   - Label E2E blocked-by-environment.
   - Reshape E2E as a new pitch.
 - **Acceptance criteria**: AC-03, AC-18, AC-20, AC-30 (host OS), REQ-DESK-01..06, REQ-SEC-05, REQ-TEST-08, REQ-ECO-06 (Tauri after SEA).
-- **Deliverable**: branch `minor/poc-05-tauri-sidecar`. PR title: `feat: Tauri shell supervising SEA sidecar with tray`. Results under `docs/`: `POC-05-Result` and `ADR-005` (desktop process model).
+- **Deliverable**: branch `minor/poc-05-tauri-sidecar`. PR title: `feat: Tauri shell supervising SEA sidecar with tray`. Results under `docs/`: `POC-05-Result` and `ADR-009` (desktop process model).
 
 ### POC-6: PostgreSQL adapter parity (BACKLOG)
 
@@ -491,7 +491,7 @@ sequenceDiagram
 - **Solution sketch**:
   - Dependency task, first (decision 13, [OQ5](#open-questions)): wait for the POC-5 spike. Security claims about the wizard are not verified.
     - Scope: take the chosen wizard path as input. It feeds the initial-credential flow and the dev super user hand-off.
-    - Output: the path in ADR-006 (auth mechanism) and in `POC-07-Result`.
+    - Output: the path in ADR-010 (auth mechanism) and in `POC-07-Result`.
     - Budget: no own spike time. If the POC-5 spike hit its 2-day breaker, use the MSI dialog on Windows. Use the CLI `setup` command on Linux and macOS.
   - Auth design (decision 5; unreviewed research summary):
     - scrypt through Node native. Use argon2id only if Node ships it (not verified).
@@ -520,7 +520,7 @@ sequenceDiagram
   - A test proves auth rejects an expired account.
   - Then ship without the dev super user and reshape.
 - **Acceptance criteria**: AC-06, REQ-SEC-01..04, REQ-SEC-06, REQ-WEB-02..04, REQ-TEST-05.
-- **Deliverable**: branch `minor/poc-07-auth-roles`. PR title: `feat: user:password auth with roles and protected API and UI`. Results under `docs/`: `POC-07-Result` and `ADR-006` (auth mechanism).
+- **Deliverable**: branch `minor/poc-07-auth-roles`. PR title: `feat: user:password auth with roles and protected API and UI`. Results under `docs/`: `POC-07-Result` and `ADR-010` (auth mechanism).
 
 ### POC-8: MSI credential dialog, platform matrix and lockstep versioning
 
@@ -531,7 +531,7 @@ sequenceDiagram
 - **Solution sketch**:
   - Dependency task, first (decision 13, [OQ5](#open-questions)): wait for the POC-5 spike. Security claims about the wizard are not verified.
     - Scope: decide whether the wizard replaces or complements the MSI credential dialog.
-    - Output: the decision in `POC-08-Result` and in ADR-006 (auth mechanism).
+    - Output: the decision in `POC-08-Result` and in ADR-010 (auth mechanism).
     - Budget: no own spike time. If the POC-5 spike hit its 2-day breaker, keep the MSI credential dialog.
   - MSI dialog for the initial credential: a hidden property plus `MsiHiddenProperties`. A deferred custom action computes the hash. This is a design. Not verified. Add a smoke test per OS. It proves that the credential works and that no default exists.
   - Path layout (decision 11; REQ-CFG-05, REQ-SEA-05). The MSI installs read-only files under `<InstallDir>`: the SEA and `config.default.json`.
@@ -581,7 +581,7 @@ sequenceDiagram
 - **No-gos**: no cloud deploy. No direct `nx`, `jest`, `ng`, `cargo`, `ncu` or `postject` in the workflow. No `continue-on-error` on audit. No amend or force-push. No untrusted-PR cache. No silent `securityFix` run (REQ-DEPS-02).
 - **Circuit breaker**: if a mandatory platform cannot run, the release is blocked (REQ-CI-02, REQ-CI-06). The release is not green. Ship PR CI only and publish the findings. Reshape CD as a new pitch.
 - **Acceptance criteria**: AC-26, AC-27, AC-35, AC-36, REQ-CI-01..10, REQ-SEC-CI-01..04, AC-02, AC-32.
-- **Deliverable**: branch `chore/poc-09-ci-cd`. PR title: `chore: GitHub Actions CI and release pipeline`. Results under `docs/`: `POC-09-Result` and `ADR-007` (release flow).
+- **Deliverable**: branch `chore/poc-09-ci-cd`. PR title: `chore: GitHub Actions CI and release pipeline`. Results under `docs/`: `POC-09-Result` and `ADR-011` (release flow).
 
 ---
 
@@ -780,7 +780,7 @@ Human decisions (source: plan `optimized-wondering-waffle.md`, section "Recorded
 13. (2026-10-30) First-run setup wizard. Resolves OQ5 as intent with a spike first. Human answer: "We want a WordPress-style setup wizard so the first real admin is created by the user at install time and replaces the admin/root (and the seeded dev super user). We do not decide the mechanism now. When the POC starts, its first task is a spike: run research and define the path we will implement." The DB stays the source of truth (decision 12).
     - The exact mechanism stays open. The spike decides it.
     - The spike also decides whether the wizard replaces or complements the MSI credential dialog.
-    - POC-5 owns the spike. POC-7 and POC-8 consume its result and depend on it. The result goes into the POC result page and into ADR-006 (auth mechanism).
+    - POC-5 owns the spike. POC-7 and POC-8 consume its result and depend on it. The result goes into the POC result page and into ADR-010 (auth mechanism).
     - Budget: 2 days at most. Circuit breaker: if no clear path appears, keep the MSI credential dialog on Windows and the CLI `setup` command on Linux and macOS.
     - Inputs for the spike. They are not decisions. The general security claims are not verified:
       - A wizard is a known attack vector. Whoever reaches it first owns the admin account.
@@ -809,7 +809,7 @@ Human decisions (source: plan `optimized-wondering-waffle.md`, section "Recorded
     - POC-4 owns the spike, as its first task. Budget: 2 days at most, inside the appetite.
     - Spike inputs: the own DER build with `node:crypto`, against the pure-JS dependency.
     - Spike checks: `openssl verify` accepts the chain. Chrome, Firefox and Safari accept the installed CA and a leaf with an IP SAN. The leaf is reissued when the IP or SAN changes, with the same CA. A Windows ACL recipe. A read of the OWASP guidance.
-    - Spike output: the POC result page and `ADR-004` (TLS trust model).
+    - Spike output: the POC result page and `ADR-008` (TLS trust model).
     - Circuit breaker: if the own path fails the checks in 2 days, adopt the pure-JS dependency that passes the supply-chain policy (REQ-SUPPLY-01).
     - ASVS stays not verified.
 

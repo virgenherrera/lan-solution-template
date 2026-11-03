@@ -115,7 +115,7 @@ Observable:
 
 - The result can overstate. Every claim carries `verified` or `not verified` and its command. Windows stays unverified.
 - Editing requirement files and OQ rows changes shared contracts of the SRS set. Those edits wait for the human.
-- ADR numbering: the ADR index says ADR-001 to ADR-007 are the per-POC results. ADR-002 matches the pitch.
+- ADR numbering: the ADR index said ADR-001 to ADR-007 were the per-POC results. ADR-002 matches the pitch. Later numbering: placeholders start at ADR-008.
 
 ---
 
