@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { jsonText } from './json-text.js';
 import { statusSnapshotSchema } from './status-snapshot.js';
 
 // The sidecar contract with the host (Tauri). The host sees the supervisor through four things only: stdout lines, stderr lines, stdin lines and the exit code.
@@ -27,17 +28,7 @@ export const sidecarCommandSchema = z.discriminatedUnion('kind', [sidecarShutdow
 export type SidecarCommand = z.infer<typeof sidecarCommandSchema>;
 
 // One stdin line: JSON text, then the command schema. Both failures come back as zod issues.
-const commandLineSchema = z
-  .string()
-  .transform((text, ctx): unknown => {
-    try {
-      return JSON.parse(text);
-    } catch {
-      ctx.addIssue({ code: 'custom', message: 'stdin line is not valid JSON' });
-      return z.NEVER;
-    }
-  })
-  .pipe(sidecarCommandSchema);
+const commandLineSchema = jsonText(sidecarCommandSchema);
 
 export const decodeSidecarCommand = (line: string): z.ZodSafeParseResult<SidecarCommand> => commandLineSchema.safeParse(line);
 

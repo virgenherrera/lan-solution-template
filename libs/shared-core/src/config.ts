@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { jsonText } from 'service-registry';
 import { z } from 'zod';
 import type { AppPaths } from './paths.js';
 
@@ -11,7 +12,9 @@ const dbSchema = z.discriminatedUnion('engine', [
     engine: z.literal('sqlite'),
     sqlite: z.strictObject({
       // Relative to dataDir; the database stays outside the SEA (REQ-DB-07).
-      file: z.string().min(1),
+      file: z
+        .string()
+        .regex(/^(?!\.+$)[\w.-]+$/, "a plain file name inside the data directory: no path separators, no '..'"),
       foreignKeys: z.boolean(),
       journalMode: z.enum(['WAL', 'DELETE']),
       synchronous: z.enum(['FULL', 'NORMAL']),
@@ -41,13 +44,8 @@ export function loadConfig(paths: AppPaths): AppConfig {
   if (!existsSync(file)) {
     throw new Error(`config ${file} is missing: the installer (or \`pnpm run dev:config\` in dev) must create it`);
   }
-  let raw: unknown;
-  try {
-    raw = JSON.parse(readFileSync(file, 'utf8'));
-  } catch (error) {
-    throw new Error(`config ${file} is not valid JSON: ${(error as Error).message}`);
-  }
-  const parsed = configSchema.safeParse(raw);
+  // One error path: invalid JSON and schema failures are issues of the same list.
+  const parsed = jsonText(configSchema).safeParse(readFileSync(file, 'utf8'));
   if (!parsed.success) throw new Error(`config ${file} is invalid: ${z.prettifyError(parsed.error)}`);
   return deepFreeze(parsed.data);
 }

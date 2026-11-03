@@ -5,8 +5,10 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { z } from 'zod';
 
 const root = resolve(import.meta.dirname, '..', '..');
+const { jsonText } = (await import(join(root, 'libs', 'service-registry', 'dist', 'json-text.js'))) as typeof import('../../libs/service-registry/dist/json-text.js');
 const sharedCorePath = join(root, 'libs', 'shared-core', 'dist', 'index.js');
 const sqliteEnginePath = join(root, 'libs', 'shared-core', 'dist', 'db', 'sqlite', 'index.js');
 const contractPath = join(root, 'libs', 'db-migrations', 'dist', 'contract', 'index.js');
@@ -19,9 +21,15 @@ function fail(message: string): never {
   throw new Error(message);
 }
 
+// Drizzle owns the journal file, so only the fields read here are checked.
+const journalSchema = z.looseObject({ entries: z.array(z.looseObject({ idx: z.number(), tag: z.string() })) });
+
 // Same order and numbering as the migrator input: journal idx + 1 is the version.
 function readMigrations(dir: string): { version: number; name: string; sql: string }[] {
-  const journal = JSON.parse(readFileSync(join(dir, 'meta', '_journal.json'), 'utf8')) as { entries: { idx: number; tag: string }[] };
+  const journalPath = join(dir, 'meta', '_journal.json');
+  const parsed = jsonText(journalSchema).safeParse(readFileSync(journalPath, 'utf8'));
+  if (!parsed.success) fail(`${journalPath}: ${z.prettifyError(parsed.error)}`);
+  const journal = parsed.data;
   return [...journal.entries]
     .sort((a, b) => a.idx - b.idx)
     .map((entry) => ({ version: entry.idx + 1, name: entry.tag, sql: readFileSync(join(dir, `${entry.tag}.sql`), 'utf8') }));

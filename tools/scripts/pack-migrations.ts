@@ -6,8 +6,10 @@
 import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { z } from 'zod';
 
 const root = resolve(import.meta.dirname, '..', '..');
+const { jsonText } = (await import(join(root, 'libs', 'service-registry', 'dist', 'json-text.js'))) as typeof import('../../libs/service-registry/dist/json-text.js');
 const libDir = join(root, 'libs', 'db-migrations');
 export const migrationsDirFor = (engine: string): string => join(libDir, engine, 'migrations');
 const contractPath = join(libDir, 'dist', 'contract', 'index.js');
@@ -28,15 +30,27 @@ const STATEMENT_BREAKPOINT = '--> statement-breakpoint';
 // Exact semver (optionally pre-release/build); anything with ^ ~ or a range operator fails.
 const EXACT_VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
-interface Journal {
-  entries: { idx: number; tag: string }[];
-}
-
 function fail(message: string): never {
   throw new Error(message);
 }
 
-const readJson = <T>(path: string): T => JSON.parse(readFileSync(path, 'utf8')) as T;
+// Only the fields this script reads; files owned by other tools stay loose, the pin table is ours and stays strict.
+const packageSchema = z.looseObject({ name: z.string().optional(), version: z.string().optional() });
+const devDependenciesSchema = z.looseObject({ devDependencies: z.record(z.string(), z.string()).optional() });
+const journalSchema = z.looseObject({ entries: z.array(z.looseObject({ idx: z.number(), tag: z.string() })) });
+const vectorTableSchema = z.strictObject({
+  library: z.string(),
+  version: z.string(),
+  source: z.string(),
+  platforms: z.record(z.string(), z.unknown()),
+  unavailable: z.array(z.string()),
+});
+
+function readJson<S extends z.ZodType>(path: string, schema: S): z.output<S> {
+  const parsed = jsonText(schema).safeParse(readFileSync(path, 'utf8'));
+  if (!parsed.success) fail(`${path}: ${z.prettifyError(parsed.error)}`);
+  return parsed.data;
+}
 
 function exact(name: string, version: string | undefined, where: string): string {
   if (version === undefined || !EXACT_VERSION.test(version)) {
@@ -47,16 +61,16 @@ function exact(name: string, version: string | undefined, where: string): string
 
 function packageVersion(relativeDir: string): string {
   const path = join(root, relativeDir, 'package.json');
-  const pkg = readJson<{ name?: string; version?: string }>(path);
+  const pkg = readJson(path, packageSchema);
   return exact(pkg.name ?? fail(`${path}: no name`), pkg.version, path);
 }
 
 // drizzle-kit as pinned for the library: a literal devDependency, or a `catalog:` reference whose version the lockfile resolves to the installed copy.
 function drizzleKit(): string {
   const path = join(libDir, 'package.json');
-  const spec = readJson<{ devDependencies?: Record<string, string> }>(path).devDependencies?.['drizzle-kit'];
+  const spec = readJson(path, devDependenciesSchema).devDependencies?.['drizzle-kit'];
   const installedPath = join(libDir, 'node_modules', 'drizzle-kit', 'package.json');
-  const installed = existsSync(installedPath) ? readJson<{ version?: string }>(installedPath).version : undefined;
+  const installed = existsSync(installedPath) ? readJson(installedPath, packageSchema).version : undefined;
   if (spec?.startsWith('catalog:')) return exact('drizzle-kit', installed ?? fail(`${installedPath}: run \`pnpm install\` first`), installedPath);
   if (installed !== undefined && installed !== spec) fail(`${installedPath}: installed drizzle-kit ${installed} differs from the pin ${spec}`);
   return exact('drizzle-kit', spec, path);
@@ -79,7 +93,7 @@ function assertStatements(file: string, text: string): void {
 function readEntries(engine: string): { id: number; tag: string; file: string; sha256: string }[] {
   const migrationsDir = migrationsDirFor(engine);
   const journalPath = join(migrationsDir, 'meta', '_journal.json');
-  const journal = readJson<Journal>(journalPath);
+  const journal = readJson(journalPath, journalSchema);
   const entries = [...journal.entries].sort((a, b) => a.idx - b.idx);
   entries.forEach((entry, position) => {
     if (entry.idx !== position) fail(`${journalPath}: journal gap, expected idx ${position}, found ${entry.idx}`);
@@ -125,7 +139,7 @@ async function main(): Promise<void> {
   const contract = (await import(contractPath)) as { manifestSchema: ManifestSchema; ENGINES: readonly string[] };
 
   const generator = drizzleKit();
-  const sqlite = readJson<{ library: string; version: string }>(join(root, 'tools', 'vector', 'sqlite-vector-1.1.2.json'));
+  const sqlite = readJson(join(root, 'tools', 'vector', 'sqlite-vector-1.1.2.json'), vectorTableSchema);
   const buildInfo = {
     runtime_version: packageVersion('apps/sea-runtime'),
     gateway_version: packageVersion('apps/api-gateway'),

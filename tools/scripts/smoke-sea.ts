@@ -9,9 +9,11 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { parseArgs } from 'node:util';
+import { z } from 'zod';
 import { serverConfigSchema } from '../../apps/api-gateway/src/server-config.ts';
 
 const root = resolve(import.meta.dirname, '..', '..');
+const { jsonText } = (await import(join(root, 'libs', 'service-registry', 'dist', 'json-text.js'))) as typeof import('../../libs/service-registry/dist/json-text.js');
 const { AGGREGATE_STATE, DISPATCHER_CONFIG, SIDECAR_KIND, SPAWNED_PATTERN, SUPERVISOR_CONFIG, sidecarEventSchema, stateMessage } = (await import(
   join(root, 'libs', 'service-registry', 'dist', 'index.js')
 )) as typeof import('service-registry');
@@ -95,14 +97,8 @@ class Run {
   // Every stdout line must be a valid sidecar event; the first one that is not fails the check.
   events(): SidecarEvent[] {
     return this.stdoutLines.map((line, index) => {
-      let json: unknown;
-      try {
-        json = JSON.parse(line);
-      } catch {
-        throw new Error(`stdout line ${index + 1} is not JSON: ${line.slice(0, TAIL_WIDTH)}`);
-      }
-      const parsed = sidecarEventSchema.safeParse(json);
-      if (!parsed.success) throw new Error(`stdout line ${index + 1} is not a sidecar event: ${parsed.error.message}`);
+      const parsed = jsonText(sidecarEventSchema).safeParse(line);
+      if (!parsed.success) throw new Error(`stdout line ${index + 1} is not a sidecar event (${line.slice(0, TAIL_WIDTH)}): ${parsed.error.message}`);
       return parsed.data;
     });
   }
@@ -157,14 +153,14 @@ async function get(path: string): Promise<{ status: number; body: string } | und
   }
 }
 
+// Only the status field is read from the health body.
+const healthBodySchema = z.looseObject({ status: z.string().optional() });
+
 async function healthState(): Promise<string | undefined> {
   const response = await get(ROUTES.health);
   if (response?.status !== EXPECTED_STATUS.ok) return undefined;
-  try {
-    return (JSON.parse(response.body) as { status?: string }).status;
-  } catch {
-    return undefined;
-  }
+  const parsed = jsonText(healthBodySchema).safeParse(response.body);
+  return parsed.success ? parsed.data.status : undefined;
 }
 
 const waitReady = (timeoutMs: number): Promise<true> =>
@@ -410,9 +406,14 @@ await check('config missing: exit 1, no service spawned', async () => {
   return 'exit 1';
 });
 
+// The example config is copied back out whole, so only the db block shape is checked here.
+const exampleConfigSchema = z.looseObject({ db: z.record(z.string(), z.unknown()) });
+
 await check('config with an unknown key: exit 1, the key is named', async () => {
   const home = mkdtempSync(join(smokeRoot, 'bad-config-'));
-  const config = JSON.parse(readFileSync(EXAMPLE_CONFIG, 'utf8')) as { db: Record<string, unknown> };
+  const parsedConfig = jsonText(exampleConfigSchema).safeParse(readFileSync(EXAMPLE_CONFIG, 'utf8'));
+  if (!parsedConfig.success) throw new Error(`${EXAMPLE_CONFIG}: ${z.prettifyError(parsedConfig.error)}`);
+  const config = parsedConfig.data;
   config.db['bogusKey'] = true;
   writeConfig(home, JSON.stringify(config));
   const bad = new Run(binary, [], home);

@@ -28,7 +28,8 @@
     "rimraf": "catalog:",
     "tsconfig-paths-webpack-plugin": "catalog:",
     "typescript": "catalog:",
-    "webpack-node-externals": "catalog:"
+    "webpack-node-externals": "catalog:",
+    "zod": "catalog:"
   },
   "nx": {},
   "packageManager": "pnpm@12.16.1",
