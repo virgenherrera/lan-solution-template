@@ -12,6 +12,8 @@ updated: 2026-11-02
 
 # POC-03 Result
 
+Superseded 2026-11-03: the paths precedence (`--root`, `APP_HOME`, marker, dev anchor, OS default) and the first-start creation of `config.json` are replaced by one base directory and a strict config. See [ADR-007](../architecture/adr/ADR-007-persistence-system.md) and [Persistence system](../backlog/persistence-system.md).
+
 Branch: `minor/poc-03-sqlite-vector`. Epic: [POC-3](../backlog/poc-3-config-sqlite-vector.md). Decisions: [ADR-003](../architecture/adr/ADR-003-config-and-db-strategy.md).
 
 ## Summary
