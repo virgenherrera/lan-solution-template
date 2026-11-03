@@ -66,7 +66,7 @@ Edges follow "Depends on" in [PROPOSAL.md](../roadmap/PROPOSAL.md#cycles-and-bet
 | Outside the cycles | POC-6 | BACKLOG |
 | Outside the cycles | POC-9 | on hold (decision 9) |
 | Unscheduled | Service status indicator | supervisor endpoint done; consumers open |
-| Unscheduled | Third-party license notices | proposed; spike done, nothing built; see [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md) |
+| Unscheduled | Third-party license notices | decided 2026-11-03: documentation only, no code; see [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md) |
 
 ---
 
@@ -102,7 +102,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | POC-8 | [MSI credential dialog, platform matrix and lockstep versioning](poc-8-msi-matrix-versioning.md) | Cycle 3 (planned) | AC-21, AC-25, AC-33 |
 | POC-9 | [GitHub Actions CI/CD and releases (HOLD)](poc-9-ci-cd-releases.md) | HOLD (decision 9) | AC-26, AC-27, AC-35, AC-36, AC-02, AC-32 |
 | none | [Service status indicator](service-status-indicator.md) | HTTP endpoint removed; status contract moved to supervisor stdio ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)); tray and web UI consumers open | none |
-| none | [Third-party license notices](third-party-licenses.md) | Proposed (slices A to F, nothing built); spike: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md). Open questions OQ18 to OQ22 | none (no REQ or AC id exists for licenses) |
+| none | [Third-party license notices](third-party-licenses.md) | Decided 2026-11-03: documentation only, one guide slice, no code; spike: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md). OQ18 to OQ22 decided | none (no REQ or AC id exists for licenses) |
 
 ---
 
@@ -117,5 +117,5 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | OQ1, OQ2, OQ4, OQ5, OQ8 | Decided (decisions 11 to 15) |
 | OQ6, OQ12, OQ15 | Decided by the human |
 | OQ16, OQ17 | Proposed (OQ16 is a draft; a spike decides it) |
-| OQ18 to OQ22 | Open, owner human (third-party licenses; see [Third-party license notices](third-party-licenses.md#open-questions)) |
+| OQ18 to OQ22 | Decided by the human, 2026-11-03 (third-party licenses; see [Third-party license notices](third-party-licenses.md#decisions)) |
 | Blocking open questions | None |

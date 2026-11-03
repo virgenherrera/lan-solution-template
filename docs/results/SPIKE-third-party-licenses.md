@@ -205,6 +205,8 @@ Where the file could live in the SEA (design only, nothing built):
 
 [Back to navigation](#navigation)
 
+Update 2026-11-03: the human decided OQ18 to OQ22. The template ships documentation only; slices A to F and the questions below are superseded. See [Third-party license notices](../backlog/third-party-licenses.md#decisions).
+
 Smallest coherent design: generate one `THIRD-PARTY-NOTICES.txt` at package time with a small TypeScript script (option iii) over the production graphs of `sea-runtime`, `api-gateway` and `web-angular`. Add the Node.js `LICENSE`, the `sqlite-vector` `LICENSE.md` and the project `LICENSE`. Embed it as a SEA asset and write a copy next to the executable. Treat the Angular `3rdpartylicenses.txt` as a cross-check, not the source.
 
 Follow-up slices (rough sizes are guesses, not measured):

@@ -3,12 +3,14 @@ fmt: TOON
 doc: docs/backlog/third-party-licenses.md
 title: "Third-party license notices"
 type: backlog
-summary: "Proposed backlog item: ship third-party license notices with the SEA and Tauri artifacts, in slices A to F."
+summary: "Backlog item: one documentation slice, the third-party license guide for derived products, plus documented future ideas."
 ids[0]:
 related[4]: docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md,docs/roadmap/PROPOSAL.md,docs/requirements/10-node-sea-distribution.md
 status: current
 updated: 2026-11-03
 -->
+
+# Third-party license notices
 
 # Third-party license notices
 
@@ -20,11 +22,12 @@ updated: 2026-11-03
 
 - [At a glance](#at-a-glance)
 - [Problem](#problem)
-- [Goal](#goal)
-- [Slices](#slices)
+- [Decisions](#decisions)
+- [Slice](#slice)
+- [The guide](#the-guide)
+- [Future ideas](#future-ideas)
 - [Non-goals](#non-goals)
-- [Risks](#risks)
-- [Open questions](#open-questions)
+- [Not verified](#not-verified)
 
 ---
 
@@ -34,11 +37,11 @@ updated: 2026-11-03
 
 | Item | Value |
 |---|---|
-| Status | Proposed. Nothing is built. No POC id. |
+| Status | Decided on 2026-11-03: documentation only. No code slice remains. No POC id. |
 | Origin | Spike [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md) on branch `chore/third-party-licenses` |
-| Depends on | Nothing for slices A to D. Slice E waits for the final Tauri sidecar wiring. |
-| Requirements | None. The spike found no requirement or roadmap decision about third-party licenses. No REQ or AC id exists for this item, and this page invents none. Slice F proposes one; that is a human decision. |
-| Open questions | [OQ18 to OQ22](../roadmap/PROPOSAL.md#open-questions) |
+| Depends on | Nothing. |
+| Requirements | None. No REQ or AC id exists for this item, and this page invents none ([OQ19](../roadmap/PROPOSAL.md#open-questions)). |
+| Decided questions | [OQ18 to OQ22](../roadmap/PROPOSAL.md#open-questions) |
 | Not legal advice | The spike is engineering research. Ask a lawyer before you rely on it. |
 
 ---
@@ -49,41 +52,93 @@ updated: 2026-11-03
 
 Source: the [spike summary](../results/SPIKE-third-party-licenses.md#summary).
 
-- The measured production set is 118 package versions (110 names): MIT 106, ISC 5, BSD-3-Clause 3, Apache-2.0 2, 0BSD 2. No missing, `UNKNOWN`, copyleft or source-available license.
-- Every license in the set asks for the notice to travel with binary copies, except 0BSD.
+- The measured production set is 118 package versions (110 names): MIT 106, ISC 5, BSD-3-Clause 3, Apache-2.0 2, 0BSD 2. No missing, `UNKNOWN`, copyleft or source-available license. The set is permissive, not only MIT.
+- Every license in the set asks for the notice to travel with copies, except 0BSD.
 - The Angular build writes `3rdpartylicenses.txt`. `compile-sea` embeds only `browser/`, so that file is dropped today.
-- The project `LICENSE` says the notice must "appear in all copies". Whether a binary counts as a copy: not verified.
 - The set is an upper bound. The exact modules inside `sea-app.mjs`: not verified.
 - The Tauri crates (414 `Cargo.lock` entries) were not collected. Their licenses: not verified.
 
 ---
 
-## Goal
+## Decisions
 
 [Back to navigation](#navigation)
 
-- One generated `THIRD-PARTY-NOTICES.txt` travels with each shipped artifact.
-- The file carries the production dependency licenses, the Node.js `LICENSE`, the `sqlite-vector` `LICENSE.md` and the project `LICENSE`.
-- The SEA embeds it as an asset. A copy sits next to the executable.
+The human decided on 2026-11-03. The repository is a template.
 
-Source: [spike recommendation](../results/SPIKE-third-party-licenses.md#q6-recommendation). The design is not decided. See [Open questions](#open-questions).
+| ID | Decision |
+|---|---|
+| [OQ18](../roadmap/PROPOSAL.md#open-questions) | Option 2: documentation only. The template ships guidance, no generator and no built-in notices file. Each derived product implements notices when it distributes binaries. |
+| [OQ19](../roadmap/PROPOSAL.md#open-questions) | No for now. No REQ, no AC, no check. The check design is a [future idea](#future-ideas). |
+| [OQ20](../roadmap/PROPOSAL.md#open-questions) | No `--licenses` flag. A derived product may add it. |
+| [OQ21](../roadmap/PROPOSAL.md#open-questions) | A documented convention only, in [Future ideas](#future-ideas). |
+| [OQ22](../roadmap/PROPOSAL.md#open-questions) | Yes. `license = "PostgreSQL"` in `apps/desktop/src-tauri/Cargo.toml`. |
+
+Reasoning for OQ18. A template distributes source and `pnpm-lock.yaml`, not copies of dependencies. The notice obligation of the MIT, ISC, BSD and Apache-2.0 licenses applies when copies are redistributed. The derived product does that act. This is a general analysis, not legal advice. The hosted or SaaS case: not verified.
+
+Reasoning for OQ20. A `--licenses` flag would be argv handled by `dispatch()` in `libs/service-registry`. It would be a third mode that prints an embedded notices file and exits 0. It would change the CLI surface, the exit code contract and the smoke bad-selector check. It has nothing to print without an embedded file.
 
 ---
 
-## Slices
+## Slice
 
 [Back to navigation](#navigation)
 
-Sizes are guesses from the spike, not measured. Acceptance items are proposals; the spike states none.
+One slice. No code.
 
-| Slice | Goal | Size | Depends on | Acceptance (observable) |
-|---|---|---|---|---|
-| A | Generator script under `tools/scripts/`. Runs `pnpm licenses list --prod --json -C <app>` for `sea-runtime`, `api-gateway` and `web-angular`, merges, dedupes, reads each license file. | S to M | None | One command writes one text file. It lists the 118 package versions measured by the spike, or a changed count that the run reports. The command exits non-zero on a missing license or a license outside the allowlist. A package with no license file (`@tokenizer/token@0.3.0` in the spike) is handled by a stated rule. |
-| B | `compile-sea` embeds the file as an asset and copies it next to the binary. | S | A | The built SEA holds the asset. The file exists next to the executable in `artifacts/sea-runtime/`. Both files are byte-equal. |
-| C | Fetch the Node.js `LICENSE` for the target version and the `sqlite-vector` `LICENSE.md`. Pin them by hash in `tools/vector/*.json`, like the library. | S | A | The generated file contains both texts. A changed upstream file fails the hash check. |
-| D | Optional `--licenses` print. The dispatcher in `libs/service-registry/src/dispatcher.ts` parses argv. | S | B | The flag prints the asset and exits 0. Without the flag, existing output and exit codes are unchanged. Touches the CLI surface: open decision [OQ20](../roadmap/PROPOSAL.md#open-questions). |
-| E | Tauri crates: `cargo-about` with `about.toml` and a template. | M | Final sidecar wiring (`externalBin` is `null` today). Rust tooling. | The generated file lists the crate licenses. Crate count compared with `Cargo.lock`. |
-| F | Requirement text and a CI allowlist check. | S | Human decision ([OQ19](../roadmap/PROPOSAL.md#open-questions)). CI release work is on hold (decision 9). | A requirement id exists after the human decides. The check fails the build on a license outside the allowlist. |
+| Slice | Goal | Acceptance (observable) |
+|---|---|---|
+| A | Write [the guide](#the-guide) in this page. | The guide section exists and holds the neutral sentence about derived products. The metadata check exits 0. |
+
+Slice A is done by this page. The old slices A to F (generator, SEA embed, pinned license texts, `--licenses`, `cargo-about`, CI check) are dropped. Their ideas live in [Future ideas](#future-ideas).
+
+---
+
+## The guide
+
+[Back to navigation](#navigation)
+
+For a team that builds a product from this template.
+
+1. The `license` fields and the `LICENSE` file describe this template. A derived product sets its own license and keeps this template's copyright notice where template code remains, as the PostgreSQL License requires copies to carry it. This is not legal advice.
+2. This template ships source and `pnpm-lock.yaml`. It ships no copy of a dependency. It ships no notices file.
+3. When your product distributes binaries (a SEA, a Tauri installer), the notice obligation of the dependency licenses applies to you. Measured on the template: MIT 106, ISC 5, BSD-3-Clause 3, Apache-2.0 2, 0BSD 2 production package versions. Re-measure for your product. Source: [spike](../results/SPIKE-third-party-licenses.md).
+4. Collect the production licenses with `pnpm licenses list --prod --json -C <app>` for each app that you bundle. Read it with `toon`, per the repository rules.
+5. Add the license of the Node.js runtime and of `sqlite-vector` if you bundle them. Add your own `LICENSE`.
+6. The Angular build already writes `3rdpartylicenses.txt` for the web bundle (verified in the spike).
+7. Hosted or SaaS use: not verified.
+
+---
+
+## Future ideas
+
+[Back to navigation](#navigation)
+
+Documented only. Nothing here is built, scheduled or required.
+
+### Check design
+
+- A deterministic TypeScript script runs `pnpm licenses list --prod --json -C <app>` for `sea-runtime`, `api-gateway` and `web-angular`, and takes the union.
+- A zod schema validates the output.
+- An SPDX allowlist: MIT, ISC, BSD-2-Clause, BSD-3-Clause, Apache-2.0, 0BSD.
+- An exceptions list, each with a reason. Example: `@tokenizer/token` declares MIT without a license file.
+- The script exits 1 and lists `package@version` and its license for each violation.
+- It hooks next to the root `securityCheck`.
+- Limits: SPDX compound expressions need an evaluator. It reads the `license` field, not the license text. It needs installed dependencies.
+
+### Generator design
+
+- A script merges and dedupes the same `pnpm licenses` output and reads each license file.
+- It writes the notices file described below.
+
+### Notices file convention
+
+- One plain-text file `THIRD-PARTY-NOTICES.txt`.
+- Content: the notice of every distributed dependency, the project `LICENSE`, and the Node.js and `sqlite-vector` licenses.
+- It is an asset of the Tauri MSI installer. It is not embedded in the SEA.
+- It lands in the install path through Tauri `bundle.resources`. Placement per OS: not verified.
+- The SEA package script generates it as a post-step, like the smoke check that runs at the end of `sea-runtime:package`. Tauri packages after the SEA (REQ-ECO-06).
+- It is written next to the executable in `artifacts/sea-runtime/`. That `desktop:package` reads that directory: not verified.
 
 ---
 
@@ -93,33 +148,21 @@ Sizes are guesses from the spike, not measured. Acceptance items are proposals; 
 
 - No claim that the project is "license compliant" or "audited".
 - No claim that the set is complete before the real bundle contents are measured.
-- No Rust, WebView or Tauri license fact until slice E runs.
-- No new requirement or acceptance criterion. This page proposes none.
+- No Rust, WebView or Tauri license fact.
+- No new requirement or acceptance criterion.
+- No generator, check script or CLI flag in this template.
 - No legal advice.
 
 ---
 
-## Risks
+## Not verified
 
 [Back to navigation](#navigation)
 
-- The pnpm output format can change. Source: [Q5](../results/SPIKE-third-party-licenses.md#q5-options-to-produce-the-notices), option (iii).
-- The text grows the SEA binary. The Angular file is about 17 KB; the full set was not measured.
-- Third-party tools add a dependency tree that the `minimumReleaseAge` and `allowBuilds` policy must review.
-- Only macOS arm64 was available for the spike. Windows and Linux SEA builds: not verified.
-
----
-
-## Open questions
-
-[Back to navigation](#navigation)
-
-Tracked in the [Open questions](../roadmap/PROPOSAL.md#open-questions) table of the roadmap. All owned by the human, none blocking.
-
-| ID | Question |
-|---|---|
-| [OQ18](../roadmap/PROPOSAL.md#open-questions) | Is there a distribution plan (who receives the binaries), so the obligations apply? |
-| [OQ19](../roadmap/PROPOSAL.md#open-questions) | Add a requirement for third-party notices and an allowlist policy that fails the build on copyleft? |
-| [OQ20](../roadmap/PROPOSAL.md#open-questions) | Add a `--licenses` CLI flag, or only the file? |
-| [OQ21](../roadmap/PROPOSAL.md#open-questions) | Which file name and location next to the artifact? |
-| [OQ22](../roadmap/PROPOSAL.md#open-questions) | Replace the empty `license = ""` in `apps/desktop/src-tauri/Cargo.toml` with `PostgreSQL`? |
+- Whether a binary counts as a copy under the project `LICENSE` ("appear in all copies").
+- The exact modules inside `sea-app.mjs`.
+- The licenses of the Tauri crates.
+- Tauri `bundle.resources` placement per OS.
+- That `desktop:package` reads `artifacts/sea-runtime/`.
+- The hosted or SaaS case.
+- Windows and Linux SEA builds. Only macOS arm64 was available for the spike.

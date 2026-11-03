@@ -135,4 +135,4 @@ Versions and stack constraints live in [Technology baseline](docs/requirements/0
 
 [PostgreSQL License](LICENSE) (SPDX: `PostgreSQL`). Every workspace `package.json` declares the same `license`.
 
-Third-party licenses of the shipped artifacts: see the [spike](docs/results/SPIKE-third-party-licenses.md) and the [backlog item](docs/backlog/third-party-licenses.md). Nothing is built yet. Open questions: [OQ18 to OQ22](docs/roadmap/PROPOSAL.md#open-questions).
+Third-party licenses of the shipped artifacts: see the [spike](docs/results/SPIKE-third-party-licenses.md) and the [backlog item](docs/backlog/third-party-licenses.md). Documentation only; nothing is built. Decisions: [OQ18 to OQ22](docs/roadmap/PROPOSAL.md#open-questions).
