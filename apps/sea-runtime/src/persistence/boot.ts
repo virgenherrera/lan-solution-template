@@ -37,7 +37,7 @@ export interface PersistenceDeps {
 
 function openDatabase$(log: Log, { paths, config, db }: PersistenceDeps): Observable<PersistenceBoot> {
   return defer(() => {
-    log(`root ${paths.root} (${paths.source})`);
+    log(`root ${paths.root}`);
     const location = resolve(paths.dataDir, config.db.sqlite.file);
     return from(db.connect()).pipe(
       // "file is not a database" alone does not say which file; the operator needs the path.

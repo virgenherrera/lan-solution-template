@@ -1,6 +1,7 @@
 import { Inject, Injectable, Module, type OnApplicationShutdown } from '@nestjs/common';
+import { isSea } from 'node:sea';
 import { catchError, concatMap, defer, firstValueFrom, from, map, type Observable, throwError } from 'rxjs';
-import { createDbAdapter, derivePaths, initConfig, resolveRoot, type AppConfig, type AppPaths, type DbAdapter } from 'shared-core';
+import { createDbAdapter, derivePaths, initConfig, resolveBase, type AppConfig, type AppPaths, type DbAdapter } from 'shared-core';
 import { APP_CONFIG, APP_PATHS, DB_ADAPTER } from './tokens.js';
 
 export { DB_ADAPTER };
@@ -39,11 +40,11 @@ class DatabaseLifecycle implements OnApplicationShutdown {
 // One connection per service, opened once while Nest builds the module. If the handshake fails, the application does not start.
 @Module({
   providers: [
-    // The supervisor passes its root through APP_HOME, so both processes use the same database.
+    // A child is the same executable as the supervisor, so both resolve the same base and open the same database.
     {
       provide: APP_PATHS,
       useFactory: (): AppPaths =>
-        derivePaths(resolveRoot({ argv: process.argv.slice(2), env: process.env, execPath: process.execPath, platform: process.platform }), process.execPath),
+        derivePaths(resolveBase({ sea: isSea(), execPath: process.execPath, cwd: process.cwd() })),
     },
     // A missing or invalid config throws here and the application does not start.
     { provide: APP_CONFIG, inject: [APP_PATHS], useFactory: (paths: AppPaths): AppConfig => initConfig(paths) },

@@ -38,11 +38,11 @@ function deepFreeze<T>(value: T): T {
   return value;
 }
 
-// Reads the file and validates it; a missing or invalid config fails fast before readiness (REQ-DB-06). Never created here: the installer creates it (ADR-007).
+// Reads the file and validates it; a missing or invalid config fails fast before readiness (REQ-DB-06). Never created here: it must exist next to the executable (ADR-007).
 export function loadConfig(paths: AppPaths): AppConfig {
   const file = join(paths.configDir, CONFIG_FILE);
   if (!existsSync(file)) {
-    throw new Error(`config ${file} is missing: the installer (or \`pnpm run dev:config\` in dev) must create it`);
+    throw new Error(`config ${file} is missing: copy libs/shared-core/config.example.json to ${file} (the installer creates it in a packaged install)`);
   }
   // One error path: invalid JSON and schema failures are issues of the same list.
   const parsed = jsonText(configSchema).safeParse(readFileSync(file, 'utf8'));
