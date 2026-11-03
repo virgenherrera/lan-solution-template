@@ -34,7 +34,7 @@ Three requirement changes, one closed question, one amendment and one proposal. 
 | [REQ-DB-05](05-persistence.md) | The history table gains `runtime_version` and `duration_ms` | none |
 | [REQ-STACK-07](02-technology-baseline.md) | `drizzle-orm` `0.45.4` and `drizzle-kit` `0.31.11`, exact. `1.0.0-rc.5` stays the fallback | [OQ15](../roadmap/PROPOSAL.md#open-questions), closed |
 | [REQ-DB-06](05-persistence.md) | The startup order gains a schema structure check after the migrations | none |
-| [REQ-DB-10](05-persistence.md) | New, proposed, not approved. The supervisor compares the live schema with the descriptor in the binary | none |
+| [REQ-DB-10](05-persistence.md) | New, approved by the human on 2026-11-02. The supervisor compares the live schema with the descriptor in the binary | none |
 
 ## Approval status
 
@@ -49,7 +49,7 @@ Three requirement changes, one closed question, one amendment and one proposal. 
 | Slice names, `app_meta` as first table | Assumption, not answered by the human |
 | Downgrade guard from `runtime_version` | Proposed, not approved, not applied |
 | Text of [REQ-DB-06](05-persistence.md) (schema check step) | Agent proposal, applied in the doc only |
-| [REQ-DB-10](05-persistence.md) | Proposed, not approved. The human has not approved it |
+| [REQ-DB-10](05-persistence.md) | Approved by the human on 2026-11-02 |
 | [ADR-005](../architecture/adr/ADR-005-live-schema-validation.md) | Accepted 2026-11-02, after the code and the packaged run (see DBM-Schema-Gate-Result) |
 | Slice names DBM-i to DBM-n | Assumption, not answered by the human |
 
@@ -65,6 +65,6 @@ The SRS v1.6 line numbers for these texts are not verified. Each entry names the
 - [Roadmap proposal](../roadmap/PROPOSAL.md). The no-go "no drizzle-kit" now reads "no drizzle-kit at run time". The POC-3 problem text says the migrator applies SQL that `drizzle-kit` generates at build time.
 - [ADR-003](../architecture/adr/ADR-003-config-and-db-strategy.md). Its Drizzle section links to [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md).
 - [REQ-DB-06](05-persistence.md). Before: the order is `... → verify/apply migrations → publish DB ready → publish gateway ready`. After: `... → verify/apply migrations → verify schema structure → publish DB ready → publish gateway ready`. The supervisor runs the structure check once, when it initializes persistence. See [ADR-005](../architecture/adr/ADR-005-live-schema-validation.md).
-- [REQ-DB-10](05-persistence.md). New and proposed. It is not approved. Before: no requirement compared the live schema with an expected structure. After (proposal): the supervisor **MUST** compare the live schema with the descriptor in the binary. It **MUST** fail on a missing element, a difference, or an extra `NOT NULL` column without a default. It **MUST** tolerate the other extras.
+- [REQ-DB-10](05-persistence.md). New and approved by the human on 2026-11-02. Before: no requirement compared the live schema with an expected structure. After: the supervisor **MUST** compare the live schema with the descriptor in the binary. It **MUST** fail on a missing element, a difference, or an extra `NOT NULL` column without a default. It **MUST** tolerate the other extras.
 
 POC-3 pages and the [POC-3 result](../results/POC-03-Result.md) stay as written. They record what POC-3 built.

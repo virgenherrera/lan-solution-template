@@ -36,7 +36,7 @@ updated: 2026-11-02
 | Branch | `minor/dbm-schema-gate`, off `minor/dbm-drizzle-migrations` |
 | Delivery | One branch, one PR |
 | Decision | [ADR-005](../architecture/adr/ADR-005-live-schema-validation.md) (accepted) |
-| Requirements | REQ-DB-06 (amended), REQ-DB-10 (proposed, not approved) |
+| Requirements | REQ-DB-06 (amended), REQ-DB-10 (approved 2026-11-02) |
 | Acceptance criteria | AC-07, AC-08, AC-10 (same as POC-3); a gate-specific AC is not defined |
 
 This extends DBM on a human request of 2026-11-02. The slice names are an assumption.
@@ -66,7 +66,7 @@ This extends DBM on a human request of 2026-11-02. The slice names are an assump
 [Back to navigation](#navigation)
 
 - [REQ-DB-06](../requirements/05-persistence.md) (amended)
-- [REQ-DB-10](../requirements/05-persistence.md) (proposed, not approved)
+- [REQ-DB-10](../requirements/05-persistence.md) (approved 2026-11-02)
 - [REQ-TEST-01](../requirements/11-nx-quality-testing.md)
 
 Proof is by real runs of the build and the packaged binary.
@@ -103,7 +103,7 @@ Design rules for all slices:
 
 | Topic | Status |
 |---|---|
-| [REQ-DB-10](../requirements/05-persistence.md) text | proposed, not approved by the human |
+| [REQ-DB-10](../requirements/05-persistence.md) text | approved by the human on 2026-11-02 |
 | Slice names DBM-i to DBM-n | assumption, not answered by the human |
 | Do services open their own database connection, or only the supervisor? | Answered by the human: services get a database module (DBM-n) |
 | Does a `database` status component belong in DBM-l or in the `docs/service-status-indicator` branch? | open |
