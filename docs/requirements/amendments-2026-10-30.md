@@ -5,9 +5,9 @@ title: "Amendments 2026-10-30"
 type: requirement
 summary: Records agent-applied amendments to SRS v1.6 pending human approval of open questions.
 ids[0]:
-related[3]: docs/requirements/README.md,docs/requirements/12-agent-delivery.md,docs/requirements/traceability.md
+related[5]: docs/requirements/README.md,docs/requirements/12-agent-delivery.md,docs/requirements/traceability.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/persistence-system.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # Amendments 2026-10-30
@@ -21,6 +21,7 @@ updated: 2026-10-31
 - [At a glance](#at-a-glance)
 - [Approval status](#approval-status)
 - [Amendments 2026-10-30](#amendments-2026-10-30)
+- [Proposed amendment: REQ-CFG-05, no default config copy](#proposed-amendment-req-cfg-05-no-default-config-copy)
 
 ## At a glance
 
@@ -46,6 +47,7 @@ Five agent changes to the v1.6 text. Next: the human approves [OQ15](../roadmap/
 | [OQ1](../roadmap/PROPOSAL.md#open-questions) | Decided 2026-10-30 (human decision 11) |
 | [OQ2](../roadmap/PROPOSAL.md#open-questions) | Decided 2026-10-30 (human decision 12) |
 | [OQ15](../roadmap/PROPOSAL.md#open-questions) | Waits for human approval |
+| Proposed amendment of [REQ-CFG-05](04-configuration.md) (no default config copy), [OQ25](../roadmap/PROPOSAL.md#open-questions) | Proposed 2026-11-03, waits for human approval |
 
 See the Open questions table in the [roadmap proposal](../roadmap/PROPOSAL.md#open-questions).
 
@@ -60,3 +62,16 @@ Line numbers are those of the file before the amendments. They are written as `S
 - SRS v1.6 L269 ([REQ-NET-01](06-web-gateway-https-pwa.md)). The `NodeAdapter` + `ServeStaticModule` premise is marked `not verified`. The requirement does not change. Superseded by POC-1f: no `ServeStaticModule` in the current design.
 - SRS v1.6 L165 ([REQ-CFG-05](04-configuration.md)) and L502 ([REQ-SEA-05](10-node-sea-distribution.md)): the install path holds only read-only defaults. The defaults contain no secrets. The real `config.json` lives under the root that the paths library resolves once. The code uses paths relative to that root. Permissions are `0700`/`0600`. [OQ1](../roadmap/PROPOSAL.md#open-questions) is decided by human decision 11.
 - SRS v1.6 L349 ([REQ-SEC-02](07-security.md), ref. section 12 item 7). The database is the single source of truth for identity. A setup wizard creates the first real admin (human decision 13). The only dev account is the seeded, self-destructing `dev-admin` data row, only in development. See human decision 12 (2026-10-30) ([OQ2](../roadmap/PROPOSAL.md#open-questions)). No environment flag bypasses the database. No config file holds credentials. The production user-creation path creates the `dev-admin` row. The password is random, at least 15 characters, shown once. The server enforces expiry and purge. Production never seeds. There is no permanent credential and no default credential in production. ASVS citations stay `not verified`.
+
+## Proposed amendment: REQ-CFG-05, no default config copy
+
+[Back to navigation](#navigation)
+
+Status: proposed on 2026-11-03. It waits for the human ([OQ25](../roadmap/PROPOSAL.md#open-questions)). The text of [REQ-CFG-05](04-configuration.md) is not edited by this entry.
+
+- Current text. The install path holds only read-only defaults. The defaults contain no secrets. The real `config.json` lives under the root that the paths library resolves.
+- Cause. The persistence system uses a strict config with no defaults ([ADR-007](../architecture/adr/ADR-007-persistence-system.md)). A missing or invalid config always throws. The runtime never creates it.
+- Proposed change. The install path holds no config copy. The shipped `config.default.json` copy path is removed. The real `config.json` still lives under the resolved root. Who creates it on a host is TBD with the installer ([OQ24](../roadmap/PROPOSAL.md#open-questions)).
+- Unchanged. The root is resolved once by the paths library. The code does not use the current working directory as the anchor. Directory and file permissions stay as the requirement states.
+- Effect. The sentence about read-only defaults in the install path, and the matching sentence in [REQ-SEA-05](10-node-sea-distribution.md), would need a text fix if the human approves. The exact wording is not drafted. Not verified: which other pages repeat the sentence.
+- Slices. See the [persistence system backlog](../backlog/persistence-system.md).

@@ -1,4 +1,4 @@
-docs[73]:
+docs[75]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -53,6 +53,15 @@ docs[73]:
     status: proposed
     updated: 2026-11-03
     refs[1]: REQ-RUNTIME-05
+  - doc: docs/architecture/adr/ADR-007-persistence-system.md
+    title: ADR-007 Persistence system
+    type: architecture
+    summary: "Proposes a strict engine-keyed config that always throws, lazy engine loading, a barrel split and engine-keyed migration assets."
+    ids: []
+    related[7]: docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/backlog/persistence-system.md,docs/requirements/04-configuration.md,docs/requirements/05-persistence.md,docs/requirements/amendments-2026-10-30.md
+    status: proposed
+    updated: 2026-11-03
+    refs[4]: REQ-CFG-04,REQ-CFG-05,REQ-DB-02,REQ-DB-03
   - doc: docs/architecture/overview.md
     title: Architecture overview
     type: architecture
@@ -67,10 +76,10 @@ docs[73]:
     type: backlog
     summary: Backlog index of POC epics mapped to acceptance criteria and cycles.
     ids: []
-    related[6]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md
+    related[7]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md
     status: current
     updated: 2026-11-03
-    refs[36]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36
+    refs[37]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36,REQ-CFG-05
   - doc: docs/backlog/dbm-drizzle-migrations.md
     title: DBM Drizzle build-time migrations
     type: backlog
@@ -89,6 +98,15 @@ docs[73]:
     status: current
     updated: 2026-11-02
     refs[6]: AC-07,AC-08,AC-10,REQ-DB-06,REQ-DB-10,REQ-TEST-01
+  - doc: docs/backlog/persistence-system.md
+    title: Persistence system
+    type: backlog
+    summary: "Backlog item for a strict engine-keyed config, lazy engine loading, a barrel split and engine-keyed migration assets."
+    ids: []
+    related[6]: docs/backlog/README.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/roadmap/PROPOSAL.md,docs/requirements/amendments-2026-10-30.md,docs/requirements/04-configuration.md,docs/requirements/05-persistence.md
+    status: proposed
+    updated: 2026-11-03
+    refs[8]: AC-07,AC-08,AC-10,REQ-CFG-04,REQ-CFG-05,REQ-DB-02,REQ-DB-03,REQ-TEST-01
   - doc: docs/backlog/poc-1a-monorepo-init.md
     title: POC-1a Monorepo init
     type: backlog
@@ -418,9 +436,9 @@ docs[73]:
     type: requirement
     summary: Records agent-applied amendments to SRS v1.6 pending human approval of open questions.
     ids: []
-    related[3]: docs/requirements/README.md,docs/requirements/12-agent-delivery.md,docs/requirements/traceability.md
+    related[5]: docs/requirements/README.md,docs/requirements/12-agent-delivery.md,docs/requirements/traceability.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/persistence-system.md
     status: current
-    updated: 2026-10-31
+    updated: 2026-11-03
     refs[5]: REQ-CFG-05,REQ-NET-01,REQ-SEA-05,REQ-SEC-02,REQ-STACK-07
   - doc: docs/requirements/amendments-2026-11-02.md
     title: Amendments 2026-11-02

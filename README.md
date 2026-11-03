@@ -102,6 +102,7 @@ flowchart LR
 - [Roadmap](docs/roadmap/PROPOSAL.md): proposal of POCs and open questions.
 - [Backlog](docs/backlog/README.md): draft epics derived from the roadmap.
 - [Third-party licenses](docs/backlog/third-party-licenses.md): backlog item for license notices, with the [spike](docs/results/SPIKE-third-party-licenses.md).
+- [Persistence system](docs/backlog/persistence-system.md): backlog item for the strict config and lazy engine loading, with [ADR-007](docs/architecture/adr/ADR-007-persistence-system.md).
 - [Page metadata](docs/meta.toon): machine-readable metadata of every page except `AGENTS.md` and `README.md`. Generated from the toon-meta blocks and the file bodies. Never edit it by hand. Regeneration command: [Metadata block v1](docs/standards/README.md#metadata-block-v1).
 
 Versions and stack constraints live in [Technology baseline](docs/requirements/02-technology-baseline.md).
