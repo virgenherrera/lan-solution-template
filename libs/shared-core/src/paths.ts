@@ -12,7 +12,7 @@ export interface RootInput {
   // In a SEA this is process.execPath; the anchor is its directory, never the cwd.
   readonly execPath: string;
   readonly platform: NodeJS.Platform;
-  // Set only by a dev launch (repo root). A packaged run leaves it undefined.
+  // Set only by a dev launch (the ignored `.local` folder of the repo). A packaged run leaves it undefined.
   readonly devAnchor?: string;
   readonly exists?: (path: string) => boolean;
 }
@@ -23,7 +23,7 @@ export interface ResolvedRoot {
 }
 
 export interface AppPaths extends ResolvedRoot {
-  // Read-only: the SEA and config.default.json.
+  // Read-only: the SEA and its bundled assets.
   readonly installDir: string;
   readonly configDir: string;
   readonly dataDir: string;
@@ -69,7 +69,7 @@ export function resolveRoot(input: RootInput): ResolvedRoot {
   return { root: osDefaultRoot(input.platform, input.env), source: 'os-default' };
 }
 
-// Derived paths are relative to the root. Dev layout: ./config and ./data under the repo.
+// Derived paths are relative to the root. Dev layout: config/ and data/ under the ignored `.local` folder of the repo.
 export function derivePaths(resolved: ResolvedRoot, execPath: string): AppPaths {
   const { root } = resolved;
   return Object.freeze({
