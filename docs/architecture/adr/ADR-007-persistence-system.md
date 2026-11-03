@@ -57,6 +57,8 @@ z.discriminatedUnion('engine', [
 - No `.default`, no `.prefault`, no `superRefine`.
 - The union has one variant today (sqlite). PostgreSQL is TBD and joins as one more variant later. No pg config block exists in this work.
 - Probe on zod 4.6.7: all of these fail. A missing engine block. Extra keys. Both blocks. An unknown engine. An empty object. `null`.
+- `sqlite.file` is a plain file name: `z.string().regex(/^(?!\.+$)[\w.-]+$/)`. A path separator, an absolute path or `..` fails, so the database cannot leave the data directory. It is a regex, not a `refine`.
+- The pg variant is not declared yet. A declared variant would make an `engine: "pg"` config valid while the runtime still has no adapter for it. Until PG is in scope, `engine: "pg"` fails with `Invalid discriminator value. Expected 'sqlite'`.
 
 ### Always throws, never auto-created
 
@@ -64,6 +66,7 @@ z.discriminatedUnion('engine', [
 - The `ensureConfigFile` auto-create path is removed. The code never writes a config on its own.
 - The installer assistant will create the valid `config.json`. Where and how is TBD until the installer work ([OQ24](../../roadmap/PROPOSAL.md#open-questions)).
 - A service or a migration script that needs the database throws without a valid config.
+- JSON text is parsed inside the zod pipeline with one helper, `jsonText(schema)` in `service-registry`: `z.string().transform(JSON.parse in try/catch, addIssue).pipe(schema)`. A JSON error and a schema error come out of the same `safeParse`, so `loadConfig` has one error path. `JSON.parse` appears nowhere else in the repo code.
 
 ### Lazy engine selection
 
