@@ -7,7 +7,9 @@
     "package": "nx run-many -t package --exclude=lan-solution-template",
     "clean": "nx run-many -t clean --exclude=lan-solution-template && rimraf artifacts dist",
     "clean:all": "pnpm run clean && rimraf .nx/cache .nx/workspace-data \"apps/*/node_modules\" \"libs/*/node_modules\" node_modules",
-    "securityCheck": "pnpm audit --audit-level=high"
+    "securityCheck": "pnpm audit --audit-level=high",
+    "dev:gateway": "pnpm --filter api-gateway build && node apps/api-gateway/dist/main.js --web none",
+    "dev:web": "NODE_EXTRA_CA_CERTS=\"$PWD/certs/ca.crt\" pnpm --filter web-angular exec ng serve"
   },
   "license": "PostgreSQL",
   "devEngines": {

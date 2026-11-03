@@ -12,3 +12,17 @@ dist/
 
 # Local ODD logbook; mirrored in Engram under odd/<feature>/tasks.
 /odd/
+
+# Runtime state of a dev run (base = cwd): TLS keys, database, logs and the live config must never be committed.
+/config/
+/certs/
+/data/
+/logs/
+/apps/*/config/
+/apps/*/certs/
+/apps/*/data/
+/apps/*/logs/
+/libs/*/config/
+/libs/*/certs/
+/libs/*/data/
+/libs/*/logs/
