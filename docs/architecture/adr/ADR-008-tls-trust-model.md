@@ -97,6 +97,8 @@ At start the identity service compares the SAN of the stored leaf with this set.
 }
 ```
 
+`net.bind` is the listen address, validated as an IPv4 or IPv6 address. `0.0.0.0` listens on every IPv4 interface, which other devices on the LAN need to reach the gateway. `::` listens on IPv6 and, on macOS, Linux and Windows, on IPv4 as well. `127.0.0.1` keeps the gateway on the local machine. Dual-stack behavior of `::` on a real LAN: not verified.
+
 - `hostname` leaves `serverConfigSchema`. The listen address comes from `net.bind`.
 - `config.example.json` and the smoke config writer carry both blocks.
 - All parsed input goes through zod. `JSON.parse` stays inside `json-text.ts`.
