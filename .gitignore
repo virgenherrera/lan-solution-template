@@ -9,3 +9,6 @@ node_modules/
 dist/
 /artifacts
 *.tsbuildinfo
+
+# Local ODD logbook; mirrored in Engram under odd/<feature>/tasks.
+/odd/
