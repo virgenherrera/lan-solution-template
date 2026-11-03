@@ -1,158 +1,85 @@
-import { Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
-import { spawn, type ChildProcess } from 'node:child_process';
-import { getAsset, isSea } from 'node:sea';
-import { lastValueFrom } from 'rxjs';
-import {
-  AGGREGATE_STATE,
-  CONTROL_KIND,
-  DISPATCHER_CONFIG,
-  SUPERVISOR_CONFIG,
-  aggregateState,
-  serviceArgs,
-  servicesAssetSchema,
-  startupOrder,
-  stateMessageSchema,
-  type AggregateState,
-  type StatusSnapshot,
-} from 'service-registry';
-import { seaAssetSource } from '../persistence/asset-source.js';
-import { bootPersistence$, type PersistenceBoot } from '../persistence/boot.js';
-import { devAnchor, fsAssetSource } from '../persistence/dev-assets.js';
-import { hasWebBundle, loadWebBundle, type WebFile } from '../web/web-bundle.js';
-import { forwardLines, prefixed, spawnedMessage, stateMessage } from './log-lines.js';
-import { StatusServer } from '../status/status-server.js';
-import { stopTree, treeSpawnOptions } from './process-tree.js';
-import { ServiceLifecycle } from './service-lifecycle.js';
+import { Inject, Injectable, type BeforeApplicationShutdown, type OnApplicationBootstrap } from '@nestjs/common';
+import { isSea } from 'node:sea';
+import { AGGREGATE_STATE, SUPERVISOR_CONFIG, startupOrder, type ServiceRoute } from 'service-registry';
+import { PersistenceService } from '../persistence/persistence.service.js';
+import { SidecarInput } from '../sidecar/sidecar-input.js';
+import { SupervisorLogger } from '../sidecar/supervisor-logger.js';
+import { ChildSpawner } from './child-spawner.js';
+import { ServiceLifecycleFactory } from './service-lifecycle.factory.js';
+import { type ServiceLifecycle } from './service-lifecycle.js';
+import { stopTree } from './process-tree.js';
+import { StatusPublisher } from './status-publisher.js';
+import { SERVICE_ROUTES } from './tokens.js';
 
+// Orchestration only: starts the services in order, stops them in reverse order, and turns every reason to stop into the same shutdown.
 @Injectable()
-export class SupervisorService implements OnModuleInit, OnModuleDestroy {
+export class SupervisorService implements OnApplicationBootstrap, BeforeApplicationShutdown {
   private readonly services: ServiceLifecycle[] = [];
-  private stopping = false;
-  private state?: AggregateState;
-  private persistence?: PersistenceBoot;
-  private readonly statusServer = new StatusServer(() => this.snapshot());
-  private readonly onSignal = (signal: NodeJS.Signals): void => {
-    void this.shutdown(signal, 0);
-  };
+  private shutdownRun?: Promise<void>;
 
-  // Every supervisor line carries the supervisor id as prefix.
-  private log(text: string): void {
-    process.stdout.write(`${prefixed(SUPERVISOR_CONFIG.id, text)}\n`);
-  }
+  constructor(
+    @Inject(SERVICE_ROUTES) private readonly routes: readonly ServiceRoute[],
+    private readonly persistence: PersistenceService,
+    private readonly spawner: ChildSpawner,
+    private readonly lifecycles: ServiceLifecycleFactory,
+    private readonly status: StatusPublisher,
+    private readonly input: SidecarInput,
+    private readonly logger: SupervisorLogger,
+  ) {}
 
-  async onModuleInit(): Promise<void> {
+  onApplicationBootstrap(): void {
+    // Dev (`nest start`): same persistence path. No service is spawned because there is no SEA binary to spawn.
     if (!isSea()) {
-      await this.bootDev();
+      this.logger.log('not running as a SEA executable; spawning no services');
       return;
     }
-
-    const raw = getAsset(DISPATCHER_CONFIG.servicesAsset, 'utf8');
-    if (raw === undefined) {
-      throw new Error(`SEA asset "${DISPATCHER_CONFIG.servicesAsset}" is missing`);
-    }
-    const { services } = servicesAssetSchema.parse(JSON.parse(raw));
-
-    // The web bundle is read from the executable and sent to the api-gateway child over IPC; nothing is written to disk. No web bundle in the build means no --web flag.
-    const web = hasWebBundle() ? loadWebBundle() : undefined;
-    this.log(web === undefined ? 'no web bundle embedded' : `web bundle loaded in memory: ${web.length} files`);
-
-    // Invalid config or an incompatible database throws here, before any service is spawned and before ready (REQ-DB-06).
-    this.persistence = await lastValueFrom(bootPersistence$((text) => this.log(text), seaAssetSource));
-
-    process.once('SIGINT', this.onSignal);
-    process.once('SIGTERM', this.onSignal);
-
-    // The asset lists ids only, so no dependency is known yet; the order is the registry order.
-    const order = startupOrder(services.map((id) => ({ id, dependsOn: [], enabled: true })));
-    for (const id of order) {
-      const lifecycle = new ServiceLifecycle(id, {
-        spawn: () => this.spawnChild(id, id === 'api-gateway' ? web : undefined),
-        onStatus: () => this.update(),
-        log: (text) => this.log(text),
+    // A `shutdown` command is the only command today. A closed stdin means the host is gone, which means the same.
+    this.input.listen().subscribe({
+      next: () => void this.shutdown('shutdown command', 0),
+      complete: () => void this.shutdown('end of stdin', 0),
+    });
+    for (const route of this.startOrder()) {
+      const lifecycle = this.lifecycles.create(route, {
+        spawn: () => this.spawner.spawn(route),
+        onStatus: () => this.refresh(),
+        log: (text) => this.logger.log(text),
       });
       this.services.push(lifecycle);
       lifecycle.start();
     }
-    await this.openStatusEndpoint();
-    this.update();
+    this.refresh();
   }
 
-  // Dev (`nest start`): same persistence path, assets read from disk. No service is spawned because there is no SEA binary to spawn.
-  private async bootDev(): Promise<void> {
-    this.persistence = await lastValueFrom(bootPersistence$((text) => this.log(text), fsAssetSource(), devAnchor()));
-    this.log('not running as a SEA executable; spawning no services');
-    process.once('SIGINT', this.onSignal);
-    process.once('SIGTERM', this.onSignal);
+  // Nest calls this on SIGINT and SIGTERM (enableShutdownHooks).
+  beforeApplicationShutdown(signal?: string): Promise<void> {
+    return this.shutdown(signal ?? 'shutdown', 0);
   }
 
-  // Spawns one process with the IPC control channel. Its output is piped and re-emitted with the id prefix. The web bundle is sent again on every restart, from memory.
-  private spawnChild(id: string, web: readonly WebFile[] | undefined): ChildProcess {
-    const args = web === undefined ? serviceArgs(id) : [...serviceArgs(id), '--web', 'ipc'];
-    const child = spawn(process.execPath, args, {
-      shell: false,
-      // The service opens the same database as the supervisor, so it gets the root the supervisor resolved (it may come from --root).
-      env: { ...process.env, ...(this.persistence === undefined ? {} : { APP_HOME: this.persistence.root }) },
-      stdio: ['inherit', 'pipe', 'pipe', 'ipc'],
-      serialization: 'advanced',
-      ...treeSpawnOptions(),
-    });
-    if (child.stdout) forwardLines(id, child.stdout, process.stdout);
-    if (child.stderr) forwardLines(id, child.stderr, process.stderr);
-    this.log(spawnedMessage(id, child.pid));
-    if (web !== undefined) {
-      child.send({ kind: 'web-bundle', files: web }, (error) => {
-        if (error) this.log(`web bundle handoff failed: ${error.message}`);
-      });
-    }
-    return child;
+  private startOrder(): ServiceRoute[] {
+    const byId = new Map(this.routes.map((route) => [route.id, route]));
+    return startupOrder(this.routes).flatMap((id) => byId.get(id) ?? []);
   }
 
-  // Per-service view for the status endpoint. Built on demand from the lifecycles, so it can never drift from them.
-  private snapshot(): StatusSnapshot {
-    const state = this.state ?? aggregateState(this.services.map(({ status }) => status), this.stopping);
-    return { state, services: this.services.map(({ id, status }) => ({ id, status })) };
+  private refresh(): void {
+    if (this.status.publish(this.services) === AGGREGATE_STATE.error) void this.shutdown('state error', SUPERVISOR_CONFIG.errorExitCode);
   }
 
-  // A busy port is logged and skipped: the indicator must not stop the runtime.
-  private async openStatusEndpoint(): Promise<void> {
-    const port = this.persistence?.config.supervisor.statusPort;
-    if (port === undefined) return;
-    const failure = await this.statusServer.listen(port);
-    this.log(failure === undefined ? `status endpoint on 127.0.0.1:${port}/status` : `status endpoint unavailable on port ${port}: ${failure.message}`);
+  // Idempotent: every caller waits for the same run, which ends the process.
+  private shutdown(reason: string, exitCode: number): Promise<void> {
+    this.shutdownRun ??= this.stopAll(reason, exitCode);
+    return this.shutdownRun;
   }
 
-  // Recomputes the aggregate state; on a change logs it, prints one JSON line for the desktop shell and forwards it to the children.
-  private update(): void {
-    const next = aggregateState(this.services.map(({ status }) => status), this.stopping);
-    if (next === this.state) return;
-    this.state = next;
-    const message = stateMessageSchema.parse({ kind: CONTROL_KIND.state, state: next });
-    this.log(stateMessage(next));
-    // Design for POC-5: one JSON line per change, never prefixed, so the shell can tell it from log lines. Not verified against Tauri.
-    process.stdout.write(`${JSON.stringify(message)}\n`);
-    for (const { child } of this.services) {
-      if (child?.connected) child.send(message, () => undefined);
-    }
-    if (next === AGGREGATE_STATE.error) void this.shutdown('SIGTERM', SUPERVISOR_CONFIG.errorExitCode);
-  }
-
-  onModuleDestroy(): void {
-    process.off('SIGINT', this.onSignal);
-    process.off('SIGTERM', this.onSignal);
-  }
-
-  // Stops every child in reverse startup order (shutdown message, timeout, tree kill), then ends the supervisor with the given exit code.
-  private async shutdown(signal: NodeJS.Signals, exitCode: number): Promise<void> {
-    if (this.stopping) return;
-    this.stopping = true;
-    this.log(`received ${signal}; stopping ${this.services.length} service(s)`);
-    this.update();
+  // Stops every child in reverse startup order (shutdown message, timeout, tree kill), closes the database, then ends the supervisor.
+  private async stopAll(reason: string, exitCode: number): Promise<void> {
+    this.logger.log(`received ${reason}; stopping ${this.services.length} service(s)`);
+    this.status.markStopping();
+    this.refresh();
     for (const service of [...this.services].reverse()) {
       service.stop();
-      if (service.child !== undefined) await stopTree(service.id, service.child, SUPERVISOR_CONFIG, (text) => this.log(text));
+      if (service.child !== undefined) await stopTree(service.id, service.child, SUPERVISOR_CONFIG, (text) => this.logger.log(text));
     }
-    await this.statusServer.close();
-    await this.persistence?.db.close();
+    await this.persistence.close();
     process.exit(exitCode);
   }
 }

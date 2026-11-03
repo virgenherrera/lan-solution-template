@@ -35,11 +35,6 @@ export const serviceRegistrySchema = z
 
 export type ServiceRegistry = readonly ServiceDefinition[];
 
-// Shape of the services asset written by the assembler.
-export const servicesAssetSchema = z.object({
-  services: z.array(serviceIdSchema),
-});
-
 // Command line arguments that start one service in a child process.
 export function serviceArgs(id: string): string[] {
   return [`--${DISPATCHER_CONFIG.serviceFlag}`, serviceIdSchema.parse(id)];

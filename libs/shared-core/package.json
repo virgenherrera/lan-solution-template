@@ -1,6 +1,6 @@
 {
   "name": "shared-core",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -13,15 +13,16 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "PostgreSQL",
   "type": "module",
   "types": "dist/index.d.ts",
   "devDependencies": {
-    "@types/node": "24.19.2",
+    "@types/node": "catalog:",
     "rimraf": "catalog:"
   },
   "dependencies": {
-    "rxjs": "7.8.2",
+    "rxjs": "catalog:",
     "zod": "catalog:"
-  }
+  },
+  "private": true
 }

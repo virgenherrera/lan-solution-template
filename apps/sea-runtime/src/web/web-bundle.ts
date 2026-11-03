@@ -12,6 +12,14 @@ export interface WebFile {
   readonly bytes: Uint8Array;
 }
 
+// The IPC message that hands the bundle to a service. The receiving side validates the same shape.
+export const webBundleMessageSchema = z.object({
+  kind: z.literal('web-bundle'),
+  files: z.array(z.object({ path: z.string().min(1), bytes: z.instanceof(Uint8Array) })).min(1),
+});
+
+export type WebBundleMessage = z.infer<typeof webBundleMessageSchema>;
+
 // True when the build embedded a web bundle.
 export const hasWebBundle = (): boolean => getAsset(WEB_MANIFEST_ASSET, 'utf8') !== undefined;
 

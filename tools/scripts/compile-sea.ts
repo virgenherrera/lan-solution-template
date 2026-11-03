@@ -175,6 +175,7 @@ function webBrowserDir(name: string, projectDir: string): string {
 const REGISTRY_LIB = 'service-registry';
 
 type Registry = typeof import('service-registry');
+type ServiceRoute = import('service-registry').ServiceRoute;
 
 // Loads the built contract library; every other literal of the assembler comes from its ASSEMBLER_CONFIG.
 async function loadRegistry(): Promise<{ lib: LibEntry; contract: Registry }> {
@@ -236,18 +237,18 @@ function discoverDependencies(
   return { services, web: webs[0] };
 }
 
-// Builds the registry from the discovered services and validates it with the 2b contract. Every declared entrypoint must exist; this runs before bundling and before `node --build-sea`.
-function validateRegistry(services: ServiceEntry[], contract: Registry): string[] {
-  const parsed = contract.serviceRegistrySchema.safeParse(
-    services.map((s) => ({ id: s.service, entry: s.entryPath })),
-  );
-  if (!parsed.success) {
-    throw new Error(`invalid service registry: ${parsed.error.issues.map((i) => i.message).join('; ')}`);
-  }
-  for (const service of parsed.data) {
-    if (!existsSync(service.entry)) throw new Error(`service "${service.id}": declared entrypoint missing: ${service.entry}`);
-  }
-  return parsed.data.filter((s) => s.enabled).map((s) => s.id);
+// Matches each declared route to the built service of its workspace project, so the entry table is keyed by route id. Runs before bundling and before `node --build-sea`.
+function resolveRoutes(routes: readonly ServiceRoute[], built: ServiceEntry[], supervisor: string, serviceEntry: string): ServiceEntry[] {
+  return routes.map((route) => {
+    const project = route.project ?? route.id;
+    const found = built.find((s) => s.service === project);
+    if (found === undefined) {
+      throw new Error(
+        `service "${route.id}": project "${project}" is not a built workspace dependency of ${supervisor}; add it as "workspace:*" and build it (${serviceEntry})`,
+      );
+    }
+    return { service: route.id, entryPath: found.entryPath };
+  });
 }
 
 // The generated entry only lists the registered services; the dispatcher (libs/service-registry) picks the role: no --service starts the supervisor, --service <id> starts that one service, anything else exits with the reject code.
@@ -428,10 +429,13 @@ async function main(): Promise<void> {
   if (!existsSync(supervisorEntry)) {
     throw new Error(`${supervisor}: missing ${supervisorEntry}; run the ${supervisor} build target first`);
   }
-  const { services, web } = discoverDependencies(supervisor, supervisorDir, contract.ASSEMBLER_CONFIG.serviceEntry);
-  const serviceIds = validateRegistry(services, contract);
+  const built = discoverDependencies(supervisor, supervisorDir, contract.ASSEMBLER_CONFIG.serviceEntry);
+  // Loaded after the contract check above: services.ts imports the built service-registry.
+  const { SERVICES } = (await import('../../apps/sea-runtime/src/services.ts')) as typeof import('../../apps/sea-runtime/src/services.ts');
+  const services = resolveRoutes(SERVICES, built.services, supervisor, contract.ASSEMBLER_CONFIG.serviceEntry);
+  const web = built.web;
   console.log(
-    `supervisor ${supervisor}; services: ${serviceIds.join(', ')}; web: ${web?.name ?? 'none'}; target ${target.triple}; code cache ${contract.useCodeCache(hostTriple(), target.triple) ? 'on' : 'off'}`,
+    `supervisor ${supervisor}; services: ${SERVICES.filter((r) => r.enabled).map((r) => r.id).join(', ')}; web: ${web?.name ?? 'none'}; target ${target.triple}; code cache ${contract.useCodeCache(hostTriple(), target.triple) ? 'on' : 'off'}`,
   );
 
   const artifactDir = join(root, 'artifacts', supervisor);
@@ -446,7 +450,7 @@ async function main(): Promise<void> {
   writeEntry(supervisorEntry, services, registry);
   writeFileSync(
     servicesPath,
-    `${JSON.stringify(contract.servicesAssetSchema.parse({ services: serviceIds }), null, 2)}\n`,
+    `${JSON.stringify(contract.servicesAssetSchema.parse({ services: SERVICES.map(({ project: _project, ...route }) => route) }), null, 2)}\n`,
   );
   await bundle();
   const vector = await vectorAssets(target);

@@ -1,7 +1,7 @@
 {
   "name": "desktop",
   "version": "0.0.1",
-  "license": "UNLICENSED",
+  "license": "PostgreSQL",
   "private": true,
   "scripts": {
     "test": "pnpm run test:static && pnpm run test:dynamic",
@@ -12,7 +12,7 @@
   },
   "type": "module",
   "devDependencies": {
-    "@tauri-apps/cli": "2.12.4"
+    "@tauri-apps/cli": "catalog:"
   },
   "nx": {
     "targets": {

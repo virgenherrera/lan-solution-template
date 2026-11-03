@@ -1,6 +1,6 @@
 {
   "name": "service-registry",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -13,14 +13,15 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "PostgreSQL",
   "type": "module",
   "dependencies": {
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "24.19.2",
+    "@types/node": "catalog:",
     "rimraf": "catalog:"
   },
-  "types": "dist/index.d.ts"
+  "types": "dist/index.d.ts",
+  "private": true
 }
