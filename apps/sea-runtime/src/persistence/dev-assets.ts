@@ -9,8 +9,6 @@ import type { AssetSource } from './asset-source.js';
 // `pnpm exec nx run sea-runtime:package` once; it writes dist/sea-package/sea-config.json (the asset map) and dist/db-migrations/.
 const PACKAGE_HINT = 'run `pnpm exec nx run sea-runtime:package` first';
 const WORKSPACE_MARKER = 'pnpm-workspace.yaml';
-// Ignored dev root: config/, data/, logs/ and certs/ live here, never in the repo root.
-const DEV_ROOT_DIR = '.local';
 const SEA_CONFIG = join('dist', 'sea-package', 'sea-config.json');
 
 // Walks up from this file until the workspace marker. The root comes from the file's location, never the cwd,
@@ -23,11 +21,6 @@ export function repoRoot(): string {
     dir = parent;
   }
   return dir;
-}
-
-// Root for config, data and logs of a dev launch: an ignored folder, so dev state never lands in tracked files.
-export function devAnchor(): string {
-  return join(repoRoot(), DEV_ROOT_DIR);
 }
 
 const seaConfigSchema = z.object({ assets: z.record(z.string(), z.string()) });
