@@ -6,7 +6,7 @@ type: backlog
 summary: "Backlog slice 2e of POC-2: respawn of process.execPath with backoff, a restart budget and an error state."
 related[3]: docs/backlog/poc-2-single-sea-runtime-supervisor.md,docs/backlog/poc-2d-supervisor-readiness-logs.md,docs/backlog/poc-2f-coordinated-shutdown.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # POC-2e: Bounded restart
@@ -34,12 +34,9 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Done in commit `06ab764` on `minor/poc-02-supervisor`, see [result](../results/POC-02e-bounded-restart.md) |
+| Status | Done in commit `06ab764` on `minor/poc-02-supervisor` (merged in PR #11), see [result](../results/POC-02e-bounded-restart.md) |
 | Slice | 2e of 2a to 2h; umbrella [POC-2](poc-2-single-sea-runtime-supervisor.md) |
-| Size | ~250 authored lines (ASSUMPTION) |
 | Depends on | [2d](poc-2d-supervisor-readiness-logs.md) |
-| Branch (decided, D1) | `minor/poc-02-supervisor`, one commit or commit group per slice, one draft PR for all of POC-2 |
-| Result page | `docs/results/POC-02e-bounded-restart.md` |
 | Requirements | REQ-RUNTIME-01, REQ-RUNTIME-03, REQ-RUNTIME-05 |
 | Acceptance criteria | AC-29 (respawn uses the same `process.execPath`) |
 
@@ -86,14 +83,14 @@ Values: [OQ11](../roadmap/PROPOSAL.md#open-questions), decision D2. Backoff 1, 2
 
 [Back to navigation](#navigation)
 
-- [ ] Replace the single `spawn` in the supervisor with a per-service lifecycle object that owns spawn, exit handling and the restart budget. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md), [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md).
-- [ ] Implement backoff, jitter, window and reset as one Zod-validated constants object (decision D2). Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md), [OQ11](../roadmap/PROPOSAL.md#open-questions).
-- [ ] On respawn, resend the web bundle to the gateway from the supervisor memory. Source: [REQ-NET-03](../requirements/06-web-gateway-https-pwa.md).
-- [ ] Distinguish a crash from a requested stop, so `stopping` never restarts. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
-- [ ] Set the aggregate state to `degraded` while a restart is pending and to `error` when the budget is exhausted. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
-- [ ] Observe a restart on macOS arm64 and in Debian bookworm images (arm64 and amd64), with the outputs above. Source: [REQ-RUNTIME-08](../requirements/09-desktop-tauri.md) (subset), POC-1c inherited item.
-- [ ] Record which port-in-use behaviour appears: a gateway that cannot bind exits and burns the budget. Port-busy handling for the user belongs to POC-5 ([REQ-DESK-05](../requirements/09-desktop-tauri.md)). Source: not verified.
-- [ ] Publish `docs/results/POC-02e-bounded-restart.md` with the measured delays. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
+- [x] Replace the single `spawn` in the supervisor with a per-service lifecycle object that owns spawn, exit handling and the restart budget. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md), [REQ-RUNTIME-03](../requirements/09-desktop-tauri.md).
+- [x] Implement backoff, jitter, window and reset as one Zod-validated constants object (decision D2). Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md), [OQ11](../roadmap/PROPOSAL.md#open-questions).
+- [x] On respawn, resend the web bundle to the gateway from the supervisor memory. Source: [REQ-NET-03](../requirements/06-web-gateway-https-pwa.md).
+- [x] Distinguish a crash from a requested stop, so `stopping` never restarts. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
+- [x] Set the aggregate state to `degraded` while a restart is pending and to `error` when the budget is exhausted. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
+- [x] Observe a restart on macOS arm64 and in Debian bookworm images (arm64 and amd64), with the outputs above. Source: [REQ-RUNTIME-08](../requirements/09-desktop-tauri.md) (subset), POC-1c inherited item.
+- [x] Record which port-in-use behaviour appears: a gateway that cannot bind exits and burns the budget. Port-busy handling for the user belongs to POC-5 ([REQ-DESK-05](../requirements/09-desktop-tauri.md)). Source: not verified.
+- [x] Publish `docs/results/POC-02e-bounded-restart.md` with the measured delays. Source: [REQ-RUNTIME-05](../requirements/09-desktop-tauri.md).
 
 ---
 

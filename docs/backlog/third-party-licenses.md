@@ -49,8 +49,6 @@ updated: 2026-11-03
 
 [Back to navigation](#navigation)
 
-Source: the [spike summary](../results/SPIKE-third-party-licenses.md#summary).
-
 - The measured production set is 118 package versions (110 names): MIT 106, ISC 5, BSD-3-Clause 3, Apache-2.0 2, 0BSD 2. No missing, `UNKNOWN`, copyleft or source-available license. The set is permissive, not only MIT.
 - Every license in the set asks for the notice to travel with copies, except 0BSD.
 - The Angular build writes `3rdpartylicenses.txt`. `compile-sea` embeds only `browser/`, so that file is dropped today.
@@ -135,7 +133,6 @@ Documented only. Nothing here is built, scheduled or required.
 - No Rust, WebView or Tauri license fact.
 - No new requirement or acceptance criterion.
 - No generator, check script or CLI flag in this template.
-- No legal advice.
 
 ---
 

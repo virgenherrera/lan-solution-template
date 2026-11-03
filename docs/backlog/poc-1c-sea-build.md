@@ -6,7 +6,7 @@ type: backlog
 summary: "Backlog slice 1c of POC-1: the dummy Nest app packaged as a Node SEA with a minimal native build script."
 related[3]: docs/backlog/README.md,docs/backlog/poc-1b-nest-apps.md,docs/backlog/poc-1d-angular-link.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # POC-1c: SEA build
@@ -32,7 +32,7 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Delivered on branch `minor/poc-01b-nest` (PR 3, draft) |
+| Status | Delivered in PR #4 (commit `2c815c9`, slices 1a to 1c) |
 | Slice | 1c of 1a to 1e; umbrella [POC-1](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton) |
 | Appetite | ~2 days, ASSUMPTION |
 | Depends on | POC-1b |
@@ -91,13 +91,13 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-wo
 
 [Back to navigation](#navigation)
 
-- [x] Write the minimal `tools/scripts/compile-sea.ts` with native `node --build-sea`, no postject. It bundles the services that are workspace dependencies of `sea-runtime` (today `api-gateway`) and the supervisor entry into one ESM file, then writes one executable. Observed: `artifacts/sea-runtime/sea-runtime-aarch64-apple-darwin`. The SEA requirements are in [10-node-sea-distribution](../requirements/10-node-sea-distribution.md); no REQ id is added to this slice because the old single POC-1 epic cites none here. Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
-- [x] Declare the `package` target on the project `sea-runtime`, not on a separate `sea-build` project. It runs `tools/scripts/compile-sea.ts sea-runtime`. Its `build` depends on the `build` of its workspace dependencies (`^build`). Observed: `pnpm nx package sea-runtime` ran `api-gateway:build`, `sea-runtime:build` and `sea-runtime:package`, exit 0. Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
-- [x] Add the minimal supervisor. `sea-runtime` reads the SEA asset `services.json`, validates it with Zod, and spawns `process.execPath --service <id>` for each service. It stops the children on SIGINT or SIGTERM. Observed: the child answered `/health`; SIGTERM stopped the supervisor and its child. SIGINT not exercised on macOS; exercised on Linux in Docker ([POC-01c Result](../results/POC-01c-Result.md#linux-in-docker)). Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
-- [ ] Invalidate the build when a registered service is added or changed. Not built in this slice; the clause moves to [POC-2](poc-2-single-sea-runtime-supervisor.md). Source: [REQ-BUILD-04](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton))
-- [x] Write `docs/results/POC-01c-Result.md` with the build command, the binary size, the observed run and the list of manual edits (files not produced by a CLI). Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
-- [x] Run and verify. Run `pnpm nx package sea-runtime`. Expected: exit 0 and one binary `artifacts/sea-runtime/sea-runtime-<target-triple>`. Observed on macOS arm64: exit 0, one file of 147863776 bytes. Start the binary with no arguments and run `curl -i http://127.0.0.1:3000/health`: observed `HTTP/1.1 200 OK` from the `api-gateway` child, not from `node`. Run the binary with a PATH that has no `node`: observed, it starts. Linux binaries built and run in Docker (arm64 and amd64, see [POC-01c Result](../results/POC-01c-Result.md#linux-in-docker)). Windows binary not built. Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
-- [x] Check the artifact naming against the Tauri sidecar documentation (`<name>-<target-triple>`). The result page quotes the naming. The Tauri consumer side is not verified. Source: [Decision 16](../roadmap/PROPOSAL.md#decision-log), this slice only. Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
+- [x] Write the minimal `tools/scripts/compile-sea.ts` with native `node --build-sea`, no postject. It bundles the services that are workspace dependencies of `sea-runtime` (today `api-gateway`) and the supervisor entry into one ESM file, then writes one executable. Observed: `artifacts/sea-runtime/sea-runtime-aarch64-apple-darwin`. The SEA requirements are in [10-node-sea-distribution](../requirements/10-node-sea-distribution.md); no REQ id is added to this slice because the old single POC-1 epic cites none here. No REQ or AC id added.
+- [x] Declare the `package` target on the project `sea-runtime`, not on a separate `sea-build` project. It runs `tools/scripts/compile-sea.ts sea-runtime`. Its `build` depends on the `build` of its workspace dependencies (`^build`). Observed: `pnpm nx package sea-runtime` ran `api-gateway:build`, `sea-runtime:build` and `sea-runtime:package`, exit 0. No REQ or AC id added.
+- [x] Add the minimal supervisor. `sea-runtime` reads the SEA asset `services.json`, validates it with Zod, and spawns `process.execPath --service <id>` for each service. It stops the children on SIGINT or SIGTERM. Observed: the child answered `/health`; SIGTERM stopped the supervisor and its child. SIGINT not exercised on macOS; exercised on Linux in Docker ([POC-01c Result](../results/POC-01c-Result.md#linux-in-docker)). No REQ or AC id added.
+- [ ] Invalidate the build when a registered service is added or changed. Not built in this slice; the clause moves to [POC-2](poc-2-single-sea-runtime-supervisor.md). Source: [REQ-BUILD-04](../requirements/11-nx-quality-testing.md)
+- [x] Write `docs/results/POC-01c-Result.md` with the build command, the binary size, the observed run and the list of manual edits (files not produced by a CLI). No REQ or AC id added.
+- [x] Run and verify. Run `pnpm nx package sea-runtime`. Expected: exit 0 and one binary `artifacts/sea-runtime/sea-runtime-<target-triple>`. Observed on macOS arm64: exit 0, one file of 147863776 bytes. Start the binary with no arguments and run `curl -i http://127.0.0.1:3000/health`: observed `HTTP/1.1 200 OK` from the `api-gateway` child, not from `node`. Run the binary with a PATH that has no `node`: observed, it starts. Linux binaries built and run in Docker (arm64 and amd64, see [POC-01c Result](../results/POC-01c-Result.md#linux-in-docker)). Windows binary not built. No REQ or AC id added.
+- [x] Check the artifact naming against the Tauri sidecar documentation (`<name>-<target-triple>`). The result page quotes the naming. The Tauri consumer side is not verified. Source: [Decision 16](../roadmap/PROPOSAL.md#decision-log), this slice only. No REQ or AC id added.
 - [ ] Decide the Linux binary run-time need for `libatomic.so.1` on the host (see [POC-01c Result](../results/POC-01c-Result.md#linux-in-docker)). Decide whether to document it as an installer prerequisite or avoid the dependency. Not decided in this slice.
 
 ---

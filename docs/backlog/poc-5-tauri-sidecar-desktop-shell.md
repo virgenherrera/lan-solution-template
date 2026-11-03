@@ -4,9 +4,9 @@ doc: docs/backlog/poc-5-tauri-sidecar-desktop-shell.md
 title: "POC-5 Tauri desktop shell with SEA sidecar"
 type: backlog
 summary: "Backlog item for the Tauri desktop shell with SEA sidecar."
-related[3]: docs/backlog/README.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/backlog/poc-6-postgresql-adapter-parity.md
+related[5]: docs/backlog/README.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/backlog/poc-6-postgresql-adapter-parity.md,docs/backlog/service-status-indicator.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md
 status: current
-updated: 2026-10-30
+updated: 2026-11-03
 -->
 
 # POC-5: Tauri desktop shell with SEA sidecar
@@ -113,20 +113,20 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-s
   - Output: the chosen path in `POC-05-Result` and in ADR-010 (auth mechanism). It states whether the wizard replaces or complements the MSI dialog.
   - Circuit breaker: no clear path after 2 days. Then keep the MSI dialog on Windows. Keep the CLI `setup` command on Linux and macOS.
   - Source: [decision 13](../roadmap/PROPOSAL.md#decision-log), [OQ5](../roadmap/PROPOSAL.md#open-questions)
-- [ ] Ship the SEA as an `externalBin` sidecar, one per target triple. Source: [REQ-DESK-01](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
-- [ ] Pass the resolved root to the SEA sidecar as an absolute path (the host may). Design, not verified as a Tauri pattern. The cwd of the sidecar child is not verified: check it here. Source: [REQ-DESK-02](../requirements/09-desktop-tauri.md), [decision 11](../roadmap/PROPOSAL.md#decision-log)
-- [ ] Tauri only starts, monitors and stops the supervisor. Quit terminates the process tree and checks for orphans on the host OS. Source: [REQ-DESK-02](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md), [AC-30](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
-- [ ] Design the tray UI in this POC. Until then, document only common options: start, stop, open UI, quit and an autostart checkbox. Source: [REQ-DESK-03](../requirements/09-desktop-tauri.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
-- [ ] Tray with starting, ready and error states, Open UI, Quit. Closing the window hides it to the tray. Source: [REQ-DESK-03](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
-- [ ] Autostart at OS login is opt-in and off by default. The user enables it with a checkbox in the tray menu. The app persists the choice ([OQ12](../roadmap/PROPOSAL.md#open-questions), decided by the human). Source: [REQ-DESK-04](../requirements/09-desktop-tauri.md), [OQ12](../roadmap/PROPOSAL.md#open-questions) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
-- [ ] Single instance, port-busy handling, orphan handling and crash recovery. Source: [REQ-DESK-05](../requirements/09-desktop-tauri.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
-- [ ] Keep the gateway reachable from the LAN while the window is hidden. Source: [REQ-DESK-06](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
-- [ ] Restrict IPC capabilities; no shell or sidecar privileges for the LAN-served frontend. Source: [REQ-SEC-05](../requirements/07-security.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
-- [ ] The WebView loads the gateway origin. Source: [AC-18](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
-- [ ] Tauri installs `ca.crt` into the OS trust store with explicit consent. Key storage per OS: [OQ8](../roadmap/PROPOSAL.md#open-questions). Source: [REQ-TLS-02](../requirements/06-web-gateway-https-pwa.md), [OQ8](../roadmap/PROPOSAL.md#open-questions) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
-- [ ] Run native E2E with `@wdio/tauri-service` on an instrumented build; the commercial installer excludes it. Source: [REQ-TEST-08](../requirements/11-nx-quality-testing.md), [AC-20](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
-- [ ] Order Tauri `build`/`package` after SEA. Source: [REQ-ECO-06](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
-- [ ] Publish `POC-05-Result` and `ADR-009` (desktop process model) under `docs/`. Source: [REQ-DESK-02](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar))
+- [ ] Ship the SEA as an `externalBin` sidecar, one per target triple. Source: [REQ-DESK-01](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md)
+- [ ] Spawn the sidecar and read the base directory from the executable directory ([ADR-007](../architecture/adr/ADR-007-persistence-system.md#one-base-directory)): no root argument. Wire the host side of the sidecar contract of [ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md): `status` events on stdout, logs on stderr, `shutdown` command on stdin (EOF also shuts down), exit codes 0, 1, 2. Tauri sidecar behavior: not verified. Source: [REQ-DESK-02](../requirements/09-desktop-tauri.md), [decision 11](../roadmap/PROPOSAL.md#decision-log)
+- [ ] Tauri only starts, monitors and stops the supervisor. Quit terminates the process tree and checks for orphans on the host OS. Source: [REQ-DESK-02](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md), [AC-30](../requirements/11-nx-quality-testing.md)
+- [ ] Design the tray UI in this POC. Until then, document only common options: start, stop, open UI, quit and an autostart checkbox. Source: [REQ-DESK-03](../requirements/09-desktop-tauri.md)
+- [ ] Tray with starting, ready and error states (fed by the `status` events), Open UI, Quit. Closing the window hides it to the tray. Source: [REQ-DESK-03](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md)
+- [ ] Autostart at OS login is opt-in and off by default. The user enables it with a checkbox in the tray menu. The app persists the choice ([OQ12](../roadmap/PROPOSAL.md#open-questions), decided by the human). Source: [REQ-DESK-04](../requirements/09-desktop-tauri.md), [OQ12](../roadmap/PROPOSAL.md#open-questions)
+- [ ] Single instance, port-busy handling, orphan handling and crash recovery. Source: [REQ-DESK-05](../requirements/09-desktop-tauri.md)
+- [ ] Keep the gateway reachable from the LAN while the window is hidden. Source: [REQ-DESK-06](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md)
+- [ ] Restrict IPC capabilities; no shell or sidecar privileges for the LAN-served frontend. Source: [REQ-SEC-05](../requirements/07-security.md)
+- [ ] The WebView loads the gateway origin. Source: [AC-18](../requirements/11-nx-quality-testing.md)
+- [ ] Tauri installs `ca.crt` into the OS trust store with explicit consent. Key storage per OS: [OQ8](../roadmap/PROPOSAL.md#open-questions). Source: [REQ-TLS-02](../requirements/06-web-gateway-https-pwa.md), [OQ8](../roadmap/PROPOSAL.md#open-questions)
+- [ ] Run native E2E with `@wdio/tauri-service` on an instrumented build; the commercial installer excludes it. Source: [REQ-TEST-08](../requirements/11-nx-quality-testing.md), [AC-20](../requirements/11-nx-quality-testing.md)
+- [ ] Order Tauri `build`/`package` after SEA. Source: [REQ-ECO-06](../requirements/11-nx-quality-testing.md)
+- [ ] Publish `POC-05-Result` and `ADR-009` (desktop process model) under `docs/`. Source: [REQ-DESK-02](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md)
 
 ---
 
@@ -136,7 +136,7 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-s
 
 These pitch items carry no REQ or AC id. They are not tasks:
 
-- Linux and macOS first-run setup: the wizard from the spike ([decision 13](../roadmap/PROPOSAL.md#decision-log), [OQ5](../roadmap/PROPOSAL.md#open-questions)). On Windows the MSI credential dialog (POC-8) is the fallback. The spike decides whether the wizard replaces it ([pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar)). No REQ or AC id in the pitch.
+- Linux and macOS first-run setup: the wizard from the spike ([decision 13](../roadmap/PROPOSAL.md#decision-log), [OQ5](../roadmap/PROPOSAL.md#open-questions)). On Windows the MSI credential dialog (POC-8) is the fallback. The spike decides whether the wizard replaces it. No REQ or AC id in the pitch.
 
 ---
 

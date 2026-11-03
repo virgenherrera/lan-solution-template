@@ -6,7 +6,7 @@ type: backlog
 summary: "Backlog item for a startup gate that compares the live database structure with the descriptor in the binary."
 related[5]: docs/backlog/README.md,docs/backlog/dbm-drizzle-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/requirements/amendments-2026-11-02.md,docs/requirements/05-persistence.md
 status: current
-updated: 2026-11-02
+updated: 2026-11-03
 -->
 
 # DBM: schema gate
@@ -31,7 +31,7 @@ updated: 2026-11-02
 
 | Item | Value |
 |---|---|
-| Status | Done for DBM-i to DBM-n. See [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md) |
+| Status | Done for DBM-i to DBM-n and merged in PR #12. See [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md) |
 | Depends on | DBM ([DBM-Result](../results/DBM-Result.md)) |
 | Branch | `minor/dbm-schema-gate`, off `minor/dbm-drizzle-migrations` |
 | Delivery | One branch, one PR |
@@ -47,7 +47,7 @@ This extends DBM on a human request of 2026-11-02. The slice names are an assump
 
 [Back to navigation](#navigation)
 
-- Read the live schema with the engine: `PRAGMA` on SQLite, `information_schema` on PostgreSQL.
+- Read the live schema with the engine: `PRAGMA` on SQLite, the only engine today.
 - Compare it with the descriptor that ships in the binary.
 - Exit with code 1 before any service spawns when the structure is not what the build expects.
 - Run the check once, in the persistence boot. No periodic probe.
@@ -86,7 +86,7 @@ One branch, one PR. Slice names DBM-i to DBM-n are an assumption. DBM-n is done:
 | DBM-k | Port: `LiveSchema` and `DbAdapter.introspectSchema`. `SqliteAdapter` implements it and reports defaults. The parity check drops its own introspector | DBM-j | Parity stdout and exit code are identical to the base run |
 | DBM-l | Gate: `verifySchema$` in the boot pipeline, between the migrations and the `app_meta` write, using `required` mode | DBM-k | The packaged binary runs against 11 databases. The 10 cases from the earlier prototype and one rebuilt table with an extra `NOT NULL` column. 6 exit 1 with the message and no spawn. 5 exit 0 with a spawn |
 | DBM-m | Dev: an `AssetSource` with a `sea` and an `fs` implementation. `nest start` runs the same persistence path | DBM-l | `nest start` against a mutated database exits 1 with the same message. A valid database starts |
-| DBM-n | Done: a Nest database module with a one-time `SELECT 1` handshake for services. Optional `database` component in the service status indicator | DBM-l, the merge of `docs/service-status-indicator`, and a service that opens the database | A service against an unreachable database reports failed |
+| DBM-n | Done: a Nest database module in `api-gateway` with a one-time `SELECT 1` handshake | DBM-l | A service against an unreachable database reports failed |
 
 Design rules for all slices:
 
@@ -106,5 +106,4 @@ Design rules for all slices:
 | [REQ-DB-10](../requirements/05-persistence.md) text | approved by the human on 2026-11-02 |
 | Slice names DBM-i to DBM-n | assumption, not answered by the human |
 | Do services open their own database connection, or only the supervisor? | Answered by the human: services get a database module (DBM-n) |
-| Does a `database` status component belong in DBM-l or in the `docs/service-status-indicator` branch? | open |
-| PostgreSQL type mapping for the gate | not verified, belongs to POC-6 |
+| PostgreSQL type mapping for the gate | not verified, belongs to POC-6 (PostgreSQL is TBD) |

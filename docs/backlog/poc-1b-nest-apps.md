@@ -6,7 +6,7 @@ type: backlog
 summary: "Backlog slice 1b of POC-1: api-gateway and sea-runtime generated with the Nest CLI, plus shared-core."
 related[3]: docs/backlog/README.md,docs/backlog/poc-1a-monorepo-init.md,docs/backlog/poc-1c-sea-build.md
 status: current
-updated: 2026-10-31
+updated: 2026-11-03
 -->
 
 # POC-1b: Nest apps
@@ -32,7 +32,7 @@ updated: 2026-10-31
 
 | Item | Value |
 |---|---|
-| Status | Delivered on branch `minor/poc-01b-nest` (PR 3, draft) |
+| Status | Delivered in PR #4 (commit `2c815c9`, slices 1a to 1c) |
 | Slice | 1b of 1a to 1e; umbrella [POC-1](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton) |
 | Appetite | ~1 day, ASSUMPTION |
 | Depends on | POC-1a |
@@ -95,12 +95,12 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-wo
 
 [Back to navigation](#navigation)
 
-- [x] Create skeletons `apps/api-gateway`, `apps/sea-runtime` (both with `pnpm dlx @nestjs/cli new`) and `libs/shared-core`. Add a dummy health endpoint on `api-gateway`. Check that they run in dev, build independently and do not import each other. Source: [REQ-REP-01](../requirements/03-file-structure.md), [REQ-REP-02](../requirements/03-file-structure.md), [REQ-REP-03](../requirements/03-file-structure.md), [AC-13](../requirements/11-nx-quality-testing.md) ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton))
-- [x] Write `docs/results/POC-01b-Result.md` with the generation commands, the observed dev and build results and the list of manual edits (files not produced by a CLI). Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
-- [x] Configure `api-gateway` with a Zod schema, parsed once and frozen, injected by token. `sea-runtime` has no config: it opens no listener. No env or file reads in app code. Persisted `config.json` is deferred to POC-3. Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
-- [x] Run and verify. Run each Nest app in dev with its generated start script (script name not verified). Run `curl -i http://localhost:<port>/<health path>` against `api-gateway`: expected, `HTTP/1.1 200`. Run `pnpm nx build api-gateway` and `pnpm nx build sea-runtime` (target names not verified): both exit 0 on their own. Run `rg -n "api-gateway|sea-runtime" apps/api-gateway/src apps/sea-runtime/src libs`: expected, no import of one app by the other. Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
-- [x] Make `sea-runtime` a standalone Nest application context: `NestFactory.createApplicationContext(RuntimeModule)`, no HTTP listener, no port config. Remove the generated `AppModule`, `AppController` and `AppService` of `sea-runtime`, and drop `@nestjs/platform-node` from it. Source: [REQ-RUNTIME-02](../requirements/09-desktop-tauri.md) ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton))
-- [x] Build each Nest app to one self-contained ESM `dist/main.js` (plus `main.js.map`) with the Nest CLI rspack builder. One shared config is in `tools/rspack/nest.config.ts`, set by `compilerOptions.builder` in each `nest-cli.json`. Observed: `api-gateway` `dist/main.js` 3144787 bytes runs alone with `node` from an empty directory and answers `/health` with 200. `sea-runtime` `dist/main.js` 1709241 bytes runs alone and exits 0. Source: this slice only, no REQ or AC id added ([pitch](../roadmap/PROPOSAL.md#poc-1-toolchain-viability-and-workspace-skeleton)).
+- [x] Create skeletons `apps/api-gateway`, `apps/sea-runtime` (both with `pnpm dlx @nestjs/cli new`) and `libs/shared-core`. Add a dummy health endpoint on `api-gateway`. Check that they run in dev, build independently and do not import each other. Source: [REQ-REP-01](../requirements/03-file-structure.md), [REQ-REP-02](../requirements/03-file-structure.md), [REQ-REP-03](../requirements/03-file-structure.md), [AC-13](../requirements/11-nx-quality-testing.md)
+- [x] Write `docs/results/POC-01b-Result.md` with the generation commands, the observed dev and build results and the list of manual edits (files not produced by a CLI). Source: this slice only, no REQ or AC id added.
+- [x] Configure `api-gateway` with a Zod schema, parsed once and frozen, injected by token. `sea-runtime` has no config: it opens no listener. No env or file reads in app code. Persisted `config.json` is deferred to POC-3. Source: this slice only, no REQ or AC id added.
+- [x] Run and verify. Run each Nest app in dev with its generated start script (script name not verified). Run `curl -i http://localhost:<port>/<health path>` against `api-gateway`: expected, `HTTP/1.1 200`. Run `pnpm nx build api-gateway` and `pnpm nx build sea-runtime` (target names not verified): both exit 0 on their own. Run `rg -n "api-gateway|sea-runtime" apps/api-gateway/src apps/sea-runtime/src libs`: expected, no import of one app by the other. Source: this slice only, no REQ or AC id added.
+- [x] Make `sea-runtime` a standalone Nest application context: `NestFactory.createApplicationContext(RuntimeModule)`, no HTTP listener, no port config. Remove the generated `AppModule`, `AppController` and `AppService` of `sea-runtime`, and drop `@nestjs/platform-node` from it. Source: [REQ-RUNTIME-02](../requirements/09-desktop-tauri.md)
+- [x] Build each Nest app to one self-contained ESM `dist/main.js` (plus `main.js.map`) with the Nest CLI rspack builder. One shared config is in `tools/rspack/nest.config.ts`, set by `compilerOptions.builder` in each `nest-cli.json`. Observed: `api-gateway` `dist/main.js` 3144787 bytes runs alone with `node` from an empty directory and answers `/health` with 200. `sea-runtime` `dist/main.js` 1709241 bytes runs alone and exits 0. Source: this slice only, no REQ or AC id added.
 
 ---
 

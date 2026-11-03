@@ -12,6 +12,8 @@ updated: 2026-10-31
 
 # POC-2a Launcher cwd
 
+Superseded 2026-11-03: the root precedence recommended here (`--root`, `APP_HOME`, marker, dev anchor, OS default) is not built. The base directory is `process.cwd()` in dev and the executable directory in prod. See [ADR-007](../architecture/adr/ADR-007-persistence-system.md). The launcher cwd facts below stand.
+
 Branch: `minor/poc-02-supervisor`. Question: what is the initial cwd of the supervisor and of the `api-gateway` child under launchd and systemd, and can the cwd anchor root resolution?
 
 ## Summary

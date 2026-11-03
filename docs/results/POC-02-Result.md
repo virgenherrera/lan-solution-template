@@ -11,6 +11,8 @@ updated: 2026-10-31
 
 # POC-2 Result
 
+Superseded 2026-11-03 for item 10 only: the root precedence recommended for POC-3 is not built. See [ADR-007](../architecture/adr/ADR-007-persistence-system.md).
+
 Consolidated result of POC-2, slices 2a to 2g, closed by slice 2h. Backlog: [POC-2 umbrella](../backlog/poc-2-single-sea-runtime-supervisor.md), [POC-2h](../backlog/poc-2h-result-and-adr.md) and [backlog index](../backlog/README.md). Slice pages: [2a](POC-02a-launcher-cwd.md), [2b](POC-02b-dispatcher-registry.md), [2c](POC-02c-assembler-registry.md), [2d](POC-02d-readiness-logs.md), [2e](POC-02e-bounded-restart.md), [2f](POC-02f-coordinated-shutdown.md), [2g](POC-02g-real-binary-smoke.md). Decision record: [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md). Pattern: [POC-1 result](POC-01-Result.md).
 
 ## Navigation
@@ -48,7 +50,7 @@ Consolidated result of POC-2, slices 2a to 2g, closed by slice 2h. Backlog: [POC
 | 2c | `0f7a834` | feat: drive the sea assembler from the service registry (POC-2c) | [2c](POC-02c-assembler-registry.md) | `qc-2c.toon` (18 pass, 3 not run, 0 fail); `docker-2c-verify.toon` |
 | 2d | `97b5f01` | feat: add supervisor readiness, prefixed logs and aggregate health (POC-2d) | [2d](POC-02d-readiness-logs.md) | no QC report found; evidence is the slice page only |
 | 2e | `06ab764` | feat: add bounded service restart with backoff (POC-2e) | [2e](POC-02e-bounded-restart.md) | `qc-2e.toon` (pass with observations; one fail, see pending item 2) |
-| 2e follow-up | `ef5c429` | task: centralize state literals in service-registry | [2d](POC-02d-readiness-logs.md), [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md#state-words) | `qc-2f.toon` checks "state_literals" pass |
+| 2e follow-up | `ef5c429` | task: centralize state literals in service-registry | [2d](POC-02d-readiness-logs.md), [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md#state-words-in-statests) | `qc-2f.toon` checks "state_literals" pass |
 | 2f | `85a8ed3` | feat: add coordinated shutdown and tree kill (POC-2f) | [2f](POC-02f-coordinated-shutdown.md) | `qc-2f.toon` (pass with reservations) |
 | 2g | `d5e8b04` | feat: add real-binary smoke as package post-step (POC-2g) | [2g](POC-02g-real-binary-smoke.md) | no QC report found; evidence is the slice page only |
 | 2h | the commit that adds this page | docs: close poc-2 with result page and adr-002 | this page | none |
