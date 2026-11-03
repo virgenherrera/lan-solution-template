@@ -57,9 +57,9 @@ function logMigration(log: Log, event: MigrationEvent): void {
 function prepare$(boot: PersistenceBoot, log: Log, source: AssetSource): Observable<PersistenceBoot> {
   const { db, location } = boot;
   return defer(() => {
-    const info = readBuildInfo(source);
+    const info = readBuildInfo(source, boot.config.db.engine);
     return from(db.verifyVector()).pipe(
-      concatMap(() => migrate$(db, readEmbeddedMigrations(source), { runtimeVersion: info.runtime_version })),
+      concatMap(() => migrate$(db, readEmbeddedMigrations(source, boot.config.db.engine), { runtimeVersion: info.runtime_version })),
       tap((event) => logMigration(log, event)),
       toArray(),
       concatMap(() => verifySchema$(db, location, log)),
