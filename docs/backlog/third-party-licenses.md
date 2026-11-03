@@ -74,7 +74,7 @@ The human decided on 2026-11-03. The repository is a template.
 | [OQ21](../roadmap/PROPOSAL.md#open-questions) | A documented convention only, in [Future ideas](#future-ideas). |
 | [OQ22](../roadmap/PROPOSAL.md#open-questions) | Yes. `license = "PostgreSQL"` in `apps/desktop/src-tauri/Cargo.toml`. |
 
-Reasoning for OQ18. A template distributes source and `pnpm-lock.yaml`, not copies of dependencies. The notice obligation of the MIT, ISC, BSD and Apache-2.0 licenses applies when copies are redistributed. The derived product does that act. This is a general analysis, not legal advice. The hosted or SaaS case: not verified.
+Reasoning for OQ18. A template distributes source and `pnpm-lock.yaml`, not copies of dependencies. The notice obligation of the MIT, ISC, BSD and Apache-2.0 licenses applies when copies are redistributed. The derived product does that act. This is a general analysis, not legal advice.
 
 Reasoning for OQ20. A `--licenses` flag would be argv handled by `dispatch()` in `libs/service-registry`. It would be a third mode that prints an embedded notices file and exits 0. It would change the CLI surface, the exit code contract and the smoke bad-selector check. It has nothing to print without an embedded file.
 
@@ -106,7 +106,6 @@ For a team that builds a product from this template.
 4. Collect the production licenses with `pnpm licenses list --prod --json -C <app>` for each app that you bundle. Read it with `toon`, per the repository rules.
 5. Add the license of the Node.js runtime and of `sqlite-vector` if you bundle them. Add your own `LICENSE`.
 6. The Angular build already writes `3rdpartylicenses.txt` for the web bundle (verified in the spike).
-7. Hosted or SaaS use: not verified.
 
 ---
 
@@ -164,5 +163,4 @@ Documented only. Nothing here is built, scheduled or required.
 - The licenses of the Tauri crates.
 - Tauri `bundle.resources` placement per OS.
 - That `desktop:package` reads `artifacts/sea-runtime/`.
-- The hosted or SaaS case.
 - Windows and Linux SEA builds. Only macOS arm64 was available for the spike.
