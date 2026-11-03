@@ -7,6 +7,7 @@
     "package": "nx run-many -t package --exclude=lan-solution-template",
     "clean": "nx run-many -t clean --exclude=lan-solution-template && rimraf artifacts dist",
     "clean:all": "pnpm run clean && rimraf .nx/cache .nx/workspace-data \"apps/*/node_modules\" \"libs/*/node_modules\" node_modules",
+    "dev:config": "node tools/scripts/init-dev-config.ts",
     "securityCheck": "pnpm audit --audit-level=high"
   },
   "license": "PostgreSQL",

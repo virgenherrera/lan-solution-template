@@ -2,7 +2,7 @@
 // Usage: `node tools/scripts/smoke-sea.ts [--artifacts <dir>]`; the default dir is artifacts/sea-runtime. One line per check; the first failed check prints the tail of the run output and exits 1.
 // Needs the built service-registry library (the same contract the assembler loads). Windows is not verified (decision D3): the executable lookup throws there.
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, readlinkSync, realpathSync, statSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, readlinkSync, realpathSync, statSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { DatabaseSync } from 'node:sqlite';
 import { tmpdir } from 'node:os';
@@ -47,6 +47,14 @@ type SidecarEvent = import('service-registry').SidecarEvent;
 const sleep = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms));
 const smokeRoot = mkdtempSync(join(tmpdir(), 'lan-smoke-'));
 process.on('exit', () => rmSync(smokeRoot, { recursive: true, force: true }));
+// Like the installer: a valid config exists before the first start, because the app never creates one.
+const EXAMPLE_CONFIG = join(root, 'libs', 'shared-core', 'config.example.json');
+const CONFIG_FILE = 'config.json';
+function writeConfig(home: string, text: string = readFileSync(EXAMPLE_CONFIG, 'utf8')): void {
+  mkdirSync(join(home, 'config'), { recursive: true });
+  writeFileSync(join(home, 'config', CONFIG_FILE), text);
+}
+writeConfig(smokeRoot);
 const startedAt = Date.now();
 const knownPids = new Set<number>();
 let current: Run | undefined;
@@ -372,6 +380,7 @@ await check('stdin shutdown command: exit 0, no process left', async () => {
 await check('schema mismatch (app_meta.value missing): exit 1, no service spawned', async () => {
   const home = mkdtempSync(join(smokeRoot, 'mismatch-'));
   mkdirSync(join(home, 'data'));
+  writeConfig(home);
   copyFileSync(join(smokeRoot, 'data', 'lan.db'), join(home, 'data', 'lan.db'));
   const db = new DatabaseSync(join(home, 'data', 'lan.db'));
   try {
@@ -385,6 +394,33 @@ await check('schema mismatch (app_meta.value missing): exit 1, no service spawne
   expect(code === 1, `exited ${code}`);
   expect(broken.lines.some((line) => line.includes('schema check FAILED')), 'no "schema check FAILED" line');
   expect(broken.spawnedPids().length === 0, 'a service was spawned');
+  return 'exit 1';
+});
+
+// A missing or invalid config must stop the start before any service spawns and before anything reaches stdout.
+await check('config missing: exit 1, no service spawned', async () => {
+  const home = mkdtempSync(join(smokeRoot, 'no-config-'));
+  const bare = new Run(binary, [], home);
+  current = bare;
+  const code = await bare.exit(SLACK_MS, 'start without a config');
+  expect(code === 1, `exited ${code}`);
+  expect(bare.lines.some((line) => line.includes('is missing')), 'no "is missing" line');
+  expect(bare.spawnedPids().length === 0, 'a service was spawned');
+  expect(bare.stdoutLines.length === 0, `stdout is not empty: ${bare.stdoutLines.length} lines`);
+  return 'exit 1';
+});
+
+await check('config with an unknown key: exit 1, the key is named', async () => {
+  const home = mkdtempSync(join(smokeRoot, 'bad-config-'));
+  const config = JSON.parse(readFileSync(EXAMPLE_CONFIG, 'utf8')) as { db: Record<string, unknown> };
+  config.db['bogusKey'] = true;
+  writeConfig(home, JSON.stringify(config));
+  const bad = new Run(binary, [], home);
+  current = bad;
+  const code = await bad.exit(SLACK_MS, 'start with an invalid config');
+  expect(code === 1, `exited ${code}`);
+  expect(bad.lines.some((line) => line.includes('bogusKey')), 'stderr does not name "bogusKey"');
+  expect(bad.spawnedPids().length === 0, 'a service was spawned');
   return 'exit 1';
 });
 

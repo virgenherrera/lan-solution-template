@@ -8,11 +8,13 @@ import type { AssetSource } from './asset-source.js';
 // `pnpm exec nx run sea-runtime:package` once; it writes dist/sea-package/sea-config.json (the asset map) and dist/db-migrations/.
 const PACKAGE_HINT = 'run `pnpm exec nx run sea-runtime:package` first';
 const WORKSPACE_MARKER = 'pnpm-workspace.yaml';
+// Ignored dev root: config/, data/, logs/ and certs/ live here, never in the repo root.
+const DEV_ROOT_DIR = '.local';
 const SEA_CONFIG = join('dist', 'sea-package', 'sea-config.json');
 
 // Walks up from this file until the workspace marker. The root comes from the file's location, never the cwd,
 // because `pnpm --filter` changes the cwd to the app folder. No fixed depth: the bundler may report the source or the dist path.
-export function devAnchor(): string {
+export function repoRoot(): string {
   let dir = dirname(fileURLToPath(import.meta.url));
   while (!existsSync(join(dir, WORKSPACE_MARKER))) {
     const parent = dirname(dir);
@@ -22,10 +24,15 @@ export function devAnchor(): string {
   return dir;
 }
 
+// Root for config, data and logs of a dev launch: an ignored folder, so dev state never lands in tracked files.
+export function devAnchor(): string {
+  return join(repoRoot(), DEV_ROOT_DIR);
+}
+
 const seaConfigSchema = z.object({ assets: z.record(z.string(), z.string()) });
 
-function readAssetMap(repoRoot: string): Record<string, string> {
-  const configPath = join(repoRoot, SEA_CONFIG);
+function readAssetMap(base: string): Record<string, string> {
+  const configPath = join(base, SEA_CONFIG);
   if (!existsSync(configPath)) throw new Error(`${configPath} not found: ${PACKAGE_HINT}`);
   return seaConfigSchema.parse(JSON.parse(readFileSync(configPath, 'utf8'))).assets;
 }
@@ -36,8 +43,8 @@ function readFile(name: string, path: string): Buffer {
 }
 
 // Same name list the SEA embeds: the assets map of sea-config.json maps each name to its file.
-export function fsAssetSource(repoRoot: string = devAnchor()): AssetSource {
-  const assets = readAssetMap(repoRoot);
+export function fsAssetSource(base: string = repoRoot()): AssetSource {
+  const assets = readAssetMap(base);
   return {
     readText(name) {
       const path = assets[name];

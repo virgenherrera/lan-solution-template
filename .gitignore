@@ -12,3 +12,6 @@ dist/
 
 # Local ODD logbook; mirrored in Engram under odd/<feature>/tasks.
 /odd/
+
+# Dev root: config, data, logs and certs of a local launch.
+/.local/
