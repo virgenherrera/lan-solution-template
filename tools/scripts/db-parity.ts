@@ -10,7 +10,7 @@ const root = resolve(import.meta.dirname, '..', '..');
 const sharedCorePath = join(root, 'libs', 'shared-core', 'dist', 'index.js');
 const sqliteEnginePath = join(root, 'libs', 'shared-core', 'dist', 'db', 'sqlite', 'index.js');
 const contractPath = join(root, 'libs', 'db-migrations', 'dist', 'contract', 'index.js');
-const DEFAULT_MIGRATIONS_DIR = join(root, 'libs', 'db-migrations', 'sqlite', 'migrations');
+const defaultMigrationsDir = (engine: string): string => join(root, 'libs', 'db-migrations', engine, 'migrations');
 
 // Only sqlite has an adapter wired here; a new engine adds its adapter and the check itself does not change.
 const ENGINES: readonly string[] = ['sqlite'];
@@ -40,14 +40,15 @@ async function main(): Promise<number> {
   }
   const { runMigrations } = (await import(sharedCorePath)) as typeof import('../../libs/shared-core/dist/index.js');
   const { SqliteAdapter } = (await import(sqliteEnginePath)) as typeof import('../../libs/shared-core/dist/db/sqlite/index.js');
-  const { tables, tablesSchema, compareSchema } = (await import(contractPath)) as typeof import('../../libs/db-migrations/dist/contract/index.js');
-  const migrations = readMigrations(resolve(option('migrations-dir', DEFAULT_MIGRATIONS_DIR)));
+  const { tablesByEngine, tablesSchema, compareSchema } = (await import(contractPath)) as typeof import('../../libs/db-migrations/dist/contract/index.js');
+  const migrations = readMigrations(resolve(option('migrations-dir', defaultMigrationsDir(engine))));
 
   const workDir = mkdtempSync(join(tmpdir(), 'db-parity-'));
   const db = new SqliteAdapter({ file: 'parity.db', foreignKeys: true, journalMode: 'DELETE', synchronous: 'NORMAL' }, workDir);
   try {
     await db.connect();
     await runMigrations(db, migrations);
+    const tables = tablesByEngine[engine as keyof typeof tablesByEngine];
     // Validate the descriptor itself first, then compare it exactly with what the real migrations built.
     const diff = compareSchema(tablesSchema.parse(tables), await db.introspectSchema(), 'exact').problems;
     if (diff.length === 0) {

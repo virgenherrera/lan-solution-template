@@ -1,4 +1,4 @@
-import { compareSchema, tables, tablesSchema, type SchemaReport } from 'db-migrations';
+import { compareSchema, tablesByEngine, tablesSchema, type Engine, type SchemaReport } from 'db-migrations';
 import { defer, from, map, type Observable, tap } from 'rxjs';
 import type { DbAdapter } from 'shared-core';
 
@@ -30,11 +30,15 @@ function assertMatches(db: DbAdapter, location: string, report: SchemaReport): S
   return report;
 }
 
+function failUnknownEngine(engine: string): never {
+  throw new Error(`no table descriptors for db engine "${engine}"`);
+}
+
 // Runs once per start, after the migrations: the live structure must contain what this build needs (S4, S6).
 // Extras that cannot hurt this build are tolerated and only logged.
 export function verifySchema$(db: DbAdapter, location: string, log: Log): Observable<SchemaReport> {
   return defer(() => {
-    const expected = tablesSchema.parse(tables);
+    const expected = tablesSchema.parse(tablesByEngine[db.engine as Engine] ?? failUnknownEngine(db.engine));
     return from(db.introspectSchema()).pipe(map((live) => assertMatches(db, location, compareSchema(expected, live, 'required'))));
   }).pipe(
     // A failure is printed once, in full, by main.ts when the boot stream rejects.

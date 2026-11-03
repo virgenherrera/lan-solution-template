@@ -18,7 +18,7 @@ import {
   buildInfoAssetName,
   manifestAssetName,
   migrationAssetName,
-  migrationsDir,
+  packOutDirFor,
 } from './pack-migrations.ts';
 
 const root = resolve(import.meta.dirname, '..', '..');
@@ -367,25 +367,32 @@ async function vectorAssets(target: BuildTarget): Promise<Record<string, string>
   return { 'sqlite-vector/pin.json': vectorPinPath, [`sqlite-vector/${entry.file}`]: binary };
 }
 
-// The packed migrations (pack-migrations.ts, run before this script) become SEA assets "db-migrations/manifest.json", "db-migrations/build-info.json" and "db-migrations/<tag>.sql".
-// Asset names come from the constants shared with the pack step; only SQL and JSON travel, never Drizzle (S7).
-function migrationAssets(): Record<string, string> {
-  const manifestPath = join(PACK_OUT_DIR, MANIFEST_FILE);
-  const buildInfoPath = join(PACK_OUT_DIR, BUILD_INFO_FILE);
+// The packed migrations (pack-migrations.ts, run before this script) become SEA assets "db-migrations/<engine>/manifest.json", "db-migrations/<engine>/build-info.json" and "db-migrations/<engine>/<tag>.sql".
+// Every packed engine is embedded and the runtime reads only the selected one. Asset names come from the constants shared with the pack step; only SQL and JSON travel, never Drizzle (S7).
+function engineMigrationAssets(engine: string): Record<string, string> {
+  const outDir = packOutDirFor(engine);
+  const manifestPath = join(outDir, MANIFEST_FILE);
+  const buildInfoPath = join(outDir, BUILD_INFO_FILE);
   for (const path of [manifestPath, buildInfoPath]) {
-    if (!existsSync(path)) throw new Error(`${path} missing; run "node tools/scripts/pack-migrations.ts" first`);
+    if (!existsSync(path)) throw new Error(`${path} missing; run "node tools/scripts/pack-migrations.ts --engine ${engine}" first`);
   }
-  const { migrations } = JSON.parse(readFileSync(manifestPath, 'utf8')) as { migrations: { file: string; sha256: string }[] };
-  const assets: Record<string, string> = { [manifestAssetName]: manifestPath, [buildInfoAssetName]: buildInfoPath };
+  const { migrations } = JSON.parse(readFileSync(manifestPath, utf8)) as { migrations: { file: string; sha256: string }[] };
+  const assets: Record<string, string> = { [manifestAssetName(engine)]: manifestPath, [buildInfoAssetName(engine)]: buildInfoPath };
   for (const { file, sha256 } of migrations) {
-    const path = join(migrationsDir, file);
-    if (createHash('sha256').update(readFileSync(path, 'utf8')).digest('hex') !== sha256) {
-      throw new Error(`${file}: differs from the packed manifest; run "node tools/scripts/pack-migrations.ts" again`);
+    const path = join(outDir, file);
+    if (!existsSync(path) || createHash(sha256).update(readFileSync(path, utf8)).digest(hex) !== sha256) {
+      throw new Error(`${path}: missing or differs from the packed manifest; run "node tools/scripts/pack-migrations.ts --engine ${engine}" again`);
     }
-    assets[migrationAssetName(file)] = path;
+    assets[migrationAssetName(engine, file)] = path;
   }
-  console.log(`db migrations: ${migrations.length} sql file(s) plus manifest and build info`);
+  console.log(`db migrations (${engine}): ${migrations.length} sql file(s) plus manifest and build info`);
   return assets;
+}
+
+function migrationAssets(): Record<string, string> {
+  const engines = existsSync(PACK_OUT_DIR) ? readdirSync(PACK_OUT_DIR, { withFileTypes: true }).filter((entry) => entry.isDirectory()) : [];
+  if (engines.length === 0) throw new Error(`${PACK_OUT_DIR}: no packed engine; run "node tools/scripts/pack-migrations.ts" first`);
+  return Object.assign({}, ...engines.map((entry) => engineMigrationAssets(entry.name)));
 }
 
 // REQ-SEA-03 baseline from ASSEMBLER_CONFIG; the code cache follows the native/cross rule; a cross build names the target's Node as the SEA base.
