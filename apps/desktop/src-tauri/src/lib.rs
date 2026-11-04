@@ -27,6 +27,9 @@ pub fn run() {
       }
     })
     .setup(|app| {
+      // The wdio plugin installs its own logger but leaves the max level at Off: raise it so the E2E can read the host log.
+      #[cfg(feature = "wdio")]
+      log::set_max_level(log::LevelFilter::Info);
       // The wdio plugin installs its own logger; a second one panics.
       if cfg!(debug_assertions) && !cfg!(feature = "wdio") {
         app.handle().plugin(

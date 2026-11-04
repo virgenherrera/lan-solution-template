@@ -1,5 +1,5 @@
 // Native E2E of the desktop host (REQ-TEST-08, AC-20): the instrumented build starts the real sea-runtime sidecar.
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { request } from 'node:https';
 import { join } from 'node:path';
 
@@ -29,5 +29,25 @@ describe('desktop host', () => {
   it('creates the main window once the sidecar is ready', async () => {
     const handles = await browser.getWindowHandles();
     if (!handles.includes('main')) throw new Error(`no main window handle: ${JSON.stringify(handles)}`);
+  });
+});
+
+// A2: the window may only stay on https://127.0.0.1:<httpsPort>. The page is not trusted in this run (the window URL reads about:blank), so the assertions are that the URL does not change and that the host log records each block.
+describe('navigation filter', () => {
+  const foreign = ['https://example.com/', `http://127.0.0.1:${port + 1}/`, `http://127.0.0.1:${port}/`, 'ftp://127.0.0.1/'];
+  const hostLog = () => {
+    const dir = join(base, 'wdio-logs');
+    return existsSync(dir) ? readdirSync(dir).map((f) => readFileSync(join(dir, f), 'utf8')).join('\n') : '';
+  };
+
+  it('blocks every navigation outside the gateway origin and logs it', async () => {
+    await browser.switchToWindow('main');
+    const before = await browser.getUrl();
+    for (const target of foreign) {
+      await browser.url(target).catch(() => undefined);
+      await browser.waitUntil(() => hostLog().includes(`navigation blocked url=${target}`), { timeout: 15_000, interval: 500, timeoutMsg: `no "navigation blocked" log for ${target}` });
+      const after = await browser.getUrl();
+      if (after !== before) throw new Error(`window URL changed after ${target}: ${before} -> ${after}`);
+    }
   });
 });
