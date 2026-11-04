@@ -148,7 +148,7 @@ The [ADR index](../roadmap/PROPOSAL.md#adr-index) in the roadmap proposal lists 
 | [ADR-004](adr/ADR-004-drizzle-build-time-migrations.md) | Drizzle build-time migrations | accepted | DBM |
 | [ADR-005](adr/ADR-005-live-schema-validation.md) | Live schema validation | accepted | DBM |
 | [ADR-006](adr/ADR-006-sidecar-status-contract.md) | Sidecar status contract | proposed; implemented in PR #15 | PR #15 |
-| [ADR-007](adr/ADR-007-persistence-system.md) | Persistence system | proposed; implemented in PR #17 (draft) | PR #17 |
+| [ADR-007](adr/ADR-007-persistence-system.md) | Persistence system | implemented in PR #17 (merged) | PR #17 |
 | [ADR-008](adr/ADR-008-tls-trust-model.md) | TLS trust model | accepted; implemented on `minor/poc-04-https-gateway` ([device-trust guide](device-trust-guide.md)) | [POC-4](../roadmap/PROPOSAL.md#poc-4-https-gateway-serving-the-angular-pwa) |
 | ADR-009 | Desktop process model | placeholder | [POC-5](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar) |
 | ADR-010 | Auth mechanism | placeholder | [POC-7](../roadmap/PROPOSAL.md#poc-7-auth-and-roles) |

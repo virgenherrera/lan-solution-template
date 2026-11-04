@@ -3,7 +3,7 @@ fmt: TOON
 doc: docs/results/SPIKE-pwa-https-trust-Result.md
 title: "SPIKE PWA HTTPS trust result"
 type: backlog
-summary: "Observed results of the phone-trust spike on Chromium, an iOS simulator and an Android emulator; real phones remain."
+summary: "Observed results of the phone-trust spike on Chromium, an iOS simulator and an Android emulator; real phones closed as not needed."
 ids[0]:
 related[5]: docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/device-trust-guide.md,docs/results/POC-04-Result.md
 status: current
@@ -19,7 +19,7 @@ Branch: `docs/phone-trust-and-dev-trust`. Plan: [spike plan](../backlog/spike-pw
 - Question: does the built-in CA of [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md) let a PWA load over HTTPS and register its service worker on iOS Safari and Android Chrome?
 - Answer on an iOS simulator and an Android emulator: yes, once the CA is installed. Without it both browsers show a certificate warning and the service worker does not register.
 - Chrome on Android honors a user-installed CA. The research had marked this a contradiction.
-- Not done: real phones, Add to Home Screen, installed-PWA behavior and an IP change. See [Not observed](#not-observed).
+- Not done (closed 2026-11-03, see Not observed): real phones, Add to Home Screen, installed-PWA behavior and an IP change. See [Not observed](#not-observed).
 
 ## Environment
 
