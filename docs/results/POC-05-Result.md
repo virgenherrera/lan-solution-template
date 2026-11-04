@@ -122,7 +122,7 @@ Deviations:
 - The spike hooks `SPIKE_AUTOQUIT_MS`, `SPIKE_EOF` and `SPIKE_SIDECAR_ARGS` were not kept.
 - WDIO permissions live in the overlay `tauri.wdio.conf.json`, not in `capabilities/` (a file there is always loaded and breaks the default build).
 - The first-run wizard has no code in this POC. ADR-010 is a proposal.
-- Requirement ids: REQ-DESK-01 to REQ-DESK-06, REQ-SEC-05, REQ-TLS-02, REQ-TEST-08, REQ-TEST-09 and REQ-ECO-06 (11 ids, the list in the [epic](../backlog/poc-5-tauri-sidecar-desktop-shell.md)). The log service and the first-run setup have no REQ or AC id.
+- Requirement ids: REQ-DESK-01, REQ-DESK-02, REQ-DESK-03, REQ-DESK-04, REQ-DESK-05, REQ-DESK-06, REQ-SEC-05, REQ-TLS-02, REQ-TEST-08, REQ-TEST-09 and REQ-ECO-06 (11 ids, the list in the [epic](../backlog/poc-5-tauri-sidecar-desktop-shell.md)). The log service and the first-run setup have no REQ or AC id.
 
 ## Open decisions for the human
 
