@@ -24,6 +24,7 @@ updated: 2026-11-04
 - [Acceptance criteria](#acceptance-criteria)
 - [Tasks](#tasks)
 - [U3 result: the macOS installer](#u3-result-the-macos-installer)
+- [U4a result: the executable creates the per-install TLS files](#u4a-result-the-executable-creates-the-per-install-tls-files)
 - [Moved to technical debt](#moved-to-technical-debt)
 - [Pitch items without a source id](#pitch-items-without-a-source-id)
 - [Open questions](#open-questions)
@@ -172,6 +173,39 @@ cat /usr/local/lan-solution/config/config.json   # must still print the edited c
 sudo rm -rf /usr/local/lan-solution
 sudo pkgutil --forget com.virgenherrera.lansolution
 ```
+
+---
+
+## U4a result: the executable creates the per-install TLS files
+
+[Back to navigation](#navigation)
+
+The `sea-runtime` executable has one new operation, `--generate-certs`. The installer (U4b) calls it, so each install gets its own CA and leaf. No CA or key travels in the payload.
+
+Operations of the executable and their exit codes:
+
+| Invocation | What it does | Exit codes |
+|---|---|---|
+| no argument | starts the supervisor | the supervisor's own code |
+| `--service <id>` | starts one registered service | the service's own code; `2` for an unknown, empty or repeated id |
+| `--generate-certs` | creates `<base>/certs/{ca.crt, ca.key, leaf.crt, leaf.key}` and exits | `0` done; `1` error (config missing or invalid, CA unusable); `2` when combined with `--service` |
+
+Behaviour:
+
+- The base is the directory of the executable ([ADR-007](../architecture/adr/ADR-007-persistence-system.md)). The operation reads `<base>/config/config.json` for `tls.extraNames`.
+- It runs the same generator as `pnpm dev:certs` (`generateTlsIdentity` in `libs/shared-core/src/tls/generate.ts`). Profile, validity and file modes are those of [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md): `certs/` 0700, keys 0600.
+- It never replaces an existing CA. A second run keeps `ca.crt` and `ca.key` and reissues only a missing, expiring or renamed leaf. A CA that is unusable, or a lone `ca.crt` or `ca.key`, exits 1 and changes nothing.
+- It prints the paths, `CA created|kept` and the CA SHA-256 fingerprint (for the installer to record). It never prints key material.
+- The code is `libs/shared-core/src/tls/certs-command.ts`. It is not exported from `shared-core/tls`, so the gateway still cannot create certificates. The generated SEA entry imports it by path; the dispatcher (`libs/service-registry`) returns the new target kind `generate-certs`.
+
+Verified on macOS 27.2 arm64, 2026-11-04, with the real `sea-runtime` binary copied into a temporary base:
+
+- Files and modes as above; `openssl verify -CAfile ca.crt leaf.crt` prints OK; the CA has `CA:TRUE`; the leaf SAN has `localhost`, `127.0.0.1`, `::1`, the host name, the LAN addresses and the `extraNames` added to `config.json`; the printed fingerprint equals `openssl x509 -fingerprint -sha256`.
+- A second run keeps `ca.key`, `ca.crt` and `leaf.crt` byte for byte; a changed `extraNames` reissues only the leaf.
+- The supervisor of that base reaches `ready` and `curl --cacert certs/ca.crt https://127.0.0.1:8443/api/health` returns `{"status":"ready"}`; no process is left after `SIGTERM`.
+- Against the previous binary: `--service nope` still exits 2 with the same message, and `pnpm dev:certs` yields the same certificate profile.
+
+The dispatcher list in [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md) ("no argument means supervisor mode, `--service <id>` starts one service, anything else exits 2") and the sentence in [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md) that the packaged install gets its files from the installer were not edited. Both need a human decision (U7).
 
 ---
 
