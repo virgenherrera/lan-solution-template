@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "test": "pnpm run test:static && pnpm run test:dynamic",
-    "build": "cargo check --manifest-path src-tauri/Cargo.toml",
-    "package": "tauri build --no-bundle",
+    "build": "node ../../tools/scripts/stage-sidecar.ts && cargo check --manifest-path src-tauri/Cargo.toml",
+    "package": "node ../../tools/scripts/stage-sidecar.ts && tauri build --no-bundle",
     "test:static": "echo \"test:static: not defined for this package\"",
     "test:dynamic": "echo \"test:dynamic: not defined for this package\""
   },
@@ -23,6 +23,12 @@
               "web-angular"
             ],
             "target": "build"
+          },
+          {
+            "projects": [
+              "sea-runtime"
+            ],
+            "target": "package"
           }
         ]
       },

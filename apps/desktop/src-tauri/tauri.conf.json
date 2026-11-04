@@ -47,6 +47,7 @@
     },
     "android": {
       "debugApplicationIdSuffix": ".debug"
-    }
+    },
+    "externalBin": ["binaries/sea-runtime"]
   }
 }
