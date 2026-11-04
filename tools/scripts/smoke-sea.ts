@@ -2,7 +2,7 @@
 // Usage: `node tools/scripts/smoke-sea.ts [--artifacts <dir>]`; the default dir is artifacts/sea-runtime. One line per check; the first failed check prints the tail of the run output and exits 1.
 // Needs the built service-registry library (the same contract the assembler loads). Windows is not verified (decision D3): the executable lookup throws there.
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, readlinkSync, realpathSync, statSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, readlinkSync, realpathSync, statSync } from 'node:fs';
 import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { createServer } from 'node:net';
@@ -71,12 +71,19 @@ function writeConfig(installDir: string, text: string = JSON.stringify(smokeConf
   mkdirSync(join(installDir, 'config'), { recursive: true });
   writeFileSync(join(installDir, 'config', CONFIG_FILE), text);
 }
+// Like the installer, the command creates and renews the TLS files: the gateway only validates them.
+const GENERATE_CERTS = join(root, 'tools', 'scripts', 'generate-certs.ts');
+function generateCerts(installDir: string): string {
+  return execFileSync(process.execPath, [GENERATE_CERTS, '--base', installDir], { encoding: 'utf8' });
+}
 // The executable resolves its base from its own folder, so each run gets a fresh install dir holding a copy of it.
-function install(source: string, withConfig: boolean = true, text?: string): { dir: string; binary: string } {
+// A valid config (the default) is followed by the TLS files; pass withCerts false for an install the installer has not finished.
+function install(source: string, withConfig: boolean = true, text?: string, withCerts: boolean = true): { dir: string; binary: string } {
   const dir = mkdtempSync(join(smokeRoot, 'install-'));
   const binary = join(dir, basename(source));
   copyFileSync(source, binary);
   if (withConfig) writeConfig(dir, text);
+  if (withConfig && text === undefined && withCerts) generateCerts(dir);
   return { dir, binary };
 }
 const startedAt = Date.now();
@@ -165,7 +172,7 @@ const alive = (pid: number): boolean => {
   }
 };
 
-// The install dir of the run being checked: the CA the binary created lives in its certs/ folder.
+// The install dir of the run being checked: the CA made by generate-certs lives in its certs/ folder.
 let activeDir = '';
 const readCa = (dir: string): string | undefined => {
   try {
@@ -347,7 +354,7 @@ await check('child runs the same executable as the supervisor', async () => {
   expect(child.argv0 === realpathSync(binary), `${child.argv0} is not ${realpathSync(binary)}`);
 });
 
-await check('TLS identity created with private modes', async () => {
+await check('TLS files made by generate-certs have private modes', async () => {
   const certs = join(installDir, 'certs');
   const modeOf = (path: string): number => statSync(path).mode & 0o777;
   expect(modeOf(certs) === 0o700, `certs dir mode ${modeOf(certs).toString(8)}`);
@@ -473,25 +480,28 @@ async function stopClean(target: Run): Promise<void> {
 }
 
 const certFile = (dir: string, name: string): Buffer => readFileSync(join(dir, 'certs', name));
+const TLS_FILES = ['ca.crt', 'ca.key', 'leaf.crt', 'leaf.key'] as const;
 
-await check('second start reuses the TLS identity', async () => {
+await check('second start uses the TLS files and changes none', async () => {
   knownPids.clear();
-  const caBefore = certFile(installDir, 'ca.crt');
-  const leafBefore = certFile(installDir, 'leaf.crt');
+  const before = TLS_FILES.map((name) => certFile(installDir, name));
   const again = await startReady(binary);
-  expect(certFile(installDir, 'ca.crt').equals(caBefore), 'ca.crt changed');
-  expect(certFile(installDir, 'leaf.crt').equals(leafBefore), 'leaf.crt changed');
-  expect(again.lines.some((line) => line.includes('reusing')), 'no stderr line with "reusing"');
+  TLS_FILES.forEach((name, index) => expect(certFile(installDir, name).equals(before[index]), `${name} changed`));
+  expect(again.lines.some((line) => line.includes('using leaf certificate')), 'no stderr line with "using leaf certificate"');
   await stopClean(again);
 });
 
-await check('tls.extraNames: new leaf, same CA, new name redirects', async () => {
+await check('generate-certs again: nothing changes; with tls.extraNames: new leaf, same CA, new name redirects', async () => {
   knownPids.clear();
+  const before = TLS_FILES.map((name) => certFile(installDir, name));
+  generateCerts(installDir);
+  TLS_FILES.forEach((name, index) => expect(certFile(installDir, name).equals(before[index]), `${name} changed on a second generate-certs`));
   const caBefore = certFile(installDir, 'ca.crt');
   const leafBefore = certFile(installDir, 'leaf.crt');
   const config = smokeConfig();
   config.tls.extraNames = ['lan.test'];
   writeConfig(installDir, JSON.stringify(config));
+  generateCerts(installDir);
   const renamed = await startReady(binary);
   expect(certFile(installDir, 'ca.crt').equals(caBefore), 'ca.crt changed');
   expect(!certFile(installDir, 'leaf.crt').equals(leafBefore), 'leaf.crt was not reissued');
@@ -530,7 +540,7 @@ await check('sidecar simulation: stdout holds only valid events', async () => {
 await check('sidecar simulation: HTTPS with the CA from the install dir', async () => {
   const response = await get(ROUTES.health, sidecar.dir);
   expect(response?.status === EXPECTED_STATUS.ok, `status ${response?.status}`);
-  expect(readCa(sidecar.dir) !== undefined, 'certs were not created next to the executable');
+  expect(readCa(sidecar.dir) !== undefined, 'certs are missing next to the executable');
 });
 
 await check('sidecar simulation: shutdown line on stdin, exit 0, no listener left', async () => {
@@ -567,6 +577,35 @@ await check('config missing: exit 1, no service spawned', async () => {
   expect(bare.lines.some((line) => line.includes('is missing')), 'no "is missing" line');
   expect(bare.spawnedPids().length === 0, 'a service was spawned');
   expect(bare.stdoutLines.length === 0, `stdout is not empty: ${bare.stdoutLines.length} lines`);
+  return 'exit 1';
+});
+
+// The gateway never creates certificates: missing or invalid files stop the start and name the command that fixes them.
+// The gateway runs alone (service selector) here, so its own exit code is the one observed.
+const gatewayArgs = [`--${DISPATCHER_CONFIG.serviceFlag}`, SERVICE_ID];
+await check('TLS files missing: exit 1, the message names pnpm dev:certs, no file created', async () => {
+  const bare = install(artifact, true, undefined, false);
+  const run = new Run(bare.binary, gatewayArgs);
+  current = run;
+  const code = await run.exit(SLACK_MS, 'start without TLS files');
+  expect(code === 1, `exited ${code}`);
+  expect(run.lines.some((line) => line.includes('pnpm dev:certs')), 'stderr does not name "pnpm dev:certs"');
+  expect(run.lines.some((line) => line.includes('ca.crt is missing')), 'stderr does not name the missing ca.crt');
+  expect(!existsSync(join(bare.dir, 'certs')), 'the gateway created the certs/ folder');
+  return 'exit 1';
+});
+
+await check('leaf.key that does not match leaf.crt: exit 1, the mismatch is named, files untouched', async () => {
+  const broken = install(artifact);
+  const other = install(artifact);
+  copyFileSync(join(other.dir, 'certs', 'leaf.key'), join(broken.dir, 'certs', 'leaf.key'));
+  const before = TLS_FILES.map((name) => certFile(broken.dir, name));
+  const run = new Run(broken.binary, gatewayArgs);
+  current = run;
+  const code = await run.exit(SLACK_MS, 'start with a mismatched leaf.key');
+  expect(code === 1, `exited ${code}`);
+  expect(run.lines.some((line) => line.includes('leaf.key does not belong to')), 'stderr does not name the key mismatch');
+  TLS_FILES.forEach((name, index) => expect(certFile(broken.dir, name).equals(before[index]), `${name} changed`));
   return 'exit 1';
 });
 

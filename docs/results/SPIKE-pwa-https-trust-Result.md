@@ -72,7 +72,7 @@ Closed with the sources above (decided 2026-11-03 under the human's delegation: 
 - D4 and D8 on phones: Add to Home Screen, the Chrome install prompt, offline reload and the installed PWA.
 - D8 against the packaged gateway PWA (no packaged binary was available to the harness).
 - D5 and D9 on Android. The emulator hit a system "isn't responding" dialog before they ran.
-- D10, a changed host IP. The `tls.extraNames` reissue is covered by the packaged smoke; a real IP change was not run.
+- D10, a changed host IP. The `tls.extraNames` reissue by `pnpm dev:certs` is covered by the packaged smoke; a real IP change was not run.
 - Clicking through the certificate warning. No layer tested whether that enables the service worker.
 - mDNS on a real phone. The simulator shares the Mac network.
 - Name constraints, certificate lifetime on Android, and the blast radius of a stolen leaf key (research items that need no device).

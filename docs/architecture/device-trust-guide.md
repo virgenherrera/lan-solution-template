@@ -30,7 +30,7 @@ Status: no step below was run on a device. Each OS section says what the vendor 
 
 ## The CA file
 
-The gateway creates the CA on its first start. The file is `<base>/certs/ca.crt`. `<base>` is the directory of the executable, or the working directory in a dev run ([ADR-007](adr/ADR-007-persistence-system.md#one-base-directory)).
+`pnpm dev:certs` creates the CA, once; the gateway only reads it and never creates or replaces it. The file is `<base>/certs/ca.crt`. `<base>` is the directory of the executable, or the working directory in a dev run ([ADR-007](adr/ADR-007-persistence-system.md#one-base-directory)).
 
 - Copy only `ca.crt` to the device by a channel you control (USB, file share). No gateway endpoint serves it.
 - Never copy or share `ca.key` or `leaf.key`. Whoever holds `ca.key` can issue a certificate that a trusting device accepts.
@@ -41,7 +41,8 @@ A device that trusts `ca.crt` accepts every certificate that this CA signs. The 
 
 - Trust only a CA file that you copied from your own host.
 - Remove the CA from a device when the gateway is retired.
-- The CA lasts 10 years. The leaf lasts 397 days and the gateway renews it. A trusting device keeps trusting the new leaf.
+- The CA lasts 10 years. The leaf lasts 397 days and `pnpm dev:certs` renews it. A trusting device keeps trusting the new leaf.
+- If `certs/` is deleted, `pnpm dev:certs` creates a new CA. Devices keep the old CA in their stores: remove it and trust the new `ca.crt`.
 
 ## iOS and iPadOS
 
@@ -110,4 +111,4 @@ The page does not say how to add the file to the keychain or which menu value ma
 
 ## After the network changes
 
-The gateway reissues the leaf when the hostname or an address changes, and logs the reason ([REQ-TLS-04](../requirements/06-web-gateway-https-pwa.md)). The CA stays. A device that trusts the CA needs no action. Add a stable name to `tls.extraNames` in `config/config.json` if clients use one.
+The gateway logs a leaf that no longer covers the hostname or an address, with the reason ([REQ-TLS-04](../requirements/06-web-gateway-https-pwa.md)), and keeps using it. Run `pnpm dev:certs` to issue a new leaf. The CA stays. A device that trusts the CA needs no action. Add a stable name to `tls.extraNames` in `config/config.json` if clients use one.

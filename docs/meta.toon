@@ -65,7 +65,7 @@ docs[81]:
   - doc: docs/architecture/adr/ADR-008-tls-trust-model.md
     title: ADR-008 TLS trust model
     type: architecture
-    summary: "Local CA and leaf built with Node built-ins only, strict net and tls config, HTTPS 8443 with a 308 redirect."
+    summary: "Local CA and leaf built with Node built-ins, created only by pnpm dev:certs and validated read-only by the gateway."
     ids: []
     related[10]: docs/architecture/device-trust-guide.md,docs/results/POC-04-Result.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/requirements/06-web-gateway-https-pwa.md,docs/roadmap/PROPOSAL.md,docs/architecture/overview.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md
     status: current

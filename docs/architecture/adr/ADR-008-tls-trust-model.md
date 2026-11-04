@@ -3,7 +3,7 @@ fmt: TOON
 doc: docs/architecture/adr/ADR-008-tls-trust-model.md
 title: "ADR-008 TLS trust model"
 type: architecture
-summary: "Local CA and leaf built with Node built-ins only, strict net and tls config, HTTPS 8443 with a 308 redirect."
+summary: "Local CA and leaf built with Node built-ins, created only by pnpm dev:certs and validated read-only by the gateway."
 ids[0]:
 related[10]: docs/architecture/device-trust-guide.md,docs/results/POC-04-Result.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/requirements/06-web-gateway-https-pwa.md,docs/roadmap/PROPOSAL.md,docs/architecture/overview.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md
 status: current
@@ -29,6 +29,8 @@ updated: 2026-11-03
 ## Status
 
 Accepted, 2026-11-03. Implemented on `minor/poc-04-https-gateway`. Evidence: the [POC-4 result](../../results/POC-04-Result.md). The human delegated the choice ([OQ8](../../roadmap/PROPOSAL.md#open-questions)) with this instruction: "trata de hacer auto-gen solo con built-ins de node. y que funcionee en todos los ambientes (dev, sea, sidecar tauri)". The details below are agent decisions. The tasks are on the [backlog page](../../backlog/poc-4-https-gateway-angular-pwa.md).
+
+Amended 2026-11-03 on `minor/strict-tls-identity` after this human instruction: "Si no esta o es invalido truena y dice coaramente porque (faltan los certs o son invalidos por lo que sea) (ya sabes usa zod)" and "deberia ser como la validacion de db". The gateway no longer creates certificates: see [The gateway never creates certificates](#the-gateway-never-creates-certificates).
 
 ## Context
 
@@ -73,7 +75,9 @@ The leaf SAN is the union of:
 - The non-internal IPv4 and IPv6 addresses of `os.networkInterfaces()`, except link-local IPv6 (`fe80::/10`), which needs a zone id.
 - `tls.extraNames` from the config.
 
-At start the identity service compares the SAN of the stored leaf with this set. A difference is logged ([REQ-TLS-04](../../requirements/06-web-gateway-https-pwa.md)). The leaf is then reissued under the same CA. The CA never changes, so a device that trusts it keeps trusting the new leaf. An expired or unreadable leaf follows the same path.
+`pnpm dev:certs` compares the SAN of the stored leaf with this set. When the leaf is missing, expired, within 30 days of expiry, broken or has a different SAN set, it issues a new leaf under the same CA. The CA never changes, so a device that trusts it keeps trusting the new leaf.
+
+At start the gateway compares the SAN of the stored leaf with the same set. A difference, or an expiry within 30 days, is logged with the fix command ([REQ-TLS-04](../../requirements/06-web-gateway-https-pwa.md)) and the gateway keeps starting with that leaf. The redirect allow-list is the SAN of the leaf, not the wanted set.
 
 ### Storage
 
@@ -85,7 +89,23 @@ At start the identity service compares the SAN of the stored leaf with this set.
   leaf.crt
 ```
 
-`<base>` is the one base directory of [ADR-007](ADR-007-persistence-system.md#one-base-directory). The keys are not encrypted and no key-storage provider exists. The file mode is the protection. The CA private key never goes in the database and is never served or distributed ([REQ-TLS-03](../../requirements/06-web-gateway-https-pwa.md)). Reading all of `certs/` yields the keys. That residual risk is accepted.
+`<base>` is the one base directory of [ADR-007](ADR-007-persistence-system.md#one-base-directory). Only `pnpm dev:certs` writes these files, each with an atomic rename. The gateway reads `ca.crt`, `leaf.crt` and `leaf.key`; `ca.key` may stay offline. The keys are not encrypted and no key-storage provider exists. The file mode is the protection. The CA private key never goes in the database and is never served or distributed ([REQ-TLS-03](../../requirements/06-web-gateway-https-pwa.md)). Reading all of `certs/` yields the keys. That residual risk is accepted.
+
+### The gateway never creates certificates
+
+Decision (agent, 2026-11-03, after the instruction in [Status](#status)). The gateway validates the TLS files like it validates the database config: a missing or invalid file stops the start. It never creates, renews or deletes a file in `certs/`.
+
+- Why: when `certs/` was deleted the gateway created a new CA. The old CA stayed trusted in the store of every device (the iOS simulator collected 3 entries) and the new one had to be trusted again. A start must not change what devices trust.
+- Validation: the facts are computed with `node:crypto` `X509Certificate` and checked by one zod schema (`z.literal(true, message)` and `z.date().min(now, message)`, no `superRefine`, no default). `z.prettifyError` lists every problem in one error. A missing file is named individually.
+- Checked: `ca.crt` is a CA and not expired. `leaf.crt` is signed by `ca.crt` and is not expired. `leaf.key` matches `leaf.crt`.
+- Exit 1 and a message that names the file and `pnpm dev:certs`. A packaged install gets its files from the installer; no installer exists yet.
+- Command: `pnpm dev:certs [--base <dir>]` (`tools/scripts/generate-certs.ts`). The base defaults to the cwd and holds `config/config.json` and `certs/`.
+  - It creates the CA only when `ca.crt` and `ca.key` are both absent. One present is an error that names the missing one.
+  - It never replaces an existing CA, not even an expired one. Deleting `certs/` is the explicit way to get a new CA.
+  - It issues only the leaf, when it is missing, expired, within 30 days of expiry, not issued by the CA, not matched by its key, or when its SAN set differs from the wanted set.
+  - It prints the SHA-256 fingerprint of the CA. After it creates a new CA it warns that every device that trusts an older CA must trust this one; the older CA stays in their stores until removed.
+- The command is the setup that [REQ-TLS-01](../../requirements/06-web-gateway-https-pwa.md) asks for ("the setup MUST generate/provision"). No requirement text changes.
+- Code: `libs/shared-core/src/tls/identity.ts` (`loadTlsIdentity`, read-only) and `generate.ts` (used only by the command, not exported from `shared-core/tls`).
 
 ### Strict config blocks
 
@@ -136,7 +156,7 @@ POC-5 owns those.
 
 ### Out of scope
 
-- Installing the CA in the trust store of other devices ([REQ-TLS-02](../../requirements/06-web-gateway-https-pwa.md) says "SHOULD facilitate"). The [device-trust guide](../device-trust-guide.md) meets it. The host that runs the gateway has `pnpm dev:trust` (see [Phone trust](#phone-trust)).
+- Installing the CA in the trust store of other devices ([REQ-TLS-02](../../requirements/06-web-gateway-https-pwa.md) says "SHOULD facilitate"). The [device-trust guide](../device-trust-guide.md) meets it. The host that runs the gateway has `pnpm dev:trust` (see [Phone trust](#phone-trust)), after `pnpm dev:certs` created the CA.
 - Windows ACL.
 - Real Tauri and PostgreSQL.
 
@@ -173,25 +193,28 @@ Decision:
 
 ## Known gap
 
-The identity writes `leaf.key` and then `leaf.crt`, each with an atomic rename. A crash between the two leaves a key that does not match the certificate. The next start throws `<leaf.key> does not belong to <leaf.crt>` and stops.
+`pnpm dev:certs` writes `leaf.key` and then `leaf.crt`, each with an atomic rename. A crash between the two leaves a key that does not match the certificate. The gateway does not repair it: the next start stops with `<leaf.key> does not belong to <leaf.crt>`.
 
-- Option, not implemented: reissue the leaf when the leaf pair is inconsistent. A leaf has no trust implication, because devices trust the CA. The CA pair must keep throwing, because a new CA breaks the trust of every device.
-- Today the operator deletes `leaf.key` and `leaf.crt` and restarts.
+- The next `pnpm dev:certs` reissues the leaf, because a key that does not match is one of its reasons. A leaf has no trust implication, because devices trust the CA. The CA pair is never touched by that repair.
+- Only the command writes `certs/`, so the gap is limited to a crash during the command.
 
 ## Consequences
 
 - No new dependency. The SEA stays one file.
 - The DER encoder and the X.509 builder are project code. The smoke scripts pin them with the probe checks above. There is no unit suite ([REQ-TEST-01](../../requirements/11-nx-quality-testing.md)).
 - Every device must install `ca.crt` by hand. The system promises no automatic trust.
-- The leaf is reissued when the network changes. A mobile client that trusts the CA needs nothing.
+- The leaf is reissued by `pnpm dev:certs` when the network changes. The gateway only logs the mismatch. A mobile client that trusts the CA needs nothing.
+- A start without the files stops. In dev the operator runs `pnpm dev:certs` once before `pnpm dev:gateway`.
+- Deleting `certs/` and running the command creates a new CA. Devices keep the old one and must trust the new one.
 - `net` and `tls` are required in `config.json`. An existing config without them stops the start.
 
 ## Measured
 
-From the packaged smoke (28 checks, 4 of them the sidecar simulation) and the dev smoke (3 checks). Details: [POC-4 result](../../results/POC-04-Result.md#evidence).
+From the packaged smoke (30 checks, 4 of them the sidecar simulation) and the dev smoke (6 checks). Details: [POC-4 result](../../results/POC-04-Result.md#evidence).
 
 - Modes: `certs/` is `0700`, key files are `0600`.
-- A second start reuses the identity. A changed `tls.extraNames` gives a new leaf and the same `ca.crt`.
+- A second start uses the files and changes none. After a changed `tls.extraNames`, `generate-certs` gives a new leaf and the same `ca.crt`.
+- A start without TLS files exits 1, names the missing file and `pnpm dev:certs`, and creates nothing. A `leaf.key` that does not match `leaf.crt` exits 1 and names the mismatch.
 - HTTPS with the CA answers 200. Without the CA the client fails with `UNABLE_TO_VERIFY_LEAF_SIGNATURE`.
 - The redirect answers 308 for a known host, 400 for an unknown host and 405 for a method other than GET and HEAD.
 - A taken port stops the start with exit 1.
@@ -207,5 +230,6 @@ Same list as the [POC-4 result](../../results/POC-04-Result.md#not-verified).
 - The WebView of Tauri trusting the CA.
 - Real Tauri `CommandEvent` handling, the tray and the supervisor ending on stdin EOF.
 - Windows: ACLs on `certs/`, shells and any packaged run. Windows ignores 0600.
+- The installer step that creates the TLS files of a packaged install: no installer exists. The packaged smoke runs `generate-certs` by hand.
 - A base directory inside a read-only app bundle, so `certs/` could not be written. POC-5 and [OQ16](../../roadmap/PROPOSAL.md#open-questions) own it.
 - macOS code signing of the sidecar.
