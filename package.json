@@ -1,6 +1,6 @@
 {
   "name": "lan-solution-template",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "scripts": {
     "test": "node tools/scripts/test-filter.ts",
     "build": "nx run-many -t build --exclude=lan-solution-template",
@@ -12,7 +12,11 @@
     "dev:web": "NODE_EXTRA_CA_CERTS=\"$PWD/certs/ca.crt\" pnpm --filter web-angular exec ng serve",
     "dev:all": "pnpm --filter lan-solution-template --parallel run \"/^dev:(gateway|web)$/\"",
     "dev:certs": "pnpm --filter shared-core build && node tools/scripts/generate-certs.ts",
-    "dev:trust": "node tools/scripts/trust-ca.ts"
+    "dev:trust": "node tools/scripts/trust-ca.ts",
+    "release:version": "nx release version",
+    "release:changelog": "nx release changelog",
+    "release:check": "node tools/scripts/version-check.ts",
+    "release:branch": "node tools/scripts/branch-name.ts"
   },
   "license": "PostgreSQL",
   "devEngines": {

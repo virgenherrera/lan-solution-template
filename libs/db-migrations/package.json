@@ -1,6 +1,6 @@
 {
   "name": "db-migrations",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "",
   "main": "dist/contract/index.js",
   "scripts": {
