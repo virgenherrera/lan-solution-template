@@ -23,6 +23,10 @@ export function dispatch(argv: readonly string[], registeredIds: readonly string
     strict: false,
   });
   const selector: readonly unknown[] | undefined = values[flag] as readonly unknown[] | undefined;
+  // The operation is a bare flag: any inline value (`--generate-certs=1`) is refused, never ignored.
+  if (values[certsFlag] !== undefined && values[certsFlag] !== true) {
+    return { kind: 'rejected', message: `--${certsFlag} takes no value` };
+  }
   // The operation never starts a role, so it cannot be mixed with a selector.
   if (values[certsFlag] === true) {
     return selector === undefined
