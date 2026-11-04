@@ -1,21 +1,32 @@
 import { X509Certificate, createPrivateKey } from 'node:crypto';
-import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { z } from 'zod';
 import { wantedNames } from './san.js';
 import type { WantedNames, WantedNamesInput } from './san.js';
-import { createCa, issueLeaf, needsReissue } from './x509.js';
-import type { PemPair } from './x509.js';
+import { needsReissue } from './x509.js';
 
-const CA_COMMON_NAME = 'LAN Solution Local CA';
-const LEAF_COMMON_NAME = 'lan-gateway';
-const CA_YEARS = 10;
-const LEAF_DAYS = 397;
-const RENEW_BEFORE_DAYS = 30;
+export const RENEW_BEFORE_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const DIR_MODE = 0o700;
-const PRIVATE_MODE = 0o600;
-const PUBLIC_MODE = 0o644;
+// The command that creates and renews the files. The gateway itself never writes in certs/.
+export const CERTS_COMMAND = 'pnpm dev:certs';
+
+export interface TlsFiles {
+  readonly caKey: string;
+  readonly caCrt: string;
+  readonly leafKey: string;
+  readonly leafCrt: string;
+}
+
+export function tlsFiles(certDir: string): TlsFiles {
+  return {
+    caKey: join(certDir, 'ca.key'),
+    caCrt: join(certDir, 'ca.crt'),
+    leafKey: join(certDir, 'leaf.key'),
+    leafCrt: join(certDir, 'leaf.crt'),
+  };
+}
 
 export interface TlsIdentityInput {
   readonly paths: { readonly certDir: string };
@@ -31,156 +42,126 @@ export interface TlsIdentity {
   readonly key: string;
   readonly cert: string;
   readonly ca: string;
-  readonly reissued: boolean;
+  // The names the leaf certificate really covers (its SAN), not the names wanted today.
   readonly names: WantedNames;
 }
 
-interface Files {
-  readonly caKey: string;
-  readonly caCrt: string;
-  readonly leafKey: string;
-  readonly leafCrt: string;
-}
-
-// Same-directory temp file + rename: a crash never leaves a half-written key or certificate.
-function writeAtomic(file: string, data: string, mode: number): void {
-  const temp = `${file}.${process.pid}.tmp`;
-  writeFileSync(temp, data, { mode });
-  renameSync(temp, file);
-  // The umask can strip bits at creation: set the mode explicitly.
-  chmodSync(file, mode);
-}
-
-function parseCertificate(file: string, pem: string, problems: string[]): X509Certificate | undefined {
+function parseCertificate(pem: string | undefined): X509Certificate | undefined {
+  if (pem === undefined) return undefined;
   try {
     return new X509Certificate(pem);
   } catch {
-    problems.push(`${file} is not a valid PEM certificate`);
     return undefined;
   }
 }
 
-function checkKey(file: string, pem: string, certificate: X509Certificate | undefined, certFile: string, problems: string[]): void {
-  let key;
+function keyMatches(pem: string | undefined, certificate: X509Certificate | undefined): boolean | undefined {
+  if (pem === undefined || certificate === undefined) return undefined;
   try {
-    key = createPrivateKey(pem);
+    return certificate.checkPrivateKey(createPrivateKey(pem));
   } catch {
-    problems.push(`${file} is not a valid PEM private key`);
-    return;
-  }
-  if (certificate !== undefined && !certificate.checkPrivateKey(key)) {
-    problems.push(`${file} does not belong to ${certFile}`);
+    return false;
   }
 }
 
-// Reads what is on disk and returns every inconsistency, one per line, never repairing anything by itself.
-function inspect(files: Files, present: Record<keyof Files, boolean>, now: Date): { problems: string[]; ca?: PemPair; leaf?: PemPair } {
-  const problems: string[] = [];
-  const pairs: [keyof Files, keyof Files][] = [
-    ['caCrt', 'caKey'],
-    ['leafCrt', 'leafKey'],
-  ];
-  for (const [crt, key] of pairs) {
-    if (present[crt] && !present[key]) problems.push(`${files[key]} is missing while ${files[crt]} exists`);
-    if (!present[crt] && present[key]) problems.push(`${files[crt]} is missing while ${files[key]} exists`);
+function readIfPresent(file: string): string | undefined {
+  try {
+    return existsSync(file) ? readFileSync(file, 'utf8') : undefined;
+  } catch (error) {
+    // A directory or an unreadable file: name the file and the fix instead of a bare system error.
+    throw new Error(`cannot read ${file}: ${error instanceof Error ? error.message : String(error)}\ncreate or renew the TLS files with: ${CERTS_COMMAND}`);
   }
-  if (present.leafCrt && !present.caCrt) problems.push(`${files.leafCrt} exists but its issuer ${files.caCrt} is missing`);
-  if (problems.length > 0) return { problems };
-
-  let ca: PemPair | undefined;
-  let caCertificate: X509Certificate | undefined;
-  if (present.caCrt) {
-    ca = { certPem: readFileSync(files.caCrt, 'utf8'), keyPem: readFileSync(files.caKey, 'utf8') };
-    caCertificate = parseCertificate(files.caCrt, ca.certPem, problems);
-    checkKey(files.caKey, ca.keyPem, caCertificate, files.caCrt, problems);
-    if (caCertificate !== undefined) {
-      if (!caCertificate.ca) problems.push(`${files.caCrt} is not a CA certificate`);
-      const notAfter = new Date(caCertificate.validTo);
-      if (now < new Date(caCertificate.validFrom)) {
-        problems.push(`${files.caCrt} is not valid yet`);
-      } else if (notAfter.getTime() - now.getTime() <= RENEW_BEFORE_DAYS * DAY_MS) {
-        // A new CA changes the trust the user already installed, so it is never replaced silently.
-        problems.push(
-          `${files.caCrt} expired or expires within ${RENEW_BEFORE_DAYS} days (${caCertificate.validTo}): delete ${files.caKey}, ${files.caCrt}, ${files.leafKey} and ${files.leafCrt} to create a new CA, then trust the new ${files.caCrt} again on every device`,
-        );
-      }
-    }
-  }
-
-  let leaf: PemPair | undefined;
-  if (present.leafCrt) {
-    leaf = { certPem: readFileSync(files.leafCrt, 'utf8'), keyPem: readFileSync(files.leafKey, 'utf8') };
-    const leafCertificate = parseCertificate(files.leafCrt, leaf.certPem, problems);
-    checkKey(files.leafKey, leaf.keyPem, leafCertificate, files.leafCrt, problems);
-    if (leafCertificate !== undefined && caCertificate !== undefined && !leafCertificate.verify(caCertificate.publicKey)) {
-      problems.push(`${files.leafCrt} was not issued by ${files.caCrt}`);
-    }
-  }
-  return { problems, ...(ca === undefined ? {} : { ca }), ...(leaf === undefined ? {} : { leaf }) };
 }
 
-// Creates or reuses the CA and the leaf under certDir (REQ-TLS-01). The leaf is reissued when the wanted names change or it nears expiry (REQ-TLS-04); the CA is never regenerated silently.
-export function ensureTlsIdentity(input: TlsIdentityInput): TlsIdentity {
+// A fact whose input is unreadable gets a neutral value: the unreadable input is reported once, by its own fact, and nothing else piles up on it.
+const neutral = (fact: boolean | undefined): boolean => fact ?? true;
+
+function factsSchema(files: TlsFiles, now: Date) {
+  return z.strictObject({
+    caCrtPresent: z.literal(true, `${files.caCrt} is missing`),
+    leafCrtPresent: z.literal(true, `${files.leafCrt} is missing`),
+    leafKeyPresent: z.literal(true, `${files.leafKey} is missing`),
+    caIsCertificate: z.literal(true, `${files.caCrt} is not a valid PEM certificate`),
+    caIsCa: z.literal(true, `${files.caCrt} is not a CA certificate`),
+    caStarted: z.date().max(now, `${files.caCrt} is not valid yet`),
+    caNotExpired: z.date().min(now, `${files.caCrt} has expired: delete the certs/ folder and run ${CERTS_COMMAND} to create a new CA, then trust it again on every device`),
+    leafIsCertificate: z.literal(true, `${files.leafCrt} is not a valid PEM certificate`),
+    leafKeyIsKey: z.literal(true, `${files.leafKey} is not a valid PEM private key`),
+    leafKeyMatchesCert: z.literal(true, `${files.leafKey} does not belong to ${files.leafCrt}`),
+    leafSignedByCa: z.literal(true, `${files.leafCrt} was not issued by ${files.caCrt}`),
+    leafStarted: z.date().max(now, `${files.leafCrt} is not valid yet`),
+    leafNotExpired: z.date().min(now, `${files.leafCrt} has expired`),
+  });
+}
+
+// Node prints the SAN as "DNS:a, IP Address:1.2.3.4". IPv6 comes expanded, so it is rewritten in the compact form the Host header carries.
+function sanNames(certificate: X509Certificate): WantedNames {
+  const dnsNames: string[] = [];
+  const ipAddresses: string[] = [];
+  for (const entry of (certificate.subjectAltName ?? '').split(', ')) {
+    if (entry.startsWith('DNS:')) dnsNames.push(entry.slice('DNS:'.length).toLowerCase());
+    else if (entry.startsWith('IP Address:')) {
+      const address = entry.slice('IP Address:'.length);
+      ipAddresses.push(address.includes(':') ? new URL(`http://[${address}]`).hostname.slice(1, -1) : address);
+    }
+  }
+  return { dnsNames: dnsNames.sort(), ipAddresses: ipAddresses.sort() };
+}
+
+// Reads <certDir>/{ca.crt, leaf.crt, leaf.key} and validates them (REQ-TLS-01). It never creates, renews or deletes a file and never reads ca.key: `pnpm dev:certs` owns the files.
+// A problem with the files throws one error that lists every problem. A leaf that does not cover the current host names, or is close to expiry, is only logged (REQ-TLS-04).
+export function loadTlsIdentity(input: TlsIdentityInput): TlsIdentity {
   const { paths, config, now, log } = input;
-  const dir = paths.certDir;
-  mkdirSync(dir, { recursive: true, mode: DIR_MODE });
-  chmodSync(dir, DIR_MODE);
+  const files = tlsFiles(paths.certDir);
+  const caPem = readIfPresent(files.caCrt);
+  const leafPem = readIfPresent(files.leafCrt);
+  const leafKeyPem = readIfPresent(files.leafKey);
 
-  const files: Files = {
-    caKey: join(dir, 'ca.key'),
-    caCrt: join(dir, 'ca.crt'),
-    leafKey: join(dir, 'leaf.key'),
-    leafCrt: join(dir, 'leaf.crt'),
-  };
-  const present = {
-    caKey: existsSync(files.caKey),
-    caCrt: existsSync(files.caCrt),
-    leafKey: existsSync(files.leafKey),
-    leafCrt: existsSync(files.leafCrt),
-  };
-
-  const state = inspect(files, present, now);
-  if (state.problems.length > 0) {
-    throw new Error(`TLS identity in ${dir} is not usable:\n${state.problems.map((problem) => `- ${problem}`).join('\n')}`);
-  }
-
-  const names = wantedNames({ hostname: input.hostname, interfaces: input.interfaces, extraNames: config.tls.extraNames });
-  const wanted = [...names.dnsNames, ...names.ipAddresses];
-
-  let ca = state.ca;
-  if (ca === undefined) {
-    ca = createCa({ commonName: CA_COMMON_NAME, years: CA_YEARS, now });
-    writeAtomic(files.caKey, ca.keyPem, PRIVATE_MODE);
-    writeAtomic(files.caCrt, ca.certPem, PUBLIC_MODE);
-    log(`tls: created a new CA at ${files.caCrt} (valid ${CA_YEARS} years): no CA existed`);
-  }
-
-  let leaf = state.leaf;
-  let reissued = false;
-  if (leaf === undefined) {
-    log(`tls: no leaf certificate in ${dir}: issuing one for ${wanted.join(', ')}`);
-    reissued = true;
-  } else {
-    const decision = needsReissue(leaf.certPem, wanted, now, RENEW_BEFORE_DAYS);
-    if (decision.reissue) {
-      log(`tls: leaf certificate does not match the wanted names or validity (${decision.reasons.join('; ')}): reissuing it, the CA is unchanged`);
-      reissued = true;
-    } else {
-      log(`tls: reusing leaf certificate ${files.leafCrt} (names and validity are current)`);
+  const caCertificate = parseCertificate(caPem);
+  const leafCertificate = parseCertificate(leafPem);
+  const leafKeyObject = (() => {
+    if (leafKeyPem === undefined) return undefined;
+    try {
+      return createPrivateKey(leafKeyPem);
+    } catch {
+      return null;
     }
+  })();
+  const never = new Date(now);
+  const startOf = (certificate: X509Certificate | undefined): Date => (certificate === undefined ? never : new Date(certificate.validFrom));
+  const endOf = (certificate: X509Certificate | undefined): Date => (certificate === undefined ? never : new Date(certificate.validTo));
+
+  const facts = factsSchema(files, now).safeParse({
+    caCrtPresent: caPem !== undefined,
+    leafCrtPresent: leafPem !== undefined,
+    leafKeyPresent: leafKeyPem !== undefined,
+    caIsCertificate: caPem === undefined ? true : caCertificate !== undefined,
+    caIsCa: caCertificate === undefined ? true : caCertificate.ca,
+    caStarted: startOf(caCertificate),
+    caNotExpired: endOf(caCertificate),
+    leafIsCertificate: leafPem === undefined ? true : leafCertificate !== undefined,
+    leafKeyIsKey: leafKeyPem === undefined ? true : leafKeyObject !== null,
+    leafKeyMatchesCert: leafKeyObject === null ? true : neutral(keyMatches(leafKeyPem, leafCertificate)),
+    leafSignedByCa: caCertificate === undefined || leafCertificate === undefined ? true : leafCertificate.verify(caCertificate.publicKey),
+    leafStarted: startOf(leafCertificate),
+    leafNotExpired: endOf(leafCertificate),
+  });
+  if (!facts.success) {
+    throw new Error(
+      `TLS files in ${paths.certDir} are missing or invalid:\n${z.prettifyError(facts.error)}\ncreate or renew them with: ${CERTS_COMMAND} (the installer creates them in a packaged install)`,
+    );
   }
-  if (reissued || leaf === undefined) {
-    leaf = issueLeaf({
-      ca,
-      commonName: LEAF_COMMON_NAME,
-      dnsNames: names.dnsNames,
-      ipAddresses: names.ipAddresses,
-      days: LEAF_DAYS,
-      now,
-    });
-    writeAtomic(files.leafKey, leaf.keyPem, PRIVATE_MODE);
-    writeAtomic(files.leafCrt, leaf.certPem, PUBLIC_MODE);
+  if (caPem === undefined || leafPem === undefined || leafKeyPem === undefined || leafCertificate === undefined) {
+    throw new Error('TLS files could not be read');
   }
 
-  return { key: leaf.keyPem, cert: leaf.certPem, ca: ca.certPem, reissued, names };
+  const names = sanNames(leafCertificate);
+  const wanted = wantedNames({ hostname: input.hostname, interfaces: input.interfaces, extraNames: config.tls.extraNames });
+  const decision = needsReissue(leafPem, [...wanted.dnsNames, ...wanted.ipAddresses], now, RENEW_BEFORE_DAYS);
+  if (decision.reissue) {
+    log(`tls: leaf certificate ${files.leafCrt} does not match the current host names or is close to expiry (${decision.reasons.join('; ')}): the gateway keeps using it, run ${CERTS_COMMAND} to renew it`);
+  } else {
+    log(`tls: using leaf certificate ${files.leafCrt} (names and validity are current, ${Math.floor((new Date(leafCertificate.validTo).getTime() - now.getTime()) / DAY_MS)} days left)`);
+  }
+  return { key: leafKeyPem, cert: leafPem, ca: caPem, names };
 }

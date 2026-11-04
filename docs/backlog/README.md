@@ -4,7 +4,7 @@ doc: docs/backlog/README.md
 title: "Backlog index"
 type: backlog
 summary: "Backlog index of POC epics mapped to acceptance criteria and cycles."
-related[8]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md
+related[11]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md
 status: current
 updated: 2026-11-03
 -->
@@ -91,6 +91,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | POC-9 | [GitHub Actions CI/CD and releases (HOLD)](poc-9-ci-cd-releases.md) | HOLD (decision 9) | AC-26, AC-27, AC-35, AC-36, AC-02, AC-32 |
 | none | [Service status indicator](service-status-indicator.md) | Supervisor side done: `status` events on stdout ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)); tray and web UI consumers open | none |
 | none | [Third-party license notices](third-party-licenses.md) | Done: guide merged in PR #16, documentation only (decided 2026-11-03, OQ18 to OQ22); spike: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md) | none (no REQ or AC id exists for licenses) |
+| none | [SPIKE PWA HTTPS trust on phones](spike-pwa-https-trust.md) | Done on Chromium, an iOS simulator and an Android emulator; real phones remain; see [SPIKE-pwa-https-trust-Result](../results/SPIKE-pwa-https-trust-Result.md) and [RESEARCH-pwa-https-trust](../results/RESEARCH-pwa-https-trust.md) | none |
 | none | [Persistence system](persistence-system.md) | T1 to T6 built on `minor/persistence-system` (PR #17, draft); T7 open; decision: [ADR-007](../architecture/adr/ADR-007-persistence-system.md) | AC-07, AC-08, AC-10 (as POC-3) |
 
 ---

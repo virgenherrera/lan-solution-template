@@ -1,4 +1,4 @@
-docs[78]:
+docs[81]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -65,9 +65,9 @@ docs[78]:
   - doc: docs/architecture/adr/ADR-008-tls-trust-model.md
     title: ADR-008 TLS trust model
     type: architecture
-    summary: "Local CA and leaf built with Node built-ins only, strict net and tls config, HTTPS 8443 with a 308 redirect."
+    summary: "Local CA and leaf built with Node built-ins, created only by pnpm dev:certs and validated read-only by the gateway."
     ids: []
-    related[8]: docs/architecture/device-trust-guide.md,docs/results/POC-04-Result.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/requirements/06-web-gateway-https-pwa.md,docs/roadmap/PROPOSAL.md,docs/architecture/overview.md
+    related[10]: docs/architecture/device-trust-guide.md,docs/results/POC-04-Result.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/requirements/06-web-gateway-https-pwa.md,docs/roadmap/PROPOSAL.md,docs/architecture/overview.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md
     status: current
     updated: 2026-11-03
     refs[16]: AC-12,AC-14,AC-17,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA-02,REQ-TEST-01,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04
@@ -76,7 +76,7 @@ docs[78]:
     type: architecture
     summary: "How an operator makes a device trust the local CA of the gateway on iOS, Android, Windows and macOS."
     ids: []
-    related[4]: docs/architecture/adr/ADR-008-tls-trust-model.md,docs/requirements/06-web-gateway-https-pwa.md,docs/results/POC-04-Result.md,docs/standards/README.md
+    related[5]: docs/architecture/adr/ADR-008-tls-trust-model.md,docs/requirements/06-web-gateway-https-pwa.md,docs/results/POC-04-Result.md,docs/standards/README.md,docs/results/SPIKE-pwa-https-trust-Result.md
     status: current
     updated: 2026-11-03
     refs[2]: REQ-TLS-02,REQ-TLS-04
@@ -94,7 +94,7 @@ docs[78]:
     type: backlog
     summary: Backlog index of POC epics mapped to acceptance criteria and cycles.
     ids: []
-    related[8]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md
+    related[11]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md
     status: current
     updated: 2026-11-03
     refs[37]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36,REQ-CFG-05
@@ -323,6 +323,15 @@ docs[78]:
     status: current
     updated: 2026-11-03
     refs[1]: REQ-DESK-03
+  - doc: docs/backlog/spike-pwa-https-trust.md
+    title: SPIKE PWA HTTPS trust on phones
+    type: backlog
+    summary: "Spike plan: close the open PWA, certificate and phone-trust gaps with Playwright, the iOS Simulator, the Android emulator and two phones."
+    ids: []
+    related[5]: docs/results/RESEARCH-pwa-https-trust.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/device-trust-guide.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/results/SPIKE-pwa-https-trust-Result.md
+    status: current
+    updated: 2026-11-03
+    refs: []
   - doc: docs/backlog/third-party-licenses.md
     title: Third-party license notices
     type: backlog
@@ -643,10 +652,28 @@ docs[78]:
     type: backlog
     summary: "Result of POC-4: built-in TLS identity, HTTPS gateway with safe redirect, installable PWA, dev loop and sidecar simulation."
     ids: []
-    related[5]: docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/device-trust-guide.md,docs/results/POC-03-Result.md,docs/roadmap/PROPOSAL.md
+    related[7]: docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/device-trust-guide.md,docs/results/POC-03-Result.md,docs/roadmap/PROPOSAL.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md
     status: current
     updated: 2026-11-03
     refs[2]: REQ-NET-06,REQ-TLS-02
+  - doc: docs/results/RESEARCH-pwa-https-trust.md
+    title: RESEARCH PWA HTTPS trust on a LAN
+    type: backlog
+    summary: Source-backed research on why a LAN PWA needs HTTPS and how a private CA reaches phones; open gaps go to a spike.
+    ids: []
+    related[5]: docs/backlog/spike-pwa-https-trust.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/device-trust-guide.md,docs/results/POC-04-Result.md,docs/results/SPIKE-pwa-https-trust-Result.md
+    status: current
+    updated: 2026-11-03
+    refs: []
+  - doc: docs/results/SPIKE-pwa-https-trust-Result.md
+    title: SPIKE PWA HTTPS trust result
+    type: backlog
+    summary: "Observed results of the phone-trust spike on Chromium, an iOS simulator and an Android emulator; real phones remain."
+    ids: []
+    related[5]: docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/device-trust-guide.md,docs/results/POC-04-Result.md
+    status: current
+    updated: 2026-11-03
+    refs: []
   - doc: docs/results/SPIKE-spa-serving.md
     title: SPIKE SPA serving in the SEA
     type: backlog

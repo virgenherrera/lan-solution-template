@@ -1,8 +1,8 @@
 // @app smoke test of the dev loop (REQ-DEV-02, REQ-DEV-04): `ng serve` proxies /api to the HTTPS gateway and trusts the generated CA only through NODE_EXTRA_CA_CERTS.
-// Usage: `node tools/scripts/smoke-dev.ts`. Needs the built gateway (`pnpm --filter api-gateway build`) and the built service-registry library.
+// Usage: `node tools/scripts/smoke-dev.ts`. Needs the built shared-core library (generate-certs), the built gateway (`pnpm --filter api-gateway build`) and the built service-registry library.
 // It runs in a throwaway base and never touches the tracked proxy file. Windows shells are not verified: the process-group kill is POSIX only.
-import { type ChildProcess, spawn } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { type ChildProcess, spawn, spawnSync } from 'node:child_process';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -139,7 +139,42 @@ writeFileSync(
   JSON.stringify({ ...example, net: { ...example.net, bind: HOST, httpsPort: HTTPS_PORT, httpPort: HTTP_PORT } }),
 );
 
-const gateway = new Child('gateway', process.execPath, [join(root, 'apps', 'api-gateway', 'dist', 'main.js'), '--web', 'none'], base, process.env);
+// The gateway never creates certificates: the command does, like `pnpm dev:certs` before `pnpm dev:gateway`.
+const GATEWAY = join(root, 'apps', 'api-gateway', 'dist', 'main.js');
+const GENERATE_CERTS = join(root, 'tools', 'scripts', 'generate-certs.ts');
+const generate = spawnSync(process.execPath, [GENERATE_CERTS, '--base', base], { encoding: 'utf8' });
+if (generate.status !== 0) await fail(`generate-certs exited ${generate.status}: ${generate.stderr}`);
+pass('generate-certs created the CA and the leaf in the throwaway base');
+
+// A gateway run that must end at once: the exit code and the stderr text are what the operator sees.
+function stoppedGateway(cwd: string): { status: number | null; stderr: string } {
+  const run = spawnSync(process.execPath, [GATEWAY, '--web', 'none'], { cwd, encoding: 'utf8', timeout: READY_WAIT_MS });
+  return { status: run.status, stderr: run.stderr };
+}
+const bareBase = mkdtempSync(join(tmpdir(), 'lan-smoke-dev-bare-'));
+const brokenBase = mkdtempSync(join(tmpdir(), 'lan-smoke-dev-broken-'));
+try {
+  for (const dir of [bareBase, brokenBase]) {
+    mkdirSync(join(dir, 'config'));
+    copyFileSync(join(base, 'config', 'config.json'), join(dir, 'config', 'config.json'));
+  }
+  const missing = stoppedGateway(bareBase);
+  if (missing.status !== 1 || !missing.stderr.includes('pnpm dev:certs') || !missing.stderr.includes('ca.crt is missing')) await fail(`gateway without certs: exit ${missing.status}, stderr ${missing.stderr}`);
+  if (existsSync(join(bareBase, 'certs'))) await fail('gateway without certs created the certs/ folder');
+  pass('gateway without certs exits 1, names the missing file and pnpm dev:certs, creates nothing');
+
+  if (spawnSync(process.execPath, [GENERATE_CERTS, '--base', brokenBase]).status !== 0) await fail('generate-certs failed for the mismatch case');
+  // The key of the other base is a valid key that belongs to another certificate.
+  copyFileSync(join(base, 'certs', 'leaf.key'), join(brokenBase, 'certs', 'leaf.key'));
+  const mismatch = stoppedGateway(brokenBase);
+  if (mismatch.status !== 1 || !mismatch.stderr.includes('leaf.key does not belong to')) await fail(`gateway with a mismatched leaf.key: exit ${mismatch.status}, stderr ${mismatch.stderr}`);
+  pass('gateway with a leaf.key that does not match leaf.crt exits 1 and names the mismatch');
+} finally {
+  rmSync(bareBase, { recursive: true, force: true });
+  rmSync(brokenBase, { recursive: true, force: true });
+}
+
+const gateway = new Child('gateway', process.execPath, [GATEWAY, '--web', 'none'], base, process.env);
 const caFile = join(base, 'certs', 'ca.crt');
 const deadline = Date.now() + READY_WAIT_MS;
 while (!children.some((c) => c.lines.some((line) => line.includes(`listening on ${HOST}:${HTTPS_PORT}`)))) {
