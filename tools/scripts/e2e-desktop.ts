@@ -58,7 +58,7 @@ try {
   run('pnpm', ['--filter', 'shared-core', 'run', 'build'], root);
   run('node', [join(root, 'tools', 'scripts', 'generate-certs.ts'), '--base', base], root);
 
-  run('pnpm', ['exec', 'wdio', 'run', 'wdio.conf.mjs'], desktop, {
+  run('pnpm', ['exec', 'wdio', 'run', 'wdio.conf.ts'], desktop, {
     DESKTOP_E2E_APP: join(base, `app${exe}`),
     DESKTOP_E2E_BASE: base,
     DESKTOP_E2E_HTTPS_PORT: String(httpsPort),

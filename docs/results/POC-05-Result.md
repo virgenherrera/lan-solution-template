@@ -118,7 +118,7 @@ Stated literally. None of these was observed by a person or by a test.
 Generated files come from the official CLIs. Edits without a CLI:
 
 - `apps/desktop/src-tauri/src/*.rs` (`platform.rs`, `sidecar.rs`, `tray.rs`, `gateway.rs`, `trust.rs`, `lib.rs`), `tauri.conf.json` (`externalBin`, `app.windows` empty), `tauri.wdio.conf.json`.
-- `apps/desktop/wdio.conf.mjs`, `apps/desktop/e2e/host.e2e.mjs`, `tools/scripts/e2e-desktop.ts`.
+- `apps/desktop/wdio.conf.ts`, `apps/desktop/e2e/host.e2e.ts`, `tools/scripts/e2e-desktop.ts`.
 - `pnpm-workspace.yaml`: the build scripts of `edgedriver` and `geckodriver` are blocked in `allowBuilds`.
 - `Cargo.toml`: versions pinned exactly (the CLI wrote `"2"`).
 

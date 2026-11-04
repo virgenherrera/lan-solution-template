@@ -7,18 +7,21 @@
     "test": "pnpm run test:static && pnpm run test:dynamic",
     "build": "node ../../tools/scripts/stage-sidecar.ts && cargo check --manifest-path src-tauri/Cargo.toml",
     "package": "node ../../tools/scripts/stage-sidecar.ts && tauri build --no-bundle",
-    "test:static": "echo \"test:static: not defined for this package\"",
+    "test:static": "tsc --noEmit -p tsconfig.json",
     "test:dynamic": "echo \"test:dynamic: not defined for this package\"",
     "e2e": "node ../../tools/scripts/e2e-desktop.ts"
   },
   "type": "module",
   "devDependencies": {
     "@tauri-apps/cli": "catalog:",
+    "@types/node": "catalog:",
     "@wdio/cli": "catalog:",
+    "@wdio/globals": "catalog:",
     "@wdio/local-runner": "catalog:",
     "@wdio/mocha-framework": "catalog:",
     "@wdio/spec-reporter": "catalog:",
     "@wdio/tauri-service": "catalog:",
+    "typescript": "catalog:",
     "webdriverio": "catalog:"
   },
   "nx": {

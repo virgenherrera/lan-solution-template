@@ -2,17 +2,18 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { request } from 'node:https';
 import { join } from 'node:path';
+import { browser } from '@wdio/globals';
 
-const base = process.env.DESKTOP_E2E_BASE;
+const base = process.env.DESKTOP_E2E_BASE ?? '';
 const port = Number(process.env.DESKTOP_E2E_HTTPS_PORT);
 const ca = readFileSync(join(base, 'certs', 'ca.crt'));
 
 // The test process trusts the CA through its own `ca` option: the OS trust store is never touched.
-const health = () =>
+const health = (): Promise<{ status: number | undefined; body: string } | undefined> =>
   new Promise((resolve) => {
     const req = request({ host: '127.0.0.1', port, path: '/api/health', ca, timeout: 2_000 }, (res) => {
       let body = '';
-      res.on('data', (c) => (body += c));
+      res.on('data', (c: Buffer) => (body += c));
       res.on('end', () => resolve({ status: res.statusCode, body }));
     });
     req.on('error', () => resolve(undefined));

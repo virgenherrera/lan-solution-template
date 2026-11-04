@@ -216,6 +216,9 @@ catalogs:
     '@wdio/cli':
       specifier: 10.1.0
       version: 10.1.0
+    '@wdio/globals':
+      specifier: 10.1.0
+      version: 10.1.0
     '@wdio/local-runner':
       specifier: 10.1.0
       version: 10.1.0
@@ -427,9 +430,15 @@ importers:
       '@tauri-apps/cli':
         specifier: 'catalog:'
         version: 2.12.4
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.19.2
       '@wdio/cli':
         specifier: 'catalog:'
         version: 10.1.0(@types/node@24.19.2)(expect-webdriverio@8.0.0(@wdio/types@10.1.0)(webdriverio@10.1.0(supports-color@8.1.1)))(supports-color@8.1.1)
+      '@wdio/globals':
+        specifier: 'catalog:'
+        version: 10.1.0(expect-webdriverio@8.0.0(@wdio/types@10.1.0)(webdriverio@10.1.0(supports-color@8.1.1)))(webdriverio@10.1.0(supports-color@8.1.1))
       '@wdio/local-runner':
         specifier: 'catalog:'
         version: 10.1.0(supports-color@8.1.1)(tsx@4.23.15)(webdriverio@10.1.0(supports-color@8.1.1))
@@ -442,6 +451,9 @@ importers:
       '@wdio/tauri-service':
         specifier: 'catalog:'
         version: 1.5.1(expect-webdriverio@8.0.0(@wdio/types@10.1.0)(webdriverio@10.1.0(supports-color@8.1.1)))(supports-color@8.1.1)(tsx@4.23.15)(webdriverio@10.1.0(supports-color@8.1.1))
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
       webdriverio:
         specifier: 'catalog:'
         version: 10.1.0(supports-color@8.1.1)
@@ -6613,7 +6625,7 @@ snapshots:
 
   '@jest/pattern@30.5.0':
     dependencies:
-      '@types/node': 22.20.5
+      '@types/node': 24.19.2
       jest-regex-util: 30.5.0
 
   '@jest/schemas@30.5.0':
@@ -6626,7 +6638,7 @@ snapshots:
       '@jest/schemas': 30.5.0
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 22.20.5
+      '@types/node': 24.19.2
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
@@ -7531,7 +7543,7 @@ snapshots:
 
   '@types/split2@4.2.3':
     dependencies:
-      '@types/node': 22.20.5
+      '@types/node': 24.19.2
 
   '@types/stack-utils@2.0.3': {}
 
@@ -7549,7 +7561,7 @@ snapshots:
 
   '@types/ws@8.18.2':
     dependencies:
-      '@types/node': 22.20.5
+      '@types/node': 24.19.2
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -9089,7 +9101,7 @@ snapshots:
     dependencies:
       '@jest/expect-utils': 30.5.2
       '@jest/types': 30.5.1
-      '@types/node': 22.20.5
+      '@types/node': 24.19.2
       jest-util: 30.5.1
 
   jest-regex-util@30.5.0: {}
@@ -9097,7 +9109,7 @@ snapshots:
   jest-util@30.5.1:
     dependencies:
       '@jest/types': 30.5.1
-      '@types/node': 22.20.5
+      '@types/node': 24.19.2
       chalk: 4.1.2
       ci-info: 4.4.0
       graceful-fs: 4.2.11
