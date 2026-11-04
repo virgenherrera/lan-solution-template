@@ -340,7 +340,7 @@ docs[87]:
     related[8]: docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md,docs/backlog/persistence-system.md,docs/backlog/td-windows-linux-distribution.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/results/POC-05-Result.md
     status: current
     updated: 2026-11-04
-    refs[12]: AC-21,AC-25,AC-33,REQ-CFG-05,REQ-ECO-06,REQ-SEA-05,REQ-SEA-06,REQ-TEST-09,REQ-TEST-10,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03
+    refs[13]: AC-18,AC-21,AC-25,AC-33,REQ-CFG-05,REQ-ECO-06,REQ-SEA-05,REQ-SEA-06,REQ-TEST-09,REQ-TEST-10,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03
   - doc: docs/backlog/poc-9-ci-cd-releases.md
     title: POC-9 GitHub Actions CI/CD and releases (HOLD)
     type: backlog

@@ -25,6 +25,7 @@ updated: 2026-11-04
 - [Tasks](#tasks)
 - [U3 result: the macOS installer](#u3-result-the-macos-installer)
 - [U4a result: the executable creates the per-install TLS files](#u4a-result-the-executable-creates-the-per-install-tls-files)
+- [U4b result: the installer creates the TLS files and offers to trust the CA](#u4b-result-the-installer-creates-the-tls-files-and-offers-to-trust-the-ca)
 - [Moved to technical debt](#moved-to-technical-debt)
 - [Pitch items without a source id](#pitch-items-without-a-source-id)
 - [Open questions](#open-questions)
@@ -133,7 +134,7 @@ The working document with routes and evidence is kept outside the repository. Ta
 - [ ] U1: lockstep versioning. An Nx Release fixed group ([OQ10](../roadmap/PROPOSAL.md#open-questions)); `release:version` syncs `tauri.conf.json` and `Cargo.toml` and validates all version references; a reproducible changelog; the branch-to-SemVer table with the exemption for `docs/*` and `chore/*`. Today the manifests disagree (`package.json` files carry `0.0.1`, `tauri.conf.json` and `Cargo.toml` carry `0.1.0`). Risk: release tooling. Source: [REQ-VERSION-01](../requirements/11-nx-quality-testing.md), [REQ-VERSION-02](../requirements/11-nx-quality-testing.md), [REQ-VERSION-03](../requirements/11-nx-quality-testing.md), [AC-25](../requirements/11-nx-quality-testing.md)
 - [ ] U2: platform matrix and local scripts. Declare the OS list ([OQ4](../roadmap/PROPOSAL.md#open-questions)); record `verified`, `pending` or `blocked` per row ([OQ7](../roadmap/PROPOSAL.md#open-questions)); macOS is `verified` only where the command ran natively; every other row says `not verified`. REQ-SEA-06: the rule "validate per platform", macOS only. Source: [REQ-TEST-09](../requirements/11-nx-quality-testing.md), [REQ-TEST-10](../requirements/11-nx-quality-testing.md), [REQ-SEA-06](../requirements/10-node-sea-distribution.md), [AC-21](../requirements/11-nx-quality-testing.md), [AC-33](../requirements/11-nx-quality-testing.md)
 - [x] U3 (commit `0872f84`, built and inspected, NOT installed): the `.pkg` with an assistant, and `config/config.json`. The assistant defines the install path, which is the base directory, and creates `config/config.json` there. The installer ships no `config.default.json`. Depends on M0. Source: [OQ24](../roadmap/PROPOSAL.md#open-questions), [REQ-CFG-05](../requirements/04-configuration.md), [REQ-SEA-05](../requirements/10-node-sea-distribution.md)
-- [ ] U4: `ca.crt` in the `postinstall`, with consent. The installer generates the CA and installs it into the trust store only after the user consents; the tray item `Trust CA...` stays as a repair path. Risk: security (trust store). Depends on U3. Source: [ADR-009](../architecture/adr/ADR-009-desktop-process-model.md) D13, [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md)
+- [ ] U4: `ca.crt` in the `postinstall`, with consent. The installer generates the CA and installs it into the trust store only after the user consents; the tray item `Trust CA...` stays as a repair path. Risk: security (trust store). Depends on U3. Source: [ADR-009](../architecture/adr/ADR-009-desktop-process-model.md) D13, [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md). Status: U4a done (the executable command); U4b built and simulated with stubs, NOT installed, not yet verified by an independent reviewer ([result](#u4b-result-the-installer-creates-the-tls-files-and-offers-to-trust-the-ca)).
 - [ ] U5: uninstall script. It removes `config.json` and ALWAYS keeps the SQLite database. Depends on U3. Source: decision of the human, 2026-11-04.
 - [ ] U6: installer smoke on macOS. Steps that need `sudo` are run by the human from a recipe. Depends on U3, U4 and U5. Source: [REQ-TEST-09](../requirements/11-nx-quality-testing.md), [AC-21](../requirements/11-nx-quality-testing.md)
 - [ ] U7: publish `POC-08-Result` and the ADR for the installer, under `docs/`. Last. Source: [REQ-TEST-10](../requirements/11-nx-quality-testing.md), [AC-21](../requirements/11-nx-quality-testing.md)
@@ -209,6 +210,63 @@ The dispatcher list in [ADR-002](../architecture/adr/ADR-002-single-sea-portabil
 
 ---
 
+## U4b result: the installer creates the TLS files and offers to trust the CA
+
+[Back to navigation](#navigation)
+
+The `.pkg` now has two components. Built and inspected on macOS 27.2 arm64, 2026-11-04. NOT installed: the Installer, `sudo` and the System keychain were never touched.
+
+| Component | Identifier | Payload | Script |
+|---|---|---|---|
+| main | `identifier` of `tauri.conf.json` | `app`, `sea-runtime`, `config/config.example.json` | `scripts/postinstall` |
+| trust | the same identifier plus `.trust` | none (`pkgbuild --nopayload`) | `trust-scripts/postinstall` |
+
+Decisions of the agent (delegated):
+
+- The main `postinstall` creates `certs/` (mode 0700, owned by the console user) and runs `sea-runtime --generate-certs` as the console user (`/usr/bin/sudo -u <user> -H`), never as root. It records the CA SHA-256 fingerprint that the command prints. If the binary is missing or the command fails or prints no fingerprint, the script exits 1 with a message and the installation fails. A reinstall keeps `ca.key`, `ca.crt` and an edited `config.json` (U4a never replaces an existing CA). The payload holds no certificate, key or user data: the CA is created only in `postinstall`.
+- The trust component has its own choice in the Distribution XML, `start_selected="false"`, so the box in the Customize pane is empty by default. That is the explicit consent. A `readme` pane (`trust.html`) explains in English that the CA is created for this installation, that it goes into the System keychain, that whoever holds the CA private key can sign a certificate for any site this Mac sees, that the key stays in `<install>/certs/` with mode 0600 owned by the user, and how to revert. Source of `start_selected`, `enabled` and `customLocation`: the [Apple Distribution XML reference](https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html), as read in the M0 spike. That an unticked choice does not run its component is the documented model, but it is NOT verified in the real Installer.
+- A component without payload does not receive the install location in `$2`. `trust-scripts/postinstall` reads `install-location` and `volume` from the receipt of the main package (`pkgutil --pkg-info-plist`, parsed with `plutil -extract`). The receipt stores the location relative to the volume.
+- The trust script refuses a `ca.crt` (or `certs/`) that is a symbolic link or not a regular file, copies it to a private `mktemp -d` directory (mode 0700), checks on the copy that it holds exactly one PEM block, that it is a certificate and that it is a CA (`CA:TRUE`), logs its SHA-256 fingerprint, and runs `security add-trusted-cert -d -r trustRoot -p ssl -p basic -k /Library/Keychains/System.keychain <copy>`. The copy is removed on every exit. The script never reads the CA private key. The same pattern as the tray ([`trust.rs`](../../apps/desktop/src-tauri/src/trust.rs)).
+- The order in which the Installer runs the two components is NOT verified. If the trust script runs before the main package has a receipt or before `ca.crt` exists, it exits 1 with a clear message and trusts nothing. The human confirms the order in the recipe below.
+- Residual risk: the user who owns `certs/` can replace `ca.crt` between the checks and the copy. The copy is what the keychain receives and its fingerprint is logged, so the trusted bytes are the validated bytes; the person who installs is also the owner of that CA. Accepted.
+- `postinstall` and the trust script are shell, an exception to TypeScript (the `.pkg` runs scripts directly and the Mac has no node). The builder is TypeScript ([installer-macos.ts](../../tools/scripts/installer-macos.ts)). Hand-edited files: `scripts/postinstall`, `trust-scripts/postinstall`, `distribution.xml`, `resources/trust.html`.
+
+Verified on macOS 27.2 arm64 (build and simulation only):
+
+- `pnpm exec nx run desktop:package --skip-nx-cache --output-style=static`: exit 0, 3 passing in the E2E.
+- `xar -tf` and `pkgutil --expand-full`: main component (`Bom`, `Payload`, `Scripts`, `PackageInfo`), trust component (`Scripts`, `PackageInfo`, no `Payload`), `Resources/welcome.html`, `Resources/trust.html`, `Distribution`. The payload holds `app`, `sea-runtime` and `config/config.example.json` only: no `*.crt`, `*.key`, `*.db`, `*.sqlite` or `ca.*`.
+- Main `postinstall` without root, real `sea-runtime`, in a base whose path has a space: creates `config.json`, `data/`, `logs/`, `certs/` (0700) with `ca.key` and `leaf.key` at 0600; prints the fingerprint, equal to `openssl x509 -fingerprint -sha256`; a second run keeps `ca.key` and `ca.crt` byte for byte and `config.json`; a fake binary that exits 1, a missing binary and a binary that prints no fingerprint each give exit 1 with a message. The `sudo -u` branch runs only as root and was NOT run.
+- Trust script with stubs for `security` and `pkgutil` and the real `openssl`: the only call is `security add-trusted-cert -d -r trustRoot -p ssl -p basic -k /Library/Keychains/System.keychain <private copy>`, with the copy a regular file in a directory of mode 0700. A symbolic link, a file with two certificates, a file with a certificate and a key, a leaf that is not a CA, a missing `ca.crt`, a directory in its place, a missing receipt and an empty receipt all exit 1 without calling `security`. No temporary directory is left in any case.
+- `sh -n` exit 0 on both scripts. shellcheck is not installed. The scripts use no `rm -rf` and no `mv`; `chown -R` only on `data/` and `logs/`.
+- `security`, `trust` and keychain appear only in `trust-scripts/postinstall` and in the trust texts and builder lines that wire that component.
+
+Known issue: `pkgutil --payload-files` lists `._*` (AppleDouble) entries next to the payload files, from the `com.apple.provenance` extended attribute. `COPYFILE_DISABLE=1` and `xattr -rc` do not remove them, and `pkgutil --expand-full` extracts no `._*` file. What they do at install time is NOT verified.
+
+Recipe for the human (needs `sudo`; the agent did not run it; none of it is verified):
+
+```sh
+P=apps/desktop/src-tauri/target/release/lan-solution-desktop-0.1.0-aarch64-apple-darwin.pkg
+# 1. Install with the trust box TICKED (Installer.app, or: sudo installer -pkg "$P" -target /).
+#    In the Customize pane tick "Trust the LAN Solution certificate on this Mac".
+B=/usr/local/lan-solution
+ls -l "$B/certs"                                   # certs 0700; ca.key and leaf.key 0600, owned by you
+openssl x509 -noout -fingerprint -sha256 -in "$B/certs/ca.crt"   # equals the fingerprint in /var/log/install.log
+security find-certificate -c "$(openssl x509 -noout -subject -in "$B/certs/ca.crt" | sed 's/.*CN *= *//')" /Library/Keychains/System.keychain
+security verify-cert -c "$B/certs/ca.crt"          # certificate verification successful
+# 2. Open the host: the tray item "Trust CA..." must report the CA as already trusted,
+#    and the window must load the gateway page over HTTPS. This would finally check AC-18 with the real page.
+# 3. Reverse, then install again in ANOTHER folder with the box UNTICKED.
+sudo security remove-trusted-cert -d "$B/certs/ca.crt"
+sudo security delete-certificate -c "<CN printed above>" /Library/Keychains/System.keychain
+sudo rm -rf "$B"          # keep the database if you want it: copy "$B/data" first
+sudo pkgutil --forget com.virgenherrera.lansolution
+sudo pkgutil --forget com.virgenherrera.lansolution.trust
+# 4. With the box UNTICKED: security find-certificate must find nothing for that CA, and
+#    security verify-cert -c <new ca.crt> must fail. Also check that the trust script did not run before the main one.
+```
+
+---
+
 ## Moved to technical debt
 
 [Back to navigation](#navigation)
@@ -259,6 +317,6 @@ Source: `docs/roadmap/PROPOSAL.md`, Open questions. No open question blocks.
 
 [Back to navigation](#navigation)
 
-- A real install of the `.pkg`: the assistant screens, the install location pane (the choice is not user-disabled in the XML, whether the Installer lets the user change the folder is not verified), the root run of `postinstall`, the `chown` to the console user, and the reinstall keeping `config.json`. See the recipe in [U3 result](#u3-result-the-macos-installer).
+- A real install of the `.pkg`: the assistant screens, the install location pane (the Distribution XML sets `customLocation`, which per the Apple reference implies that the user can choose another location, and `enabled="false"` on the choice, which per the same reference only dims the selection of the choice; neither effect is verified in the real Installer), the root run of `postinstall`, the `chown` to the console user, and the reinstall keeping `config.json`. See the recipe in [U3 result](#u3-result-the-macos-installer).
 - Gatekeeper behaviour of the unsigned `.pkg`.
 - Windows, Linux, Apple signing and notarization. Nothing here was run on them.
