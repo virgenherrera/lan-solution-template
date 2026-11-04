@@ -8,11 +8,18 @@
     "build": "node ../../tools/scripts/stage-sidecar.ts && cargo check --manifest-path src-tauri/Cargo.toml",
     "package": "node ../../tools/scripts/stage-sidecar.ts && tauri build --no-bundle",
     "test:static": "echo \"test:static: not defined for this package\"",
-    "test:dynamic": "echo \"test:dynamic: not defined for this package\""
+    "test:dynamic": "echo \"test:dynamic: not defined for this package\"",
+    "e2e": "node ../../tools/scripts/e2e-desktop.ts"
   },
   "type": "module",
   "devDependencies": {
-    "@tauri-apps/cli": "catalog:"
+    "@tauri-apps/cli": "catalog:",
+    "@wdio/cli": "catalog:",
+    "@wdio/local-runner": "catalog:",
+    "@wdio/mocha-framework": "catalog:",
+    "@wdio/spec-reporter": "catalog:",
+    "@wdio/tauri-service": "catalog:",
+    "webdriverio": "catalog:"
   },
   "nx": {
     "targets": {
@@ -36,6 +43,16 @@
           },
           "build",
           "test"
+        ]
+      },
+      "e2e": {
+        "dependsOn": [
+          {
+            "projects": [
+              "sea-runtime"
+            ],
+            "target": "package"
+          }
         ]
       }
     }

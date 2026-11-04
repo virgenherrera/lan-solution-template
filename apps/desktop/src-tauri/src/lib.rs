@@ -9,9 +9,12 @@ use tauri_plugin_autostart::MacosLauncher;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  let app = tauri::Builder::default()
-    // The single-instance plugin must be the first one (REQ-DESK-05): the second launch only shows the first window, then exits.
-    .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| tray::show_window(app)))
+  // The single-instance plugin must be the first one (REQ-DESK-05): the second launch only shows the first window, then exits.
+  let builder = tauri::Builder::default().plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| tray::show_window(app)));
+  // Only the instrumented E2E build (cargo feature wdio) registers the WebDriver plugins (REQ-TEST-08, AC-20); the product never does.
+  #[cfg(feature = "wdio")]
+  let builder = builder.plugin(tauri_plugin_wdio::init()).plugin(tauri_plugin_wdio_webdriver::init());
+  let app = builder
     .plugin(tauri_plugin_shell::init())
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
@@ -24,7 +27,8 @@ pub fn run() {
       }
     })
     .setup(|app| {
-      if cfg!(debug_assertions) {
+      // The wdio plugin installs its own logger; a second one panics.
+      if cfg!(debug_assertions) && !cfg!(feature = "wdio") {
         app.handle().plugin(
           tauri_plugin_log::Builder::default()
             .level(log::LevelFilter::Info)
