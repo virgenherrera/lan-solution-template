@@ -5,14 +5,23 @@
   "private": true,
   "scripts": {
     "test": "pnpm run test:static && pnpm run test:dynamic",
-    "build": "cargo check --manifest-path src-tauri/Cargo.toml",
-    "package": "tauri build --no-bundle",
-    "test:static": "echo \"test:static: not defined for this package\"",
+    "build": "node ../../tools/scripts/stage-sidecar.ts && cargo check --manifest-path src-tauri/Cargo.toml",
+    "package": "node ../../tools/scripts/e2e-desktop.ts && node ../../tools/scripts/stage-sidecar.ts && tauri build --no-bundle",
+    "test:static": "tsc --noEmit -p tsconfig.json",
     "test:dynamic": "echo \"test:dynamic: not defined for this package\""
   },
   "type": "module",
   "devDependencies": {
-    "@tauri-apps/cli": "catalog:"
+    "@tauri-apps/cli": "catalog:",
+    "@types/node": "catalog:",
+    "@wdio/cli": "catalog:",
+    "@wdio/globals": "catalog:",
+    "@wdio/local-runner": "catalog:",
+    "@wdio/mocha-framework": "catalog:",
+    "@wdio/spec-reporter": "catalog:",
+    "@wdio/tauri-service": "catalog:",
+    "typescript": "catalog:",
+    "webdriverio": "catalog:"
   },
   "nx": {
     "targets": {
@@ -20,9 +29,9 @@
         "dependsOn": [
           {
             "projects": [
-              "web-angular"
+              "sea-runtime"
             ],
-            "target": "build"
+            "target": "package"
           }
         ]
       },
@@ -36,6 +45,17 @@
           },
           "build",
           "test"
+        ],
+        "outputs": [
+          "{projectRoot}/src-tauri/target/release"
+        ],
+        "inputs": [
+          "default",
+          "^default",
+          "{workspaceRoot}/tools/scripts/e2e-desktop.ts",
+          "{workspaceRoot}/tools/scripts/stage-sidecar.ts",
+          "{workspaceRoot}/tools/scripts/generate-certs.ts",
+          "{workspaceRoot}/artifacts/sea-runtime/**/*"
         ]
       }
     }

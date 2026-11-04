@@ -138,7 +138,7 @@ Source: `docs/roadmap/PROPOSAL.md`, Open questions. No open question blocks. OQ1
 | [OQ5](../roadmap/PROPOSAL.md#open-questions) | first-run setup wizard versus MSI dialog | decided (human decision 13): pending spike |
 | [OQ4](../roadmap/PROPOSAL.md#open-questions) | OS targets follow Tauri 2 | decided (human decision 15) |
 | [OQ16](../roadmap/PROPOSAL.md#open-questions) | Windows MSI scope, per-machine or per-user | proposed |
-| [OQ17](../roadmap/PROPOSAL.md#open-questions) | install-time choice: server mode or client mode | proposed |
+| [OQ17](../roadmap/PROPOSAL.md#open-questions) | install-time choice: server mode or client mode | decided (human, 2026-11-04) |
 | [OQ24](../roadmap/PROPOSAL.md#open-questions) | where the installer assistant defines the install path and creates `config/config.json` | open |
 | [OQ7](../roadmap/PROPOSAL.md#open-questions) | minimum verified-OS set | proposed |
 | [OQ8](../roadmap/PROPOSAL.md#open-questions) | TLS crypto library and key storage | decided (agent, 2026-11-03, delegated): built-ins of Node suffice, see [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md) |

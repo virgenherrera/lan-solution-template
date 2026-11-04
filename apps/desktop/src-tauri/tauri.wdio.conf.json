@@ -1,0 +1,15 @@
+{
+  "app": {
+    "withGlobalTauri": true,
+    "security": {
+      "capabilities": [
+        {
+          "identifier": "wdio",
+          "windows": ["main"],
+          "remote": { "urls": ["https://127.0.0.1:*/*"] },
+          "permissions": ["wdio:default", "wdio-webdriver:default"]
+        }
+      ]
+    }
+  }
+}

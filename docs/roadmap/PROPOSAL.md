@@ -4,9 +4,9 @@ doc: docs/roadmap/PROPOSAL.md
 title: "Roadmap Proposal: lan-solution-template (SRS v1.6)"
 type: roadmap
 summary: "Roadmap proposal with cycles, POC pitches, coverage matrix and open questions."
-related[4]: README.md,docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md
+related[7]: README.md,docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/results/POC-05-Result.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md
 status: proposed
-updated: 2026-11-03
+updated: 2026-11-04
 -->
 
 # Roadmap Proposal: lan-solution-template (SRS v1.6)
@@ -53,7 +53,7 @@ Why this page exists: it orders the SRS v1.6 POCs and logs 18 human decisions. N
 | Status | Proposal v2. Not approved. | [Decision Log](#decision-log) |
 | Method | Shape Up. 6 weeks of build, then 2 weeks of cooldown. | [Method](#method) |
 | Bets | 3 cycles. 8 active POCs (POC-9 on hold) and POC-6 in the backlog. | [Cycles and bets](#cycles-and-bets) |
-| ADR index | 14 rows: 12 approved, 1 proposed, 1 pending spike. | [ADR index](#adr-index) |
+| ADR index | 15 rows: 12 approved, 3 proposed. | [ADR index](#adr-index) |
 | Open questions | 25 rows. None blocks. | [Open questions](#open-questions) |
 | Coverage | 13 SRS sections and 36 acceptance criteria map to POCs. | [SRS coverage matrix](#srs-coverage-matrix) |
 
@@ -150,7 +150,8 @@ Each row summarizes one decision. The written ADR files are listed in the [archi
 | MSI scope | The MSI is a per-machine draft. A spike on WiX and Tauri capabilities decides the scope (OQ16). | OQ16 | proposed |
 | HOLD scope | The HOLD covers only CI/CD and releases in POC-9; local work continues (OQ6). | 9, human | approved |
 | Auth and first admin | Development seeds a self-destructing `dev-admin` data row, and production never seeds. POC-7 implements the seeding. The design is approved; ASVS citations stay `not verified`. | 12 | approved |
-| Auth and first admin | The database is the only identity source. The user creates the first real admin in a setup wizard. The POC-5 spike defines the path. The MSI credential dialog is the fallback. | 5, 12, 13 | pending spike |
+| Auth and first admin | The database is the only identity source. The user creates the first real admin in a setup wizard. The POC-5 spike is done and recommends a CLI `setup` plus a loopback wizard with a one-time token ([ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md)). Five questions are open for the human. The MSI credential dialog is the fallback. | 5, 12, 13 | proposed |
+| Desktop process model | Tauri starts, watches and stops the SEA supervisor. The OS-specific code is in one module. Built and run on macOS only ([ADR-009](../architecture/adr/ADR-009-desktop-process-model.md)). | POC-5, OQ12, OQ17 | proposed |
 | Config and paths | One base directory: the cwd in dev, the executable directory when packaged. Layout: `config/config.json`, `data/`, `logs/`, `certs/`. A missing or invalid config stops the start ([ADR-007](../architecture/adr/ADR-007-persistence-system.md#one-base-directory)). | 11, OQ23, OQ25 | approved |
 | TLS and keys | A local CA and a leaf built with Node built-ins only. Keys are plain PKCS#8 files, mode 0600, under `<base>/certs`, outside the database ([ADR-008](../architecture/adr/ADR-008-tls-trust-model.md)). | 7, 14, OQ8 | approved |
 | Database | SQLite plus vector is the engine. PostgreSQL is TBD (backlog). | 8 | approved |
@@ -650,7 +651,7 @@ Acceptance criteria coverage:
 
 Decision Log items 1-10 are not in the table. Items 11-15 settle OQ1, OQ2, OQ4, OQ5 and OQ8.
 
-Items 11-15, OQ3, OQ6, OQ7, OQ12, OQ14, OQ18 to OQ23 and OQ25 are human decisions. The other resolutions are agent proposals.
+Items 11-15, OQ3, OQ6, OQ7, OQ12, OQ14, OQ17, OQ18 to OQ23 and OQ25 are human decisions. The other resolutions are agent proposals.
 
 **Ownership summary** (the command in [Checks](../standards/README.md#checks) prints these counts)
 
@@ -679,7 +680,7 @@ Claims marked "not verified" stay unverified until a spike or a primary source c
 | OQ14 | Persisted config bootstrap before the DB exists (A-01). | Settled by OQ23 and OQ25: the bootstrap config is `config/config.json` under the base directory. Zod validates it. The runtime never creates it and never defaults it. It holds the DB engine and its block. A-01 is not present in the SRS. | agent:builder | no | decided (human) |
 | OQ15 | Does the fallback to `1.0.0-rc.5` need an SRS amendment (REQ-STACK-07)? | Yes, as a text fix. Closed by the 2026-11-02 amendment: REQ-STACK-07 now pins `drizzle-orm` `0.45.4` and `drizzle-kit` `0.31.11`, exact. `1.0.0-rc.5` stays the fallback for both. Record the chosen tags. See [ADR-004](../architecture/adr/ADR-004-drizzle-build-time-migrations.md) and [amendments-2026-11-02](../requirements/amendments-2026-11-02.md). | agent:builder | no | decided (human, 2026-11-02); text applied in REQ-STACK-07 |
 | OQ16 | Windows MSI scope: per-machine or per-user? | Draft: a per-machine MSI. The installer POC (POC-8) starts with a blocking spike on WiX and Tauri capabilities. It compares per-machine, dual and per-user installs, then decides. The gateway serves the LAN. The spike also decides the install folder. Per-machine installs to Program Files, and writing there needs an administrator. Source: Microsoft Learn, MSI installation context (read 2026-10-30). WiX v4 scope names and folder ACLs are not verified. | agent:builder | no | proposed |
-| OQ17 | Install-time choice. Server mode installs gateway and app. Client mode installs app only and connects to an existing LAN server. | Proposed. It touches the installer (POC-8) and the Tauri shell (POC-5). It also touches TLS trust of the server certificate (POC-4). Not designed yet. No part is verified. | human | no | proposed |
+| OQ17 | Install-time choice. Server mode installs gateway and app. Client mode installs app only and connects to an existing LAN server. | Decided by the human, 2026-11-04: the installer asks the user for server or client mode. Server mode installs everything (gateway, supervisor, desktop shell). Client mode installs the desktop shell only, and the shell loads its UI from the running gateway at a configured URL (first target: the LAN, with a port). Touches the installer (POC-8), the Tauri shell (POC-5) and the TLS trust of the server certificate (POC-4). Scope, decided 2026-11-04: POC-5 builds server mode first. Client mode stays pending (to investigate and implement): the shell loading a remote gateway URL without IPC, and how a client obtains and trusts `ca.crt`. Not verified. | human | no | decided |
 | OQ18 | Is there a distribution plan (who receives the binaries), so the third-party license obligations apply? Internal-only use changes the analysis. | Decided by the human (2026-11-03), option 2: "al ser solo un template el 2 es adecuado". Documentation only. The template ships guidance, no generator and no built-in notices file. Each derived product (for example a future ERP) implements notices when it distributes binaries. Reason: a template distributes source and `pnpm-lock.yaml`, not copies of dependencies. The notice obligation of the MIT, ISC, BSD and Apache-2.0 licenses applies when copies are redistributed, and that is the act of the derived product. General analysis, not legal advice. Source: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md#q6-recommendation), question 1. | human | no | decided (human) |
 | OQ19 | Add a requirement for third-party notices and an allowlist policy that fails the build on copyleft? | Decided by the human (2026-11-03): no for now. "al ser un template y que dependemos de puro sw mit creo que no aporta valor ahora mismo (como template)". No REQ, no AC, no check. The check design stays a documented future idea in [Third-party license notices](../backlog/third-party-licenses.md#future-ideas). The measured set is permissive but not only MIT: MIT 106, ISC 5, BSD-3-Clause 3, Apache-2.0 2, 0BSD 2. Source: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md#q5-options-to-produce-the-notices) and [Q6](../results/SPIKE-third-party-licenses.md#q6-recommendation), question 2. | human | no | decided (human) |
 | OQ20 | Add a `--licenses` CLI flag that prints the notices, or only ship the file? | Decided by the human (2026-11-03): no flag. A flag would be argv handled by `dispatch()` in `libs/service-registry`. It would be a third mode that prints an embedded notices file and exits 0. It would change the CLI surface, the exit code contract and the smoke bad-selector check, and it has nothing to print without an embedded file. The human states that other products usually offer no such option and place the bundled licenses in one file in the install path. A derived product may add the flag. Source: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md#q5-options-to-produce-the-notices), design notes, and [Q6](../results/SPIKE-third-party-licenses.md#q6-recommendation), question 3. | human | no | decided (human) |

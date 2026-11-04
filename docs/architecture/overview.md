@@ -5,9 +5,9 @@ title: Architecture overview
 type: architecture
 summary: Mermaid architecture diagrams citing SRS sections for runtime and desktop topology.
 ids[0]:
-related[12]: README.md,docs/architecture/device-trust-guide.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
+related[14]: README.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/device-trust-guide.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
 status: current
-updated: 2026-11-03
+updated: 2026-11-04
 -->
 
 # Architecture overview
@@ -35,7 +35,7 @@ updated: 2026-11-03
 | Development | Separate apps behind a dev proxy | [Development topology](#development-topology) |
 | Production | One SEA, a supervisor, a gateway, one HTTPS origin | [Production topology](#production-topology) |
 | Desktop | Tauri starts the SEA supervisor as a sidecar | [Tauri sidecar](#tauri-sidecar) |
-| Decisions | ADR-001 to ADR-008 are written. ADR-009 to ADR-011 are placeholders. | [Architecture decisions](#architecture-decisions) |
+| Decisions | ADR-001 to ADR-010 are written. ADR-009 and ADR-010 are proposed. ADR-011 is a placeholder. | [Architecture decisions](#architecture-decisions) |
 
 ---
 
@@ -129,7 +129,7 @@ Sources:
 - Tauri/Rust starts, monitors and stops only the supervisor. The supervisor manages the Nest processes. Source: SRS section 9, [REQ-DESK-02](../requirements/09-desktop-tauri.md) and [REQ-DESK-05](../requirements/09-desktop-tauri.md).
 - The WebView shows the same Angular served from the gateway process: SRS section 9, [REQ-DESK-02](../requirements/09-desktop-tauri.md).
 - The host stays operable from LAN clients with the window hidden: SRS section 9, [REQ-DESK-06](../requirements/09-desktop-tauri.md).
-- Sidecar channels: stdout carries `status` events (JSON, one per line), stderr carries the logs, stdin carries host commands. The supervisor opens no HTTP listener. Contract and Tauri facts: [ADR-006](adr/ADR-006-sidecar-status-contract.md). The host side is not verified (POC-5).
+- Sidecar channels: stdout carries `status` events (JSON, one per line), stderr carries the logs, stdin carries host commands. The supervisor opens no HTTP listener. Contract and Tauri facts: [ADR-006](adr/ADR-006-sidecar-status-contract.md). The host side is built and verified on macOS only: see [ADR-009](adr/ADR-009-desktop-process-model.md) and the [POC-5 result](../results/POC-05-Result.md).
 - Shutdown over IPC on `stdio`, then timeout and forced termination: SRS section 9.1, [REQ-RUNTIME-06](../requirements/09-desktop-tauri.md).
 
 ---
@@ -138,7 +138,7 @@ Sources:
 
 [Back to navigation](#navigation)
 
-The [ADR index](../roadmap/PROPOSAL.md#adr-index) in the roadmap proposal lists the decisions. The ADR numbers are proposals, not SRS requirements. ADR-009 to ADR-011 are numbered in the order the POCs write them.
+The [ADR index](../roadmap/PROPOSAL.md#adr-index) in the roadmap proposal lists the decisions. The ADR numbers are proposals, not SRS requirements. ADR-009 to ADR-011 are numbered in the order the POCs write them. ADR-010 was written by the POC-5 spike, ahead of POC-7.
 
 | ADR | Topic | Status | Written by |
 | --- | --- | --- | --- |
@@ -150,8 +150,8 @@ The [ADR index](../roadmap/PROPOSAL.md#adr-index) in the roadmap proposal lists 
 | [ADR-006](adr/ADR-006-sidecar-status-contract.md) | Sidecar status contract | proposed; implemented in PR #15 | PR #15 |
 | [ADR-007](adr/ADR-007-persistence-system.md) | Persistence system | implemented in PR #17 (merged) | PR #17 |
 | [ADR-008](adr/ADR-008-tls-trust-model.md) | TLS trust model | accepted; implemented on `minor/poc-04-https-gateway` ([device-trust guide](device-trust-guide.md)) | [POC-4](../roadmap/PROPOSAL.md#poc-4-https-gateway-serving-the-angular-pwa) |
-| ADR-009 | Desktop process model | placeholder | [POC-5](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar) |
-| ADR-010 | Auth mechanism | placeholder | [POC-7](../roadmap/PROPOSAL.md#poc-7-auth-and-roles) |
+| [ADR-009](adr/ADR-009-desktop-process-model.md) | Desktop process model | proposed; implemented on `minor/poc-05-tauri-sidecar` (macOS only, PR pending) | [POC-5](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar) |
+| [ADR-010](adr/ADR-010-first-run-admin-setup.md) | First admin authentication (the auth mechanism of POC-7) | proposed; not decided, no code | [POC-5](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar) spike, [POC-7](../roadmap/PROPOSAL.md#poc-7-auth-and-roles) |
 | ADR-011 | Release flow | placeholder | [POC-9](../roadmap/PROPOSAL.md#poc-9-github-actions-cicd-and-releases-hold), on HOLD |
 
 ### Topics without an ADR number
