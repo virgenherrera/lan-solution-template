@@ -24,7 +24,7 @@ const options = (() => {
   }
 })();
 const caFile = join(resolve(options.base ?? process.cwd()), 'certs', 'ca.crt');
-if (!existsSync(caFile)) fail(`${caFile} does not exist: start the gateway once so it creates the CA (pnpm dev:gateway)`);
+if (!existsSync(caFile)) fail(`${caFile} does not exist: run pnpm dev:certs to create it`);
 
 // Refuse anything that is not a current CA certificate, so a wrong file is never trusted.
 const certificate = new X509Certificate(readFileSync(caFile));

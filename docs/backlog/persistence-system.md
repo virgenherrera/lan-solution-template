@@ -69,7 +69,7 @@ The base directory in dev is `process.cwd()` ([ADR-007](../architecture/adr/ADR-
 - Once, copy `libs/shared-core/config.example.json` to `<repo root>/config/config.json`. The runtime never creates it. In VS Code, run the task "Dev: config from example".
 - A missing file stops the service.
 - Start the gateway with `pnpm dev:gateway` and the web app with `pnpm dev:web`, both from the repo root. In VS Code use the launch configurations "Dev: gateway (HTTPS)" and "Dev: web (ng serve)", or the compound "Dev: gateway + web".
-- The gateway creates `certs/` on its first start. `dev:web` trusts `certs/ca.crt` through `NODE_EXTRA_CA_CERTS`.
+- Run `pnpm dev:certs` once to create `certs/`: the gateway only validates the files and stops when they are missing or invalid. `dev:web` trusts `certs/ca.crt` through `NODE_EXTRA_CA_CERTS`.
 - `config/`, `certs/`, `data/` and `logs/` are git-ignored.
 - An app started with another cwd, such as `pnpm --filter`, has its own base directory there.
 
