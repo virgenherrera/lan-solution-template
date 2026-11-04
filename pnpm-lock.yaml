@@ -191,6 +191,9 @@ catalogs:
     '@angular/router':
       specifier: 22.2.4
       version: 22.2.4
+    '@angular/service-worker':
+      specifier: 22.2.4
+      version: 22.2.4
   default:
     '@rspack/core':
       specifier: 2.3.0
@@ -294,7 +297,6 @@ catalogs:
       version: 12.3.2
 
 overrides:
-  minimatch@<11.0.1: 11.0.1
   qs@>=6.7.0 <=6.16.0: 6.16.1
   tmp@<0.2.7: 0.2.7
   undici@>=4.0.0 <6.29.1: 6.29.1
@@ -510,6 +512,9 @@ importers:
       '@angular/router':
         specifier: catalog:angular
         version: 22.2.4(@angular/common@22.2.4(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(@angular/platform-browser@22.2.4(@angular/common@22.2.4(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@angular/service-worker':
+        specifier: catalog:angular
+        version: 22.2.4(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(rxjs@7.8.2)
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2
@@ -519,7 +524,7 @@ importers:
     devDependencies:
       '@angular/build':
         specifier: catalog:angular
-        version: 22.2.5(@angular/compiler-cli@22.2.4(@angular/compiler@22.2.4)(typescript@6.0.3))(@angular/compiler@22.2.4)(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(@angular/platform-browser@22.2.4(@angular/common@22.2.4(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2)))(@types/node@24.19.2)(jiti@2.7.0)(postcss@8.5.32)(supports-color@7.2.0)(tailwindcss@4.3.3)(tslib@2.9.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.12)(yaml@2.9.0)
+        version: 22.2.5(@angular/compiler-cli@22.2.4(@angular/compiler@22.2.4)(typescript@6.0.3))(@angular/compiler@22.2.4)(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(@angular/platform-browser@22.2.4(@angular/common@22.2.4(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2)))(@angular/service-worker@22.2.4(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(rxjs@7.8.2))(@types/node@24.19.2)(jiti@2.7.0)(postcss@8.5.32)(supports-color@7.2.0)(tailwindcss@4.3.3)(tslib@2.9.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.12)(yaml@2.9.0)
       '@angular/cli':
         specifier: catalog:angular
         version: 22.2.5(@types/node@24.19.2)(chokidar@5.0.0)
@@ -774,6 +779,14 @@ packages:
       '@angular/common': 22.2.4
       '@angular/core': 22.2.4
       '@angular/platform-browser': 22.2.4
+      rxjs: ^6.5.3 || ^7.4.0
+
+  '@angular/service-worker@22.2.4':
+    resolution: {integrity: sha512-qGZxC/xJ9kIkNzpbXVWXVPlLOdejZSeVHU8KO2IRtPEOTiMeC66MtRErdwYc9uLf3DPqDk3Jk400BjnGBdkWmQ==}
+    engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0}
+    hasBin: true
+    peerDependencies:
+      '@angular/core': 22.2.4
       rxjs: ^6.5.3 || ^7.4.0
 
   '@babel/code-frame@8.0.6':
@@ -1527,9 +1540,6 @@ packages:
     peerDependenciesMeta:
       '@types/node':
         optional: true
-
-  '@isaacs/nonrecursive-glob-match@1.0.3':
-    resolution: {integrity: sha512-SI7kyKHq4XXDRozw+r9GlRZkia1ZkFrpLW98r2IC2Bpr8YkFGE3fvjzmxCG0x78A++69HmDNrDvSMYBZmHGpKA==}
 
   '@jest/diff-sequences@30.0.1':
     resolution: {integrity: sha512-n5H8QLDJ47QqbCNn5SuFjCRDrOLEZ0h8vAHCK5RL9Ls7Xa8AQLa/YxAc9UjFqoEDM48muwtBGjtMY5cr0PLDCw==}
@@ -3906,8 +3916,12 @@ packages:
     resolution: {integrity: sha512-VP79XUPxV2CigYP3jWwAUFSku2aKqBH7uTAapFWCBqutsbmDo96KY5o8uh6U+/YSIn5OxJnXp73beVkpqMIGhA==}
     engines: {node: '>=18'}
 
-  minimatch@11.0.1:
-    resolution: {integrity: sha512-t+Vn6DX4wPCxS23y03C0uhF7S1jpi1GfqPrnlEipCJaA2ykiNbMkVlDutZtmvLfRcUN6R8AYVlzTsQrT4RZoLQ==}
+  minimatch@10.2.5:
+    resolution: {integrity: sha512-MULkVLfKGYDFYejP07QOurDLLQpcjk7Fw+7jXS2R2czRQzR56yHRveU5NDJEOviH+hETZKSkIk5c+T23GjFUMg==}
+    engines: {node: 18 || 20 || >=22}
+
+  minimatch@10.2.6:
+    resolution: {integrity: sha512-vpLQEs+VLCr1nU0BXS07maYoFwlDAH0gngQuuttxIwutDFEMHq2blX+8vpgxDdK3J1PwjCJiep77OitTZ4Ll1A==}
     engines: {node: 18 || 20 || >=22}
 
   minimist@1.2.8:
@@ -4885,7 +4899,7 @@ snapshots:
     transitivePeerDependencies:
       - chokidar
 
-  '@angular/build@22.2.5(@angular/compiler-cli@22.2.4(@angular/compiler@22.2.4)(typescript@6.0.3))(@angular/compiler@22.2.4)(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(@angular/platform-browser@22.2.4(@angular/common@22.2.4(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2)))(@types/node@24.19.2)(jiti@2.7.0)(postcss@8.5.32)(supports-color@7.2.0)(tailwindcss@4.3.3)(tslib@2.9.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.12)(yaml@2.9.0)':
+  '@angular/build@22.2.5(@angular/compiler-cli@22.2.4(@angular/compiler@22.2.4)(typescript@6.0.3))(@angular/compiler@22.2.4)(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(@angular/platform-browser@22.2.4(@angular/common@22.2.4(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2)))(@angular/service-worker@22.2.4(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(rxjs@7.8.2))(@types/node@24.19.2)(jiti@2.7.0)(postcss@8.5.32)(supports-color@7.2.0)(tailwindcss@4.3.3)(tslib@2.9.1)(tsx@4.23.15)(typescript@6.0.3)(vitest@4.1.12)(yaml@2.9.0)':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@angular-devkit/architect': 0.2202.5(chokidar@5.0.0)
@@ -4921,6 +4935,7 @@ snapshots:
     optionalDependencies:
       '@angular/core': 22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2)
       '@angular/platform-browser': 22.2.4(@angular/common@22.2.4(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))
+      '@angular/service-worker': 22.2.4(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(rxjs@7.8.2)
       '@oxc-parser/binding-wasm32-wasi': 0.150.0
       lmdb: 3.5.6
       postcss: 8.5.32
@@ -5010,6 +5025,12 @@ snapshots:
       '@angular/common': 22.2.4(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/core': 22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2)
       '@angular/platform-browser': 22.2.4(@angular/common@22.2.4(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))
+      rxjs: 7.8.2
+      tslib: 2.9.1
+
+  '@angular/service-worker@22.2.4(@angular/core@22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2))(rxjs@7.8.2)':
+    dependencies:
+      '@angular/core': 22.2.4(@angular/compiler@22.2.4)(rxjs@7.8.2)
       rxjs: 7.8.2
       tslib: 2.9.1
 
@@ -5581,8 +5602,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.19.2
 
-  '@isaacs/nonrecursive-glob-match@1.0.3': {}
-
   '@jest/diff-sequences@30.0.1': {}
 
   '@jridgewell/gen-mapping@0.3.13':
@@ -5771,7 +5790,7 @@ snapshots:
       cli-table3: 0.6.5
       commander: 15.0.0
       jsonc-parser: 3.3.1
-      minimatch: 11.0.1
+      minimatch: 10.2.6
       node-emoji: 2.2.0
       ora: 9.4.1
       tsconfig-paths: 4.2.0
@@ -7138,7 +7157,7 @@ snapshots:
 
   glob@13.0.6:
     dependencies:
-      minimatch: 11.0.1
+      minimatch: 10.2.6
       minipass: 7.1.3
       path-scurry: 2.0.2
 
@@ -7477,9 +7496,12 @@ snapshots:
 
   mimic-function@5.0.1: {}
 
-  minimatch@11.0.1:
+  minimatch@10.2.5:
     dependencies:
-      '@isaacs/nonrecursive-glob-match': 1.0.3
+      brace-expansion: 5.0.12
+
+  minimatch@10.2.6:
+    dependencies:
       brace-expansion: 5.0.12
 
   minimist@1.2.8: {}
@@ -7619,7 +7641,7 @@ snapshots:
       lines-and-columns: 2.0.3
       log-symbols: 4.1.0
       mimic-fn: 2.1.0
-      minimatch: 11.0.1
+      minimatch: 10.2.5
       minimist: 1.2.8
       npm-run-path: 4.0.1
       once: 1.4.0

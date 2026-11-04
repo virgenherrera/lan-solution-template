@@ -4,7 +4,7 @@ doc: docs/backlog/poc-8-msi-matrix-versioning.md
 title: "POC-8 MSI credential dialog, platform matrix and lockstep versioning"
 type: backlog
 summary: "Backlog item for MSI credential dialog platform matrix and lockstep versioning."
-related[4]: docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md,docs/backlog/persistence-system.md
+related[5]: docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md,docs/backlog/persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md
 status: current
 updated: 2026-11-03
 -->
@@ -123,7 +123,7 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-8-msi-credential-dialog-plat
 
 These pitch items carry no REQ or AC id. They are not tasks:
 
-- MSI dialog for the initial credential: a hidden property plus `MsiHiddenProperties`. A deferred custom action computes the hash. Design, not verified. No REQ or AC id in the pitch besides the per-OS smoke test above. Key storage per OS: [OQ8](../roadmap/PROPOSAL.md#open-questions).
+- MSI dialog for the initial credential: a hidden property plus `MsiHiddenProperties`. A deferred custom action computes the hash. Design, not verified. No REQ or AC id in the pitch besides the per-OS smoke test above. Key storage: plain files under `<base>/certs` ([ADR-008](../architecture/adr/ADR-008-tls-trust-model.md#storage)).
 
 ---
 
@@ -141,5 +141,5 @@ Source: `docs/roadmap/PROPOSAL.md`, Open questions. No open question blocks. OQ1
 | [OQ17](../roadmap/PROPOSAL.md#open-questions) | install-time choice: server mode or client mode | proposed |
 | [OQ24](../roadmap/PROPOSAL.md#open-questions) | where the installer assistant defines the install path and creates `config/config.json` | open |
 | [OQ7](../roadmap/PROPOSAL.md#open-questions) | minimum verified-OS set | proposed |
-| [OQ8](../roadmap/PROPOSAL.md#open-questions) | TLS crypto library and key storage | decided (human decision 14): pending spike |
+| [OQ8](../roadmap/PROPOSAL.md#open-questions) | TLS crypto library and key storage | decided (agent, 2026-11-03, delegated): built-ins of Node suffice, see [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md) |
 | [OQ10](../roadmap/PROPOSAL.md#open-questions) | Nx release group membership | proposed |

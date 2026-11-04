@@ -8,6 +8,7 @@
 - [What it is](#what-it-is)
 - [Who it is for](#who-it-is-for)
 - [Current status](#current-status)
+- [Set up the dev environment](#set-up-the-dev-environment)
 - [Reading order](#reading-order)
 - [Documentation map](#documentation-map)
 - [How to contribute](#how-to-contribute)
@@ -24,7 +25,7 @@
 | --- | --- |
 | What | A LAN-first, offline-capable GitHub Template Repository. |
 | For whom | Template authors, reviewers and delivering AI agents. |
-| Where we are | POC-1 to POC-3 are built. The persistence system is in review (PR #17, draft). POC-4 to POC-9 are plans. The roadmap is a proposal. |
+| Where we are | POC-1 to POC-3 are built. The persistence system is in review (PR #17, draft). POC-4 is in progress on `minor/poc-04-https-gateway`. POC-5 to POC-9 are plans. The roadmap is a proposal. |
 | What comes next | The [roadmap](docs/roadmap/PROPOSAL.md) plans POC-1 to POC-9. The [backlog](docs/backlog/README.md) holds one epic per POC. |
 
 ---
@@ -65,6 +66,23 @@ The full production diagram is in [Architecture overview](docs/architecture/over
 
 ---
 
+## Set up the dev environment
+
+[Back to navigation](#navigation)
+
+Needs Node `>=26.13.0 <27` and pnpm. The commands run from the repository root. In dev the base directory is the current directory ([ADR-007](docs/architecture/adr/ADR-007-persistence-system.md)): `config/`, `data/`, `logs/` and `certs/` are created or read there and are ignored by git.
+
+1. `pnpm install`
+2. `mkdir -p config && cp libs/shared-core/config.example.json config/config.json`. The gateway never creates the config: a missing or invalid file stops the start.
+3. `pnpm dev:certs`. It creates the local CA and the certificate under `certs/`. Run it once, and again when the network names change. It never replaces an existing CA: if you delete `certs/`, the next run creates a new CA, and every device keeps trusting the old one until you remove it and trust the new one.
+4. `pnpm dev:gateway`. It builds and starts the gateway over HTTPS. It only validates the files in `certs/`: when they are missing or invalid it exits 1 and names the problem and `pnpm dev:certs`.
+5. `pnpm dev:trust`. It trusts that CA on this machine, like `dotnet dev-certs https --trust`: the login keychain on macOS, the current user's Root store on Windows. The system asks for your password or Touch ID. On Linux it prints the steps. Restart the browser afterwards.
+6. `pnpm dev:all` runs the gateway and the Angular dev server. The gateway is at `https://localhost:8443`, the Angular app at `http://localhost:4200`.
+
+A PWA needs HTTPS to register its service worker, so a browser that does not trust the CA shows a certificate warning and the PWA does not work. For a packaged binary, run `node tools/scripts/generate-certs.ts --base artifacts/sea-runtime` and `pnpm dev:trust --base artifacts/sea-runtime` (the base needs its `config/config.json`). A phone or another device installs `ca.crt` by hand: see the [device trust guide](docs/architecture/device-trust-guide.md). Why: [ADR-008](docs/architecture/adr/ADR-008-tls-trust-model.md#phone-trust).
+
+---
+
 ## Reading order
 
 [Back to navigation](#navigation)
@@ -101,7 +119,8 @@ flowchart LR
 - [Roadmap](docs/roadmap/PROPOSAL.md): proposal of POCs and open questions.
 - [Backlog](docs/backlog/README.md): draft epics derived from the roadmap.
 - [Third-party licenses](docs/backlog/third-party-licenses.md): backlog item for license notices, with the [spike](docs/results/SPIKE-third-party-licenses.md).
-- [Persistence system](docs/backlog/persistence-system.md): strict config and lazy engine loading, with [ADR-007](docs/architecture/adr/ADR-007-persistence-system.md). Dev setup: [How to run in dev](docs/backlog/persistence-system.md#how-to-run-in-dev).
+- [Persistence system](docs/backlog/persistence-system.md): strict config and lazy engine loading, with [ADR-007](docs/architecture/adr/ADR-007-persistence-system.md). Dev setup (`pnpm dev:gateway`, `pnpm dev:web`): [How to run in dev](docs/backlog/persistence-system.md#how-to-run-in-dev).
+- [HTTPS gateway](docs/backlog/poc-4-https-gateway-angular-pwa.md): local CA built with Node built-ins, with [ADR-008](docs/architecture/adr/ADR-008-tls-trust-model.md), the [POC-4 result](docs/results/POC-04-Result.md) and the [device trust guide](docs/architecture/device-trust-guide.md).
 - [Page metadata](docs/meta.toon): generated from the toon-meta blocks. Never edit it by hand. Regeneration: [Metadata block v1](docs/standards/README.md#metadata-block-v1).
 
 Versions and stack constraints live in [Technology baseline](docs/requirements/02-technology-baseline.md).

@@ -4,7 +4,7 @@ doc: docs/backlog/README.md
 title: "Backlog index"
 type: backlog
 summary: "Backlog index of POC epics mapped to acceptance criteria and cycles."
-related[7]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md
+related[11]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md
 status: current
 updated: 2026-11-03
 -->
@@ -83,7 +83,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | POC-3 | [Config and SQLite vector persistence inside the SEA](poc-3-config-sqlite-vector.md) | Done and merged in PR #12, slices 3a to 3g; see [POC-03-Result](../results/POC-03-Result.md); config and paths later changed by the persistence system | AC-07, AC-08, AC-10 |
 | DBM | [Drizzle build-time migrations](dbm-drizzle-migrations.md) | Done and merged in PR #12, slices DBM-a to DBM-h; see [DBM-Result](../results/DBM-Result.md); extends POC-3 | AC-07, AC-08, AC-10 (as POC-3) |
 | DBM schema gate | [Live schema validation at startup](dbm-schema-gate.md) | Done and merged in PR #12, slices DBM-i to DBM-n (DBM-n is the api-gateway database module); see [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md); extends DBM | AC-07, AC-08, AC-10 (as POC-3) |
-| POC-4 | [HTTPS gateway serving the Angular PWA](poc-4-https-gateway-angular-pwa.md) | Cycle 2 (planned) | AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17 |
+| POC-4 | [HTTPS gateway serving the Angular PWA](poc-4-https-gateway-angular-pwa.md) | In progress on `minor/poc-04-https-gateway`: T0 to T6 done, T7 and the verification open; decision: [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md); result: [POC-04-Result](../results/POC-04-Result.md) | AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17 |
 | POC-5 | [Tauri desktop shell with SEA sidecar](poc-5-tauri-sidecar-desktop-shell.md) | Cycle 2 (planned) | AC-03, AC-18, AC-20, AC-30 |
 | POC-6 | [PostgreSQL adapter parity (BACKLOG)](poc-6-postgresql-adapter-parity.md) | BACKLOG | AC-09 |
 | POC-7 | [Auth and roles](poc-7-auth-roles.md) | Cycle 3 (planned) | AC-06 |
@@ -91,6 +91,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | POC-9 | [GitHub Actions CI/CD and releases (HOLD)](poc-9-ci-cd-releases.md) | HOLD (decision 9) | AC-26, AC-27, AC-35, AC-36, AC-02, AC-32 |
 | none | [Service status indicator](service-status-indicator.md) | Supervisor side done: `status` events on stdout ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)); tray and web UI consumers open | none |
 | none | [Third-party license notices](third-party-licenses.md) | Done: guide merged in PR #16, documentation only (decided 2026-11-03, OQ18 to OQ22); spike: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md) | none (no REQ or AC id exists for licenses) |
+| none | [SPIKE PWA HTTPS trust on phones](spike-pwa-https-trust.md) | Done on Chromium, an iOS simulator and an Android emulator; real phones remain; see [SPIKE-pwa-https-trust-Result](../results/SPIKE-pwa-https-trust-Result.md) and [RESEARCH-pwa-https-trust](../results/RESEARCH-pwa-https-trust.md) | none |
 | none | [Persistence system](persistence-system.md) | T1 to T6 built on `minor/persistence-system` (PR #17, draft); T7 open; decision: [ADR-007](../architecture/adr/ADR-007-persistence-system.md) | AC-07, AC-08, AC-10 (as POC-3) |
 
 ---

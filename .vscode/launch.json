@@ -1,0 +1,39 @@
+{
+  // Run the task "Dev: config from example" once on a new checkout. The launch fails on purpose while config/config.json is missing.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Dev: gateway (HTTPS)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/apps/api-gateway/dist/main.js",
+      "args": ["--web", "none"],
+      // The base directory is the working directory, as in `pnpm dev:gateway`.
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Dev: build gateway",
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/apps/api-gateway/dist/**/*.js"],
+      // The bundle names sources webpack://api-gateway/./src/... and webpack://api-gateway/../../libs/...
+      "sourceMapPathOverrides": {
+        "webpack://api-gateway/./*": "${workspaceFolder}/apps/api-gateway/*",
+        "webpack://api-gateway/../../*": "${workspaceFolder}/*"
+      }
+    },
+    {
+      // node-terminal runs a shell command with the debugger attached to the Node children.
+      "name": "Dev: web (ng serve)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "NODE_EXTRA_CA_CERTS=\"${workspaceFolder}/certs/ca.crt\" pnpm --filter web-angular exec ng serve",
+      "cwd": "${workspaceFolder}"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Dev: gateway + web",
+      "configurations": ["Dev: gateway (HTTPS)", "Dev: web (ng serve)"],
+      "stopAll": true
+    }
+  ]
+}

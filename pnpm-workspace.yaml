@@ -63,6 +63,7 @@ catalogs:
     '@angular/forms': 22.2.4
     '@angular/platform-browser': 22.2.4
     '@angular/router': 22.2.4
+    '@angular/service-worker': 22.2.4
 # Supply chain security: blocks packages published less than 24 hours ago (1440 minutes).
 # This window is the most common attack vector for malicious package hijacking.
 minimumReleaseAge: 1440
@@ -80,7 +81,6 @@ auditConfig:
   ignoreCves: []
 # Transitive audit fixes: each override names its advisory; remove once the parent ships a fix.
 overrides:
-  minimatch@<11.0.1: 11.0.1 # GHSA-g3hv-75wg-m249 (moderate); remove once the parent ships a fix
   qs@>=6.7.0 <=6.16.0: 6.16.1 # GHSA-6pq8-jhm2-2vcw (moderate); remove once the parent ships a fix
   tmp@<0.2.7: 0.2.7 # GHSA-ph9p-34f9-6g65, GHSA-7c78-jf6q-g5cm (high), GHSA-52f5-9888-hmc6 (low); remove once the parent ships a fix
   undici@>=4.0.0 <6.29.1: 6.29.1 # GHSA-2m5v-pch6-74hx, GHSA-qrxm-fqhp-jwvm, GHSA-f269-vfmq-vjvj, GHSA-vrm6-8vpv-qv8q (high) and undici 6.x moderate/low ids; remove once the parent ships a fix

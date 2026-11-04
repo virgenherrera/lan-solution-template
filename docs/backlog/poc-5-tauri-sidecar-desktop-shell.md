@@ -4,7 +4,7 @@ doc: docs/backlog/poc-5-tauri-sidecar-desktop-shell.md
 title: "POC-5 Tauri desktop shell with SEA sidecar"
 type: backlog
 summary: "Backlog item for the Tauri desktop shell with SEA sidecar."
-related[5]: docs/backlog/README.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/backlog/poc-6-postgresql-adapter-parity.md,docs/backlog/service-status-indicator.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md
+related[6]: docs/backlog/README.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/backlog/poc-6-postgresql-adapter-parity.md,docs/backlog/service-status-indicator.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-008-tls-trust-model.md
 status: current
 updated: 2026-11-03
 -->
@@ -123,7 +123,7 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-s
 - [ ] Keep the gateway reachable from the LAN while the window is hidden. Source: [REQ-DESK-06](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md)
 - [ ] Restrict IPC capabilities; no shell or sidecar privileges for the LAN-served frontend. Source: [REQ-SEC-05](../requirements/07-security.md)
 - [ ] The WebView loads the gateway origin. Source: [AC-18](../requirements/11-nx-quality-testing.md)
-- [ ] Tauri installs `ca.crt` into the OS trust store with explicit consent. Key storage per OS: [OQ8](../roadmap/PROPOSAL.md#open-questions). Source: [REQ-TLS-02](../requirements/06-web-gateway-https-pwa.md), [OQ8](../roadmap/PROPOSAL.md#open-questions)
+- [ ] Tauri installs `ca.crt` into the OS trust store with explicit consent. Key storage: plain files under `<base>/certs` ([ADR-008](../architecture/adr/ADR-008-tls-trust-model.md#storage)). Source: [REQ-TLS-02](../requirements/06-web-gateway-https-pwa.md), [OQ8](../roadmap/PROPOSAL.md#open-questions)
 - [ ] Run native E2E with `@wdio/tauri-service` on an instrumented build; the commercial installer excludes it. Source: [REQ-TEST-08](../requirements/11-nx-quality-testing.md), [AC-20](../requirements/11-nx-quality-testing.md)
 - [ ] Order Tauri `build`/`package` after SEA. Source: [REQ-ECO-06](../requirements/11-nx-quality-testing.md)
 - [ ] Publish `POC-05-Result` and `ADR-009` (desktop process model) under `docs/`. Source: [REQ-DESK-02](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md)
@@ -149,6 +149,6 @@ Source: `docs/roadmap/PROPOSAL.md`, Open questions. No open question blocks. OQ1
 | OQ | Topic | Status |
 |---|---|---|
 | [OQ5](../roadmap/PROPOSAL.md#open-questions) | first-run setup without MSI | decided (human decision 13): pending spike |
-| [OQ8](../roadmap/PROPOSAL.md#open-questions) | TLS crypto library and key storage | decided (human decision 14): pending spike |
+| [OQ8](../roadmap/PROPOSAL.md#open-questions) | TLS crypto library and key storage | decided (agent, 2026-11-03, delegated): built-ins of Node suffice, see [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md) |
 | [OQ12](../roadmap/PROPOSAL.md#open-questions) | autostart default | decided (human) |
 | [OQ17](../roadmap/PROPOSAL.md#open-questions) | install-time choice: server mode or client mode | proposed |

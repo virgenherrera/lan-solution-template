@@ -66,9 +66,12 @@ Slice names T1 to T7 are an assumption. Proof is by real runs of the build, the 
 
 The base directory in dev is `process.cwd()` ([ADR-007](../architecture/adr/ADR-007-persistence-system.md#one-base-directory)).
 
-- Copy `libs/shared-core/config.example.json` to `<cwd>/config/config.json`.
-- A missing file stops the service. Nothing creates it.
-- `pnpm --filter` changes the cwd to the app folder. To share one dev base, start every app from the same cwd.
+- Once, copy `libs/shared-core/config.example.json` to `<repo root>/config/config.json`. The runtime never creates it. In VS Code, run the task "Dev: config from example".
+- A missing file stops the service.
+- Start the gateway with `pnpm dev:gateway` and the web app with `pnpm dev:web`, both from the repo root. In VS Code use the launch configurations "Dev: gateway (HTTPS)" and "Dev: web (ng serve)", or the compound "Dev: gateway + web".
+- Run `pnpm dev:certs` once to create `certs/`: the gateway only validates the files and stops when they are missing or invalid. `dev:web` trusts `certs/ca.crt` through `NODE_EXTRA_CA_CERTS`.
+- `config/`, `certs/`, `data/` and `logs/` are git-ignored.
+- An app started with another cwd, such as `pnpm --filter`, has its own base directory there.
 
 ---
 
