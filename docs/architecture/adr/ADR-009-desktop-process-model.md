@@ -81,7 +81,7 @@ On macOS, Cmd+Q emits only `RunEvent::Exit` and never `ExitRequested`. The host 
 |---|---|---|---|
 | macOS | `ps -A -o pid=,ppid=`, `kill -0`, `kill -KILL` | `security verify-cert`, `security add-trusted-cert` into the login keychain | run on macOS |
 | Linux | same unix code | `pkexec` copy plus `update-ca-certificates`; `is_trusted` only checks that a file exists | not verified |
-| Windows | `taskkill /T /F`, `tasklist` (no snapshot needed) | `certutil -user -addstore Root` | stub, not verified |
+| Windows | `taskkill /T /F`, `tasklist` (no snapshot needed) | `certutil -user -addstore Root` | code exists, not run |
 
 ### D9. The window is created by code and has no IPC (Agent)
 
@@ -119,7 +119,14 @@ The tray item `Trust CA...` reads `<base>/certs/ca.crt` once and accepts exactly
 
 - One module (`platform.rs`) is the only place that needs a native run per OS.
 - The first start has a gap: until `ca.crt` is trusted, the window cannot load the gateway. The tray item `Trust CA...` fixes it. Which first-run flow the user sees is an open human decision.
-- The WebView has no `on_navigation` filter and no CSP. This is recorded as advisory A2 in the result.
+- Open advisories, recorded in the [result](../results/POC-05-Result.md#advisories):
+  - A2: the WebView has no `on_navigation` filter and no CSP.
+  - A3: Windows and Linux were not run.
+  - AD1: a window exists between the dialog and the use of the temporary copy. On Linux, where `pkexec` runs the copy, only the same user id could exploit it.
+  - AD2: text outside the PEM block is accepted but not installed.
+  - AD3: the temporary directory stays if the process dies by SIGKILL.
+  - AD4: on Linux `is_trusted` only checks that a file exists (as before).
+  - AD5: the Windows and Linux branches were never executed.
 
 ## Not verified
 

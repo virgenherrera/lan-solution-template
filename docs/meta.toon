@@ -691,7 +691,7 @@ docs[85]:
     related[8]: docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/results/POC-04-Result.md,docs/backlog/log-service-otel-grpc.md,docs/roadmap/PROPOSAL.md
     status: current
     updated: 2026-11-04
-    refs[6]: REQ-DESK-01,REQ-DESK-06,REQ-ECO-06,REQ-SEC-05,REQ-TEST-08,REQ-TLS-02
+    refs[7]: REQ-DESK-01,REQ-DESK-06,REQ-ECO-06,REQ-SEC-05,REQ-TEST-08,REQ-TEST-09,REQ-TLS-02
   - doc: docs/results/RESEARCH-pwa-https-trust.md
     title: RESEARCH PWA HTTPS trust on a LAN
     type: backlog
