@@ -38,7 +38,7 @@ if (args.length > 1) {
 }
 const branch = args[0] ?? currentBranch();
 const [prefix, slug, ...extra] = branch.split("/");
-const bump = prefix === undefined ? undefined : BUMPS[prefix];
+const bump = prefix !== undefined && Object.hasOwn(BUMPS, prefix) ? BUMPS[prefix] : undefined;
 
 if (bump === undefined || slug === undefined || extra.length > 0 || !SLUG.test(slug)) {
   process.stderr.write(

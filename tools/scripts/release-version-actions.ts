@@ -6,13 +6,20 @@
  * writes the same version to `Cargo.toml`, to the matching `[[package]]` entry of `Cargo.lock` and to
  * `tauri.conf.json`. Internal dependencies use `workspace:*`, so there are no dependency ranges to update.
  *
+ * Nx flushes its virtual tree to disk only after every project ran, and the flush is not atomic. So a
+ * project fails before the flush when any of its target files is not writable: nothing is written and
+ * the monorepo keeps one version.
+ *
  * Wired by `release.groups.lockstep.version.versionActions` in nx.json. Check the result with
  * `node tools/scripts/version-check.ts`.
  */
 
+import { accessSync, constants } from "node:fs";
+import { join } from "node:path";
 import { VersionActions } from "nx/release";
 
 interface TreeLike {
+  root?: string;
   exists(path: string): boolean;
   read(path: string, encoding: "utf-8"): string | null;
   write(path: string, content: string): void;
@@ -26,6 +33,21 @@ function readText(tree: TreeLike, path: string): string {
     throw new Error(`release-version-actions: cannot read ${path}`);
   }
   return content;
+}
+
+/** Throws when an existing file on disk is not writable, so the failure happens before Nx flushes any file. */
+function assertWritable(tree: TreeLike, path: string): void {
+  if (tree.root === undefined || !tree.exists(path)) {
+    return;
+  }
+  try {
+    accessSync(join(tree.root, path), constants.W_OK);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return;
+    }
+    throw new Error(`release-version-actions: ${path} is not writable; no file was changed (${(error as Error).message})`);
+  }
 }
 
 /** Replaces the top-level (2-space indent) `"version"` of a JSON text and keeps the rest byte-identical. */
@@ -80,10 +102,13 @@ export default class LockstepVersionActions extends VersionActions {
   async updateProjectVersion(tree: TreeLike, newVersion: string): Promise<string[]> {
     const logs: string[] = [];
     const manifestPath = this.manifestPath();
+    const tauriDir = `${this.root}/${TAURI_DIR}`.replace(/^\.\//, "");
+    for (const path of [manifestPath, `${tauriDir}/Cargo.toml`, `${tauriDir}/Cargo.lock`, `${tauriDir}/tauri.conf.json`]) {
+      assertWritable(tree, path);
+    }
     tree.write(manifestPath, replaceJsonVersion(readText(tree, manifestPath), newVersion, manifestPath));
     logs.push(`${manifestPath} -> ${newVersion}`);
 
-    const tauriDir = `${this.root}/${TAURI_DIR}`.replace(/^\.\//, "");
     const cargoPath = `${tauriDir}/Cargo.toml`;
     if (!tree.exists(cargoPath)) {
       return logs;
