@@ -18,7 +18,7 @@ updated: 2026-11-04
 
 - [Status](#status)
 - [Context](#context)
-- [Decisions](#decisions)
+- [Decision](#decision)
 - [Options rejected](#options-rejected)
 - [Consequences](#consequences)
 - [Not verified](#not-verified)
@@ -36,7 +36,7 @@ Each decision below carries its origin:
 
 The desktop host is a Tauri v2 application. It ships the SEA binary as a sidecar and talks to it through the [ADR-006](ADR-006-sidecar-status-contract.md) contract. The base directory is the executable directory ([ADR-007](ADR-007-persistence-system.md#one-base-directory)). The gateway serves HTTPS with the local CA of [ADR-008](ADR-008-tls-trust-model.md). The host must stop the whole process tree on Quit and leave no orphan.
 
-## Decisions
+## Decision
 
 ### D1. Focus on macOS, code for every OS (Human)
 

@@ -12,20 +12,7 @@ updated: 2026-11-04
 
 # POC-05 Result
 
-[Home](../../README.md) | [Requirements](../requirements/README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](../roadmap/PROPOSAL.md) | [Traceability](../requirements/traceability.md) | [Backlog](../backlog/README.md)
-
 Branch: `minor/poc-05-tauri-sidecar`. Epic: [POC-5](../backlog/poc-5-tauri-sidecar-desktop-shell.md). Decisions: [ADR-009](../architecture/adr/ADR-009-desktop-process-model.md) (desktop process model) and [ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md) (first admin authentication, proposed).
-
-## Navigation
-
-- [Summary](#summary)
-- [Slices](#slices)
-- [Verified](#verified)
-- [Independent verification finding](#independent-verification-finding)
-- [Advisories](#advisories)
-- [Not verified](#not-verified)
-- [Hand edits and deviations](#hand-edits-and-deviations)
-- [Open decisions for the human](#open-decisions-for-the-human)
 
 ## Summary
 
@@ -118,7 +105,7 @@ Stated literally. None of these was observed by a person or by a test.
 Generated files come from the official CLIs. Edits without a CLI:
 
 - `apps/desktop/src-tauri/src/*.rs` (`platform.rs`, `sidecar.rs`, `tray.rs`, `gateway.rs`, `trust.rs`, `lib.rs`), `tauri.conf.json` (`externalBin`, `app.windows` empty), `tauri.wdio.conf.json`.
-- `apps/desktop/wdio.conf.ts`, `apps/desktop/e2e/host.e2e.ts`, `tools/scripts/e2e-desktop.ts`.
+- `apps/desktop/wdio.conf.ts`, `apps/desktop/e2e/host.e2e.ts`, `apps/desktop/tsconfig.json` (no CLI generates it; the `test:static` target runs `tsc --noEmit` on it), `tools/scripts/e2e-desktop.ts`.
 - `pnpm-workspace.yaml`: the build scripts of `edgedriver` and `geckodriver` are blocked in `allowBuilds`.
 - `Cargo.toml`: versions pinned exactly (the CLI wrote `"2"`).
 
