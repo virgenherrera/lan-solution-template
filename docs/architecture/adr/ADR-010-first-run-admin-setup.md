@@ -3,7 +3,7 @@ fmt: TOON
 doc: docs/architecture/adr/ADR-010-first-run-admin-setup.md
 title: "ADR-010 First admin authentication"
 type: architecture
-summary: "Proposed path for creating the first real admin: CLI setup plus a loopback wizard with a one-time token. Not decided."
+summary: "Proposed path for the first real admin: CLI setup plus loopback wizard with one-time token. Five questions answered, wizard unbuilt."
 ids[0]:
 related[7]: docs/results/POC-05-Result.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/backlog/poc-7-auth-roles.md,docs/roadmap/PROPOSAL.md
 status: proposed
@@ -22,11 +22,11 @@ updated: 2026-11-04
 - [Options evaluated](#options-evaluated)
 - [Sources](#sources)
 - [Not verified](#not-verified)
-- [Open questions for the human](#open-questions-for-the-human)
+- [Decisions of 2026-11-04](#decisions-of-2026-11-04)
 
 ## Status
 
-Proposed, 2026-11-04. **Nothing here is decided.** It records the recommendation of the POC-5 spike S3 (decision 13, OQ5, "first-run setup wizard"). The spike read primary sources through page summaries and ran no code. The human has not accepted or rejected it. This ADR does not amend [ADR-006](ADR-006-sidecar-status-contract.md): that depends on question 2 below.
+Proposed, 2026-11-04. It records the recommendation of the POC-5 spike S3 (decision 13, OQ5, "first-run setup wizard"). The spike read primary sources through page summaries and ran no code. Only the five points in [Decisions of 2026-11-04](#decisions-of-2026-11-04) are decided. The rest of the proposal is not accepted, and the wizard route is not built or verified. This ADR does not amend [ADR-006](ADR-006-sidecar-status-contract.md): the amendment is deferred to the implementation (P2).
 
 The ADR number follows the [ADR index](../../roadmap/PROPOSAL.md#adr-index), where ADR-010 is the auth mechanism that POC-7 implements.
 
@@ -42,6 +42,8 @@ The user creates the first real admin at install time. The wizard replaces the s
 - Decision 12: the dev seed `dev-admin` is a data row with a bootstrap mark. "Has an admin" must exclude it, or setup never opens in dev.
 
 ## Proposal
+
+Where the [Decisions](#decisions-of-2026-11-04) differ from this section, the Decisions win.
 
 CLI `setup` as the baseline on every OS, plus a loopback wizard with a one-time token. The wizard is the primary path on desktop. The CLI is the headless path and the fallback.
 
@@ -114,12 +116,28 @@ Tags: V verified in the cited page by the spike (through a page summary, not lin
 - Whether another local OS user can read the sidecar stdout pipe or the WebView URL.
 - No code was written or run for this proposal.
 
-## Open questions for the human
+## Decisions of 2026-11-04
 
-None of these is decided.
+The human answered the five questions on 2026-11-04. For questions 2 and 3 the human said not to know how professionals do it and delegated the choice to the agent. Each decision names who took it. The wizard route stays unbuilt and unverified.
 
-1. Windows: drop the MSI credential dialog if the wizard passes the Windows smoke test, or ship both?
-2. May ADR-006 be amended with a `setup` stdout event (a new contract surface between sidecar and host)?
-3. Token policy numbers: expiry (assumed 15 minutes) and wrong-attempt limit (assumed 5). Accept, or choose?
-4. Password blocklist: bundle a list in the SEA (which list, how large), accept a dependency, or accept a short built-in list?
-5. Is the CLI `setup` required on Windows too, or only on Linux and macOS as the epic says?
+### P1. Windows installer dialog (Human)
+
+Keep the MSI credential dialog and the wizard until the wizard passes the smoke test on Windows. Decide then whether to drop the dialog.
+
+### P2. Token delivery and the ADR-006 amendment (Agent, by delegation of the human)
+
+The sidecar emits the token in a `setup` stdout event, the console pattern of Jenkins. The token is not written to disk. The CLI `setup` prints the same token in the terminal. The ADR-006 amendment is deferred to the implementation (POC-7). This ADR does not amend ADR-006.
+
+### P3. Token expiry and attempt limit (Agent, by delegation of the human)
+
+Expiry is 15 minutes and the limit is 5 wrong attempts. Both are constants in one place, so the implementer can change them.
+
+### P4. Password policy (Human)
+
+The policy is a replaceable strategy in one module. The default of the template is permissive: at least 4 characters. Whoever implements a product changes it. The spike proposal (15 or more characters with a blocklist, NIST SP 800-63B-4) stays as a stricter example. This overrides rule 4 of the [Proposal](#proposal) as the default.
+
+Security notice: an admin with a short PIN on a LAN is weak. The attempt limit slows online guessing. It does not stop an offline attack on the hash. The default is a template default and must be changed in production.
+
+### P5. CLI `setup` platforms (Human)
+
+The CLI `setup` is offered on Windows, Linux and macOS.

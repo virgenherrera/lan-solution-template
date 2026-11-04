@@ -83,7 +83,7 @@ docs[85]:
   - doc: docs/architecture/adr/ADR-010-first-run-admin-setup.md
     title: ADR-010 First admin authentication
     type: architecture
-    summary: "Proposed path for creating the first real admin: CLI setup plus a loopback wizard with a one-time token. Not decided."
+    summary: "Proposed path for the first real admin: CLI setup plus loopback wizard with one-time token. Five questions answered, wizard unbuilt."
     ids: []
     related[7]: docs/results/POC-05-Result.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/backlog/poc-7-auth-roles.md,docs/roadmap/PROPOSAL.md
     status: proposed

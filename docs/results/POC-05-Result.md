@@ -87,6 +87,9 @@ Resolved: A2 (navigation filter) in commit 47faaa7. The WebView only navigates t
 |---|---|
 | A2b | CSP of the gateway responses, not verified whether it exists. The CSP of the remote page is set by the response headers of the api-gateway, not by Tauri. Not changed here. |
 | A3 | Windows and Linux were not run. |
+| AD6 | The navigation log keeps the full payload of non-hierarchical URLs (`data:`, `javascript:`). Log hygiene advisory. |
+| AD7 | The `on_navigation` filter captures the origin when the window is created. It fails closed if the port changed at runtime. |
+| AD8 | HTTP redirects and iframes are not verified. |
 | AD1 | A window exists between the dialog and the use of the temporary copy. On Linux, where `pkexec` runs the copy, only the same user id could exploit it. |
 | AD2 | Text outside the PEM block is accepted but not installed. |
 | AD3 | The temporary directory stays if the process dies by SIGKILL. |
@@ -128,10 +131,20 @@ Deviations:
 
 ## Open decisions for the human
 
-Not decided. They stay open.
+Decided on 2026-11-04. The five questions of [ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md#decisions-of-2026-11-04) are answered:
 
-1. First start: while `ca.crt` is not trusted the window cannot load the gateway. Which flow does the user see?
-2. CSP of the gateway responses (A2b).
-3. The real keychain install of `ca.crt` (the human runs it).
-4. The five questions of [ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md#open-questions-for-the-human).
-5. Client mode (OQ17) and the log service ([idea](../backlog/log-service-otel-grpc.md)).
+| Question | Decision | Decided by |
+|---|---|---|
+| P1 Windows MSI dialog | Keep the dialog and the wizard until the wizard passes the Windows smoke test, then decide. | Human |
+| P2 Token delivery, ADR-006 amendment | `setup` stdout event (console pattern of Jenkins, no token on disk). CLI `setup` prints the same token. The amendment is deferred to POC-7. | Agent, by delegation of the human |
+| P3 Token expiry and attempts | 15 minutes and 5 attempts, constants in one place. | Agent, by delegation of the human |
+| P4 Password policy | Replaceable strategy in one module. Permissive default (4 characters minimum). | Human |
+| P5 CLI `setup` platforms | Windows, Linux and macOS. | Human |
+
+Decided by the agent: the first-run dialog to trust `ca.crt` is left to POC-8. The installer generates and installs the CA with consent. The tray item `Trust CA...` stays as a repair and development path.
+
+Pending for the human:
+
+- Push and pull request (already approved).
+- The real Trust CA install into the login keychain.
+- Everything in [Not verified](#not-verified), including A2b (CSP of the gateway responses), the wizard route and the Windows and Linux runs.
