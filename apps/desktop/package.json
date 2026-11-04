@@ -6,10 +6,9 @@
   "scripts": {
     "test": "pnpm run test:static && pnpm run test:dynamic",
     "build": "node ../../tools/scripts/stage-sidecar.ts && cargo check --manifest-path src-tauri/Cargo.toml",
-    "package": "node ../../tools/scripts/stage-sidecar.ts && tauri build --no-bundle",
+    "package": "node ../../tools/scripts/e2e-desktop.ts && node ../../tools/scripts/stage-sidecar.ts && tauri build --no-bundle",
     "test:static": "tsc --noEmit -p tsconfig.json",
-    "test:dynamic": "echo \"test:dynamic: not defined for this package\"",
-    "e2e": "node ../../tools/scripts/e2e-desktop.ts"
+    "test:dynamic": "echo \"test:dynamic: not defined for this package\""
   },
   "type": "module",
   "devDependencies": {
@@ -46,16 +45,17 @@
           },
           "build",
           "test"
-        ]
-      },
-      "e2e": {
-        "dependsOn": [
-          {
-            "projects": [
-              "sea-runtime"
-            ],
-            "target": "package"
-          }
+        ],
+        "outputs": [
+          "{projectRoot}/src-tauri/target/release"
+        ],
+        "inputs": [
+          "default",
+          "^default",
+          "{workspaceRoot}/tools/scripts/e2e-desktop.ts",
+          "{workspaceRoot}/tools/scripts/stage-sidecar.ts",
+          "{workspaceRoot}/tools/scripts/generate-certs.ts",
+          "{workspaceRoot}/artifacts/sea-runtime/**/*"
         ]
       }
     }

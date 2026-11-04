@@ -1,5 +1,5 @@
 // Native E2E of the Tauri host (REQ-TEST-08, AC-20): builds the instrumented host, installs it with the sidecar in a temporary base directory, runs WebdriverIO, then checks that no process is left.
-// Usage: `pnpm --filter desktop run e2e` (or `pnpm exec nx run desktop:e2e`). Needs `nx run sea-runtime:package` first; the nx target orders it.
+// Not a public target: the `package` step of apps/desktop runs it before the Tauri bundle (REQ-ECO-06). Run it with `pnpm exec nx run desktop:package`; the nx graph orders `sea-runtime:package` first.
 // Isolation: temporary base directory, free ports written into its config, certs from tools/scripts/generate-certs.ts. The OS trust store and keychain are never touched: the test process trusts ca.crt through its own `ca` option.
 // The instrumented binary is built into src-tauri/target/e2e, apart from the product build. Only macOS is verified; Windows and Linux (tauri-driver) are not.
 import { execFileSync, spawnSync } from 'node:child_process';
