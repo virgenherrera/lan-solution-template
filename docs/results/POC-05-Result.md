@@ -29,7 +29,7 @@ Branch: `minor/poc-05-tauri-sidecar`. Epic: [POC-5](../backlog/poc-5-tauri-sidec
 | U2 | `e38407f` | Tray, hide to tray, autostart opt-in, single instance, busy port, crash recovery with manual restart. |
 | U3 | `3567f89` | Window created by code on the gateway origin, no IPC, Trust CA item with native dialog and SHA-256 fingerprint. |
 | U3 fix | `e7a1aa4` | Install the exact `ca.crt` bytes the user confirmed (blocker B1), refuse a symlink, ignore a second click. |
-| E1 | `210cb1f` | Native E2E with `@wdio/tauri-service` on an instrumented build (`desktop:e2e`). |
+| E1 | `210cb1f` | Native E2E with `@wdio/tauri-service` on an instrumented build (run by `desktop:package`, no public `e2e` target). |
 
 The spikes S1 (host against the ADR-006 contract), S2 (WDIO on macOS) and S3 (first admin) ran before these slices. S3 has no code: its result is [ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md).
 
@@ -51,7 +51,7 @@ Everything below ran on macOS aarch64 (Darwin, tauri 2.12.5, rustc 1.94.1, Node 
 | The window is created by code on `https://127.0.0.1:<httpsPort>/`. No capability file, no permission, no `remote` URL. | Reproduction, 9 of 9 items. | `3567f89` |
 | The trust code refuses a symlink, a non-regular file, a file over 64 KiB, a private key, a file with other than one PEM block, and a certificate that is not a CA. The fingerprint and the installed file come from the same DER bytes. | Adversarial verification, B1 fixed and re-checked. | `e7a1aa4` |
 | The product build has 0 `wdio` strings. The instrumented build has 63. | Count of `wdio` matches in `strings -a` of each binary. | `210cb1f` |
-| `pnpm exec nx run desktop:e2e` gives 2 passing tests (health `ready` with the test's own CA, and the `main` window handle exists) and leaves no orphan. | Independent run with `--skip-nx-cache` (the first run was a cache hit). | `210cb1f` |
+| The E2E target of that commit (since removed; the same E2E now runs inside `desktop:package`) gave 2 passing tests (health `ready` with the test's own CA, and the `main` window handle exists) and leaves no orphan. | Independent run with `--skip-nx-cache` (the first run was a cache hit). | `210cb1f` |
 | Order of builds: Tauri `build` and `package` run after the SEA package. | Independent check ran the build and `desktop:test:static`, both exit 0. | `f8eb47c` |
 
 Nothing in this table covers Windows or Linux.
@@ -68,7 +68,9 @@ An adversarial verifier (read-only, high-risk item: trust store and security) fo
 
 Open and not fixed in this branch.
 
-Resolved: A2 (navigation filter) in commit 47faaa7. The WebView only navigates to `https://127.0.0.1:<httpsPort>`; other URLs and new windows are denied and logged. `nx run desktop:e2e` checks four foreign URLs on macOS (3 passing): the window URL does not change and the host log names each block. The `on_new_window` deny and a real `target=_blank` click were not run (not verified).
+Resolved: A2 (navigation filter) in commit 47faaa7. The WebView only navigates to `https://127.0.0.1:<httpsPort>`; other URLs and new windows are denied and logged. the E2E (run by `nx run desktop:package`) checks four foreign URLs on macOS (3 passing): the window URL does not change and the host log names each block. The `on_new_window` deny and a real `target=_blank` click were not run (not verified).
+
+The native E2E now runs inside the `package` step of `desktop`, before the Tauri bundle, and the separate E2E target no longer exists (REQ-TEST-08, REQ-ECO-01, REQ-ECO-06). `pnpm exec nx run desktop:package --skip-nx-cache` ended with exit 0 on macOS: 3 passing, then the release build; `strings -a` on the release binary gave 0 `wdio` matches. The step opens a window, so a CI run needs a display (not verified). The installer black-box smoke without instrumentation (install, start, navigate, close, uninstall) does not exist yet (POC-8) and is not done.
 
 | Id | Advisory |
 |---|---|

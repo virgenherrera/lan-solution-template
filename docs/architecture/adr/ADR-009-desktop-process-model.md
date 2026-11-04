@@ -99,7 +99,7 @@ OQ12 (human): off by default, a checkbox in the tray menu. The agent persists th
 
 ### D12. Native E2E uses a cargo feature and an overlay (Agent)
 
-`@wdio/tauri-service` 1.5.1 with the embedded driver provider runs the instrumented build. The cargo feature `wdio` registers `tauri-plugin-wdio` and `tauri-plugin-wdio-webdriver`. Their permissions and `withGlobalTauri` sit in the overlay `tauri.wdio.conf.json`, passed only with `--config`. The instrumented binary is built into `src-tauri/target/e2e`. `tauri-plugin-log` is skipped under the feature, because a second logger panics. The product build has 0 `wdio` strings and the instrumented build has 63. The E2E isolates a temporary base directory and never touches the OS trust store.
+`@wdio/tauri-service` 1.5.1 with the embedded driver provider runs the instrumented build. The cargo feature `wdio` registers `tauri-plugin-wdio` and `tauri-plugin-wdio-webdriver`. Their permissions and `withGlobalTauri` sit in the overlay `tauri.wdio.conf.json`, passed only with `--config`. The instrumented binary is built into `src-tauri/target/e2e`. `tauri-plugin-log` is skipped under the feature, because a second logger panics. The product build has 0 `wdio` strings and the instrumented build has 63. The E2E runs inside the `package` step of `apps/desktop`, before the Tauri bundle, and no public `e2e` target exists (REQ-ECO-01, REQ-ECO-06); that step opens a window, and a CI display is not verified. The installer black-box smoke without instrumentation (REQ-TEST-08) does not exist yet (POC-8). The E2E isolates a temporary base directory and never touches the OS trust store.
 
 ### D13. `ca.crt` is installed only with consent and on the bytes the user saw (Agent)
 
