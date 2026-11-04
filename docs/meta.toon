@@ -1,4 +1,4 @@
-docs[81]:
+docs[85]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -71,6 +71,24 @@ docs[81]:
     status: current
     updated: 2026-11-03
     refs[16]: AC-12,AC-14,AC-17,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA-02,REQ-TEST-01,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04
+  - doc: docs/architecture/adr/ADR-009-desktop-process-model.md
+    title: ADR-009 Desktop process model
+    type: architecture
+    summary: "How the Tauri host starts, watches and stops the SEA supervisor, and how it trusts ca.crt. Verified on macOS only."
+    ids: []
+    related[10]: docs/architecture/adr/ADR-002-single-sea-portability.md,docs/results/POC-05-Result.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/overview.md,docs/roadmap/PROPOSAL.md,docs/requirements/09-desktop-tauri.md
+    status: proposed
+    updated: 2026-11-04
+    refs[3]: REQ-DESK-06,REQ-ECO-06,REQ-SEC-05
+  - doc: docs/architecture/adr/ADR-010-first-run-admin-setup.md
+    title: ADR-010 First admin authentication
+    type: architecture
+    summary: "Proposed path for creating the first real admin: CLI setup plus a loopback wizard with a one-time token. Not decided."
+    ids: []
+    related[7]: docs/results/POC-05-Result.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/backlog/poc-7-auth-roles.md,docs/roadmap/PROPOSAL.md
+    status: proposed
+    updated: 2026-11-04
+    refs[4]: AC-21,REQ-SEC-02,REQ-SEC-05,REQ-SEC-06
   - doc: docs/architecture/device-trust-guide.md
     title: Device trust guide
     type: architecture
@@ -116,6 +134,15 @@ docs[81]:
     status: current
     updated: 2026-11-03
     refs[6]: AC-07,AC-08,AC-10,REQ-DB-06,REQ-DB-10,REQ-TEST-01
+  - doc: docs/backlog/log-service-otel-grpc.md
+    title: Log service with OpenTelemetry data model and gRPC
+    type: backlog
+    summary: "Idea, TBD, no design: one log service for Rust and Node, OpenTelemetry log data model, swappable transport."
+    ids: []
+    related[4]: docs/backlog/README.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/results/POC-05-Result.md
+    status: proposed
+    updated: 2026-11-04
+    refs[1]: REQ-SEC-06
   - doc: docs/backlog/persistence-system.md
     title: Persistence system
     type: backlog
@@ -656,6 +683,15 @@ docs[81]:
     status: current
     updated: 2026-11-03
     refs[2]: REQ-NET-06,REQ-TLS-02
+  - doc: docs/results/POC-05-Result.md
+    title: POC-05 Result
+    type: backlog
+    summary: "Result of POC-5 in server mode: Tauri host, SEA sidecar, tray, CA trust, native E2E. Built and verified on macOS only."
+    ids: []
+    related[8]: docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/results/POC-04-Result.md,docs/backlog/log-service-otel-grpc.md,docs/roadmap/PROPOSAL.md
+    status: current
+    updated: 2026-11-04
+    refs[6]: REQ-DESK-01,REQ-DESK-06,REQ-ECO-06,REQ-SEC-05,REQ-TEST-08,REQ-TLS-02
   - doc: docs/results/RESEARCH-pwa-https-trust.md
     title: RESEARCH PWA HTTPS trust on a LAN
     type: backlog
