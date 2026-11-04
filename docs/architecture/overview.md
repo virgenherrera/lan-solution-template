@@ -5,7 +5,7 @@ title: Architecture overview
 type: architecture
 summary: Mermaid architecture diagrams citing SRS sections for runtime and desktop topology.
 ids[0]:
-related[14]: README.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/device-trust-guide.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
+related[15]: README.md,docs/architecture/platform-matrix.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/device-trust-guide.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
 status: current
 updated: 2026-11-04
 -->
@@ -35,6 +35,7 @@ updated: 2026-11-04
 | Development | Separate apps behind a dev proxy | [Development topology](#development-topology) |
 | Production | One SEA, a supervisor, a gateway, one HTTPS origin | [Production topology](#production-topology) |
 | Desktop | Tauri starts the SEA supervisor as a sidecar | [Tauri sidecar](#tauri-sidecar) |
+| Platforms | Systems and architectures with what was built and verified; only macOS arm64 ran | [Platform matrix](platform-matrix.md) |
 | Decisions | ADR-001 to ADR-010 are written. ADR-009 and ADR-010 are proposed. ADR-011 is a placeholder. | [Architecture decisions](#architecture-decisions) |
 
 ---
