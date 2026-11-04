@@ -17,7 +17,7 @@ Branch: `minor/poc-04-https-gateway`. Epic: [POC-4](../backlog/poc-4-https-gatew
 ## Summary
 
 - Question: can the gateway serve the Angular PWA over HTTPS with a TLS identity built from Node built-ins only, in dev, in the SEA binary and as a Tauri sidecar?
-- Answer: yes on macOS arm64. The gateway creates a local CA and a leaf under `<base>/certs/`, serves HTTPS on `net.httpsPort` and redirects `net.httpPort` with 308. The packaged smoke passes 28 checks, 4 of them the sidecar simulation. The dev smoke passes 3 checks.
+- Answer: yes on macOS arm64. `pnpm dev:certs` creates a local CA and a leaf under `<base>/certs/` (amended: the gateway only validates them and exits 1 when they are missing or invalid, see [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md#the-gateway-never-creates-certificates)). The gateway serves HTTPS on `net.httpsPort` and redirects `net.httpPort` with 308. The packaged smoke passes 30 checks, 4 of them the sidecar simulation. The dev smoke passes 6 checks.
 - Not done: installing the CA in a system trust store. The guide covers manual install ([REQ-TLS-02](../requirements/06-web-gateway-https-pwa.md)).
 
 ## Slices
@@ -37,13 +37,13 @@ T7 is this documentation. The independent verification and the PR follow it.
 
 ## Evidence
 
-### Packaged smoke (`tools/scripts/smoke-sea.ts`, 28 checks)
+### Packaged smoke (`tools/scripts/smoke-sea.ts`, 30 checks)
 
 | Group | Checks |
 |---|---|
 | Artifact | One executable, no node copy, no Drizzle code. |
 | Start | Ports free, bad selectors exit, supervisor ready, child runs the same executable. |
-| TLS | Identity modes `0700` and `0600`. Second start reuses the identity. `tls.extraNames` gives a new leaf and the same CA. |
+| TLS | Files made by `generate-certs` have modes `0700` and `0600`. A second start changes no file. After `tls.extraNames` changes, `generate-certs` gives a new leaf and the same CA. Start without TLS files: exit 1, `pnpm dev:certs` named, nothing created. A `leaf.key` that does not match: exit 1, the mismatch named. |
 | HTTPS | `/api/health` over HTTPS with the CA. Without the CA it fails verification. `index.html` answers. A missing file answers 404. |
 | Redirect | Known host gets 308. Unknown host gets 400. A new `extraNames` host redirects after the reissue. |
 | Supervisor | Database keys, valid stdout events, invalid stdin line ignored, SIGKILL recovery, SIGTERM and stdin shutdown exit 0, restart budget, schema mismatch, config missing, unknown config key. |
@@ -88,7 +88,7 @@ Generated files come from the official CLIs. These edits have no CLI:
 - `apps/web-angular/src/index.html`: `theme-color` meta.
 - `.gitignore`: `config/`, `certs/`, `data/` and `logs/` at the root and under `apps/*` and `libs/*`.
 - `libs/shared-core/src/config.ts` and `config.example.json`: strict `net` and `tls` blocks. `hostname` left `serverConfigSchema`.
-- `package.json`: scripts `dev:gateway` and `dev:web`.
+- `package.json`: scripts `dev:certs`, `dev:gateway` and `dev:web`.
 - `tools/scripts/smoke-dev.ts` and `smoke-sea.ts`.
 - `tools/scripts/trust-ca.ts` and the `dev:trust` script of `package.json`: trust the CA on the host, like `dotnet dev-certs https --trust`.
 
@@ -118,5 +118,5 @@ Follow-up: the source-backed research is in [RESEARCH-pwa-https-trust](RESEARCH-
 
 ## Gaps
 
-- A crash between writing `leaf.key` and `leaf.crt` leaves a mismatched pair. The next start throws. See [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md#known-gap).
+- A crash between writing `leaf.key` and `leaf.crt` (only `pnpm dev:certs` writes them) leaves a mismatched pair. The next start throws; the next `pnpm dev:certs` repairs the leaf. See [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md#known-gap).
 - No endpoint serves `ca.crt`. The operator copies the file to each device by hand.
