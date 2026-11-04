@@ -170,4 +170,4 @@ Source: `docs/roadmap/PROPOSAL.md`, Open questions.
 | OQ | Topic | Status |
 |---|---|---|
 | [OQ8](../roadmap/PROPOSAL.md#open-questions) | TLS crypto library and key storage | decided (human): built-ins of Node suffice |
-| [OQ17](../roadmap/PROPOSAL.md#open-questions) | install-time choice: server mode or client mode | proposed |
+| [OQ17](../roadmap/PROPOSAL.md#open-questions) | install-time choice: server mode or client mode | decided (human, 2026-11-04) |

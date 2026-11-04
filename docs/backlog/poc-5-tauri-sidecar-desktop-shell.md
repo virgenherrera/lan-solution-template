@@ -126,6 +126,7 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-s
 - [ ] Tauri installs `ca.crt` into the OS trust store with explicit consent. Key storage: plain files under `<base>/certs` ([ADR-008](../architecture/adr/ADR-008-tls-trust-model.md#storage)). Source: [REQ-TLS-02](../requirements/06-web-gateway-https-pwa.md), [OQ8](../roadmap/PROPOSAL.md#open-questions)
 - [ ] Run native E2E with `@wdio/tauri-service` on an instrumented build; the commercial installer excludes it. Source: [REQ-TEST-08](../requirements/11-nx-quality-testing.md), [AC-20](../requirements/11-nx-quality-testing.md)
 - [ ] Order Tauri `build`/`package` after SEA. Source: [REQ-ECO-06](../requirements/11-nx-quality-testing.md)
+- [ ] Pending (investigate and implement later, not in this branch): client mode. The shell loads the UI from a running gateway on another machine (a URL on the LAN with a port) and runs with no IPC capabilities for that origin. Open: WKWebView accepting the server certificate after `ca.crt` is installed, and how a client gets `ca.crt` (no gateway endpoint serves it today, [device trust guide](../architecture/device-trust-guide.md)). Not verified. Source: [OQ17](../roadmap/PROPOSAL.md#open-questions), [REQ-SEC-05](../requirements/07-security.md)
 - [ ] Publish `POC-05-Result` and `ADR-009` (desktop process model) under `docs/`. Source: [REQ-DESK-02](../requirements/09-desktop-tauri.md), [AC-03](../requirements/11-nx-quality-testing.md)
 
 ---
@@ -151,4 +152,4 @@ Source: `docs/roadmap/PROPOSAL.md`, Open questions. No open question blocks. OQ1
 | [OQ5](../roadmap/PROPOSAL.md#open-questions) | first-run setup without MSI | decided (human decision 13): pending spike |
 | [OQ8](../roadmap/PROPOSAL.md#open-questions) | TLS crypto library and key storage | decided (agent, 2026-11-03, delegated): built-ins of Node suffice, see [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md) |
 | [OQ12](../roadmap/PROPOSAL.md#open-questions) | autostart default | decided (human) |
-| [OQ17](../roadmap/PROPOSAL.md#open-questions) | install-time choice: server mode or client mode | proposed |
+| [OQ17](../roadmap/PROPOSAL.md#open-questions) | install-time choice: server mode or client mode | decided (human, 2026-11-04): server mode now, client mode pending |

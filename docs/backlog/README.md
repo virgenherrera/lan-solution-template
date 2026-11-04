@@ -106,7 +106,8 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | Open question status | Table in PROPOSAL.md |
 | OQ1, OQ2, OQ4, OQ5, OQ8 | Decided (decisions 11 to 15) |
 | OQ6, OQ12, OQ15 | Decided by the human |
-| OQ16, OQ17 | Proposed (OQ16 is a draft; a spike decides it) |
+| OQ16 | Proposed (a draft; a spike decides it) |
+| OQ17 | Decided by the human, 2026-11-04 (install-time choice: server mode installs everything, client mode loads its UI from the running gateway URL) |
 | OQ18 to OQ22 | Decided by the human, 2026-11-03 (third-party licenses; see [Third-party license notices](third-party-licenses.md#decisions)) |
 | OQ23 | Decided by the human, 2026-11-03 (persistence system: one base directory) |
 | OQ24 | Open (installer assistant defines the install path and creates `config/config.json`; owner human; TBD with POC-8) |
