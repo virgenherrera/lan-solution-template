@@ -5,7 +5,7 @@ title: "POC-04 Result"
 type: backlog
 summary: "Result of POC-4: built-in TLS identity, HTTPS gateway with safe redirect, installable PWA, dev loop and sidecar simulation."
 ids[0]:
-related[5]: docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/device-trust-guide.md,docs/results/POC-03-Result.md,docs/roadmap/PROPOSAL.md
+related[7]: docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/device-trust-guide.md,docs/results/POC-03-Result.md,docs/roadmap/PROPOSAL.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md
 status: current
 updated: 2026-11-03
 -->
@@ -90,6 +90,7 @@ Generated files come from the official CLIs. These edits have no CLI:
 - `libs/shared-core/src/config.ts` and `config.example.json`: strict `net` and `tls` blocks. `hostname` left `serverConfigSchema`.
 - `package.json`: scripts `dev:gateway` and `dev:web`.
 - `tools/scripts/smoke-dev.ts` and `smoke-sea.ts`.
+- `tools/scripts/trust-ca.ts` and the `dev:trust` script of `package.json`: trust the CA on the host, like `dotnet dev-certs https --trust`.
 
 Deviations from the plan:
 
@@ -104,6 +105,8 @@ Independent verification (read-only, adversarial, against the packaged binary; p
 - `net.httpPort` equal to `net.httpsPort` passed the schema and made the supervisor loop on `EADDRINUSE`. The gateway now stops at start with `config net.httpPort must differ from net.httpsPort` (exit 1).
 
 ## Not verified
+
+Follow-up: the source-backed research is in [RESEARCH-pwa-https-trust](RESEARCH-pwa-https-trust.md). The [spike plan](../backlog/spike-pwa-https-trust.md) covers the browser and phone items below.
 
 - Chrome, Firefox and Safari accepting the CA and an IP SAN leaf.
 - Any mobile or desktop device following the [device-trust guide](../architecture/device-trust-guide.md).

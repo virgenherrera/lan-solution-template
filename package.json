@@ -10,7 +10,8 @@
     "securityCheck": "pnpm audit --audit-level=high",
     "dev:gateway": "pnpm --filter api-gateway build && node apps/api-gateway/dist/main.js --web none",
     "dev:web": "NODE_EXTRA_CA_CERTS=\"$PWD/certs/ca.crt\" pnpm --filter web-angular exec ng serve",
-    "dev:all": "pnpm --filter lan-solution-template --parallel run \"/^dev:(gateway|web)$/\""
+    "dev:all": "pnpm --filter lan-solution-template --parallel run \"/^dev:(gateway|web)$/\"",
+    "dev:trust": "node tools/scripts/trust-ca.ts"
   },
   "license": "PostgreSQL",
   "devEngines": {

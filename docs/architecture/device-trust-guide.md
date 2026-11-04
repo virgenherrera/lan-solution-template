@@ -5,7 +5,7 @@ title: "Device trust guide"
 type: architecture
 summary: "How an operator makes a device trust the local CA of the gateway on iOS, Android, Windows and macOS."
 ids[0]:
-related[4]: docs/architecture/adr/ADR-008-tls-trust-model.md,docs/requirements/06-web-gateway-https-pwa.md,docs/results/POC-04-Result.md,docs/standards/README.md
+related[5]: docs/architecture/adr/ADR-008-tls-trust-model.md,docs/requirements/06-web-gateway-https-pwa.md,docs/results/POC-04-Result.md,docs/standards/README.md,docs/results/SPIKE-pwa-https-trust-Result.md
 status: current
 updated: 2026-11-03
 -->
@@ -45,7 +45,7 @@ A device that trusts `ca.crt` accepts every certificate that this CA signs. The 
 
 ## iOS and iPadOS
 
-Not verified on a device.
+Not verified on a device. Observed on an iOS 18.5 simulator ([spike result](../results/SPIKE-pwa-https-trust-Result.md)): without the CA, Safari shows "This Connection Is Not Private"; after the CA was installed, the HTTPS page loaded with a registered service worker. In the simulator the CA appeared in Certificate Trust Settings with full trust already on. A real iPhone may differ; not verified.
 
 Confirmed by Apple ([Apple Support 102390](https://support.apple.com/en-us/102390)):
 
@@ -57,7 +57,14 @@ If the section is missing, no additional certificate is installed. Apple states 
 
 ## Android
 
-Not verified on a device. The vendor pages give no path for a CA used by a browser.
+Observed on an Android 15 emulator with Chrome 124, not on a phone ([spike result](../results/SPIKE-pwa-https-trust-Result.md)). The vendor pages give no path for a CA used by a browser. The observed path, with the CA file on the device:
+
+1. Open **Settings > Security & privacy > More security & privacy > Encryption & credentials**.
+2. Tap **Install a certificate**, then **CA certificate**, then **Install anyway**.
+3. Pick the CA file. It is then listed under **User credentials**.
+4. Reload the HTTPS page in Chrome: no warning, and the service worker registered.
+
+The emulator asked for no screen lock. Menu names vary by vendor.
 
 Confirmed by Google ([Pixel Help 2844832](https://support.google.com/pixelphone/answer/2844832)) for the Wi-Fi certificate option only:
 
@@ -67,9 +74,11 @@ Confirmed by Google ([Pixel Help 2844832](https://support.google.com/pixelphone/
 
 Google writes that some steps need Android 14 or later and that the device asks for a screen lock if none is set. The page names the **Wi-Fi certificate** option. It does not say that this stores a CA for HTTPS browsing; not verified.
 
-Confirmed by Android developers ([Network security configuration](https://developer.android.com/privacy-and-security/security-config)): apps that target Android 6.0 (API 23) or lower trust user-added CAs by default. The page states no default for browsers or for apps that target newer levels. Whether a given browser or the installed PWA accepts a user-added CA: not verified.
+Confirmed by Android developers ([Network security configuration](https://developer.android.com/privacy-and-security/security-config)): apps that target Android 6.0 (API 23) or lower trust user-added CAs by default. The page states no default for browsers or for apps that target newer levels. Chrome accepted the user-added CA on the emulator. Whether the installed PWA and other Android browsers accept it: not verified.
 
 ## Windows
+
+For the machine that runs the gateway, `pnpm dev:trust` runs `certutil -user -addstore Root` on the CA file ([`tools/scripts/trust-ca.ts`](../../tools/scripts/trust-ca.ts), not verified on Windows). The manual route below applies to other Windows machines.
 
 Not verified on a device.
 
@@ -85,6 +94,8 @@ Microsoft states that the store needs administrator rights and that a change can
 Command line ([certutil](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/certutil)): `certutil -addstore Root ca.crt`. The page gives the form `certutil [options] -addstore CertificateStoreName InFile` and the options `-user` and `-Enterprise`. The store name `Root` comes from the first page above, which says the store is named *root*. Running the command: not verified.
 
 ## macOS
+
+For the machine that runs the gateway, `pnpm dev:trust` adds the CA to the login keychain with `security add-trusted-cert -p basic -p ssl`, the same call `dotnet dev-certs https --trust` makes ([`tools/scripts/trust-ca.ts`](../../tools/scripts/trust-ca.ts)). The dry run and the refusal paths were run; the system trust change itself was not run by the author of the script. The manual route below applies to other Macs.
 
 Not verified on a device.
 

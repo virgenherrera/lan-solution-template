@@ -8,6 +8,7 @@
 - [What it is](#what-it-is)
 - [Who it is for](#who-it-is-for)
 - [Current status](#current-status)
+- [Set up the dev environment](#set-up-the-dev-environment)
 - [Reading order](#reading-order)
 - [Documentation map](#documentation-map)
 - [How to contribute](#how-to-contribute)
@@ -62,6 +63,22 @@ The full production diagram is in [Architecture overview](docs/architecture/over
 - Phase: documentation plus incremental POC slices ([backlog](docs/backlog/README.md)).
 - Built: POC-1 (toolchain and workspace), POC-2 (single SEA and supervisor), POC-3 (config and SQLite persistence). PR #17 (persistence system) is open as a draft.
 - The [roadmap](docs/roadmap/PROPOSAL.md) is a proposal, not approved.
+
+---
+
+## Set up the dev environment
+
+[Back to navigation](#navigation)
+
+Needs Node `>=26.13.0 <27` and pnpm. The commands run from the repository root. In dev the base directory is the current directory ([ADR-007](docs/architecture/adr/ADR-007-persistence-system.md)): `config/`, `data/`, `logs/` and `certs/` are created or read there and are ignored by git.
+
+1. `pnpm install`
+2. `mkdir -p config && cp libs/shared-core/config.example.json config/config.json`. The gateway never creates the config: a missing or invalid file stops the start.
+3. `pnpm dev:gateway`. It builds and starts the gateway over HTTPS. The first start creates the local CA and the certificate under `certs/`.
+4. `pnpm dev:trust`. It trusts that CA on this machine, like `dotnet dev-certs https --trust`: the login keychain on macOS, the current user's Root store on Windows. The system asks for your password or Touch ID. On Linux it prints the steps. Restart the browser afterwards.
+5. `pnpm dev:all` runs the gateway and the Angular dev server. The gateway is at `https://localhost:8443`, the Angular app at `http://localhost:4200`.
+
+A PWA needs HTTPS to register its service worker, so a browser that does not trust the CA shows a certificate warning and the PWA does not work. For a packaged binary, run `pnpm dev:trust --base artifacts/sea-runtime`. A phone or another device installs `ca.crt` by hand: see the [device trust guide](docs/architecture/device-trust-guide.md). Why: [ADR-008](docs/architecture/adr/ADR-008-tls-trust-model.md#phone-trust).
 
 ---
 

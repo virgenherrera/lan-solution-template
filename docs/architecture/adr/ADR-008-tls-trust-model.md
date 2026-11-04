@@ -5,7 +5,7 @@ title: "ADR-008 TLS trust model"
 type: architecture
 summary: "Local CA and leaf built with Node built-ins only, strict net and tls config, HTTPS 8443 with a 308 redirect."
 ids[0]:
-related[8]: docs/architecture/device-trust-guide.md,docs/results/POC-04-Result.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/requirements/06-web-gateway-https-pwa.md,docs/roadmap/PROPOSAL.md,docs/architecture/overview.md
+related[10]: docs/architecture/device-trust-guide.md,docs/results/POC-04-Result.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/requirements/06-web-gateway-https-pwa.md,docs/roadmap/PROPOSAL.md,docs/architecture/overview.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md
 status: current
 updated: 2026-11-03
 -->
@@ -20,6 +20,7 @@ updated: 2026-11-03
 - [Context](#context)
 - [Decision](#decision)
 - [Options rejected](#options-rejected)
+- [Phone trust](#phone-trust)
 - [Known gap](#known-gap)
 - [Consequences](#consequences)
 - [Measured](#measured)
@@ -135,9 +136,32 @@ POC-5 owns those.
 
 ### Out of scope
 
-- Installing the CA in the system trust store ([REQ-TLS-02](../../requirements/06-web-gateway-https-pwa.md) says "SHOULD facilitate"). The [device-trust guide](../device-trust-guide.md) meets it.
+- Installing the CA in the trust store of other devices ([REQ-TLS-02](../../requirements/06-web-gateway-https-pwa.md) says "SHOULD facilitate"). The [device-trust guide](../device-trust-guide.md) meets it. The host that runs the gateway has `pnpm dev:trust` (see [Phone trust](#phone-trust)).
 - Windows ACL.
 - Real Tauri and PostgreSQL.
+
+## Phone trust
+
+Amended 2026-11-03 with the [research](../../results/RESEARCH-pwa-https-trust.md) and the [spike result](../../results/SPIKE-pwa-https-trust-Result.md).
+
+The only reason this template serves HTTPS is to deploy mobile LAN apps as a PWA. The platform rules behind that are verified in the research: a service worker needs a secure context (HTTPS or loopback), and Android Chrome installs a PWA only over HTTPS. A LAN IP over plain HTTP is not a secure context. A public CA cannot issue a certificate for a private IP or a `.local` name, so a private CA is the only route on a closed LAN.
+
+Decision:
+
+- The built-in CA stays the default. Each phone installs `ca.crt` once, by hand ([device-trust guide](../device-trust-guide.md)). No MDM and no automatic trust are promised.
+- Observed on an Android 15 emulator and an iOS 18.5 simulator: without the CA the browser shows a certificate warning and the service worker does not register. With the CA installed the page loads and the service worker registers. Chrome on Android honors a CA installed as a user CA.
+- The leaf stays at 397 days. The 398-day cap applies to certificates from default-trusted roots, not to a root the user installed. No Android cap is known.
+- Name constraints on the CA stay deferred: client support is not verified.
+- `pnpm dev:trust` (`tools/scripts/trust-ca.ts`) trusts the CA on the machine that runs the gateway, like `dotnet dev-certs https --trust`. macOS: `security add-trusted-cert -p basic -p ssl` on the login keychain. Windows: `certutil -user -addstore Root`. Linux: it prints the steps, because the store depends on the distribution. It takes one parameter, the base directory that holds `certs/ca.crt`, and refuses a file that is not a current CA certificate.
+- The PWA of the gateway ships a manifest and a service worker, so the install criteria are met by the app itself. Add to Home Screen, the Chrome install prompt and offline reload on a phone are checked at the first real deployment, not by the template.
+
+### Phone trust options rejected
+
+- A public CA (Let's Encrypt or similar): the Baseline Requirements forbid certificates for internal names and reserved IP addresses.
+- MDM auto-trust: a device management service gives automatic full trust on iOS, but MDM is out of scope.
+- The Chrome flag `unsafely-treat-insecure-origin-as-secure`: on Android it needs root or developer mode, it is per device and it disables a security check.
+- A host trust command as the whole trust model: it trusts the certificate on the machine where it runs, so a phone still needs the manual step. The command exists for the host (see Decision).
+- A provided certificate (`tls.source`): no requirement asks for it. It would add one required key to the strict `tls` block, with no default.
 
 ## Options rejected
 
@@ -177,8 +201,9 @@ From the packaged smoke (28 checks, 4 of them the sidecar simulation) and the de
 
 Same list as the [POC-4 result](../../results/POC-04-Result.md#not-verified).
 
-- Chrome, Firefox and Safari accepting the CA and an IP SAN leaf.
-- Any device following the [device-trust guide](../device-trust-guide.md).
+- Firefox accepting the CA. Chrome on Android (emulator, Chrome 124) and Safari on iOS (simulator, 18.5) accepted it; a real phone was not tested.
+- A real device following the [device-trust guide](../device-trust-guide.md): the simulator showed full trust already on after install, a real iPhone may still need the switch.
+- The installed PWA, Add to Home Screen, the Chrome install prompt, `.local` resolution on a phone, a changed host IP and whether accepting the certificate warning enables the service worker ([spike result](../../results/SPIKE-pwa-https-trust-Result.md#not-observed)).
 - The WebView of Tauri trusting the CA.
 - Real Tauri `CommandEvent` handling, the tray and the supervisor ending on stdin EOF.
 - Windows: ACLs on `certs/`, shells and any packaged run. Windows ignores 0600.
