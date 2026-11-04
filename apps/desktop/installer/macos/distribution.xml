@@ -2,13 +2,19 @@
 <installer-gui-script minSpecVersion="2">
   <title>LAN Solution Desktop</title>
   <welcome file="welcome.html" mime-type="text/html"/>
+  <readme file="trust.html" mime-type="text/html"/>
   <options customize="always" require-scripts="false" hostArchitectures="@HOST_ARCH@"/>
   <domains enable_anywhere="true" enable_localSystem="true" enable_currentUserHome="false"/>
   <choices-outline>
     <line choice="server"/>
+    <line choice="trust"/>
   </choices-outline>
-  <choice id="server" title="Server mode" description="Host, sidecar runtime, config/, data/ and logs/ in the chosen folder." customLocation="/usr/local/lan-solution" start_selected="true" enabled="false">
+  <choice id="server" title="Server mode" description="Host, sidecar runtime, config/, data/, logs/ and the TLS files of this installation in the chosen folder." customLocation="/usr/local/lan-solution" start_selected="true" enabled="false">
     <pkg-ref id="@IDENTIFIER@"/>
   </choice>
+  <choice id="trust" title="Trust the LAN Solution certificate on this Mac" description="Optional. Adds the certificate authority of this installation to the System keychain so browsers on this Mac accept the gateway. Leave it empty to change nothing in your keychain." start_selected="false">
+    <pkg-ref id="@TRUST_IDENTIFIER@"/>
+  </choice>
   <pkg-ref id="@IDENTIFIER@" version="@VERSION@" onConclusion="none">@COMPONENT@</pkg-ref>
+  <pkg-ref id="@TRUST_IDENTIFIER@" version="@VERSION@" onConclusion="none">@TRUST_COMPONENT@</pkg-ref>
 </installer-gui-script>

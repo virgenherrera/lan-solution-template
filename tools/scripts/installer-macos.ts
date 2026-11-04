@@ -1,6 +1,7 @@
 // Builds the macOS installer `.pkg` with the tools macOS ships: pkgbuild and productbuild. It never installs anything.
 // Payload = the install directory ROOT: the host executable and the sidecar sit side by side so the base directory is the directory of the executable (ADR-007).
-// config/ , data/ , logs/ are created by scripts/postinstall, never shipped: the payload holds no certificate, key or user data (certs/ is U4).
+// config/ , data/ , logs/ , certs/ are created by scripts/postinstall, never shipped: the payload holds no certificate, key or user data. postinstall runs `sea-runtime --generate-certs` as the console user (U4b).
+// A second component without payload (identifier + `.trust`) holds trust-scripts/postinstall. Its choice is NOT selected by default in the Distribution XML, so the System keychain is touched only when the user ticks it.
 // No `.app` is installed: writing config/ and data/ inside a bundle breaks its code seal (odd/spikes/M0-result.md section 5, option c).
 // Output: apps/desktop/src-tauri/target/release/lan-solution-desktop-<version>-<triple>.pkg
 import { execFileSync } from 'node:child_process';
@@ -38,8 +39,10 @@ export const buildMacosPkg = (): string => {
     sidecar: join(release, SIDECAR_NAME),
     template: join(root, 'libs', 'shared-core', 'config.example.json'),
     postinstall: join(resources, 'scripts', 'postinstall'),
+    trustPostinstall: join(resources, 'trust-scripts', 'postinstall'),
     distribution: join(resources, 'distribution.xml'),
     welcome: join(resources, 'resources', 'welcome.html'),
+    trustNotice: join(resources, 'resources', 'trust.html'),
   };
   for (const [label, path] of Object.entries(inputs)) {
     if (!existsSync(path)) throw new Error(`installer: ${label} is missing: ${path} (run "pnpm exec nx run desktop:package" for the host and sidecar)`);
@@ -67,9 +70,26 @@ export const buildMacosPkg = (): string => {
       join(work, component),
     ]);
 
+    const trustIdentifier = `${identifier}.trust`;
+    const trustComponent = `${trustIdentifier}.pkg`;
+    const trustScripts = join(work, 'trust-scripts');
+    mkdirSync(trustScripts);
+    // The trust script finds the install location in the receipt of the main package, so it needs that identifier.
+    const trustScript = join(trustScripts, 'postinstall');
+    writeFileSync(trustScript, readFileSync(inputs.trustPostinstall, 'utf8').replaceAll('@IDENTIFIER@', identifier), { mode: 0o755 });
+    tool('pkgbuild', [
+      '--nopayload',
+      '--identifier', trustIdentifier,
+      '--version', version,
+      '--scripts', trustScripts,
+      join(work, trustComponent),
+    ]);
+
     const distribution = readFileSync(inputs.distribution, 'utf8')
       .replaceAll('@IDENTIFIER@', identifier)
       .replaceAll('@VERSION@', version)
+      .replaceAll('@TRUST_IDENTIFIER@', trustIdentifier)
+      .replaceAll('@TRUST_COMPONENT@', trustComponent)
       .replaceAll('@COMPONENT@', component)
       .replaceAll('@HOST_ARCH@', arch.hostArchitectures);
     const distributionPath = join(work, 'distribution.xml');
@@ -78,6 +98,7 @@ export const buildMacosPkg = (): string => {
     const resourcesDir = join(work, 'resources');
     mkdirSync(resourcesDir);
     copyFileSync(inputs.welcome, join(resourcesDir, 'welcome.html'));
+    copyFileSync(inputs.trustNotice, join(resourcesDir, 'trust.html'));
 
     const output = join(release, `lan-solution-desktop-${version}-${arch.triple}.pkg`);
     tool('productbuild', ['--distribution', distributionPath, '--resources', resourcesDir, '--package-path', work, output]);

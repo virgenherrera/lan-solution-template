@@ -1,0 +1,80 @@
+#!/bin/sh
+# LAN Solution trust postinstall (macOS .pkg, U4b). Runs ONLY when the user ticks "Trust the LAN Solution certificate on this Mac" in the assistant (the choice is not selected by default).
+# Why shell: the .pkg format runs scripts directly and the user's Mac has no node.
+# This package has no payload, so the Installer does not give it the install location in $2. It is read from the receipt of the main package.
+# It trusts <base>/certs/ca.crt, a public certificate. It NEVER reads the CA private key.
+# The Installer runs it as root. It writes nothing except the System keychain entry and a private temporary copy that it always removes.
+set -eu
+
+MAIN_ID="@IDENTIFIER@"
+KEYCHAIN="/Library/Keychains/System.keychain"
+
+fail() {
+  echo "trust postinstall: $1" >&2
+  exit 1
+}
+
+# The private copy is the only thing the trust store reads. It is removed on every exit.
+WORK=""
+cleanup() {
+  if [ -n "$WORK" ] && [ -d "$WORK" ]; then
+    /bin/rm -f "$WORK/ca.crt"
+    /bin/rmdir "$WORK" 2>/dev/null || true
+  fi
+}
+trap cleanup EXIT
+
+# 1. Install location from the receipt of the main package (fields install-location and volume).
+if ! PLIST="$(/usr/sbin/pkgutil --pkg-info-plist "$MAIN_ID" 2>/dev/null)" || [ -z "$PLIST" ]; then
+  fail "no readable receipt for package $MAIN_ID: the main package may not be installed yet (package order is not verified), so the install location is unknown"
+fi
+LOCATION="$(printf '%s' "$PLIST" | /usr/bin/plutil -extract install-location raw -o - - 2>/dev/null)" || fail "receipt of $MAIN_ID has no install-location"
+VOLUME="$(printf '%s' "$PLIST" | /usr/bin/plutil -extract volume raw -o - - 2>/dev/null)" || fail "receipt of $MAIN_ID has no volume"
+if [ -z "$LOCATION" ] || [ -z "$VOLUME" ]; then
+  fail "receipt of $MAIN_ID has an empty install-location or volume"
+fi
+# The receipt stores the location relative to the volume (for example usr/local/lan-solution on volume /).
+BASE="${VOLUME%/}/${LOCATION#/}"
+CERTS="$BASE/certs"
+CA="$CERTS/ca.crt"
+
+# 2. ca.crt must exist and be a regular file reached without a symbolic link.
+if [ -L "$CERTS" ]; then
+  fail "$CERTS is a symbolic link: refused"
+fi
+if [ -L "$CA" ]; then
+  fail "$CA is a symbolic link: refused"
+fi
+if [ ! -e "$CA" ]; then
+  fail "$CA does not exist: the certificate was not created (the main package postinstall must run first; package order is not verified)"
+fi
+if [ ! -f "$CA" ]; then
+  fail "$CA is not a regular file: refused"
+fi
+
+# 3. Private copy (mktemp -d creates a directory with mode 0700 owned by root here). All checks run on the copy, and the copy is what the trust store reads.
+WORK="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/lan-trust.XXXXXX")" || fail "cannot create a private temporary directory"
+/bin/chmod 0700 "$WORK"
+/bin/cp "$CA" "$WORK/ca.crt" || fail "cannot copy $CA"
+COPY="$WORK/ca.crt"
+
+# 4. Exactly one PEM block and it is a certificate.
+BLOCKS="$(/usr/bin/grep -c '^-----BEGIN ' "$COPY" || true)"
+CERTIFICATES="$(/usr/bin/grep -c '^-----BEGIN CERTIFICATE-----' "$COPY" || true)"
+if [ "$BLOCKS" != "1" ] || [ "$CERTIFICATES" != "1" ]; then
+  fail "ca.crt must hold exactly one certificate and nothing else (found $BLOCKS PEM blocks, $CERTIFICATES certificates): refused"
+fi
+/usr/bin/openssl x509 -in "$COPY" -noout 2>/dev/null || fail "ca.crt is not a valid certificate: refused"
+if ! /usr/bin/openssl x509 -in "$COPY" -noout -text 2>/dev/null | /usr/bin/grep -q 'CA:TRUE'; then
+  fail "ca.crt is not a CA certificate (basic constraints CA:TRUE missing): refused"
+fi
+
+# 5. The fingerprint of the exact bytes that will be trusted.
+PRINT="$(/usr/bin/openssl x509 -in "$COPY" -noout -fingerprint -sha256 2>/dev/null | /usr/bin/sed 's/^.*=//')" || fail "cannot compute the fingerprint"
+echo "trust postinstall: trusting the CA of $BASE, SHA-256 $PRINT"
+
+# 6. Trust it for TLS (ssl) and basic X.509 (basic) in the System keychain, for all users (-d).
+/usr/bin/security add-trusted-cert -d -r trustRoot -p ssl -p basic -k "$KEYCHAIN" "$COPY" || fail "security add-trusted-cert failed"
+
+echo "trust postinstall: the CA with SHA-256 $PRINT is trusted in $KEYCHAIN"
+exit 0

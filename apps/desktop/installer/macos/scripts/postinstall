@@ -1,8 +1,9 @@
 #!/bin/sh
-# LAN Solution postinstall (macOS .pkg, U3).
+# LAN Solution postinstall (macOS .pkg, U3 and U4b).
 # Why shell: the .pkg format runs scripts directly and the user's Mac has no node.
 # Arguments given by the Installer: $1 package path, $2 destination (the chosen install location, which is the base directory, ADR-007), $3 target volume, $4 target system root.
-# It writes only inside "$2". It never touches the keychain, the trust store or any other path.
+# It writes only inside "$2". It never touches the keychain, the trust store or any other path (trusting the CA is a separate, optional package: trust-scripts/postinstall).
+# U4b: it creates certs/ and runs "sea-runtime --generate-certs" as the console user, never as root, so each installation gets its own CA and leaf and no CA travels in the payload.
 set -eu
 
 BASE="${2:-}"
@@ -17,25 +18,56 @@ if [ ! -f "$TEMPLATE" ]; then
   exit 1
 fi
 
+SEA="$BASE/sea-runtime"
+if [ ! -x "$SEA" ]; then
+  echo "postinstall: $SEA is missing or not executable: the package payload is incomplete" >&2
+  exit 1
+fi
+
 mkdir -p "$BASE/config" "$BASE/data" "$BASE/logs"
+# certs/ is 0700 (ADR-008). It is created here, not by the executable, because the base belongs to root and the executable runs as the console user.
+mkdir -p "$BASE/certs"
+/bin/chmod 0700 "$BASE/certs"
 
 # config.json belongs to the user: create it from the template only when it does not exist (reinstall keeps edits).
 if [ ! -e "$BASE/config/config.json" ]; then
   cp "$TEMPLATE" "$BASE/config/config.json"
 fi
 
-# The Installer runs this script as root. data/, logs/ and config.json must belong to the person at the console, because the host and the sidecar run as that user.
+# The Installer runs this script as root. data/, logs/, certs/ and config.json must belong to the person at the console, because the host and the sidecar run as that user.
 # Console user: the owner of /dev/console is the logged-in GUI user (stat(1): -f%Su prints the owner's user name).
 # Outside root (a simulated run) nothing is changed: the files already belong to the caller.
+CONSOLE_USER=""
 if [ "$(id -u)" -eq 0 ]; then
   CONSOLE_USER="$(/usr/bin/stat -f%Su /dev/console)"
   if [ -z "$CONSOLE_USER" ] || [ "$CONSOLE_USER" = "root" ]; then
-    echo "postinstall: no console user is logged in (found '${CONSOLE_USER}'): cannot assign data/ and logs/" >&2
+    echo "postinstall: no console user is logged in (found '${CONSOLE_USER}'): cannot assign data/, logs/ and certs/" >&2
     exit 1
   fi
   /usr/sbin/chown -R "$CONSOLE_USER" "$BASE/data" "$BASE/logs"
-  /usr/sbin/chown "$CONSOLE_USER" "$BASE/config" "$BASE/config/config.json"
+  /usr/sbin/chown "$CONSOLE_USER" "$BASE/config" "$BASE/config/config.json" "$BASE/certs"
 fi
+
+# Per-install TLS files. The executable keeps an existing CA (a reinstall never replaces it) and prints "CA SHA-256 <fingerprint>".
+# As root it runs under the console user, so the keys are owned by that user with mode 0600 and root never writes them.
+STATUS=0
+if [ -n "$CONSOLE_USER" ]; then
+  OUTPUT="$(/usr/bin/sudo -u "$CONSOLE_USER" -H "$SEA" --generate-certs 2>&1 </dev/null)" || STATUS=$?
+else
+  OUTPUT="$("$SEA" --generate-certs 2>&1 </dev/null)" || STATUS=$?
+fi
+if [ "$STATUS" -ne 0 ]; then
+  echo "$OUTPUT" >&2
+  echo "postinstall: sea-runtime --generate-certs failed with exit $STATUS: the TLS files were not created, the installation is incomplete" >&2
+  exit 1
+fi
+FINGERPRINT="$(printf '%s\n' "$OUTPUT" | /usr/bin/sed -n 's/^CA SHA-256 //p' | /usr/bin/head -n 1)"
+if [ -z "$FINGERPRINT" ]; then
+  echo "$OUTPUT" >&2
+  echo "postinstall: sea-runtime --generate-certs printed no CA SHA-256 fingerprint: the installation is incomplete" >&2
+  exit 1
+fi
+echo "postinstall: CA SHA-256 $FINGERPRINT"
 
 echo "postinstall: base $BASE is ready"
 exit 0
