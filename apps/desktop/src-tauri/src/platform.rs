@@ -72,6 +72,43 @@ pub fn kill_survivors(root: u32, snapshot: &[u32]) -> Vec<u32> {
   killed
 }
 
+// A private copy of the certificate that is trusted: a fresh directory (0700 on unix) holding one file created with `create_new` (0600 on unix).
+// The trust store is fed from this copy, never from the original path, so what was shown to the user is what is installed. Dropped = deleted.
+pub struct StagedCert {
+  dir: std::path::PathBuf,
+  file: std::path::PathBuf,
+}
+
+impl StagedCert {
+  pub fn path(&self) -> &std::path::Path {
+    &self.file
+  }
+}
+
+impl Drop for StagedCert {
+  fn drop(&mut self) {
+    let _ = std::fs::remove_dir_all(&self.dir);
+  }
+}
+
+pub fn stage_cert(pem: &[u8]) -> Result<StagedCert, String> {
+  use std::io::Write;
+  let nanos = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0);
+  let dir = std::env::temp_dir().join(format!("lan-solution-ca-{}-{nanos}", std::process::id()));
+  let mut builder = std::fs::DirBuilder::new();
+  #[cfg(unix)]
+  std::os::unix::fs::DirBuilderExt::mode(&mut builder, 0o700);
+  builder.create(&dir).map_err(|e| format!("cannot create the staging directory: {e}"))?;
+  let staged = StagedCert { file: dir.join("ca.crt"), dir };
+  let mut options = std::fs::OpenOptions::new();
+  options.write(true).create_new(true);
+  #[cfg(unix)]
+  std::os::unix::fs::OpenOptionsExt::mode(&mut options, 0o600);
+  let mut file = options.open(&staged.file).map_err(|e| format!("cannot stage ca.crt: {e}"))?;
+  file.write_all(pem).map_err(|e| format!("cannot stage ca.crt: {e}"))?;
+  Ok(staged)
+}
+
 // OS trust store for the gateway CA (REQ-TLS-02). Only the public `ca.crt` ever reaches these functions.
 // macOS: the same call `dotnet dev-certs https --trust` makes, into the login keychain (command checked, store change not run by the author).
 // Windows and Linux follow the same shape: not verified.
