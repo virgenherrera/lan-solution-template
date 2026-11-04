@@ -65,7 +65,12 @@ function keyMatches(pem: string | undefined, certificate: X509Certificate | unde
 }
 
 function readIfPresent(file: string): string | undefined {
-  return existsSync(file) ? readFileSync(file, 'utf8') : undefined;
+  try {
+    return existsSync(file) ? readFileSync(file, 'utf8') : undefined;
+  } catch (error) {
+    // A directory or an unreadable file: name the file and the fix instead of a bare system error.
+    throw new Error(`cannot read ${file}: ${error instanceof Error ? error.message : String(error)}\ncreate or renew the TLS files with: ${CERTS_COMMAND}`);
+  }
 }
 
 // A fact whose input is unreadable gets a neutral value: the unreadable input is reported once, by its own fact, and nothing else piles up on it.
@@ -136,7 +141,7 @@ export function loadTlsIdentity(input: TlsIdentityInput): TlsIdentity {
     caNotExpired: endOf(caCertificate),
     leafIsCertificate: leafPem === undefined ? true : leafCertificate !== undefined,
     leafKeyIsKey: leafKeyPem === undefined ? true : leafKeyObject !== null,
-    leafKeyMatchesCert: neutral(keyMatches(leafKeyPem, leafCertificate)),
+    leafKeyMatchesCert: leafKeyObject === null ? true : neutral(keyMatches(leafKeyPem, leafCertificate)),
     leafSignedByCa: caCertificate === undefined || leafCertificate === undefined ? true : leafCertificate.verify(caCertificate.publicKey),
     leafStarted: startOf(leafCertificate),
     leafNotExpired: endOf(leafCertificate),
