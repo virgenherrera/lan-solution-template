@@ -6,21 +6,29 @@ import { serviceIdSchema } from './service-definition.js';
 export type DispatchTarget =
   | { readonly kind: 'supervisor' }
   | { readonly kind: 'service'; readonly id: string }
+  | { readonly kind: 'generate-certs' }
   | { readonly kind: 'rejected'; readonly message: string };
 
 // The selector: absent means supervisor; present means exactly one non-empty id.
 const selectorSchema = z.tuple([serviceIdSchema]);
 
-// Reads only the service option from argv; any other option is left to the selected service.
+// Reads only the service and generate-certs options from argv; any other option is left to the selected service.
 // Never reads process.env and grants no privilege: the id only picks which registered bootstrap runs.
 export function dispatch(argv: readonly string[], registeredIds: readonly string[]): DispatchTarget {
   const flag = DISPATCHER_CONFIG.serviceFlag;
+  const certsFlag = DISPATCHER_CONFIG.certsFlag;
   const { values } = parseArgs({
     args: [...argv],
-    options: { [flag]: { type: 'string', multiple: true } },
+    options: { [flag]: { type: 'string', multiple: true }, [certsFlag]: { type: 'boolean' } },
     strict: false,
   });
   const selector: readonly unknown[] | undefined = values[flag] as readonly unknown[] | undefined;
+  // The operation never starts a role, so it cannot be mixed with a selector.
+  if (values[certsFlag] === true) {
+    return selector === undefined
+      ? { kind: 'generate-certs' }
+      : { kind: 'rejected', message: `--${certsFlag} cannot be combined with --${flag}` };
+  }
   if (selector === undefined) return { kind: 'supervisor' };
 
   const parsed = selectorSchema.safeParse(selector);

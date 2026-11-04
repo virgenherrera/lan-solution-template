@@ -284,8 +284,8 @@ function resolveRoutes(routes: readonly ServiceRoute[], built: ServiceEntry[], s
   });
 }
 
-// The generated entry only lists the registered services; the dispatcher (libs/service-registry) picks the role: no --service starts the supervisor, --service <id> starts that one service, anything else exits with the reject code.
-function writeEntry(supervisorEntry: string, services: ServiceEntry[], registry: LibEntry): void {
+// The generated entry only lists the registered services; the dispatcher (libs/service-registry) picks the role: no --service starts the supervisor, --service <id> starts that one service, --generate-certs creates the TLS files next to the executable and exits, anything else exits with the reject code.
+function writeEntry(supervisorEntry: string, services: ServiceEntry[], registry: LibEntry, certsCommandEntry: string): void {
   const table = services
     .map((s) => `  [${JSON.stringify(s.service)}, () => import(${JSON.stringify(s.entryPath)})],`)
     .join('\n');
@@ -301,6 +301,9 @@ if (target.kind === 'rejected') {
   process.exit(DISPATCHER_CONFIG.rejectExitCode);
 } else if (target.kind === 'service') {
   await services.get(target.id)();
+} else if (target.kind === 'generate-certs') {
+  const { runGenerateCerts } = await import(${JSON.stringify(certsCommandEntry)});
+  process.exitCode = runGenerateCerts();
 } else {
   await import(${JSON.stringify(supervisorEntry)});
 }
@@ -466,6 +469,11 @@ async function main(): Promise<void> {
   if (!existsSync(supervisorEntry)) {
     throw new Error(`${supervisor}: missing ${supervisorEntry}; run the ${supervisor} build target first`);
   }
+  // The `--generate-certs` operation lives in shared-core (a built workspace dependency of the supervisor); it is not part of the library's public exports.
+  const certsCommandEntry = join(projectRoot('shared-core'), 'dist', 'tls', 'certs-command.js');
+  if (!existsSync(certsCommandEntry)) {
+    throw new Error(`shared-core: missing ${certsCommandEntry}; run the shared-core build target first`);
+  }
   const built = discoverDependencies(supervisor, supervisorDir, contract.ASSEMBLER_CONFIG.serviceEntry);
   // Loaded after the contract check above: services.ts imports the built service-registry.
   const { SERVICES } = (await import('../../apps/sea-runtime/src/services.ts')) as typeof import('../../apps/sea-runtime/src/services.ts');
@@ -484,7 +492,7 @@ async function main(): Promise<void> {
   mkdirSync(workDir, { recursive: true });
   mkdirSync(artifactDir, { recursive: true });
 
-  writeEntry(supervisorEntry, services, registry);
+  writeEntry(supervisorEntry, services, registry, certsCommandEntry);
   writeFileSync(
     servicesPath,
     `${JSON.stringify(contract.servicesAssetSchema.parse({ services: SERVICES.map(({ project: _project, ...route }) => route) }), null, 2)}\n`,

@@ -4,6 +4,8 @@ import { z } from 'zod';
 export const dispatcherConfigSchema = z.object({
   // Command line option that selects one service: `--service <id>`.
   serviceFlag: z.string().min(1).default('service'),
+  // Command line operation that creates the TLS files of the install and exits: `--generate-certs`.
+  certsFlag: z.string().min(1).default('generate-certs'),
   // Exit code of a rejected selector (unknown, empty, repeated or missing id).
   rejectExitCode: z.number().int().min(1).max(255).default(2),
   // SEA asset that lists the ids of every registered service.
