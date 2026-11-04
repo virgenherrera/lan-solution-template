@@ -4,9 +4,9 @@ doc: docs/backlog/README.md
 title: "Backlog index"
 type: backlog
 summary: "Backlog index of POC epics mapped to acceptance criteria and cycles."
-related[11]: docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md
+related[13]: docs/results/POC-05-Result.md,docs/backlog/log-service-otel-grpc.md,docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md
 status: current
-updated: 2026-11-03
+updated: 2026-11-04
 -->
 
 # Backlog
@@ -25,7 +25,7 @@ updated: 2026-11-03
 
 [Back to navigation](#navigation)
 
-Local epics from the roadmap pitches. Start at [POC-1a](poc-1a-monorepo-init.md). POC-1 is the umbrella id of slices 1a to 1e. POC-2 is the umbrella id of slices 2a to 2h. Merged: PRs #4 to #6 (POC-1), #11 (POC-2), #12 and #13 (persistence stack), #14, #15, #16, #17 (persistence system), #18 (POC-4).
+Local epics from the roadmap pitches. Start at [POC-1a](poc-1a-monorepo-init.md). POC-1 is the umbrella id of slices 1a to 1e. POC-2 is the umbrella id of slices 2a to 2h. Merged: PRs #4 to #6 (POC-1), #11 (POC-2), #12 and #13 (persistence stack), #14, #15, #16, #17 (persistence system), #18 (POC-4). Built and not merged: POC-5 on `minor/poc-05-tauri-sidecar` (PR pending).
 
 ```mermaid
 flowchart LR
@@ -84,7 +84,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | DBM | [Drizzle build-time migrations](dbm-drizzle-migrations.md) | Done and merged in PR #12, slices DBM-a to DBM-h; see [DBM-Result](../results/DBM-Result.md); extends POC-3 | AC-07, AC-08, AC-10 (as POC-3) |
 | DBM schema gate | [Live schema validation at startup](dbm-schema-gate.md) | Done and merged in PR #12, slices DBM-i to DBM-n (DBM-n is the api-gateway database module); see [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md); extends DBM | AC-07, AC-08, AC-10 (as POC-3) |
 | POC-4 | [HTTPS gateway serving the Angular PWA](poc-4-https-gateway-angular-pwa.md) | Done and merged in PR #18 (T0 to T8, independent verification included); decision: [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md); result: [POC-04-Result](../results/POC-04-Result.md) | AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17 |
-| POC-5 | [Tauri desktop shell with SEA sidecar](poc-5-tauri-sidecar-desktop-shell.md) | Cycle 2 (planned) | AC-03, AC-18, AC-20, AC-30 |
+| POC-5 | [Tauri desktop shell with SEA sidecar](poc-5-tauri-sidecar-desktop-shell.md) | Built in `minor/poc-05-tauri-sidecar`, server mode, verified on macOS only, PR pending; client mode pending; see [POC-05-Result](../results/POC-05-Result.md), [ADR-009](../architecture/adr/ADR-009-desktop-process-model.md) and the proposed [ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md) | AC-03, AC-18, AC-20, AC-30 |
 | POC-6 | [PostgreSQL adapter parity (BACKLOG)](poc-6-postgresql-adapter-parity.md) | BACKLOG | AC-09 |
 | POC-7 | [Auth and roles](poc-7-auth-roles.md) | Cycle 3 (planned) | AC-06 |
 | POC-8 | [MSI credential dialog, platform matrix and lockstep versioning](poc-8-msi-matrix-versioning.md) | Cycle 3 (planned) | AC-21, AC-25, AC-33 |
@@ -92,6 +92,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | none | [Service status indicator](service-status-indicator.md) | Supervisor side done: `status` events on stdout ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)); tray and web UI consumers open | none |
 | none | [Third-party license notices](third-party-licenses.md) | Done: guide merged in PR #16, documentation only (decided 2026-11-03, OQ18 to OQ22); spike: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md) | none (no REQ or AC id exists for licenses) |
 | none | [SPIKE PWA HTTPS trust on phones](spike-pwa-https-trust.md) | Done on Chromium, an iOS simulator and an Android emulator; real phones closed as not needed (decided 2026-11-03: a real phone adds no new design information; mDNS, Add to Home Screen and IP change are checked at the first real deployment); see [SPIKE-pwa-https-trust-Result](../results/SPIKE-pwa-https-trust-Result.md) and [RESEARCH-pwa-https-trust](../results/RESEARCH-pwa-https-trust.md) | none |
+| none | [Log service with OpenTelemetry data model and gRPC](log-service-otel-grpc.md) | Idea, TBD, no design. Outside POC-5 | none |
 | none | [Persistence system](persistence-system.md) | Done and merged in PR #17; decision: [ADR-007](../architecture/adr/ADR-007-persistence-system.md) | AC-07, AC-08, AC-10 (as POC-3) |
 
 ---

@@ -4,9 +4,9 @@ doc: docs/roadmap/PROPOSAL.md
 title: "Roadmap Proposal: lan-solution-template (SRS v1.6)"
 type: roadmap
 summary: "Roadmap proposal with cycles, POC pitches, coverage matrix and open questions."
-related[4]: README.md,docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md
+related[7]: README.md,docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/results/POC-05-Result.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md
 status: proposed
-updated: 2026-11-03
+updated: 2026-11-04
 -->
 
 # Roadmap Proposal: lan-solution-template (SRS v1.6)
@@ -53,7 +53,7 @@ Why this page exists: it orders the SRS v1.6 POCs and logs 18 human decisions. N
 | Status | Proposal v2. Not approved. | [Decision Log](#decision-log) |
 | Method | Shape Up. 6 weeks of build, then 2 weeks of cooldown. | [Method](#method) |
 | Bets | 3 cycles. 8 active POCs (POC-9 on hold) and POC-6 in the backlog. | [Cycles and bets](#cycles-and-bets) |
-| ADR index | 14 rows: 12 approved, 1 proposed, 1 pending spike. | [ADR index](#adr-index) |
+| ADR index | 15 rows: 12 approved, 3 proposed. | [ADR index](#adr-index) |
 | Open questions | 25 rows. None blocks. | [Open questions](#open-questions) |
 | Coverage | 13 SRS sections and 36 acceptance criteria map to POCs. | [SRS coverage matrix](#srs-coverage-matrix) |
 
@@ -150,7 +150,8 @@ Each row summarizes one decision. The written ADR files are listed in the [archi
 | MSI scope | The MSI is a per-machine draft. A spike on WiX and Tauri capabilities decides the scope (OQ16). | OQ16 | proposed |
 | HOLD scope | The HOLD covers only CI/CD and releases in POC-9; local work continues (OQ6). | 9, human | approved |
 | Auth and first admin | Development seeds a self-destructing `dev-admin` data row, and production never seeds. POC-7 implements the seeding. The design is approved; ASVS citations stay `not verified`. | 12 | approved |
-| Auth and first admin | The database is the only identity source. The user creates the first real admin in a setup wizard. The POC-5 spike defines the path. The MSI credential dialog is the fallback. | 5, 12, 13 | pending spike |
+| Auth and first admin | The database is the only identity source. The user creates the first real admin in a setup wizard. The POC-5 spike is done and recommends a CLI `setup` plus a loopback wizard with a one-time token ([ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md)). Five questions are open for the human. The MSI credential dialog is the fallback. | 5, 12, 13 | proposed |
+| Desktop process model | Tauri starts, watches and stops the SEA supervisor. The OS-specific code is in one module. Built and run on macOS only ([ADR-009](../architecture/adr/ADR-009-desktop-process-model.md)). | POC-5, OQ12, OQ17 | proposed |
 | Config and paths | One base directory: the cwd in dev, the executable directory when packaged. Layout: `config/config.json`, `data/`, `logs/`, `certs/`. A missing or invalid config stops the start ([ADR-007](../architecture/adr/ADR-007-persistence-system.md#one-base-directory)). | 11, OQ23, OQ25 | approved |
 | TLS and keys | A local CA and a leaf built with Node built-ins only. Keys are plain PKCS#8 files, mode 0600, under `<base>/certs`, outside the database ([ADR-008](../architecture/adr/ADR-008-tls-trust-model.md)). | 7, 14, OQ8 | approved |
 | Database | SQLite plus vector is the engine. PostgreSQL is TBD (backlog). | 8 | approved |
