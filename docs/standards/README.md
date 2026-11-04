@@ -7,7 +7,7 @@ summary: "Technical and normative references, standards mapping, and the metadat
 ids[0]:
 related[2]: README.md,docs/standards/identifier-glossary.md
 status: current
-updated: 2026-11-03
+updated: 2026-11-04
 -->
 
 # Standards and references
@@ -23,6 +23,7 @@ updated: 2026-11-03
   - [Specifications and security](#specifications-and-security)
   - [Reference implementation](#reference-implementation)
   - [Scripts, dependencies and release](#scripts-dependencies-and-release)
+- [Versioning and release](#versioning-and-release)
 - [Standard to where applied](#standard-to-where-applied)
 - [Identifier glossary](#identifier-glossary)
 - [Metadata block v1](#metadata-block-v1)
@@ -37,6 +38,7 @@ updated: 2026-11-03
 | Topic | What you find | Section |
 | --- | --- | --- |
 | References | Specification, implementation and release links | [13. Technical and normative references](#13-technical-and-normative-references) |
+| Versioning | One product version, the release commands and the branch rule | [Versioning and release](#versioning-and-release) |
 | Standard mapping | Which requirement file applies which standard | [Standard to where applied](#standard-to-where-applied) |
 | Id families | Ids outside the SRS | [Identifier glossary](#identifier-glossary) |
 | Page metadata | The toon-meta block and the `docs/meta.toon` loop | [Metadata block v1](#metadata-block-v1) |
@@ -107,6 +109,34 @@ Source: SRS v1.6 section 13. Per the SRS conventions note, these references are 
 - GitHub workflow artifacts — https://docs.github.com/en/actions/concepts/workflows-and-actions/workflow-artifacts
 - GitHub protected branches — https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches
 - GitHub Actions workflow permissions — https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax
+
+---
+
+## Versioning and release
+
+[Back to navigation](#navigation)
+
+REQ-VERSION-01, REQ-VERSION-02 and REQ-VERSION-03. One product version for the whole monorepo. The root `package.json` is the source of truth. The Nx Release group `lockstep` in [nx.json](../../nx.json) holds the root project, `api-gateway`, `desktop`, `sea-runtime`, `web-angular`, `db-migrations`, `service-registry` and `shared-core` with `projectsRelationship: "fixed"`. External dependencies keep their own versions.
+
+Nx Release writes only `package.json` by itself. The version actions in [tools/scripts/release-version-actions.ts](../../tools/scripts/release-version-actions.ts) also write the same version to `apps/desktop/src-tauri/Cargo.toml`, to the `app` entry of `Cargo.lock` and to `apps/desktop/src-tauri/tauri.conf.json`. The `nx release` top-level command is not used: it cannot be combined with the granular git settings, which keep commit, tag and push off. Use the subcommands.
+
+| Command | What it does |
+| --- | --- |
+| `pnpm release:branch` | Checks the current branch name (REQ-VERSION-02). Pass a name to check another. Prints `<branch> bump=<major\|minor\|patch\|none>`. Exit 1 for an unknown name, including `main`. |
+| `pnpm release:version <specifier>` | Sets the version in every place above. The specifier is `major`, `minor`, `patch` or an exact version. Add `--dry-run` to preview. |
+| `pnpm release:changelog <version>` | Writes the root `CHANGELOG.md` from the conventional commits. Add `--dry-run` to preview, and `--first-release` while no `v*` tag exists. |
+| `pnpm release:check` | Prints the version of each place and exits 1 when one differs from the root `package.json`. |
+
+| PR branch | Bump |
+| --- | --- |
+| `major/<slug>` | major |
+| `minor/<slug>` | minor |
+| `fix/<slug>` | patch |
+| `docs/<slug>`, `chore/<slug>` | none (explicit exemption: no release) |
+
+Flow on a merged PR: run `pnpm release:branch` for the bump, then `pnpm release:version <bump>`, then `pnpm release:changelog <new version>`, then `pnpm release:check`. Commit the result. Tag, push and publish stay manual.
+
+Not verified: the CI check of the branch name, the release commit or PR, the tag, the duplicate-tag guard for concurrent merges, the highest-impact choice when several PRs merge before a release, and GitHub Release. They belong to [POC-9](../backlog/poc-9-ci-cd-releases.md), which is on hold. Windows and Linux were not run. The commands above were run on macOS only.
 
 ---
 
