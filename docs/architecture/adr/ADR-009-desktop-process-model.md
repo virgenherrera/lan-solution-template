@@ -117,10 +117,12 @@ The tray item `Trust CA...` reads `<base>/certs/ca.crt` once and accepts exactly
 
 ## Consequences
 
+- The WebView navigates only to `https://127.0.0.1:<httpsPort>` (same scheme, host and port). `on_navigation` denies the rest and `on_new_window` denies every new window. The denied URL is logged without query or fragment (A2, commit 47faaa7).
+
 - One module (`platform.rs`) is the only place that needs a native run per OS.
 - The first start has a gap: until `ca.crt` is trusted, the window cannot load the gateway. The tray item `Trust CA...` fixes it. Which first-run flow the user sees is an open human decision.
 - Open advisories, recorded in the [result](../results/POC-05-Result.md#advisories):
-  - A2: the WebView has no `on_navigation` filter and no CSP.
+  - A2b: CSP of the gateway responses, not verified whether it exists. The CSP of the remote page is set by the response headers of the api-gateway, not by Tauri.
   - A3: Windows and Linux were not run.
   - AD1: a window exists between the dialog and the use of the temporary copy. On Linux, where `pkexec` runs the copy, only the same user id could exploit it.
   - AD2: text outside the PEM block is accepted but not installed.

@@ -81,9 +81,11 @@ An adversarial verifier (read-only, high-risk item: trust store and security) fo
 
 Open and not fixed in this branch.
 
+Resolved: A2 (navigation filter) in commit 47faaa7. The WebView only navigates to `https://127.0.0.1:<httpsPort>`; other URLs and new windows are denied and logged. `nx run desktop:e2e` checks four foreign URLs on macOS (3 passing): the window URL does not change and the host log names each block. The `on_new_window` deny and a real `target=_blank` click were not run (not verified).
+
 | Id | Advisory |
 |---|---|
-| A2 | The WebView has no `on_navigation` filter and no CSP. Out of scope for now. |
+| A2b | CSP of the gateway responses, not verified whether it exists. The CSP of the remote page is set by the response headers of the api-gateway, not by Tauri. Not changed here. |
 | A3 | Windows and Linux were not run. |
 | AD1 | A window exists between the dialog and the use of the temporary copy. On Linux, where `pkexec` runs the copy, only the same user id could exploit it. |
 | AD2 | Text outside the PEM block is accepted but not installed. |
@@ -129,7 +131,7 @@ Deviations:
 Not decided. They stay open.
 
 1. First start: while `ca.crt` is not trusted the window cannot load the gateway. Which flow does the user see?
-2. Navigation filter and CSP of the WebView (A2).
+2. CSP of the gateway responses (A2b).
 3. The real keychain install of `ca.crt` (the human runs it).
 4. The five questions of [ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md#open-questions-for-the-human).
 5. Client mode (OQ17) and the log service ([idea](../backlog/log-service-otel-grpc.md)).
