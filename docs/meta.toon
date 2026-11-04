@@ -668,7 +668,7 @@ docs[81]:
   - doc: docs/results/SPIKE-pwa-https-trust-Result.md
     title: SPIKE PWA HTTPS trust result
     type: backlog
-    summary: "Observed results of the phone-trust spike on Chromium, an iOS simulator and an Android emulator; real phones remain."
+    summary: "Observed results of the phone-trust spike on Chromium, an iOS simulator and an Android emulator; real phones closed as not needed."
     ids: []
     related[5]: docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/device-trust-guide.md,docs/results/POC-04-Result.md
     status: current

@@ -32,7 +32,7 @@ updated: 2026-11-03
 
 | Item | Value |
 |---|---|
-| Status | T1 to T6 built on `minor/persistence-system`. T7 (full build, package and independent verification) open. PR #17 is open (draft) |
+| Status | Done: T1 to T6 built on `minor/persistence-system`. Merged in PR #17 |
 | Depends on | DBM schema gate ([ADR-005](../architecture/adr/ADR-005-live-schema-validation.md)) |
 | Decision | [ADR-007](../architecture/adr/ADR-007-persistence-system.md) |
 | Requirements | [REQ-CFG-04](../requirements/04-configuration.md), [REQ-CFG-05](../requirements/04-configuration.md) (amendment approved 2026-11-03), [REQ-DB-02](../requirements/05-persistence.md), [REQ-DB-03](../requirements/05-persistence.md), [REQ-TEST-01](../requirements/11-nx-quality-testing.md) |
