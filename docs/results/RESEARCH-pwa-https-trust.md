@@ -12,7 +12,7 @@ updated: 2026-11-03
 
 # RESEARCH PWA HTTPS trust on a LAN
 
-Branch: `docs/pwa-https-trust-research`. Follow-up of [POC-04-Result](POC-04-Result.md). Next step: [Spike plan](../backlog/spike-pwa-https-trust.md); its observed results are in [SPIKE-pwa-https-trust-Result](SPIKE-pwa-https-trust-Result.md), which resolves several rows of Not verified. No requirement or ADR changes here: the spike decides first.
+Branch: `docs/phone-trust-and-dev-trust`. Follow-up of [POC-04-Result](POC-04-Result.md). Next step: [Spike plan](../backlog/spike-pwa-https-trust.md); its observed results are in [SPIKE-pwa-https-trust-Result](SPIKE-pwa-https-trust-Result.md), which resolves several rows of Not verified. No requirement or ADR changes here: the spike decides first.
 
 ## Question
 

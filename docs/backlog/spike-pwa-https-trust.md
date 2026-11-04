@@ -12,7 +12,7 @@ updated: 2026-11-03
 
 # SPIKE PWA HTTPS trust on phones
 
-Branch: `minor/spike-pwa-https-trust` holds the harness and the three layers (`tools/spike/`). Evidence base: [RESEARCH-pwa-https-trust](../results/RESEARCH-pwa-https-trust.md).
+Branch: `docs/phone-trust-and-dev-trust`. The checks ran with a throwaway harness (an HTTPS diagnostic server and drivers for Playwright, `simctl`, Maestro and `adb`). It is not kept in the repository: it is not part of the template. Evidence base: [RESEARCH-pwa-https-trust](../results/RESEARCH-pwa-https-trust.md).
 
 ## Question
 
@@ -42,7 +42,7 @@ Inspected on 2026-11-03. This is the state before the spike starts.
 | Xcode | Installed. The Simulator has iOS 18.5 and iOS 26.4 runtimes and no simulator device created yet. The device types include the iPhone 15 and iPhone 16 families. No iPhone 12 device is needed: the spike needs the iOS stack, not the hardware. |
 | Android SDK | `adb` and the emulator 36.4.9 are installed. No virtual device and no system image exist. The spike needs one image with Google Play (Chrome), downloaded through Android Studio. |
 | Maestro | 2.12.1, optional. |
-| Playwright | Not installed. It comes through `pnpm` when the spike starts. |
+| Playwright | Not installed before the spike. Used through the throwaway harness; not a dependency of the repository. |
 
 Creating the iOS simulator and the Android virtual device is the first step of layers S and A. It is a local setup, not a repository change.
 

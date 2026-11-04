@@ -12,7 +12,7 @@ updated: 2026-11-03
 
 # SPIKE PWA HTTPS trust result
 
-Branch: `minor/spike-pwa-https-trust`. Plan: [spike plan](../backlog/spike-pwa-https-trust.md). Research: [RESEARCH-pwa-https-trust](RESEARCH-pwa-https-trust.md). The harness and the three layers live in `tools/spike/` (commits `b8e820b`, `a4a95d3`, `79697c0`).
+Branch: `docs/phone-trust-and-dev-trust`. Plan: [spike plan](../backlog/spike-pwa-https-trust.md). Research: [RESEARCH-pwa-https-trust](RESEARCH-pwa-https-trust.md). The checks ran with a throwaway harness (an HTTPS diagnostic server and drivers for Playwright, `simctl`, Maestro and `adb`). It is not kept in the repository: it is not part of the template.
 
 ## Summary
 
@@ -29,7 +29,7 @@ Branch: `minor/spike-pwa-https-trust`. Plan: [spike plan](../backlog/spike-pwa-h
 | S | iOS 18.5 simulator `spike-iphone` (iPhone 16 device type), Mobile Safari, Maestro 2.12.1 |
 | A | Android 15 emulator, Pixel 6, image `google_apis` arm64, Chrome 124.0.6367.219 |
 
-The diag server (`tools/spike/pwa-trust/diag-server.ts`) serves the built-in CA identity over HTTPS and a plain HTTP twin. Its page prints `secure=` and `sw=`.
+The diag server of the harness serves the built-in CA identity over HTTPS and a plain HTTP twin. Its page prints `secure=` and `sw=`.
 
 ## Observed results
 
@@ -70,7 +70,7 @@ Closed with the sources above (decided 2026-11-03 under the human's delegation: 
 
 - A real iPhone 12 and a real Android phone. On the simulator the CA came out trusted at once; a real iPhone may still require the full-trust switch.
 - D4 and D8 on phones: Add to Home Screen, the Chrome install prompt, offline reload and the installed PWA.
-- D8 against the packaged gateway PWA (no packaged binary existed in the spike worktree).
+- D8 against the packaged gateway PWA (no packaged binary was available to the harness).
 - D5 and D9 on Android. The emulator hit a system "isn't responding" dialog before they ran.
 - D10, a changed host IP. The `tls.extraNames` reissue is covered by the packaged smoke; a real IP change was not run.
 - Clicking through the certificate warning. No layer tested whether that enables the service worker.
