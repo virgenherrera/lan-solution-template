@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+  <title>LAN Solution Desktop</title>
+  <welcome file="welcome.html" mime-type="text/html"/>
+  <options customize="always" require-scripts="false" hostArchitectures="@HOST_ARCH@"/>
+  <domains enable_anywhere="true" enable_localSystem="true" enable_currentUserHome="false"/>
+  <choices-outline>
+    <line choice="server"/>
+  </choices-outline>
+  <choice id="server" title="Server mode" description="Host, sidecar runtime, config/, data/ and logs/ in the chosen folder." customLocation="/usr/local/lan-solution" start_selected="true" enabled="false">
+    <pkg-ref id="@IDENTIFIER@"/>
+  </choice>
+  <pkg-ref id="@IDENTIFIER@" version="@VERSION@" onConclusion="none">@COMPONENT@</pkg-ref>
+</installer-gui-script>
