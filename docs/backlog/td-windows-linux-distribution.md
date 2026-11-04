@@ -54,6 +54,7 @@ The human cut POC-8 to macOS on 2026-11-04. Quote, verbatim, in Spanish: "lo dem
 
 Every item is not verified.
 
+- [ ] Windows and Linux installer step. `tools/scripts/installer-build.ts` prints `installer not implemented on <os>` and exits 0 outside macOS; each OS needs its own builder.
 - [ ] MSI with WiX. Includes the spike of [OQ16](../roadmap/PROPOSAL.md#open-questions): per-machine, dual or per-user, and the install folder.
 - [ ] MSI credential dialog (hidden property plus `MsiHiddenProperties`, deferred custom action). It is the fallback of decision 13 while the wizard of [ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md) is not proven on Windows.
 - [ ] `certutil` for the trust store and ACLs on the install folder (Windows).
