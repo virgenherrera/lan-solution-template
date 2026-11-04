@@ -5,7 +5,7 @@ import { hostname, networkInterfaces } from 'node:os';
 import { isSea } from 'node:sea';
 import { AGGREGATE_STATE, CONTROL_KIND, readyMessageSchema, shutdownMessageSchema } from 'service-registry';
 import { derivePaths, initConfig, resolveBase } from 'shared-core';
-import { ensureTlsIdentity } from 'shared-core/tls';
+import { loadTlsIdentity } from 'shared-core/tls';
 import { AppModule } from './app.module.js';
 import { HealthState } from './health-state.js';
 import { createRedirectServer } from './redirect-listener.js';
@@ -34,12 +34,13 @@ function closeRedirect(server: Server): Promise<void> {
 
 async function bootstrap() {
   const serverConfig = parseServerConfig(process.argv.slice(2));
-  // The one config read of this process: the TLS identity must exist before Nest builds the HTTPS server. A missing or invalid config stops the start here.
+  // The one config read of this process: the TLS identity is validated before Nest builds the HTTPS server. A missing or invalid config stops the start here.
   const paths = derivePaths(resolveBase({ sea: isSea(), execPath: process.execPath, cwd: process.cwd() }));
   const config = initConfig(paths);
   // Both listeners bind the same address: equal ports could only fail later with EADDRINUSE, so name the keys now.
   if (config.net.httpPort === config.net.httpsPort) throw new Error('config net.httpPort must differ from net.httpsPort');
-  const identity = ensureTlsIdentity({
+  // Read-only: the gateway never creates or renews certificates. Missing or invalid files stop the start here, with the command that fixes them.
+  const identity = loadTlsIdentity({
     paths,
     config,
     now: new Date(),
