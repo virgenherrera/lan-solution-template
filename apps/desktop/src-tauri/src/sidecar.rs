@@ -7,7 +7,7 @@ use tauri::{AppHandle, Manager};
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
 
-use crate::{platform, tray};
+use crate::{gateway, platform, tray};
 
 const SHUTDOWN_LINE: &[u8] = b"{\"kind\":\"shutdown\"}\n";
 const GRACE: Duration = Duration::from_secs(10);
@@ -56,12 +56,20 @@ fn sidecar(app: &AppHandle) -> Arc<Sidecar> {
 fn set_state(app: &AppHandle, next: HostState) {
   let host = sidecar(app);
   let mut current = host.state.lock().unwrap();
+  let became_ready = next == HostState::Ready && *current != HostState::Ready;
   if *current != next {
     log::info!("host state {} -> {}", current.label(), next.label());
     *current = next;
   }
   drop(current);
   tray::refresh(app, next);
+  if became_ready {
+    gateway::on_ready(app);
+  }
+}
+
+pub fn state(app: &AppHandle) -> HostState {
+  *sidecar(app).state.lock().unwrap()
 }
 
 fn is_current(host: &Sidecar, run: &Arc<Run>) -> bool {
@@ -69,8 +77,14 @@ fn is_current(host: &Sidecar, run: &Arc<Run>) -> bool {
 }
 
 // The base directory is the executable directory (ADR-007).
-fn base_dir() -> Option<std::path::PathBuf> {
+pub fn base_dir() -> Option<std::path::PathBuf> {
   std::env::current_exe().ok()?.parent().map(|p| p.to_path_buf())
+}
+
+// `net.httpsPort` from <base>/config/config.json.
+pub fn https_port() -> Option<u16> {
+  let raw = std::fs::read_to_string(base_dir()?.join("config").join("config.json")).ok()?;
+  u16::try_from(serde_json::from_str::<serde_json::Value>(&raw).ok()?["net"]["httpsPort"].as_u64()?).ok()
 }
 
 // Reads `net` from <base>/config/config.json and probes both ports. Returns the first one already taken.

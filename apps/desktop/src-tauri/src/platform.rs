@@ -71,3 +71,64 @@ pub fn kill_survivors(root: u32, snapshot: &[u32]) -> Vec<u32> {
   }
   killed
 }
+
+// OS trust store for the gateway CA (REQ-TLS-02). Only the public `ca.crt` ever reaches these functions.
+// macOS: the same call `dotnet dev-certs https --trust` makes, into the login keychain (command checked, store change not run by the author).
+// Windows and Linux follow the same shape: not verified.
+#[cfg(target_os = "macos")]
+mod trust_imp {
+  use std::path::Path;
+  use std::process::Command;
+
+  fn login_keychain() -> Result<std::path::PathBuf, String> {
+    let home = std::env::var_os("HOME").ok_or("HOME is not set")?;
+    Ok(std::path::PathBuf::from(home).join("Library").join("Keychains").join("login.keychain-db"))
+  }
+
+  pub fn is_trusted(ca: &Path) -> bool {
+    Command::new("security").args(["verify-cert", "-c"]).arg(ca).args(["-p", "ssl"]).output().map(|o| o.status.success()).unwrap_or(false)
+  }
+
+  // The system asks for the user's password or Touch ID.
+  pub fn trust(ca: &Path) -> Result<(), String> {
+    let out = Command::new("security").args(["add-trusted-cert", "-p", "basic", "-p", "ssl", "-k"]).arg(login_keychain()?).arg(ca).output().map_err(|e| e.to_string())?;
+    if out.status.success() { Ok(()) } else { Err(String::from_utf8_lossy(&out.stderr).trim().to_string()) }
+  }
+}
+
+#[cfg(windows)]
+mod trust_imp {
+  use std::path::Path;
+  use std::process::Command;
+
+  // Asks the user Root store for the certificate of the file.
+  pub fn is_trusted(ca: &Path) -> bool {
+    Command::new("certutil").args(["-user", "-verifystore", "Root", &ca.to_string_lossy()]).output().map(|o| o.status.success()).unwrap_or(false)
+  }
+
+  pub fn trust(ca: &Path) -> Result<(), String> {
+    let out = Command::new("certutil").args(["-user", "-addstore", "Root"]).arg(ca).output().map_err(|e| e.to_string())?;
+    if out.status.success() { Ok(()) } else { Err(String::from_utf8_lossy(&out.stdout).trim().to_string()) }
+  }
+}
+
+// Debian family layout. Other distributions use a different directory: not verified.
+#[cfg(all(unix, not(target_os = "macos")))]
+mod trust_imp {
+  use std::path::Path;
+  use std::process::Command;
+
+  const TARGET: &str = "/usr/local/share/ca-certificates/lan-solution-local-ca.crt";
+
+  pub fn is_trusted(_ca: &Path) -> bool {
+    Path::new(TARGET).exists()
+  }
+
+  // pkexec shows the graphical authorization prompt.
+  pub fn trust(ca: &Path) -> Result<(), String> {
+    let out = Command::new("pkexec").args(["sh", "-c", "cp \"$1\" \"$2\" && update-ca-certificates", "sh"]).arg(ca).arg(TARGET).output().map_err(|e| e.to_string())?;
+    if out.status.success() { Ok(()) } else { Err(String::from_utf8_lossy(&out.stderr).trim().to_string()) }
+  }
+}
+
+pub use trust_imp::{is_trusted, trust};

@@ -20,12 +20,6 @@
         "dependsOn": [
           {
             "projects": [
-              "web-angular"
-            ],
-            "target": "build"
-          },
-          {
-            "projects": [
               "sea-runtime"
             ],
             "target": "package"

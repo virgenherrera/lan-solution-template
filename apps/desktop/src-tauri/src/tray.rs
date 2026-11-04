@@ -7,6 +7,7 @@ use tauri::{AppHandle, Manager, Wry};
 use tauri_plugin_autostart::ManagerExt;
 
 use crate::sidecar::{self, HostState};
+use crate::{gateway, trust};
 
 const TRAY_ID: &str = "main";
 
@@ -17,12 +18,7 @@ struct Items {
 }
 
 pub fn show_window(app: &AppHandle) {
-  if let Some(window) = app.get_webview_window("main") {
-    let _ = window.show();
-    let _ = window.unminimize();
-    let _ = window.set_focus();
-    log::info!("window shown");
-  }
+  gateway::show(app);
 }
 
 // Autostart is opt-in and off by default (OQ12). The OS entry (LaunchAgent, registry key, .desktop file) is the persisted choice.
@@ -43,14 +39,16 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
   let start = MenuItem::with_id(app, "start", "Start", false, None::<&str>)?;
   let stop = MenuItem::with_id(app, "stop", "Stop", true, None::<&str>)?;
   let autostart = CheckMenuItem::with_id(app, "autostart", "Start at login", true, app.autolaunch().is_enabled().unwrap_or(false), None::<&str>)?;
+  let trust = MenuItem::with_id(app, "trust", "Trust CA...", true, None::<&str>)?;
   let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
   let sep = PredefinedMenuItem::separator(app)?;
-  let menu = Menu::with_items(app, &[&status, &sep, &open, &start, &stop, &autostart, &sep, &quit])?;
+  let menu = Menu::with_items(app, &[&status, &sep, &open, &start, &stop, &autostart, &trust, &sep, &quit])?;
   let mut builder = TrayIconBuilder::with_id(TRAY_ID).menu(&menu).tooltip("LAN Solution: starting").on_menu_event(move |app, event| match event.id().as_ref() {
     "open" => show_window(app),
     "start" => sidecar::start(app),
     "stop" => sidecar::stop(app),
     "autostart" => toggle_autostart(app, &autostart),
+    "trust" => trust::request(app),
     "quit" => sidecar::stop_then_exit(app),
     _ => {}
   });

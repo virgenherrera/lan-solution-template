@@ -1,6 +1,8 @@
+mod gateway;
 mod platform;
 mod sidecar;
 mod tray;
+mod trust;
 
 use tauri::{RunEvent, WindowEvent};
 use tauri_plugin_autostart::MacosLauncher;
@@ -11,6 +13,7 @@ pub fn run() {
     // The single-instance plugin must be the first one (REQ-DESK-05): the second launch only shows the first window, then exits.
     .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| tray::show_window(app)))
     .plugin(tauri_plugin_shell::init())
+    .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
     // Closing the window hides it: the supervisor and the gateway keep serving the LAN (REQ-DESK-03, REQ-DESK-06).
     .on_window_event(|window, event| {
