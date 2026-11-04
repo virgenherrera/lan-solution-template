@@ -3,10 +3,10 @@ fmt: TOON
 doc: docs/backlog/poc-8-msi-matrix-versioning.md
 title: "POC-8 MSI credential dialog, platform matrix and lockstep versioning"
 type: backlog
-summary: "Backlog item for MSI credential dialog platform matrix and lockstep versioning."
-related[5]: docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md,docs/backlog/persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md
+summary: "Backlog item for the platform matrix, lockstep versioning and the macOS installer. Windows and Linux are technical debt."
+related[8]: docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md,docs/backlog/persistence-system.md,docs/backlog/td-windows-linux-distribution.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/results/POC-05-Result.md
 status: current
-updated: 2026-11-03
+updated: 2026-11-04
 -->
 
 # POC-8: MSI credential dialog, platform matrix and lockstep versioning
@@ -18,12 +18,15 @@ updated: 2026-11-03
 ## Navigation
 
 - [At a glance](#at-a-glance)
+- [Scope of this delivery](#scope-of-this-delivery)
 - [Goal](#goal)
 - [Requirements](#requirements)
 - [Acceptance criteria](#acceptance-criteria)
 - [Tasks](#tasks)
+- [Moved to technical debt](#moved-to-technical-debt)
 - [Pitch items without a source id](#pitch-items-without-a-source-id)
 - [Open questions](#open-questions)
+- [Not verified](#not-verified)
 
 ---
 
@@ -33,12 +36,36 @@ updated: 2026-11-03
 
 | Item | Value |
 |---|---|
-| Status | Cycle 3 (planned) |
-| Appetite | 2 weeks, big batch |
-| Depends on | POC-5, POC-7 |
+| Status | Opened 2026-11-04 on `chore/poc-08-matrix-versioning`. macOS only. Nothing built yet. |
+| Appetite | 2 weeks, big batch. This delivery is a part of it. |
+| Depends on | POC-5 (merged in PR #21). POC-7 only for the first admin ([ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md), proposed). |
 | Branch | `chore/poc-08-matrix-versioning` |
-| Requirements | 7 REQ ids |
+| Requirements | 7 REQ ids (the pitch). This delivery covers REQ-VERSION-01, 02 and 03, and the macOS part of REQ-SEA-06. |
 | Acceptance criteria | AC-21, AC-25, AC-33 |
+| Technical debt | [Windows and Linux distribution](td-windows-linux-distribution.md) |
+
+---
+
+## Scope of this delivery
+
+[Back to navigation](#navigation)
+
+The human cut the scope on 2026-11-04. Quotes are verbatim, in Spanish.
+
+- Human: "Poc ahora mismo solo podemos calodarlo all the way down en mac (solo eso haremos ahora mismo, lo demas queda como TD o otro feat (cuando ya yengamos manera de correr en dichos os".
+- Human: "que te parece si desarrollamos pensando siempte en las 3 plataformas, y en local solo testeamos mac". The agent reads this as: write code and docs for the three platforms, and run and verify on macOS only.
+
+| In scope | Decided by |
+|---|---|
+| Lockstep versioning: REQ-VERSION-01, REQ-VERSION-02 and REQ-VERSION-03. | Pitch (human-approved roadmap) |
+| The platform matrix, documented. macOS is `verified` only where a command ran natively. Every other row is `not verified`. | Agent (delegated), from REQ-TEST-09 and REQ-TEST-10 |
+| REQ-SEA-06: only the rule "validate per platform", and only on macOS. | Agent (delegated by the human) |
+| macOS installer as a `.pkg` with an installation assistant. | Agent (delegated). The human asked for an "asistente de instalacion". The format is to confirm by spike M0. |
+| The assistant creates `config/config.json` ([OQ24](../roadmap/PROPOSAL.md#open-questions)). | Human, 2026-11-04 |
+| The `postinstall` script installs `ca.crt` into the trust store, with the consent of the user ([ADR-009](../architecture/adr/ADR-009-desktop-process-model.md), [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md)). | Agent (delegated), from ADR-009 D13 |
+| Uninstall script: removes `config.json` and ALWAYS keeps the SQLite database. The data belongs to the user. | Human, 2026-11-04. Quotes: "no (pero si la db (en caso de ser sqlite))" and "los datos de la db le pertenecen al usuario". |
+| Server mode only. Client mode stays pending ([OQ17](../roadmap/PROPOSAL.md#open-questions)). | Human, 2026-11-04 |
+| Apple signing and notarization: technical debt, not verified. | Agent (delegated) |
 
 ---
 
@@ -46,18 +73,19 @@ updated: 2026-11-03
 
 [Back to navigation](#navigation)
 
-Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-8-msi-credential-dialog-platform-matrix-and-lockstep-versioning).
+Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-8-msi-credential-dialog-platform-matrix-and-lockstep-versioning), cut to macOS by the scope above.
 
-- Record native results per OS.
-- A macOS pass does not imply Windows or Linux.
+- Record native results per OS. A macOS pass does not imply Windows or Linux.
 - Add lockstep versioning that also reaches `tauri.conf.json` and `Cargo.toml`.
-- Add an MSI dialog for the initial credential, as the fallback of decision 13.
+- Ship a macOS installer with an assistant, on the principle that the code is written for the three platforms and tested on macOS.
 
 | No-gos |
 |---|
 | No cross-OS claims without native verification. |
 | Docker does not replace native installer validation. |
-| No CI workflow yet. |
+| No CI workflow yet ([POC-9](poc-9-ci-cd-releases.md) is on hold). |
+| No Windows or Linux installer in this delivery. |
+| The uninstall never deletes the SQLite database. |
 
 ---
 
@@ -77,6 +105,7 @@ Cited elsewhere in the pitch:
 
 - [REQ-CFG-05](../requirements/04-configuration.md)
 - [REQ-SEA-05](../requirements/10-node-sea-distribution.md)
+- [REQ-SEA-06](../requirements/10-node-sea-distribution.md) ([traceability](../requirements/traceability.md) maps it to POC-8)
 
 ---
 
@@ -88,7 +117,7 @@ Cited elsewhere in the pitch:
 - [AC-25](../requirements/11-nx-quality-testing.md)
 - [AC-33](../requirements/11-nx-quality-testing.md)
 
-Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-8-msi-credential-dialog-platform-matrix-and-lockstep-versioning). The pitch also lists NFR-PORT-01 and NFR-TRUTH-01 (not defined in `docs/requirements`, so not linked).
+Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-8-msi-credential-dialog-platform-matrix-and-lockstep-versioning). The pitch also lists NFR-PORT-01 and NFR-TRUTH-01 (not defined in `docs/requirements`, so not linked). Only macOS can close them in this delivery.
 
 ---
 
@@ -96,24 +125,33 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-8-msi-credential-dialog-plat
 
 [Back to navigation](#navigation)
 
-- [ ] Dependency task, first: wait for the POC-5 spike on the first-run setup wizard. POC-8 consumes its result and depends on it. Source: [decision 13](../roadmap/PROPOSAL.md#decision-log), [OQ5](../roadmap/PROPOSAL.md#open-questions). No REQ or AC id.
-  - Decide whether the wizard replaces or complements the MSI credential dialog.
-  - Inputs: the POC-5 spike output and the list in Decision Log item 13. Security claims are not verified.
-  - Output: the decision recorded in `POC-08-Result` and in ADR-010 (auth mechanism).
-  - No own spike time. If the POC-5 spike hit its 2-day breaker, keep the MSI credential dialog on Windows.
-  - Source: [decision 13](../roadmap/PROPOSAL.md#decision-log), [OQ5](../roadmap/PROPOSAL.md#open-questions)
-- [ ] Spike, first task, blocking: test WiX and Tauri capabilities for per-machine, dual and per-user installs. Then decide the scope ([OQ16](../roadmap/PROPOSAL.md#open-questions)). Source: [OQ16](../roadmap/PROPOSAL.md#open-questions). No REQ or AC id.
-- [ ] The MSI installs per-machine (draft) into Program Files, and installing needs an administrator. It offers no per-user install in the first version. The autostart checkbox appears unchecked. Source: [decision 11](../roadmap/PROPOSAL.md#decision-log), [OQ16](../roadmap/PROPOSAL.md#open-questions), [OQ12](../roadmap/PROPOSAL.md#open-questions) (OQ16 is a draft; OQ12 is decided by the human). No REQ or AC id.
-- [ ] Declare the OS list that POC-1 records from the Tauri 2 prerequisites page in the platform matrix ([decision 15](../roadmap/PROPOSAL.md#decision-log), [OQ4](../roadmap/PROPOSAL.md#open-questions)). Native verification depends on VM availability ([OQ7](../roadmap/PROPOSAL.md#open-questions)). Until a native run exists, each row stays `not verified`. Source: [AC-33](../requirements/11-nx-quality-testing.md), [AC-21](../requirements/11-nx-quality-testing.md)
-- [ ] The installer assistant defines the install path, which is the base directory, and creates `config/config.json` there ([OQ24](../roadmap/PROPOSAL.md#open-questions), open). The MSI ships no `config.default.json`. Source: [REQ-SEA-05](../requirements/10-node-sea-distribution.md), [REQ-CFG-05](../requirements/04-configuration.md), [decision 11](../roadmap/PROPOSAL.md#decision-log)
-- [ ] On a native Windows run, check that the installer creates `config/config.json` under the install path and that the runtime stops without it. Check that secrets under that path have restricted permissions. This POC decides the install folder on Windows. The ACL recipe is not verified. Source: [REQ-CFG-05](../requirements/04-configuration.md), [decision 11](../roadmap/PROPOSAL.md#decision-log), [OQ16](../roadmap/PROPOSAL.md#open-questions)
-- [ ] Verify (not verified): the exact WiX v4 directory and scope names. Verify the effect of `NeverOverwrite` or `Permanent` on a key file. Verify the ACLs of the folders under the install path. Decide delete or keep of an edited `config.json` on uninstall. Source: [decision 11](../roadmap/PROPOSAL.md#decision-log), [OQ16](../roadmap/PROPOSAL.md#open-questions). No REQ or AC id.
-- [ ] Add a smoke test per OS. It proves that the first admin created by the setup wizard (or the MSI fallback) can log in. It proves that no default exists. Source: [REQ-TEST-09](../requirements/11-nx-quality-testing.md), [AC-21](../requirements/11-nx-quality-testing.md)
-- [ ] Run the root ECO commands natively on each declared OS/arch. Record a result matrix (verified, pending or blocked). Minimum verified-OS set is proposed in [OQ7](../roadmap/PROPOSAL.md#open-questions); Windows targets in [OQ4](../roadmap/PROPOSAL.md#open-questions) (decision 15). Source: [REQ-TEST-10](../requirements/11-nx-quality-testing.md), [AC-21](../requirements/11-nx-quality-testing.md), [AC-33](../requirements/11-nx-quality-testing.md), [OQ7](../roadmap/PROPOSAL.md#open-questions), [OQ4](../roadmap/PROPOSAL.md#open-questions)
-- [ ] Configure an Nx Release fixed group (membership proposed in [OQ10](../roadmap/PROPOSAL.md#open-questions)). Source: [REQ-VERSION-01](../requirements/11-nx-quality-testing.md), [AC-25](../requirements/11-nx-quality-testing.md), [OQ10](../roadmap/PROPOSAL.md#open-questions)
-- [ ] `release:version` syncs `tauri.conf.json` and `Cargo.toml`, validates all version references and builds a reproducible changelog. Source: [REQ-VERSION-03](../requirements/11-nx-quality-testing.md), [AC-25](../requirements/11-nx-quality-testing.md)
-- [ ] Validate the branch-to-SemVer mapping, including its branch table and the exemption rule. Source: [REQ-VERSION-02](../requirements/11-nx-quality-testing.md), [AC-25](../requirements/11-nx-quality-testing.md)
-- [ ] Publish `Platform-Matrix` and `POC-08-Result` under `docs/`. Source: [REQ-TEST-10](../requirements/11-nx-quality-testing.md), [AC-21](../requirements/11-nx-quality-testing.md)
+The working document with routes and evidence is kept outside the repository. Task ids: M0 (spike), U1 to U7 (units).
+
+- [ ] M0: spike on the `.pkg` format on macOS. Check `pkgbuild`, `productbuild`, a `distribution.xml` with an assistant (Welcome, Conclusion, a custom panel is not verified), `postinstall` and `preinstall` scripts, and how an assistant can write `config/config.json`. Decide the format. Output: a short result in `POC-08-Result`. Source: the human asked for an "asistente de instalacion"; the format is an agent decision. Not verified. No REQ or AC id.
+- [ ] U1: lockstep versioning. An Nx Release fixed group ([OQ10](../roadmap/PROPOSAL.md#open-questions)); `release:version` syncs `tauri.conf.json` and `Cargo.toml` and validates all version references; a reproducible changelog; the branch-to-SemVer table with the exemption for `docs/*` and `chore/*`. Today the manifests disagree (`package.json` files carry `0.0.1`, `tauri.conf.json` and `Cargo.toml` carry `0.1.0`). Risk: release tooling. Source: [REQ-VERSION-01](../requirements/11-nx-quality-testing.md), [REQ-VERSION-02](../requirements/11-nx-quality-testing.md), [REQ-VERSION-03](../requirements/11-nx-quality-testing.md), [AC-25](../requirements/11-nx-quality-testing.md)
+- [ ] U2: platform matrix and local scripts. Declare the OS list ([OQ4](../roadmap/PROPOSAL.md#open-questions)); record `verified`, `pending` or `blocked` per row ([OQ7](../roadmap/PROPOSAL.md#open-questions)); macOS is `verified` only where the command ran natively; every other row says `not verified`. REQ-SEA-06: the rule "validate per platform", macOS only. Source: [REQ-TEST-09](../requirements/11-nx-quality-testing.md), [REQ-TEST-10](../requirements/11-nx-quality-testing.md), [REQ-SEA-06](../requirements/10-node-sea-distribution.md), [AC-21](../requirements/11-nx-quality-testing.md), [AC-33](../requirements/11-nx-quality-testing.md)
+- [ ] U3: the `.pkg` with an assistant, and `config/config.json`. The assistant defines the install path, which is the base directory, and creates `config/config.json` there. The installer ships no `config.default.json`. Depends on M0. Source: [OQ24](../roadmap/PROPOSAL.md#open-questions), [REQ-CFG-05](../requirements/04-configuration.md), [REQ-SEA-05](../requirements/10-node-sea-distribution.md)
+- [ ] U4: `ca.crt` in the `postinstall`, with consent. The installer generates the CA and installs it into the trust store only after the user consents; the tray item `Trust CA...` stays as a repair path. Risk: security (trust store). Depends on U3. Source: [ADR-009](../architecture/adr/ADR-009-desktop-process-model.md) D13, [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md)
+- [ ] U5: uninstall script. It removes `config.json` and ALWAYS keeps the SQLite database. Depends on U3. Source: decision of the human, 2026-11-04.
+- [ ] U6: installer smoke on macOS. Steps that need `sudo` are run by the human from a recipe. Depends on U3, U4 and U5. Source: [REQ-TEST-09](../requirements/11-nx-quality-testing.md), [AC-21](../requirements/11-nx-quality-testing.md)
+- [ ] U7: publish `POC-08-Result` and the ADR for the installer, under `docs/`. Last. Source: [REQ-TEST-10](../requirements/11-nx-quality-testing.md), [AC-21](../requirements/11-nx-quality-testing.md)
+
+---
+
+## Moved to technical debt
+
+[Back to navigation](#navigation)
+
+These pitch items need a Windows or Linux run that does not exist today. They are listed, with nothing verified, in [Windows and Linux distribution](td-windows-linux-distribution.md):
+
+- The MSI with WiX, the OQ16 spike and the MSI credential dialog.
+- `certutil` and ACLs on Windows.
+- `.deb` and `.rpm` packages.
+- The matrix on Windows x64 and on Linux with WebKitGTK.
+- Black-box smoke of native installers.
+- Client mode.
+- The CI matrix in POC-9.
+- Apple signing and notarization.
 
 ---
 
@@ -123,7 +161,7 @@ Source: [PROPOSAL pitch](../roadmap/PROPOSAL.md#poc-8-msi-credential-dialog-plat
 
 These pitch items carry no REQ or AC id. They are not tasks:
 
-- MSI dialog for the initial credential: a hidden property plus `MsiHiddenProperties`. A deferred custom action computes the hash. Design, not verified. No REQ or AC id in the pitch besides the per-OS smoke test above. Key storage: plain files under `<base>/certs` ([ADR-008](../architecture/adr/ADR-008-tls-trust-model.md#storage)).
+- MSI dialog for the initial credential: a hidden property plus `MsiHiddenProperties`. A deferred custom action computes the hash. Design, not verified. Moved to [technical debt](td-windows-linux-distribution.md). Key storage: plain files under `<base>/certs` ([ADR-008](../architecture/adr/ADR-008-tls-trust-model.md#storage)).
 
 ---
 
@@ -131,15 +169,24 @@ These pitch items carry no REQ or AC id. They are not tasks:
 
 [Back to navigation](#navigation)
 
-Source: `docs/roadmap/PROPOSAL.md`, Open questions. No open question blocks. OQ16 is a draft. A spike decides it.
+Source: `docs/roadmap/PROPOSAL.md`, Open questions. No open question blocks.
 
 | OQ | Topic | Status |
 |---|---|---|
-| [OQ5](../roadmap/PROPOSAL.md#open-questions) | first-run setup wizard versus MSI dialog | decided (human decision 13): pending spike |
+| [OQ5](../roadmap/PROPOSAL.md#open-questions) | first-run setup wizard versus MSI dialog | decided (human decision 13); recommendation proposed in ADR-010; the MSI part is technical debt |
 | [OQ4](../roadmap/PROPOSAL.md#open-questions) | OS targets follow Tauri 2 | decided (human decision 15) |
-| [OQ16](../roadmap/PROPOSAL.md#open-questions) | Windows MSI scope, per-machine or per-user | proposed |
-| [OQ17](../roadmap/PROPOSAL.md#open-questions) | install-time choice: server mode or client mode | decided (human, 2026-11-04) |
-| [OQ24](../roadmap/PROPOSAL.md#open-questions) | where the installer assistant defines the install path and creates `config/config.json` | open |
-| [OQ7](../roadmap/PROPOSAL.md#open-questions) | minimum verified-OS set | proposed |
+| [OQ16](../roadmap/PROPOSAL.md#open-questions) | Windows MSI scope, per-machine or per-user | proposed; moved to technical debt |
+| [OQ17](../roadmap/PROPOSAL.md#open-questions) | install-time choice: server mode or client mode | decided (human, 2026-11-04): server mode now, client mode pending |
+| [OQ24](../roadmap/PROPOSAL.md#open-questions) | where the installer assistant creates `config/config.json` | decided (human, 2026-11-04) |
+| [OQ7](../roadmap/PROPOSAL.md#open-questions) | minimum verified-OS set | decided (human) |
 | [OQ8](../roadmap/PROPOSAL.md#open-questions) | TLS crypto library and key storage | decided (agent, 2026-11-03, delegated): built-ins of Node suffice, see [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md) |
 | [OQ10](../roadmap/PROPOSAL.md#open-questions) | Nx release group membership | proposed |
+
+---
+
+## Not verified
+
+[Back to navigation](#navigation)
+
+- Everything about the `.pkg` format, its assistant and its scripts, until M0 runs.
+- Windows, Linux, Apple signing and notarization. Nothing here was run on them.

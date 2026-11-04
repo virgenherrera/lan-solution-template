@@ -150,7 +150,7 @@ The [ADR index](../roadmap/PROPOSAL.md#adr-index) in the roadmap proposal lists 
 | [ADR-006](adr/ADR-006-sidecar-status-contract.md) | Sidecar status contract | proposed; implemented in PR #15 | PR #15 |
 | [ADR-007](adr/ADR-007-persistence-system.md) | Persistence system | implemented in PR #17 (merged) | PR #17 |
 | [ADR-008](adr/ADR-008-tls-trust-model.md) | TLS trust model | accepted; implemented on `minor/poc-04-https-gateway` ([device-trust guide](device-trust-guide.md)) | [POC-4](../roadmap/PROPOSAL.md#poc-4-https-gateway-serving-the-angular-pwa) |
-| [ADR-009](adr/ADR-009-desktop-process-model.md) | Desktop process model | proposed; implemented on `minor/poc-05-tauri-sidecar` (macOS only, PR pending) | [POC-5](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar) |
+| [ADR-009](adr/ADR-009-desktop-process-model.md) | Desktop process model | proposed; implemented in PR #21 (merged; macOS only) | [POC-5](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar) |
 | [ADR-010](adr/ADR-010-first-run-admin-setup.md) | First admin authentication (the auth mechanism of POC-7) | proposed; not decided, no code | [POC-5](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar) spike, [POC-7](../roadmap/PROPOSAL.md#poc-7-auth-and-roles) |
 | ADR-011 | Release flow | placeholder | [POC-9](../roadmap/PROPOSAL.md#poc-9-github-actions-cicd-and-releases-hold), on HOLD |
 

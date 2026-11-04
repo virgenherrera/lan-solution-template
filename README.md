@@ -25,7 +25,7 @@
 | --- | --- |
 | What | A LAN-first, offline-capable GitHub Template Repository. |
 | For whom | Template authors, reviewers and delivering AI agents. |
-| Where we are | POC-1 to POC-4 are built, with the persistence system (PRs #17 and #18). POC-5 is built on the branch `minor/poc-05-tauri-sidecar` in server mode and verified on macOS only, with no pull request yet ([result](docs/results/POC-05-Result.md)). POC-6 to POC-9 are plans. The roadmap is a proposal. |
+| Where we are | POC-1 to POC-4 are built, with the persistence system (PRs #17 and #18). POC-5 is merged in PR #21 (squash `35525d9`) in server mode and verified on macOS only ([result](docs/results/POC-05-Result.md)). POC-6 to POC-9 are plans. The roadmap is a proposal. |
 | What comes next | The [roadmap](docs/roadmap/PROPOSAL.md) plans POC-1 to POC-9. The [backlog](docs/backlog/README.md) holds one epic per POC. |
 
 ---

@@ -1,4 +1,4 @@
-docs[85]:
+docs[86]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -112,7 +112,7 @@ docs[85]:
     type: backlog
     summary: Backlog index of POC epics mapped to acceptance criteria and cycles.
     ids: []
-    related[13]: docs/results/POC-05-Result.md,docs/backlog/log-service-otel-grpc.md,docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md
+    related[14]: docs/results/POC-05-Result.md,docs/backlog/log-service-otel-grpc.md,docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md,docs/backlog/td-windows-linux-distribution.md
     status: current
     updated: 2026-11-04
     refs[37]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36,REQ-CFG-05
@@ -326,12 +326,12 @@ docs[85]:
   - doc: docs/backlog/poc-8-msi-matrix-versioning.md
     title: "POC-8 MSI credential dialog, platform matrix and lockstep versioning"
     type: backlog
-    summary: Backlog item for MSI credential dialog platform matrix and lockstep versioning.
+    summary: "Backlog item for the platform matrix, lockstep versioning and the macOS installer. Windows and Linux are technical debt."
     ids: []
-    related[5]: docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md,docs/backlog/persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md
+    related[8]: docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md,docs/backlog/persistence-system.md,docs/backlog/td-windows-linux-distribution.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/results/POC-05-Result.md
     status: current
-    updated: 2026-11-03
-    refs[10]: AC-21,AC-25,AC-33,REQ-CFG-05,REQ-SEA-05,REQ-TEST-09,REQ-TEST-10,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03
+    updated: 2026-11-04
+    refs[11]: AC-21,AC-25,AC-33,REQ-CFG-05,REQ-SEA-05,REQ-SEA-06,REQ-TEST-09,REQ-TEST-10,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03
   - doc: docs/backlog/poc-9-ci-cd-releases.md
     title: POC-9 GitHub Actions CI/CD and releases (HOLD)
     type: backlog
@@ -359,6 +359,15 @@ docs[85]:
     status: current
     updated: 2026-11-03
     refs: []
+  - doc: docs/backlog/td-windows-linux-distribution.md
+    title: "Technical debt: Windows and Linux distribution"
+    type: backlog
+    summary: "Technical debt moved out of POC-8: Windows and Linux installers, matrix runs, client mode and signing. Nothing verified."
+    ids: []
+    related[6]: docs/backlog/README.md,docs/backlog/poc-8-msi-matrix-versioning.md,docs/backlog/poc-9-ci-cd-releases.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/results/POC-05-Result.md
+    status: proposed
+    updated: 2026-11-04
+    refs[2]: REQ-TEST-09,REQ-TEST-10
   - doc: docs/backlog/third-party-licenses.md
     title: Third-party license notices
     type: backlog

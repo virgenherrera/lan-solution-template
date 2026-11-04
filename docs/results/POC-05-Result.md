@@ -19,7 +19,7 @@ Branch: `minor/poc-05-tauri-sidecar`. Epic: [POC-5](../backlog/poc-5-tauri-sidec
 - Question: can a Tauri v2 host start, watch and stop the SEA supervisor as a sidecar, show its state in a tray, load the HTTPS gateway in a WebView, and be tested by a native E2E that leaves no orphan?
 - Answer: yes on macOS arm64, server mode only. Client mode is pending (OQ17, decided by the human on 2026-11-04). The human also decided the focus: macOS first, with code that stays multi-platform.
 - Not done: any run on Windows or Linux, the tray UI seen by a person, the native Trust CA dialog, the real WebView load of the gateway. See [Not verified](#not-verified).
-- A PR is pending. Nothing is pushed.
+- Merged in PR #21 (squash `35525d9`).
 
 ## Slices
 

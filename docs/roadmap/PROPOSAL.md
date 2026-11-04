@@ -651,13 +651,13 @@ Acceptance criteria coverage:
 
 Decision Log items 1-10 are not in the table. Items 11-15 settle OQ1, OQ2, OQ4, OQ5 and OQ8.
 
-Items 11-15, OQ3, OQ6, OQ7, OQ12, OQ14, OQ17, OQ18 to OQ23 and OQ25 are human decisions. The other resolutions are agent proposals.
+Items 11-15, OQ3, OQ6, OQ7, OQ12, OQ14, OQ17, OQ18 to OQ25 are human decisions. The other resolutions are agent proposals.
 
 **Ownership summary** (the command in [Checks](../standards/README.md#checks) prints these counts)
 
 - Rows: 25.
 - Owner: 10 human, 9 agent:builder, 5 agent:researcher, 1 agent:verifier.
-- Status: 13 `decided (human)`. 1 each of `decided (human decision 11)`, `decided (human decision 12)`, `decided (human decision 15)`, `decided (human decision, POC-2 D2)` and `decided (human, 2026-11-02); text applied in REQ-STACK-07`. 1 pending spike (decision 13). 5 `proposed`. 1 `open` (OQ24).
+- Status: 14 `decided (human)`. 1 each of `decided (human decision 11)`, `decided (human decision 12)`, `decided (human decision 15)`, `decided (human decision, POC-2 D2)` and `decided (human, 2026-11-02); text applied in REQ-STACK-07`. 1 pending spike (decision 13). 1 `decided` (OQ17). 4 `proposed`. 0 `open`.
 - Blocking: 25 `no`. No row has status `needs human decision`.
 
 Claims marked "not verified" stay unverified until a spike or a primary source confirms them.
@@ -687,7 +687,7 @@ Claims marked "not verified" stay unverified until a spike or a primary source c
 | OQ21 | Which file name and location next to the artifact for the notices file? | Decided by the human (2026-11-03) as a documented convention only ("solo ideas documentadas por ahora"). Nothing is built. The convention is in [Third-party license notices](../backlog/third-party-licenses.md#future-ideas): one plain-text file `THIRD-PARTY-NOTICES.txt`, placed in the install path. Per-OS placement via Tauri `bundle.resources`: not verified. Source: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md#q6-recommendation), question 4. | human | no | decided (human) |
 | OQ22 | Replace the empty `license = ""` in `apps/desktop/src-tauri/Cargo.toml` with `PostgreSQL`? | Decided by the human (2026-11-03): yes. Set `license = "PostgreSQL"`. Cargo accepts the value: `cargo metadata` check recorded in the commit that sets it. Source: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md#q6-recommendation), question 5. | human | no | decided (human) |
 | OQ23 | Where is the dev root, and how is the dev config provisioned? | Decided by the human, 2026-11-03: one parameter changes between dev and prod, the base directory. Dev: `process.cwd()`, whatever pnpm gives. Prod: the install path, the directory of the executable, defined by the installer assistant. Identical layout under it: `config/config.json`, `data/`, `logs/`, `certs/`. No `--root` flag, no `APP_HOME`, no marker file, no OS default root, no `.local/`, no `dev:config` script. `libs/shared-core/config.example.json` documents that `config/config.json` MUST exist. A missing file throws. Human quote: "lo unico que cambia entre dev y prod es el CWD en dev (es lo que diga pnpm) y en built/prod/deploy es el installPath que haya definido el asistente de instalacion". See [ADR-007](../architecture/adr/ADR-007-persistence-system.md#one-base-directory). | human | no | decided (human) |
-| OQ24 | Where does the installer assistant create the valid `config.json`? | TBD with the installer (POC-8). The installer assistant defines the install path (the base directory of OQ23) and creates `config/config.json` there. Until then a missing config stops the start. Not designed. | human | no | open |
+| OQ24 | Where does the installer assistant create the valid `config.json`? | Decided by the human, 2026-11-04: the installer assistant defines the install path (the base directory of OQ23) and creates `config/config.json` there. The runtime never creates it, and a missing config stops the start. First target: the macOS `.pkg` of POC-8 (agent decision, delegated; to confirm by spike M0). The Windows and Linux installers are technical debt: [td-windows-linux-distribution](../backlog/td-windows-linux-distribution.md). Not verified on any OS yet. | human | no | decided (human) |
 | OQ25 | Does REQ-CFG-05 lose the read-only defaults copy at the install path? | Decided by the human, 2026-11-03: yes. Applied in [REQ-CFG-05](../requirements/04-configuration.md) and [REQ-SEA-05](../requirements/10-node-sea-distribution.md). Human quote: "SIEMPRE TRUENA si esta invalida o falta". A missing or invalid `config.json` stops the start. The runtime never creates it and never falls back to defaults. The base directory rule is OQ23. Text: [Amendments 2026-10-30](../requirements/amendments-2026-10-30.md#approved-amendment-req-cfg-05-no-default-config-copy). | human | no | decided (human) |
 
 ---
