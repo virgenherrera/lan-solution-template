@@ -1,8 +1,9 @@
 import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import { NodeAdapter } from '@nestjs/platform-node';
 import type { INestApplication } from '@nestjs/common';
 import { hostname, networkInterfaces } from 'node:os';
-import { AppConfigModule, NetConfig } from 'shared-core';
+import { NetConfig } from 'shared-core';
 import { loadTlsIdentity, type TlsIdentity } from 'shared-core/tls';
 import { API_PREFIX } from './api-prefix.js';
 import { AppModule } from './app.module.js';
@@ -34,9 +35,11 @@ export class AppBootstrap {
     });
     app.setGlobalPrefix(API_PREFIX);
 
-    // By the injection token of the namespace, as @InjectConfig does: pnpm resolves @nestjs/config twice (api-gateway and shared-core get different peer sets), so the ConfigService class here is not the one the module provides.
-    const netConfig = app.get<NetConfig>(AppConfigModule.getToken(NetConfig), { strict: false });
-    const serverConfig = app.get<ServerConfig>(AppConfigModule.getToken(ServerConfig), { strict: false });
+    const configService = app.get(ConfigService);
+    const netConfig = configService.get<NetConfig>(NetConfig.name);
+    const serverConfig = configService.get<ServerConfig>(ServerConfig.name);
+    if (!netConfig) throw new Error(`Unable to find ${NetConfig.name}`);
+    if (!serverConfig) throw new Error(`Unable to find ${ServerConfig.name}`);
 
     return { app, netConfig, serverConfig, identity };
   }

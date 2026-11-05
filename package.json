@@ -34,6 +34,7 @@
     "@rspack/core": "catalog:",
     "nx": "catalog:",
     "rimraf": "catalog:",
+    "supports-color": "catalog:",
     "tsconfig-paths-webpack-plugin": "catalog:",
     "typescript": "catalog:",
     "webpack-node-externals": "catalog:",
