@@ -7,7 +7,8 @@ import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { createServer } from 'node:net';
 import { DatabaseSync } from 'node:sqlite';
-import { tmpdir } from 'node:os';
+import { X509Certificate } from 'node:crypto';
+import { networkInterfaces, tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { parseArgs } from 'node:util';
@@ -493,6 +494,33 @@ await check('second start uses the TLS files and changes none', async () => {
   const tlsLines = again.lines.filter((line) => line.includes('tls:')).slice(0, 3);
   expect(logged, `no stderr line with "using leaf certificate"; tls: lines of the second start: ${tlsLines.length > 0 ? tlsLines.join(' | ') : 'none'}`);
   await stopClean(again);
+});
+
+await check('leaf SAN holds every LAN IPv4 of the host and no IPv6 other than ::1', async () => {
+  const sans = (new X509Certificate(certFile(installDir, 'leaf.crt')).subjectAltName ?? '').split(', ');
+  const ips = sans.filter((entry) => entry.startsWith('IP Address:')).map((entry) => entry.slice('IP Address:'.length).toLowerCase());
+  const lanV4 = Object.values(networkInterfaces()).flatMap((list) => list ?? []).filter((info) => !info.internal && info.family === 'IPv4').map((info) => info.address);
+  const missing = lanV4.filter((address) => !ips.includes(address));
+  expect(missing.length === 0, `leaf.crt lacks LAN IPv4 ${missing.join(', ')}`);
+  const v6 = ips.filter((address) => address.includes(':') && address !== '0:0:0:0:0:0:0:1' && address !== '::1');
+  expect(v6.length === 0, `leaf.crt carries IPv6 ${v6.join(', ')}`);
+  return `${lanV4.length} LAN IPv4, ${ips.length} IP names`;
+});
+
+await check('a configured name missing from the leaf is reported, the gateway keeps running', async () => {
+  knownPids.clear();
+  const config = smokeConfig();
+  config.tls.extraNames = ['lan.test'];
+  writeConfig(installDir, JSON.stringify(config));
+  try {
+    const mismatched = await startReady(binary);
+    const reported = await until(() => (mismatched.lines.some((line) => line.includes('does not match') && line.includes('missing name: lan.test')) ? true : undefined), SLACK_MS, 'stderr line "does not match" with "missing name: lan.test"').catch(() => false);
+    const tlsLines = mismatched.lines.filter((line) => line.includes('tls:')).slice(0, 3);
+    expect(reported, `no mismatch line for lan.test; tls: lines: ${tlsLines.length > 0 ? tlsLines.join(' | ') : 'none'}`);
+    await stopClean(mismatched);
+  } finally {
+    writeConfig(installDir);
+  }
 });
 
 await check('generate-certs again: nothing changes; with tls.extraNames: new leaf, same CA, new name redirects', async () => {

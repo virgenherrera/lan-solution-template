@@ -384,7 +384,7 @@ Backlog epics: [2a](../backlog/poc-2a-launcher-cwd-spike.md), [2b](../backlog/po
     - Output: the POC result page and `ADR-008` (TLS trust model).
   - Generate the TLS identity with SAN handling (REQ-TLS-01, REQ-TLS-04).
   - TLS design (decisions 7 and 14, `dotnet dev-certs` style; unreviewed research summary):
-    - One local CA per installation. A renewable leaf is reissued when the SAN or IP changes. The spike picks the library (decision 14).
+    - One local CA per installation. A renewable leaf is reissued when the SAN or IP changes. Spike note (2026-11): the automatic SAN names are loopback, host name and LAN IPv4 only; IPv6 goes through `tls.extraNames` (temporary IPv6 addresses rotate daily and caused a false SAN mismatch). The spike picks the library (decision 14).
     - Key storage sits behind a NestJS provider contract (decision 14). The exact name belongs to the POC. One initial implementation: an encrypted file in `dataDir`. It reuses the POC-3 port and strategy wording (REQ-DB-01, REQ-DB-02).
     - The CA private key never goes in the database.
     - A separate dev CA with `NODE_EXTRA_CA_CERTS`.
