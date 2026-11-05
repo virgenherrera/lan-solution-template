@@ -13,7 +13,7 @@ import { ServerConfig } from './server-config.js';
     HealthState,
     // Every body, query and param declares a nestjs-zod DTO; one without it is a startup-time error, not a silent pass-through.
     { provide: APP_PIPE, useClass: createZodValidationPipe({ strictSchemaDeclaration: true }) },
-    // Responses declared with @ZodSerializerDto are validated and stripped to their schema.
+    // Responses declared with @ZodSerializerDto are validated against their schema. A z.object schema strips extra fields; a z.strictObject schema (as HealthResponseDto) rejects them with a 500.
     { provide: APP_INTERCEPTOR, useClass: ZodSerializerInterceptor },
   ],
 })
@@ -22,7 +22,7 @@ export class AppModule {
   static register(source: ConfigSource, origin: string): DynamicModule {
     return {
       module: AppModule,
-      imports: [AppConfigModule.forRoot({ 
+      imports: [AppConfigModule.forRoot({
         // A new config namespace is registered by adding its class here (and exporting it from shared-core).
         configClasses: [DbConfig, ServerConfig],
         source,

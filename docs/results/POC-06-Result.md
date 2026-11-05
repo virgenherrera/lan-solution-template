@@ -33,6 +33,7 @@ Commits after `main` (`git log --oneline main..HEAD`):
 | T4 migrations | `25fba61` | `db-migrations/pg/`, `pack-migrations` for `pg`, `db-parity --engine pg`. |
 | T5 vector | `4431022` | `db-parity` prints the inner errors when it cannot connect. The vector checks were already in `4656deb`. |
 | T6 APP test | `84e2fb3` | `tools/scripts/smoke-pg.ts` and the Nx target `sea-runtime:smoke-pg`. |
+| Config in Nest DI | `883886e`, `14f5da4`, `c188813`, `9a55016`, `e56cb05` | `AppConfigModule` with nestjs-zod namespaces in shared-core; `@InjectConfig` per namespace (sea-runtime db config, api-gateway `DbConfig` and `ServerConfig`); nestjs-zod validation pipe and serializer interceptor registered globally in the gateway; `keep_classnames` in the shared bundler config (see below). |
 
 ## Drizzle stable-first (decision 10)
 
@@ -95,6 +96,21 @@ The independent verifier returned PASS with advisories. No blocker. Each item be
 - No committed APP test runs `insertVector` or `searchSimilar` against PostgreSQL (gap in REQ-TEST-06 coverage; see "Not verified" and the vector table debt above). The verifier marked S6 as partial for this reason.
 - Some commit subjects on this branch write `PostgreSQL` with capitals. [AGENTS.md](../../AGENTS.md) asks for lowercase subjects. History is not rewritten.
 - Pre-existing, not caused by this branch: `nx run-many -t build` without `--exclude=lan-solution-template` fails with `Recursive task invocation`. It fails the same way on `main`.
+
+### Config migration and keep_classnames
+
+- `883886e`, `14f5da4`, `c188813`, `9a55016`: config moved to `AppConfigModule`, `@InjectConfig` and nestjs-zod. The gateway injects only the `db` namespace and keeps the strict config root.
+- Cause of the SEA failure fixed in `e56cb05`: nestjs-zod resolves the reflector by the class name `Reflector`. The minified bundle renamed the class, so the SEA gateway failed at startup.
+- Fix: `SwcJsMinimizerRspackPlugin` with `keep_classnames` (compress and mangle) in `tools/rspack/nest.config.ts`, also passed to the SEA bundle in `tools/scripts/compile-sea.ts`. The manual `Reflector` alias was removed.
+
+### Advisories from the config migration
+
+- nestjs-zod 5.5.0 declares the peer `@nestjs/common` `^10 || ^11`, while 12.3.2 is installed.
+- The bundle depends on `keep_classnames`, and only `smoke-sea` detects a regression.
+- `NetConfig` and `TlsConfig` are exported with no consumer, and the gateway still uses the aggregate `loadConfig` in `main` before Nest starts.
+- `docs/backlog/persistence-system.md:88` mentions `APP_CONFIG` (a historical row).
+- `smoke-sea` reads `run.lines` right after ready, and the line `tls: using leaf certificate` (stderr) can arrive later. The flake was not reproduced in 21 runs and is pre-existing (`tools/scripts/smoke-sea.ts:490`, `libs/shared-core/src/tls/identity.ts:164`).
+- `nx run-many` without `--exclude=lan-solution-template` fails by recursion on `main` too.
 
 ## Recipe for the human
 
