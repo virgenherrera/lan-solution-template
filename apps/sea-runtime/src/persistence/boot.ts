@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 import { catchError, concatMap, defer, from, map, type MonoTypeOperatorFunction, type Observable, tap, throwError, toArray } from 'rxjs';
 import {
   migrate$,
-  type AppConfig,
+  type DbConfig,
   type AppPaths,
   type DbAdapter,
   type MigrationEvent,
@@ -16,7 +16,7 @@ import { verifySchema$ } from './schema-check.js';
 export interface PersistenceBoot {
   readonly db: DbAdapter;
   readonly root: string;
-  readonly config: AppConfig;
+  readonly dbConfig: DbConfig;
   // Where the database lives, for operator messages.
   readonly location: string;
 }
@@ -28,26 +28,26 @@ function closeOnError<T>(db: DbAdapter): MonoTypeOperatorFunction<T> {
   return catchError((error: unknown) => from(db.close()).pipe(concatMap(() => throwError(() => error))));
 }
 
-// What the providers already built: paths, validated config and the adapter chosen by `db.engine`.
+// What the providers already built: paths, the validated db config and the adapter chosen by `db.engine`.
 export interface PersistenceDeps {
   readonly paths: AppPaths;
-  readonly config: AppConfig;
+  readonly dbConfig: DbConfig;
   readonly db: DbAdapter;
 }
 
 // Where the operator looks for the database: the file for SQLite, the server and database name for PostgreSQL.
-function locationOf(paths: AppPaths, { db }: AppConfig): string {
+function locationOf(paths: AppPaths, db: DbConfig): string {
   return db.engine === 'sqlite' ? resolve(paths.dataDir, db.sqlite.file) : `${db.pg.host}:${db.pg.port}/${db.pg.database}`;
 }
 
-function openDatabase$(log: Log, { paths, config, db }: PersistenceDeps): Observable<PersistenceBoot> {
+function openDatabase$(log: Log, { paths, dbConfig, db }: PersistenceDeps): Observable<PersistenceBoot> {
   return defer(() => {
     log(`root ${paths.root}`);
-    const location = locationOf(paths, config);
+    const location = locationOf(paths, dbConfig);
     return from(db.connect()).pipe(
       // "file is not a database" alone does not say which file; the operator needs the path.
       catchError((error: unknown) => throwError(() => new Error(`cannot open the database at ${location}: ${error instanceof Error ? error.message : String(error)}`))),
-      map((): PersistenceBoot => ({ db, root: paths.root, config, location })),
+      map((): PersistenceBoot => ({ db, root: paths.root, dbConfig, location })),
       closeOnError(db),
     );
   });
@@ -62,9 +62,9 @@ function logMigration(log: Log, event: MigrationEvent): void {
 function prepare$(boot: PersistenceBoot, log: Log, source: AssetSource): Observable<PersistenceBoot> {
   const { db, location } = boot;
   return defer(() => {
-    const info = readBuildInfo(source, boot.config.db.engine);
+    const info = readBuildInfo(source, boot.dbConfig.engine);
     return from(db.verifyVector()).pipe(
-      concatMap(() => migrate$(db, readEmbeddedMigrations(source, boot.config.db.engine), { runtimeVersion: info.runtime_version })),
+      concatMap(() => migrate$(db, readEmbeddedMigrations(source, boot.dbConfig.engine), { runtimeVersion: info.runtime_version })),
       tap((event) => logMigration(log, event)),
       toArray(),
       concatMap(() => verifySchema$(db, location, log)),
