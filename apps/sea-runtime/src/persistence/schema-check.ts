@@ -30,6 +30,7 @@ function assertMatches(db: DbAdapter, location: string, report: SchemaReport): S
   return report;
 }
 
+// Only an engine with no entry in tablesByEngine gets here (a config value this build does not know).
 function failUnknownEngine(engine: string): never {
   throw new Error(`no table descriptors for db engine "${engine}"`);
 }

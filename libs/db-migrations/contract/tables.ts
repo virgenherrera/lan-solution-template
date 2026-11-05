@@ -27,4 +27,5 @@ export const appMetaTable: TableDescriptor<AppMetaRow> = {
 // Every table each engine's migrations are expected to create. A new table is added here and to the engine schemas; a new engine adds a key.
 export const tablesByEngine: Readonly<Record<Engine, readonly TableDescriptor<any>[]>> = {
   sqlite: [appMetaTable],
+  pg: [appMetaTable],
 };

@@ -41,5 +41,5 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
   },
-  "include": ["contract/**/*.ts", "sqlite/**/*.ts"]
+  "include": ["contract/**/*.ts", "sqlite/**/*.ts", "pg/**/*.ts"]
 }

@@ -25,6 +25,7 @@ export interface SchemaReport {
 // Tables the check never reports as extra: migrator bookkeeping and engine internals. A new engine adds one entry.
 const IGNORED_TABLE: Readonly<Record<Engine, RegExp>> = {
   sqlite: /^(schema_migrations|sqlite_.*)$/,
+  pg: /^(schema_migrations|pg_.*)$/,
 };
 
 const indexKey = (index: IndexDescriptor): string => `${index.unique ? 'unique ' : ''}(${index.columns.join(', ')})`;

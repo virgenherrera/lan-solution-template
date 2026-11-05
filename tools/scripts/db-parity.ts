@@ -1,8 +1,11 @@
-// Parity check (S6). Run from the repository root: `node tools/scripts/db-parity.ts [--engine sqlite] [--migrations-dir <dir>]`.
+// Parity check (S6). Run from the repository root: `node tools/scripts/db-parity.ts [--engine sqlite|pg] [--migrations-dir <dir>]`.
+// Engine pg also takes [--pg-host localhost] [--pg-port 5432] [--pg-user postgres] [--pg-database postgres] and PGPASSWORD (default empty).
+// It creates a throwaway database on that server, migrates it, compares it and drops it.
 // Applies the real migrations with the real migrator to a temp database, reads the resulting structure back and
 // compares it with the declarative descriptor in libs/db-migrations/contract/tables.ts. Exit 0 = parity, 1 = diff.
 // Needs the built libraries: `pnpm --filter shared-core run build` and `pnpm --filter db-migrations run build`.
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { z } from 'zod';
@@ -19,8 +22,12 @@ type ParityAdapter = import('../../libs/shared-core/dist/db/port.js').DbAdapter;
 interface EngineEntry {
   readonly modulePath: string;
   open(workDir: string): Promise<ParityAdapter>;
+  // Runs after close(), for state the adapter does not own (a database created on a server).
+  cleanup?(workDir: string): Promise<void>;
 }
 const sqliteModulePath = join(root, 'libs', 'shared-core', 'dist', 'db', 'sqlite', 'index.js');
+const pgModulePath = join(root, 'libs', 'shared-core', 'dist', 'db', 'pg', 'index.js');
+const PG_PASSWORD_FILE = 'pg.pass';
 const ENGINES: Readonly<Record<string, EngineEntry>> = {
   sqlite: {
     modulePath: sqliteModulePath,
@@ -29,7 +36,44 @@ const ENGINES: Readonly<Record<string, EngineEntry>> = {
       return new SqliteAdapter({ file: 'parity.db', foreignKeys: true, journalMode: 'DELETE', synchronous: 'NORMAL' }, workDir);
     },
   },
+  pg: pgEntry(),
 };
+
+// The server comes from the --pg-* options; the password from PGPASSWORD goes to a file in the work dir, as the adapter expects (decision 11).
+// Each run migrates a database of its own, so the server's other databases are never touched.
+function pgEntry(): EngineEntry {
+  const database = `parity_${randomBytes(6).toString('hex')}`;
+  const connect = async (workDir: string, name: string): Promise<ParityAdapter> => {
+    const { PgAdapter } = (await import(pgModulePath)) as typeof import('../../libs/shared-core/dist/db/pg/index.js');
+    writeFileSync(join(workDir, PG_PASSWORD_FILE), process.env.PGPASSWORD ?? '');
+    const settings = {
+      host: option('pg-host', 'localhost'),
+      port: Number(option('pg-port', '5432')),
+      database: name,
+      user: option('pg-user', 'postgres'),
+      passwordFile: PG_PASSWORD_FILE,
+    };
+    const db = new PgAdapter(settings, workDir);
+    await db.connect();
+    return db;
+  };
+  const adminDo = async (workDir: string, statement: string): Promise<void> => {
+    const admin = await connect(workDir, option('pg-database', 'postgres'));
+    try {
+      await admin.run(statement);
+    } finally {
+      await admin.close();
+    }
+  };
+  return {
+    modulePath: pgModulePath,
+    open: async (workDir) => {
+      await adminDo(workDir, `CREATE DATABASE ${database}`);
+      return connect(workDir, database);
+    },
+    cleanup: (workDir) => adminDo(workDir, `DROP DATABASE IF EXISTS ${database} WITH (FORCE)`),
+  };
+}
 
 function fail(message: string): never {
   throw new Error(message);
@@ -81,6 +125,7 @@ async function main(): Promise<number> {
     return 1;
   } finally {
     await db.close();
+    await entry.cleanup?.(workDir);
     rmSync(workDir, { recursive: true, force: true });
   }
 }

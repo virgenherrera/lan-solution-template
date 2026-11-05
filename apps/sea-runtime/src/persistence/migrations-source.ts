@@ -8,9 +8,7 @@ import { manifestAsset, migrationAsset } from './assets.js';
 // packed for another engine throws. The manifest sha256 travels with each migration, so the migrator rejects a file that no longer matches the build.
 export function readEmbeddedMigrations(source: AssetSource, engine: string): Migration[] {
   const manifest = jsonText(manifestSchema).parse(source.readText(manifestAsset(engine)));
-  // Widened to string: with a single engine the compiler would otherwise narrow the mismatch branch to never.
-  const packed: string = manifest.engine;
-  if (packed !== engine) throw new Error(`migration manifest is for engine "${packed}", expected "${engine}"`);
+  if (manifest.engine !== engine) throw new Error(`migration manifest is for engine "${manifest.engine}", expected "${engine}"`);
   return manifest.migrations.map((entry) => ({
     // The migrator wants versions from 1; drizzle journal ids start at 0.
     version: entry.id + 1,
