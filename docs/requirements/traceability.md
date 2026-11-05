@@ -4,9 +4,9 @@ doc: docs/requirements/traceability.md
 title: Traceability
 type: traceability
 summary: Maps each REQ and AC id to its POC and acceptance criterion.
-related[3]: docs/requirements/README.md,docs/requirements/amendments-2026-10-30.md,docs/requirements/amendments-2026-11-02.md
+related[5]: docs/results/POC-08-Result.md,docs/architecture/platform-matrix.md,docs/requirements/README.md,docs/requirements/amendments-2026-10-30.md,docs/requirements/amendments-2026-11-02.md
 status: current
-updated: 2026-11-03
+updated: 2026-11-04
 -->
 
 # Traceability
@@ -21,6 +21,7 @@ updated: 2026-11-03
 - [How to read](#how-to-read)
 - [Requirement to POC](#requirement-to-poc)
 - [Acceptance criteria to requirement](#acceptance-criteria-to-requirement)
+- [POC-8 status on macOS](#poc-8-status-on-macos)
 - [Unmapped ids](#unmapped-ids)
 
 ---
@@ -44,6 +45,7 @@ flowchart LR
 |---|---|
 | The POC of a requirement | [Requirement to POC](#requirement-to-poc) |
 | The requirements of a POC from an AC | [Acceptance criteria to requirement](#acceptance-criteria-to-requirement) |
+| What POC-8 verified on macOS | [POC-8 status on macOS](#poc-8-status-on-macos) |
 | Ids with no POC | [Unmapped ids](#unmapped-ids) |
 
 ---
@@ -239,6 +241,24 @@ Nothing here adds or changes a requirement.
 | [AC-34](11-nx-quality-testing.md) | REQ-STACK-01, REQ-STACK-02, REQ-STACK-03, REQ-STACK-04, REQ-STACK-05, REQ-STACK-06, REQ-STACK-08, REQ-SUPPLY-01, REQ-SUPPLY-02, REQ-REP-01, REQ-REP-02, REQ-REP-03, REQ-REP-04, REQ-REP-05, REQ-SEC-CI-01, REQ-SEC-CI-02, REQ-SEC-CI-03, REQ-SEC-CI-04, REQ-BUILD-01, REQ-BUILD-02, REQ-BUILD-03, REQ-BUILD-04, REQ-BUILD-05, REQ-TEST-02, REQ-TEST-03, REQ-ECO-01, REQ-ECO-02, REQ-ECO-03, REQ-ECO-04, REQ-ECO-05, REQ-ECO-06, REQ-ECO-07, REQ-REF-01, REQ-DEPS-01, REQ-DEPS-02 | [POC-1][p-poc-1] / [brief][b-README-epics] |
 | [AC-35](11-nx-quality-testing.md) | REQ-SEC-CI-01, REQ-SEC-CI-02, REQ-SEC-CI-03, REQ-SEC-CI-04, REQ-ECO-07, REQ-DEPS-02, REQ-CI-01, REQ-CI-02, REQ-CI-03, REQ-CI-04, REQ-CI-05, REQ-CI-06, REQ-CI-07, REQ-CI-08, REQ-CI-09, REQ-CI-10 | [POC-9][p-poc-9] / [brief][b-poc-9-ci-cd-releases] |
 | [AC-36](11-nx-quality-testing.md) | REQ-SEC-CI-01, REQ-SEC-CI-02, REQ-SEC-CI-03, REQ-SEC-CI-04, REQ-ECO-07, REQ-DEPS-02, REQ-CI-01, REQ-CI-02, REQ-CI-03, REQ-CI-04, REQ-CI-05, REQ-CI-06, REQ-CI-07, REQ-CI-08, REQ-CI-09, REQ-CI-10 | [POC-9][p-poc-9] / [brief][b-poc-9-ci-cd-releases] |
+
+---
+
+## POC-8 status on macOS
+
+[Back to navigation](#navigation)
+
+The mapping above says which POC covers an id. It does not say how far the POC went. For POC-8 the answer is partial: the human cut it to macOS on 2026-11-04. Source: [POC-08-Result](../results/POC-08-Result.md). Nothing below was run on Windows, Linux or macOS x64.
+
+| Id | Status | Verified on macOS arm64 | Missing |
+|---|---|---|---|
+| [REQ-VERSION-01](11-nx-quality-testing.md) | partial | The Nx Release group `lockstep` holds eight projects, `projectsRelationship: "fixed"`. One version in 11 places (`pnpm release:check` exit 0). | A release run in CI. [POC-9](../backlog/poc-9-ci-cd-releases.md) is on hold. |
+| [REQ-VERSION-02](11-nx-quality-testing.md) | partial | `branch-name.ts` maps the table and the exemption for `docs/` and `chore/`, and rejects every other name (independent verifier, 2 blockers fixed). | The CI check of branch names, the highest-impact choice for several merged PRs, the duplicate-tag guard. Confirm that `main` should fail. |
+| [REQ-VERSION-03](11-nx-quality-testing.md) | partial | `release:version` writes `package.json`, `Cargo.toml`, `Cargo.lock` (the `app` entry) and `tauri.conf.json`; `release:check` validates them; `release:changelog --dry-run` exit 0. | The check wired into a pipeline. A failure inside the Nx flush (a full disk) is not covered. |
+| [REQ-SEA-06](10-node-sea-distribution.md) | partial (the rule only) | The rule "validate per platform" applied on macOS arm64 with `verify-platform.ts` (6 checks, exit 0). | Every other platform and architecture. |
+| [AC-21](11-nx-quality-testing.md) | partial | The macOS arm64 row of the [platform matrix](../architecture/platform-matrix.md) is `verified`. | Windows x64 is `blocked`; Linux and macOS x64 are `pending`. A macOS pass never changes another row. |
+| [AC-25](11-nx-quality-testing.md) | partial | The versioning commands above, on macOS. | The release flow on a merged PR, and CI. |
+| [AC-33](11-nx-quality-testing.md) | partial | The macOS arm64 checks above, and the installer built and inspected. | The installer installed and uninstalled for real (the recipe is in the [result](../results/POC-08-Result.md#recipe-for-the-human)), and the other platforms. |
 
 ---
 

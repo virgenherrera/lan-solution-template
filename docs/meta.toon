@@ -1,4 +1,4 @@
-docs[85]:
+docs[89]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -89,6 +89,15 @@ docs[85]:
     status: proposed
     updated: 2026-11-04
     refs[4]: AC-21,REQ-SEC-02,REQ-SEC-05,REQ-SEC-06
+  - doc: docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md
+    title: ADR-011 macOS installer and install-time trust
+    type: architecture
+    summary: "How the macOS .pkg installs, creates a CA per installation, trusts it only with consent, and uninstalls. Not installed."
+    ids: []
+    related[10]: docs/results/POC-08-Result.md,docs/backlog/poc-8-msi-matrix-versioning.md,docs/backlog/td-windows-linux-distribution.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/overview.md,docs/standards/README.md,docs/roadmap/PROPOSAL.md
+    status: proposed
+    updated: 2026-11-04
+    refs[4]: AC-18,REQ-CFG-05,REQ-SEA-06,REQ-VERSION-01
   - doc: docs/architecture/device-trust-guide.md
     title: Device trust guide
     type: architecture
@@ -103,16 +112,25 @@ docs[85]:
     type: architecture
     summary: Mermaid architecture diagrams citing SRS sections for runtime and desktop topology.
     ids: []
-    related[14]: README.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/device-trust-guide.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
+    related[17]: README.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/results/POC-08-Result.md,docs/architecture/platform-matrix.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/device-trust-guide.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
     status: current
     updated: 2026-11-04
     refs[10]: REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-05,REQ-DESK-06,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-05,REQ-RUNTIME-06
+  - doc: docs/architecture/platform-matrix.md
+    title: Platform matrix
+    type: architecture
+    summary: "Systems and architectures the template targets, with what was built and verified on each. Only macOS arm64 ran; every other cell is not verified."
+    ids: []
+    related[8]: docs/requirements/11-nx-quality-testing.md,docs/requirements/10-node-sea-distribution.md,docs/backlog/poc-8-msi-matrix-versioning.md,docs/backlog/td-windows-linux-distribution.md,docs/results/POC-05-Result.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/device-trust-guide.md,docs/roadmap/PROPOSAL.md
+    status: current
+    updated: 2026-11-04
+    refs[4]: AC-21,REQ-SEA-06,REQ-TEST-09,REQ-TEST-10
   - doc: docs/backlog/README.md
     title: Backlog index
     type: backlog
     summary: Backlog index of POC epics mapped to acceptance criteria and cycles.
     ids: []
-    related[13]: docs/results/POC-05-Result.md,docs/backlog/log-service-otel-grpc.md,docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md
+    related[16]: docs/results/POC-08-Result.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/results/POC-05-Result.md,docs/backlog/log-service-otel-grpc.md,docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md,docs/backlog/td-windows-linux-distribution.md
     status: current
     updated: 2026-11-04
     refs[37]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36,REQ-CFG-05
@@ -326,12 +344,12 @@ docs[85]:
   - doc: docs/backlog/poc-8-msi-matrix-versioning.md
     title: "POC-8 MSI credential dialog, platform matrix and lockstep versioning"
     type: backlog
-    summary: Backlog item for MSI credential dialog platform matrix and lockstep versioning.
+    summary: "Backlog item for the platform matrix, lockstep versioning and the macOS installer. Windows and Linux are technical debt."
     ids: []
-    related[5]: docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md,docs/backlog/persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md
+    related[10]: docs/results/POC-08-Result.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md,docs/backlog/persistence-system.md,docs/backlog/td-windows-linux-distribution.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/results/POC-05-Result.md
     status: current
-    updated: 2026-11-03
-    refs[10]: AC-21,AC-25,AC-33,REQ-CFG-05,REQ-SEA-05,REQ-TEST-09,REQ-TEST-10,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03
+    updated: 2026-11-04
+    refs[13]: AC-18,AC-21,AC-25,AC-33,REQ-CFG-05,REQ-ECO-06,REQ-SEA-05,REQ-SEA-06,REQ-TEST-09,REQ-TEST-10,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03
   - doc: docs/backlog/poc-9-ci-cd-releases.md
     title: POC-9 GitHub Actions CI/CD and releases (HOLD)
     type: backlog
@@ -359,6 +377,15 @@ docs[85]:
     status: current
     updated: 2026-11-03
     refs: []
+  - doc: docs/backlog/td-windows-linux-distribution.md
+    title: "Technical debt: Windows and Linux distribution"
+    type: backlog
+    summary: "Technical debt left by POC-8: Windows and Linux installers, matrix runs, client mode, signing and installer follow-ups. Nothing verified."
+    ids: []
+    related[8]: docs/results/POC-08-Result.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/backlog/README.md,docs/backlog/poc-8-msi-matrix-versioning.md,docs/backlog/poc-9-ci-cd-releases.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/results/POC-05-Result.md
+    status: proposed
+    updated: 2026-11-04
+    refs[4]: AC-18,REQ-TEST-09,REQ-TEST-10,REQ-VERSION-02
   - doc: docs/backlog/third-party-licenses.md
     title: Third-party license notices
     type: backlog
@@ -508,9 +535,9 @@ docs[85]:
     type: traceability
     summary: Maps each REQ and AC id to its POC and acceptance criterion.
     ids: []
-    related[3]: docs/requirements/README.md,docs/requirements/amendments-2026-10-30.md,docs/requirements/amendments-2026-11-02.md
+    related[5]: docs/results/POC-08-Result.md,docs/architecture/platform-matrix.md,docs/requirements/README.md,docs/requirements/amendments-2026-10-30.md,docs/requirements/amendments-2026-11-02.md
     status: current
-    updated: 2026-11-03
+    updated: 2026-11-04
     refs[161]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36,REQ-BUILD-01,REQ-BUILD-02,REQ-BUILD-03,REQ-BUILD-04,REQ-BUILD-05,REQ-CFG-01,REQ-CFG-02,REQ-CFG-03,REQ-CFG-04,REQ-CFG-05,REQ-CFG-06,REQ-CI-01,REQ-CI-02,REQ-CI-03,REQ-CI-04,REQ-CI-05,REQ-CI-06,REQ-CI-07,REQ-CI-08,REQ-CI-09,REQ-CI-10,REQ-DB-01,REQ-DB-02,REQ-DB-03,REQ-DB-04,REQ-DB-05,REQ-DB-06,REQ-DB-07,REQ-DB-08,REQ-DB-09,REQ-DB-10,REQ-DEPS-01,REQ-DEPS-02,REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-04,REQ-DESK-05,REQ-DESK-06,REQ-DEV-01,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-DEV-05,REQ-ECO-01,REQ-ECO-02,REQ-ECO-03,REQ-ECO-04,REQ-ECO-05,REQ-ECO-06,REQ-ECO-07,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA-01,REQ-PWA-02,REQ-PWA-03,REQ-REF-01,REQ-REP-01,REQ-REP-02,REQ-REP-03,REQ-REP-04,REQ-REP-05,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-SEA-04,REQ-SEA-05,REQ-SEA-06,REQ-SEC-01,REQ-SEC-02,REQ-SEC-03,REQ-SEC-04,REQ-SEC-05,REQ-SEC-06,REQ-SEC-CI-01,REQ-SEC-CI-02,REQ-SEC-CI-03,REQ-SEC-CI-04,REQ-STACK-01,REQ-STACK-02,REQ-STACK-03,REQ-STACK-04,REQ-STACK-05,REQ-STACK-06,REQ-STACK-07,REQ-STACK-08,REQ-STACK-09,REQ-STACK-10,REQ-SUPPLY-01,REQ-SUPPLY-02,REQ-TEST-01,REQ-TEST-02,REQ-TEST-03,REQ-TEST-04,REQ-TEST-05,REQ-TEST-06,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09,REQ-TEST-10,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03,REQ-WEB-01,REQ-WEB-02,REQ-WEB-03,REQ-WEB-04
   - doc: docs/results/CHORE-tauri-hardening-Result.md
     title: CHORE Tauri hardening Result
@@ -692,6 +719,15 @@ docs[85]:
     status: current
     updated: 2026-11-04
     refs[12]: REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-04,REQ-DESK-05,REQ-DESK-06,REQ-ECO-01,REQ-ECO-06,REQ-SEC-05,REQ-TEST-08,REQ-TEST-09,REQ-TLS-02
+  - doc: docs/results/POC-08-Result.md
+    title: POC-08 Result
+    type: backlog
+    summary: "Result of POC-8 on macOS: lockstep versioning, platform matrix, .pkg installer, per-install CA with consent, uninstall. Not installed."
+    ids: []
+    related[10]: docs/backlog/poc-8-msi-matrix-versioning.md,docs/backlog/td-windows-linux-distribution.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/architecture/platform-matrix.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/results/POC-05-Result.md,docs/standards/README.md,docs/backlog/poc-9-ci-cd-releases.md,docs/roadmap/PROPOSAL.md
+    status: current
+    updated: 2026-11-04
+    refs[5]: AC-18,AC-25,AC-26,AC-27,REQ-VERSION-02
   - doc: docs/results/RESEARCH-pwa-https-trust.md
     title: RESEARCH PWA HTTPS trust on a LAN
     type: backlog
@@ -733,7 +769,7 @@ docs[85]:
     type: roadmap
     summary: "Roadmap proposal with cycles, POC pitches, coverage matrix and open questions."
     ids: []
-    related[7]: README.md,docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/results/POC-05-Result.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md
+    related[9]: docs/results/POC-08-Result.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,README.md,docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/results/POC-05-Result.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md
     status: proposed
     updated: 2026-11-04
     refs[146]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36,REQ-BUILD-01,REQ-BUILD-02,REQ-BUILD-04,REQ-CFG-01,REQ-CFG-02,REQ-CFG-03,REQ-CFG-04,REQ-CFG-05,REQ-CFG-06,REQ-CI-01,REQ-CI-02,REQ-CI-03,REQ-CI-04,REQ-CI-05,REQ-CI-06,REQ-CI-07,REQ-CI-09,REQ-CI-10,REQ-DB-01,REQ-DB-02,REQ-DB-04,REQ-DB-05,REQ-DB-06,REQ-DB-07,REQ-DB-08,REQ-DB-09,REQ-DEPS,REQ-DEPS-01,REQ-DEPS-02,REQ-DESK,REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-04,REQ-DESK-05,REQ-DESK-06,REQ-DEV,REQ-DEV-01,REQ-DEV-04,REQ-ECO-01,REQ-ECO-02,REQ-ECO-04,REQ-ECO-05,REQ-ECO-06,REQ-ECO-07,REQ-NET,REQ-NET-01,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA,REQ-PWA-01,REQ-PWA-02,REQ-REF-01,REQ-REP-01,REQ-RUNTIME,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-SEA-04,REQ-SEA-05,REQ-SEA-06,REQ-SEC-01,REQ-SEC-02,REQ-SEC-03,REQ-SEC-04,REQ-SEC-05,REQ-SEC-06,REQ-SEC-CI-01,REQ-SEC-CI-02,REQ-SEC-CI-03,REQ-SEC-CI-04,REQ-STACK-01,REQ-STACK-04,REQ-STACK-07,REQ-SUPPLY-01,REQ-TEST-01,REQ-TEST-02,REQ-TEST-03,REQ-TEST-04,REQ-TEST-05,REQ-TEST-06,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09,REQ-TEST-10,REQ-TLS,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03,REQ-WEB-01,REQ-WEB-02,REQ-WEB-03,REQ-WEB-04
@@ -744,8 +780,8 @@ docs[85]:
     ids: []
     related[2]: README.md,docs/standards/identifier-glossary.md
     status: current
-    updated: 2026-11-03
-    refs[1]: REQ-SEC-02
+    updated: 2026-11-04
+    refs[4]: REQ-SEC-02,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03
   - doc: docs/standards/identifier-glossary.md
     title: Identifier glossary
     type: standard

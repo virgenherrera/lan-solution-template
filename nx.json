@@ -15,5 +15,32 @@
     "lint": {
       "cache": true
     }
+  },
+  "release": {
+    "groups": {
+      "lockstep": {
+        "projects": [
+          "lan-solution-template",
+          "api-gateway",
+          "desktop",
+          "sea-runtime",
+          "web-angular",
+          "db-migrations",
+          "service-registry",
+          "shared-core"
+        ],
+        "projectsRelationship": "fixed",
+        "version": {
+          "versionActions": "./tools/scripts/release-version-actions.ts",
+          "currentVersionResolver": "disk"
+        }
+      }
+    },
+    "version": { "git": { "commit": false, "tag": false, "push": false } },
+    "changelog": {
+      "workspaceChangelog": { "file": "CHANGELOG.md", "createRelease": false },
+      "projectChangelogs": false,
+      "git": { "commit": false, "tag": false, "push": false }
+    }
   }
 }

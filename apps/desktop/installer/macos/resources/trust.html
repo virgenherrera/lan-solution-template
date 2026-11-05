@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Trust the certificate</title></head>
+<body style="font-family: -apple-system, Helvetica, sans-serif; font-size: 13px;">
+<h2>Trust the LAN Solution certificate (optional)</h2>
+<p>The installer creates a certificate authority (CA) for <b>this installation only</b>. Nothing is shared with other installations. This is what lets a browser on this Mac open the gateway over HTTPS without a warning.</p>
+<p>In the next pane, <b>Customize</b>, the box <b>Trust the LAN Solution certificate on this Mac</b> is <b>not ticked</b>. If you leave it empty, the installer does not touch your keychain at all. Tick it only if you agree with the following:</p>
+<ul>
+<li>The CA certificate (<code>certs/ca.crt</code>) is added to the <b>System keychain</b> and trusted for TLS (policy <code>ssl</code>) and for basic X.509 (policy <code>basic</code>), for every user of this Mac.</li>
+<li>This CA was generated for <b>this installation</b>. The installer records its SHA-256 fingerprint in a file that only an administrator can change, and trusts only a certificate with that fingerprint.</li>
+<li>Whoever can read the CA private key can sign a certificate for <b>any site</b> that this Mac sees. The key stays in <code>&lt;install folder&gt;/certs/ca.key</code>, with mode 0600, owned by the user who installs. Keep that folder private.</li>
+<li>The installer never reads the private key to do this. It copies only the public certificate, checks that it is a single CA certificate with the recorded fingerprint, and writes that fingerprint in the installer log.</li>
+<li>To compare, run <code>openssl x509 -noout -fingerprint -sha256 -in &lt;install folder&gt;/certs/ca.crt</code> after the installation.</li>
+<li><b>Removing the application does not undo this trust.</b> The trust stays in the System keychain until you remove it by hand.</li>
+</ul>
+<p><b>How to undo it by hand:</b></p>
+<pre>sudo security remove-trusted-cert -d &lt;install folder&gt;/certs/ca.crt
+sudo security delete-certificate -c "&lt;name of the CA&gt;" /Library/Keychains/System.keychain</pre>
+<p>The name of the CA is the <code>CN</code> printed by <code>openssl x509 -noout -subject -in &lt;install folder&gt;/certs/ca.crt</code>. The tray item <b>Trust CA...</b> offers the same step later, with its own confirmation.</p>
+</body>
+</html>

@@ -33,7 +33,7 @@ updated: 2026-11-04
 
 | Item | Value |
 |---|---|
-| Status | Built on `minor/poc-05-tauri-sidecar`, server mode, verified on macOS only. PR pending. Client mode pending. See [POC-05-Result](../results/POC-05-Result.md) |
+| Status | Done and merged in PR #21 (squash `35525d9`), server mode, verified on macOS only. Client mode pending. See [POC-05-Result](../results/POC-05-Result.md) |
 | Appetite | 2 weeks, big batch |
 | Depends on | POC-2, POC-4 |
 | Branch | `minor/poc-05-tauri-sidecar` |
