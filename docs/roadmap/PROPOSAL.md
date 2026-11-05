@@ -29,7 +29,7 @@ Source: `lan-solution-template-SRS-v1.6.md` (sections 1-13). The REQ-* and AC-* 
   - [POC-3: Config and SQLite vector persistence inside the SEA](#poc-3-config-and-sqlite-vector-persistence-inside-the-sea)
   - [POC-4: HTTPS gateway serving the Angular PWA](#poc-4-https-gateway-serving-the-angular-pwa)
   - [POC-5: Tauri desktop shell with SEA sidecar](#poc-5-tauri-desktop-shell-with-sea-sidecar)
-  - [POC-6: PostgreSQL adapter parity (BACKLOG)](#poc-6-postgresql-adapter-parity-backlog)
+  - [POC-6: PostgreSQL adapter parity (built on branch)](#poc-6-postgresql-adapter-parity-built-on-branch)
   - [POC-7: Auth and roles](#poc-7-auth-and-roles)
   - [POC-8: MSI credential dialog, platform matrix and lockstep versioning](#poc-8-msi-credential-dialog-platform-matrix-and-lockstep-versioning)
   - [POC-9: GitHub Actions CI/CD and releases (HOLD)](#poc-9-github-actions-cicd-and-releases-hold)
@@ -52,7 +52,7 @@ Why this page exists: it orders the SRS v1.6 POCs and logs 18 human decisions. N
 |---|---|---|
 | Status | Proposal v2. Not approved. | [Decision Log](#decision-log) |
 | Method | Shape Up. 6 weeks of build, then 2 weeks of cooldown. | [Method](#method) |
-| Bets | 3 cycles. 8 active POCs (POC-9 on hold) and POC-6 in the backlog. | [Cycles and bets](#cycles-and-bets) |
+| Bets | 3 cycles. 8 active POCs (POC-9 on hold) and POC-6 built on a branch (PR pending). | [Cycles and bets](#cycles-and-bets) |
 | ADR index | 16 rows: 12 approved, 4 proposed. | [ADR index](#adr-index) |
 | Open questions | 25 rows. None blocks. | [Open questions](#open-questions) |
 | Coverage | 13 SRS sections and 36 acceptance criteria map to POCs. | [SRS coverage matrix](#srs-coverage-matrix) |
@@ -86,7 +86,7 @@ flowchart LR
     P5 --> P8["POC-8 MSI and matrix"]
     P7 --> P8
     P8 --> P9["POC-9 CI/CD - on hold"]
-    P6["POC-6 PostgreSQL - backlog"]
+    P6["POC-6 PostgreSQL - built, PR pending"]
     classDef pause stroke-dasharray:5 5
     class P9,P6 pause
 ```
@@ -119,7 +119,7 @@ The SRS v1.6 defines a LAN-first template that works offline. It has these parts
 - Tauri v2 desktop shell (`apps/desktop`).
 - `libs/shared-core`.
 
-One Node SEA per OS/arch ships everything (REQ-RUNTIME-01, FR-02). Persistence is SQLite with vector search. PostgreSQL is TBD (POC-6, backlog).
+One Node SEA per OS/arch ships everything (REQ-RUNTIME-01, FR-02). Persistence is SQLite with vector search. PostgreSQL parity is built on a branch (POC-6, PR pending).
 
 Main risks from the SRS:
 
@@ -154,7 +154,7 @@ Each row summarizes one decision. The written ADR files are listed in the [archi
 | Desktop process model | Tauri starts, watches and stops the SEA supervisor. The OS-specific code is in one module. Built and run on macOS only ([ADR-009](../architecture/adr/ADR-009-desktop-process-model.md)). | POC-5, OQ12, OQ17 | proposed |
 | Config and paths | One base directory: the cwd in dev, the executable directory when packaged. Layout: `config/config.json`, `data/`, `logs/`, `certs/`. A missing or invalid config stops the start ([ADR-007](../architecture/adr/ADR-007-persistence-system.md#one-base-directory)). | 11, OQ23, OQ25 | approved |
 | TLS and keys | A local CA and a leaf built with Node built-ins only. Keys are plain PKCS#8 files, mode 0600, under `<base>/certs`, outside the database ([ADR-008](../architecture/adr/ADR-008-tls-trust-model.md)). | 7, 14, OQ8 | approved |
-| Database | SQLite plus vector is the engine. PostgreSQL is TBD (backlog). | 8 | approved |
+| Database | SQLite plus vector is the default engine. PostgreSQL with pgvector is built as a second engine on the POC-6 branch (PR pending, [POC-06-Result](../results/POC-06-Result.md)). | 8 | approved |
 | Database | We install the current stable Drizzle tag first and use `1.0.0-rc.5` only if it fails. | 10 | approved |
 | Release | Release automation is on HOLD until all POCs are ready. | 9 | approved |
 | Toolchain | Version substitutions in POC-1 (S1 to S5) are recorded in [ADR-001](../architecture/adr/ADR-001-version-substitutions.md). | 1e, human | approved |
@@ -217,7 +217,7 @@ flowchart LR
 | POC-3 | Config (`config.json`) + SQLite vector inside SEA | 2 weeks | big | POC-2 | `minor/poc-03-sqlite-vector` |
 | POC-4 | HTTPS gateway (dev-certs-style TLS) serving Angular PWA + dev loop | 2 weeks | big | POC-2 (POC-3 not blocking) | `minor/poc-04-https-gateway` |
 | POC-5 | Tauri desktop shell with SEA sidecar + CA install + first-run setup | 2 weeks | big | POC-2, POC-4 | `minor/poc-05-tauri-sidecar` |
-| POC-6 | PostgreSQL adapter parity | n/a | n/a | n/a | BACKLOG (see [Backlog](#backlog)) |
+| POC-6 | PostgreSQL adapter parity | 1 week (original) | small | none | `minor/poc-06-postgresql-parity`; built, PR pending ([result](../results/POC-06-Result.md)) |
 | POC-7 | Auth (user:password) + roles + protected UI | 1-2 weeks | small | POC-4, POC-5 | `minor/poc-07-auth-roles` |
 | POC-8 | MSI credential dialog + native platform matrix + lockstep versioning | 2 weeks | big | POC-5, POC-7 | `chore/poc-08-matrix-versioning` |
 | POC-9 | CI/CD GitHub Actions + Releases | 2 weeks | big | POC-8 | HOLD: `chore/poc-09-ci-cd` |
@@ -466,14 +466,14 @@ sequenceDiagram
 - **Acceptance criteria**: AC-03, AC-18, AC-20, AC-30 (host OS), REQ-DESK-01..06, REQ-SEC-05, REQ-TEST-08, REQ-ECO-06 (Tauri after SEA).
 - **Deliverable**: branch `minor/poc-05-tauri-sidecar`. PR title: `feat: Tauri shell supervising SEA sidecar with tray`. Results under `docs/`: `POC-05-Result` and `ADR-009` (desktop process model).
 
-### POC-6: PostgreSQL adapter parity (BACKLOG)
+### POC-6: PostgreSQL adapter parity (built on branch)
 
 [Back to navigation](#navigation)
 
-- **Status**: BACKLOG stub. Decision 8 deferred it. Full details are in [Backlog](#backlog).
-- **Appetite**: none assigned.
+- **Status**: built on branch `minor/poc-06-postgresql-parity`. Pull request pending. Decision 8 deferred it; the human asked for it on 2026-11-04. Result: [POC-06-Result](../results/POC-06-Result.md). Original details are in [Backlog](#backlog).
+- **Appetite**: none assigned (original: 1 week, small batch).
 - **Acceptance criteria**: AC-09 and the PostgreSQL part of REQ-TEST-06.
-- **Gap**: the SRS marks REQ-TEST-06 as MUST. REQ-TEST-06 and AC-09 stay unmet until this item runs.
+- **Gap**: closed on the branch for PostgreSQL 17 with pgvector 0.8.7 on macOS arm64 only. See the Not verified list in the result.
 
 ### POC-7: Auth and roles
 
@@ -633,7 +633,7 @@ Acceptance criteria coverage:
 | AC-06 | POC-7 | AC-24 | POC-1 |
 | AC-07 | POC-3 | AC-25 | POC-8 |
 | AC-08 | POC-3 | AC-26 | POC-9 |
-| AC-09 | Backlog (POC-6) | AC-27 | POC-9 |
+| AC-09 | POC-6 (built on branch) | AC-27 | POC-9 |
 | AC-10 | POC-3 | AC-28 | POC-2 |
 | AC-11 | POC-2 | AC-29 | POC-2 |
 | AC-12 | POC-4 | AC-30 | POC-2, POC-5 |
@@ -697,7 +697,7 @@ Claims marked "not verified" stay unverified until a spike or a primary source c
 
 [Back to navigation](#navigation)
 
-- POC-6: PostgreSQL adapter parity (`pg` + pgvector >=0.8.7 behind the same port). Requirements: REQ-DB-01..03, REQ-DB-05, REQ-DB-08, AC-09, REQ-TEST-06 PG part. Decision 8 deferred it. Original appetite: 1 week, small batch. Original branch name: `minor/poc-06-postgres-pgvector`. The circuit breaker is unchanged: if pgvector is not installable, the status is blocked-by-environment. The same stable-first Drizzle rule applies (decision 10). Test the stable tag for PostgreSQL vector support. Then fall back to `1.0.0-rc.5`.
+- POC-6 (built on branch, PR pending; see [POC-06-Result](../results/POC-06-Result.md)): PostgreSQL adapter parity (`pg` + pgvector >=0.8.7 behind the same port). Requirements: REQ-DB-01..03, REQ-DB-05, REQ-DB-08, AC-09, REQ-TEST-06 PG part. Decision 8 deferred it. Original appetite: 1 week, small batch. Original branch name: `minor/poc-06-postgres-pgvector`. The circuit breaker is unchanged: if pgvector is not installable, the status is blocked-by-environment. The same stable-first Drizzle rule applies (decision 10). Test the stable tag for PostgreSQL vector support. Then fall back to `1.0.0-rc.5`.
 - Future extensions of the key-storage contract (decision 14). They are only noted, not planned. They have no tasks and no appetite:
   - Implementations that use OS stores: DPAPI, Keychain and Secret Service.
   - A remote store, a KMS or a vault.
