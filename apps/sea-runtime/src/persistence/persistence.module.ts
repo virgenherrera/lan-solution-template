@@ -5,15 +5,11 @@ import {
   AppConfigModule,
   CONFIG_FILE,
   DbConfig,
-  InjectConfig,
-  NetConfig,
-  TlsConfig,
   configFileSource,
   createDbAdapter,
   derivePaths,
   resolveBase,
   type AdapterDeps,
-  type AppConfig,
   type AppPaths,
   type DbAdapter,
 } from 'shared-core';
@@ -37,7 +33,8 @@ async function engineDeps(config: DbConfig, paths: AppPaths, source: AssetSource
   imports: [
     // A missing or invalid config throws while Nest builds the modules, so the start fails before any service is spawned.
     AppConfigModule.forRoot({
-      configClasses: [DbConfig, NetConfig, TlsConfig],
+      // A new config namespace is registered by adding its class here (and exporting it from shared-core).
+      configClasses: [DbConfig],
       source: configFileSource(paths),
       origin: join(paths.configDir, CONFIG_FILE),
     }),
@@ -49,12 +46,8 @@ async function engineDeps(config: DbConfig, paths: AppPaths, source: AssetSource
     { provide: APP_PATHS, useValue: paths },
     {
       provide: DATABASE_ADAPTER,
-      inject: [AppConfigModule.getToken(DbConfig), AppConfigModule.getToken(NetConfig), AppConfigModule.getToken(TlsConfig), ASSET_SOURCE],
-      // createDbAdapter still takes the whole AppConfig; it reads only db.
-      useFactory: async (db: DbConfig, net: NetConfig, tls: TlsConfig, source: AssetSource): Promise<DbAdapter> => {
-        const config: AppConfig = { db, net, tls };
-        return createDbAdapter(config, paths, await engineDeps(db, paths, source));
-      },
+      inject: [AppConfigModule.getToken(DbConfig), ASSET_SOURCE],
+      useFactory: async (db: DbConfig, source: AssetSource): Promise<DbAdapter> => createDbAdapter(db, paths, await engineDeps(db, paths, source)),
     },
     PersistenceService,
   ],

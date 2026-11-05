@@ -1,6 +1,6 @@
 import { Inject, Injectable, Module, type OnApplicationShutdown } from '@nestjs/common';
 import { catchError, concatMap, defer, firstValueFrom, from, map, type Observable, throwError } from 'rxjs';
-import { createDbAdapter, DbConfig, InjectConfig, NetConfig, TlsConfig, type AppPaths, type DbAdapter } from 'shared-core';
+import { createDbAdapter, DbConfig, InjectConfig, type AppPaths, type DbAdapter } from 'shared-core';
 import { APP_PATHS, appPathsProvider } from '../app-paths.js';
 import { DB_ADAPTER } from './tokens.js';
 
@@ -37,18 +37,15 @@ class DatabaseLifecycle implements OnApplicationShutdown {
   }
 }
 
-// Reassembles the persisted config from its namespaces: the adapter factory takes the whole of it, though only `db` is read.
 @Injectable()
 class DatabaseOpener {
   constructor(
     @InjectConfig(DbConfig) private readonly db: DbConfig,
-    @InjectConfig(NetConfig) private readonly net: NetConfig,
-    @InjectConfig(TlsConfig) private readonly tls: TlsConfig,
     @Inject(APP_PATHS) private readonly paths: AppPaths,
   ) {}
 
   async open(): Promise<DbAdapter> {
-    return firstValueFrom(open$(await createDbAdapter({ db: this.db, net: this.net, tls: this.tls }, this.paths)));
+    return firstValueFrom(open$(await createDbAdapter(this.db, this.paths)));
   }
 }
 

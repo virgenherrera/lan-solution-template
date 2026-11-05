@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import pg from 'pg';
-import type { AppConfig } from '../../config.js';
+import type { DbConfig } from '../../config-dtos.js';
 import {
   VectorUnavailableError,
   type DbAdapter,
@@ -15,7 +15,7 @@ import {
   type VectorMatch,
 } from '../port.js';
 
-type PgSettings = Extract<AppConfig['db'], { engine: 'pg' }>['pg'];
+type PgSettings = Extract<DbConfig, { engine: 'pg' }>['pg'];
 
 // information_schema data_type to the logical names the table descriptors use. A type with no logical name stays as the
 // server reports it (lowercased), so the diff shows it.

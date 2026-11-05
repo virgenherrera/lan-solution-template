@@ -85,28 +85,14 @@ export function loadConfig(paths: AppPaths): AppConfig {
   return deepFreeze(parsed.data);
 }
 
-// The raw, not yet schema-validated config object: what AppConfigModule takes as its source, so each namespace DTO validates its own part.
+// The config object AppConfigModule takes as its source. The file is checked against the whole schema once, so an unknown root key still stops the start (ADR-007); each namespace DTO then validates its own part.
 export type ConfigSource = () => unknown | Promise<unknown>;
 
 export function configFileSource(paths: AppPaths): ConfigSource {
   return () => {
     const { file, text } = readConfigText(paths);
-    const parsed = jsonText(z.looseObject({})).safeParse(text);
+    const parsed = jsonText(configSchema).safeParse(text);
     if (!parsed.success) throw new Error(`config ${file} is invalid: ${z.prettifyError(parsed.error)}`);
     return parsed.data;
   };
-}
-
-let current: AppConfig | undefined;
-
-// One immutable config per process (REQ-CFG-06). The app reads it only through getConfig (REQ-CFG-02).
-export function initConfig(paths: AppPaths): AppConfig {
-  if (current !== undefined) throw new Error('config is already initialized');
-  current = loadConfig(paths);
-  return current;
-}
-
-export function getConfig(): AppConfig {
-  if (current === undefined) throw new Error('config is not initialized');
-  return current;
 }

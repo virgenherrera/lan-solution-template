@@ -1,7 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { DatabaseSync, type SQLInputValue } from 'node:sqlite';
 import { dirname, isAbsolute, join } from 'node:path';
-import type { AppConfig } from '../../config.js';
+import type { DbConfig } from '../../config-dtos.js';
 import type { AppPaths } from '../../paths.js';
 import {
   VectorUnavailableError,
@@ -23,7 +23,7 @@ export interface SqliteVectorBackend {
   search(db: DatabaseSync, collection: string, query: Float32Array, k: number): readonly VectorMatch[];
 }
 
-type SqliteSettings = Extract<AppConfig['db'], { engine: 'sqlite' }>['sqlite'];
+type SqliteSettings = Extract<DbConfig, { engine: 'sqlite' }>['sqlite'];
 
 const SQLITE_TYPES: Readonly<Record<string, LiveColumnType>> = { TEXT: 'text', INTEGER: 'integer', REAL: 'real', BLOB: 'blob' };
 

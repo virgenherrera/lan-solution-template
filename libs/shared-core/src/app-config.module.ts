@@ -4,12 +4,9 @@ import { z } from 'zod';
 import type { ConfigSource } from './config.js';
 import type { ConfigClass } from './config-dtos.js';
 
-// Injectable raw source, for providers that need the whole object (the namespaces are the normal way in).
-export const CONFIG_SOURCE = Symbol('CONFIG_SOURCE');
-
 export type AppConfigModuleOptions = {
   configClasses: [ConfigClass, ...ConfigClass[]];
-  // Returns the raw config object; it is called once and validated per namespace. No process.env is read.
+  // Returns the config object; it is called once and each namespace validates its own part. Unknown root keys are the source's to reject (configFileSource does). No process.env is read.
   source: ConfigSource;
   // Names the config in errors, normally the file path.
   origin: string;
@@ -33,8 +30,7 @@ export class AppConfigModule {
     return {
       module: AppConfigModule,
       imports: [configModule],
-      providers: [{ provide: CONFIG_SOURCE, useFactory: source }],
-      exports: [ConfigModule, CONFIG_SOURCE],
+      exports: [ConfigModule],
     };
   }
 

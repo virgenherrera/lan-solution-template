@@ -1,4 +1,4 @@
-import type { AppConfig } from '../../config.js';
+import type { DbConfig } from '../../config-dtos.js';
 import type { AppPaths } from '../../paths.js';
 import type { DbAdapter } from '../port.js';
 import { SqliteAdapter, type SqliteVectorBackend } from './adapter.js';
@@ -11,7 +11,7 @@ export interface SqliteOptions {
   readonly vector?: SqliteVectorBackend;
 }
 
-export function createAdapter(config: AppConfig, paths: AppPaths, options: SqliteOptions = {}): DbAdapter {
-  if (config.db.engine !== 'sqlite') throw new Error(`the sqlite engine cannot open a "${config.db.engine}" config`);
-  return new SqliteAdapter(config.db.sqlite, paths.dataDir, options.vector);
+export function createAdapter(config: DbConfig, paths: AppPaths, options: SqliteOptions = {}): DbAdapter {
+  if (config.engine !== 'sqlite') throw new Error(`the sqlite engine cannot open a "${config.engine}" config`);
+  return new SqliteAdapter(config.sqlite, paths.dataDir, options.vector);
 }
