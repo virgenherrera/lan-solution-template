@@ -489,7 +489,9 @@ await check('second start uses the TLS files and changes none', async () => {
   TLS_FILES.forEach((name, index) => expect(certFile(installDir, name).equals(before[index]), `${name} changed`));
   // Health answering ready does not mean the stderr pipe has been drained: the line can still be in flight, so poll for it.
   const logged = await until(() => (again.lines.some((line) => line.includes('using leaf certificate')) ? true : undefined), SLACK_MS, 'stderr line "using leaf certificate"').catch(() => false);
-  expect(logged, 'no stderr line with "using leaf certificate"');
+  // Diagnostic only: on failure show the real `tls:` lines (for example a reissue because the host names changed), the check itself is not relaxed.
+  const tlsLines = again.lines.filter((line) => line.includes('tls:')).slice(0, 3);
+  expect(logged, `no stderr line with "using leaf certificate"; tls: lines of the second start: ${tlsLines.length > 0 ? tlsLines.join(' | ') : 'none'}`);
   await stopClean(again);
 });
 
