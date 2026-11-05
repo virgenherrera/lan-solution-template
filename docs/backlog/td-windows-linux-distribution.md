@@ -78,6 +78,7 @@ Every item is not verified.
   - A5: allow-list for the base (owner root, not writable by others) instead of a deny list.
   - A6: print a message when `rm -f` fails (`|| { warn ...; FAILED=1; }`).
   - A7: remove `._*` entries from the payload (`COPYFILE_DISABLE=1` did not remove them in U3); verify the plist name in a real run.
+- [ ] A8 of U5 (found by the final QC): an earlier run of `uninstall.sh` left a `lan-untrust.*` directory with a copy of the public `ca.crt` in the system temporary directory. Cause not verified; failure path not identified. The script already has `trap cleanup EXIT`. Proposal, not implemented: also trap `INT TERM HUP`. See [A8](../results/POC-08-Result.md#advisories-still-open).
 - [ ] CI validation of branch names and a guard against duplicate tags ([REQ-VERSION-02](../requirements/11-nx-quality-testing.md)), the highest-impact bump when several PRs merge before a release, and GitHub Release. They belong to [POC-9](poc-9-ci-cd-releases.md), which is on hold.
 - [ ] The `display` that the `package` step of `desktop` needs in CI: the E2E opens a window.
 - [ ] Optional guard `cargo check --target <triple>` for the other platforms. It needs `rustup target add`, which is an installation. It needs the approval of the human.
