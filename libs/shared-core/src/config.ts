@@ -39,11 +39,16 @@ const dbSchema = z.discriminatedUnion('engine', [
 ]);
 
 // Network binding for the HTTPS listener and the plain-HTTP redirect listener.
-const netSchema = z.strictObject({
-  bind: z.union([z.ipv4(), z.ipv6()]),
-  httpsPort: port,
-  httpPort: port,
-});
+const netSchema = z
+  .strictObject({
+    bind: z.union([z.ipv4(), z.ipv6()]),
+    httpsPort: port,
+    httpPort: port,
+  })
+  .superRefine((net, ctx) => {
+    // Both listeners bind the same address: equal ports could only fail later with EADDRINUSE, so name the keys now.
+    if (net.httpPort === net.httpsPort) ctx.addIssue({ code: 'custom', message: 'net.httpPort must differ from net.httpsPort', path: ['httpPort'] });
+  });
 
 // Names added to the certificate on top of the detected ones: DNS names or IP addresses.
 const tlsSchema = z.strictObject({
@@ -68,19 +73,14 @@ export function deepFreeze<T>(value: T): T {
   return value;
 }
 
-function readConfigText(paths: AppPaths): { file: string; text: string } {
+// Reads the file and validates it; a missing or invalid config fails fast before readiness (REQ-DB-06). Never created here: it must exist next to the executable (ADR-007).
+export function loadConfig(paths: AppPaths): AppConfig {
   const file = join(paths.configDir, CONFIG_FILE);
   if (!existsSync(file)) {
     throw new Error(`config ${file} is missing: copy libs/shared-core/config.example.json to ${file} (the installer creates it in a packaged install)`);
   }
-  return { file, text: readFileSync(file, 'utf8') };
-}
-
-// Reads the file and validates it; a missing or invalid config fails fast before readiness (REQ-DB-06). Never created here: it must exist next to the executable (ADR-007).
-export function loadConfig(paths: AppPaths): AppConfig {
-  const { file, text } = readConfigText(paths);
   // One error path: invalid JSON and schema failures are issues of the same list.
-  const parsed = jsonText(configSchema).safeParse(text);
+  const parsed = jsonText(configSchema).safeParse(readFileSync(file, 'utf8'));
   if (!parsed.success) throw new Error(`config ${file} is invalid: ${z.prettifyError(parsed.error)}`);
   return deepFreeze(parsed.data);
 }
@@ -88,11 +88,8 @@ export function loadConfig(paths: AppPaths): AppConfig {
 // The config object AppConfigModule takes as its source. The file is checked against the whole schema once, so an unknown root key still stops the start (ADR-007); each namespace DTO then validates its own part.
 export type ConfigSource = () => unknown | Promise<unknown>;
 
-export function configFileSource(paths: AppPaths): ConfigSource {
-  return () => {
-    const { file, text } = readConfigText(paths);
-    const parsed = jsonText(configSchema).safeParse(text);
-    if (!parsed.success) throw new Error(`config ${file} is invalid: ${z.prettifyError(parsed.error)}`);
-    return parsed.data;
-  };
+// The first call reads and validates the file; every later call returns the same frozen object, so one process holds one read and one instance.
+export function configFileSource(paths: AppPaths): () => AppConfig {
+  let config: AppConfig | undefined;
+  return () => (config ??= loadConfig(paths));
 }

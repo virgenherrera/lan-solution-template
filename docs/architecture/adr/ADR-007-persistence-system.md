@@ -27,7 +27,7 @@ updated: 2026-11-03
 
 Accepted for the design, 2026-11-03. The human asked for the direction and decided the base directory rule. The other details below are agent proposals. The code is implemented in PR #17 (merged). The slices are on the [backlog page](../../backlog/persistence-system.md).
 
-Update 2026-11-03: the lazy loading is `createDbAdapter` in `libs/shared-core/src/db/factory.ts`: an async function with a literal `import()`. In `sea-runtime`, `PersistenceService` calls it in `onModuleInit` with the injected `DbConfig` namespace and `AppPathsService`; no consumer reads the whole config. Providers are classes injected by class, with no Symbol tokens.
+Update 2026-11-03: the lazy loading is `createDbAdapter` in `libs/shared-core/src/db/factory.ts`: an async function with a literal `import()`. In `sea-runtime`, `PersistenceService` calls it in `onModuleInit` with the injected `DbConfig` namespace and `AppPathsService`; no consumer reads the whole config. In `api-gateway`, `DatabaseService` does the same in `onModuleInit` and closes in `onApplicationShutdown`; `main` calls `app.init()` before `listen`, so a database failure is not reported as a listen failure. Providers are classes injected by class, with no Symbol tokens.
 
 ## Context
 

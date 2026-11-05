@@ -1,10 +1,6 @@
-import { Inject, Injectable, Module, type OnApplicationShutdown } from '@nestjs/common';
+import { Injectable, Module, type OnApplicationShutdown, type OnModuleInit } from '@nestjs/common';
 import { catchError, concatMap, defer, firstValueFrom, from, map, type Observable, throwError } from 'rxjs';
-import { createDbAdapter, DbConfig, InjectConfig, type AppPaths, type DbAdapter } from 'shared-core';
-import { APP_PATHS, appPathsProvider } from '../app-paths.js';
-import { DB_ADAPTER } from './tokens.js';
-
-export { DB_ADAPTER };
+import { AppPathsService, createDbAdapter, DbConfig, InjectConfig, type DbAdapter } from 'shared-core';
 
 // The question every engine can answer: proves the connection works, not that the schema is right (the supervisor checked that before spawning this service).
 function handshake$(db: DbAdapter): Observable<void> {
@@ -28,35 +24,32 @@ function open$(db: DbAdapter): Observable<DbAdapter> {
   );
 }
 
+// One connection per service, opened once while the application initializes (`app.init()`, which main awaits before it listens). If the handshake fails, the application does not start.
 @Injectable()
-class DatabaseLifecycle implements OnApplicationShutdown {
-  constructor(@Inject(DB_ADAPTER) private readonly db: DbAdapter) {}
+export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
+  private db: DbAdapter | undefined;
 
-  async onApplicationShutdown(): Promise<void> {
-    await this.db.close();
-  }
-}
-
-@Injectable()
-class DatabaseOpener {
   constructor(
-    @InjectConfig(DbConfig) private readonly db: DbConfig,
-    @Inject(APP_PATHS) private readonly paths: AppPaths,
+    @InjectConfig(DbConfig) private readonly config: DbConfig,
+    private readonly appPaths: AppPathsService,
   ) {}
 
-  async open(): Promise<DbAdapter> {
-    return firstValueFrom(open$(await createDbAdapter(this.db, this.paths)));
+  async onModuleInit(): Promise<void> {
+    this.db = await firstValueFrom(open$(await createDbAdapter(this.config, this.appPaths.paths)));
+  }
+
+  async onApplicationShutdown(): Promise<void> {
+    await this.db?.close();
+  }
+
+  get adapter(): DbAdapter {
+    if (this.db === undefined) throw new Error('the database is not open yet');
+    return this.db;
   }
 }
 
-// One connection per service, opened once while Nest builds the module. If the handshake fails, the application does not start.
 @Module({
-  providers: [
-    appPathsProvider,
-    DatabaseOpener,
-    { provide: DB_ADAPTER, inject: [DatabaseOpener], useFactory: (opener: DatabaseOpener): Promise<DbAdapter> => opener.open() },
-    DatabaseLifecycle,
-  ],
-  exports: [DB_ADAPTER],
+  providers: [AppPathsService, DatabaseService],
+  exports: [DatabaseService],
 })
 export class DatabaseModule {}
