@@ -338,6 +338,7 @@ async function bundle(): Promise<void> {
     },
     experiments: { outputModule: true },
     externals: shared.externals,
+    optimization: shared.optimization,
     plugins: [
       ...shared.plugins,
       new rspackNamespace.BannerPlugin({
