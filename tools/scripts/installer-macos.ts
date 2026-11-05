@@ -1,6 +1,6 @@
 // Builds the macOS installer `.pkg` with the tools macOS ships: pkgbuild and productbuild. It never installs anything.
 // Payload = the install directory ROOT: the host executable and the sidecar sit side by side so the base directory is the directory of the executable (ADR-007).
-// config/ , data/ , logs/ , certs/ are created by scripts/postinstall, never shipped: the payload holds no certificate, key or user data. postinstall runs `sea-runtime --generate-certs` as the console user (U4b).
+// config/ , data/ , logs/ , certs/ are created by scripts/postinstall, never shipped: the payload holds no certificate, key or user data. postinstall runs `sea-runtime --generate-certs` as the console user (U4b) and records the CA fingerprint in a root-owned <base>/.installer/ca.sha256, which the trust script requires.
 // A second component without payload (identifier + `.trust`) holds trust-scripts/postinstall. Its choice is NOT selected by default in the Distribution XML, so the System keychain is touched only when the user ticks it.
 // No `.app` is installed: writing config/ and data/ inside a bundle breaks its code seal (odd/spikes/M0-result.md section 5, option c).
 // Output: apps/desktop/src-tauri/target/release/lan-solution-desktop-<version>-<triple>.pkg

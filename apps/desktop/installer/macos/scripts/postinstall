@@ -3,7 +3,9 @@
 # Why shell: the .pkg format runs scripts directly and the user's Mac has no node.
 # Arguments given by the Installer: $1 package path, $2 destination (the chosen install location, which is the base directory, ADR-007), $3 target volume, $4 target system root.
 # It writes only inside "$2". It never touches the keychain, the trust store or any other path (trusting the CA is a separate, optional package: trust-scripts/postinstall).
+# Security rule (U4b): root touches ONLY what it creates in this run. config.json, data/, logs/ and certs/ that already exist (symbolic links and dangling links included) are never changed, copied over or given to anyone: after the first install the console user owns them and could plant links there. There is no chown -R.
 # U4b: it creates certs/ and runs "sea-runtime --generate-certs" as the console user, never as root, so each installation gets its own CA and leaf and no CA travels in the payload.
+# U4b: root then records the SHA-256 of ca.crt in <base>/.installer/ca.sha256, a root-owned file the console user cannot replace. The trust script trusts only a certificate with that fingerprint.
 set -eu
 
 BASE="${2:-}"
@@ -24,19 +26,8 @@ if [ ! -x "$SEA" ]; then
   exit 1
 fi
 
-mkdir -p "$BASE/config" "$BASE/data" "$BASE/logs"
-# certs/ is 0700 (ADR-008). It is created here, not by the executable, because the base belongs to root and the executable runs as the console user.
-mkdir -p "$BASE/certs"
-/bin/chmod 0700 "$BASE/certs"
-
-# config.json belongs to the user: create it from the template only when it does not exist (reinstall keeps edits).
-if [ ! -e "$BASE/config/config.json" ]; then
-  cp "$TEMPLATE" "$BASE/config/config.json"
-fi
-
-# The Installer runs this script as root. data/, logs/, certs/ and config.json must belong to the person at the console, because the host and the sidecar run as that user.
-# Console user: the owner of /dev/console is the logged-in GUI user (stat(1): -f%Su prints the owner's user name).
-# Outside root (a simulated run) nothing is changed: the files already belong to the caller.
+# Console user, checked BEFORE anything is created. The owner of /dev/console is the logged-in GUI user (stat(1): -f%Su prints the owner's user name).
+# Outside root (a simulated run) nothing is changed: what the script creates already belongs to the caller.
 CONSOLE_USER=""
 if [ "$(id -u)" -eq 0 ]; then
   CONSOLE_USER="$(/usr/bin/stat -f%Su /dev/console)"
@@ -44,11 +35,51 @@ if [ "$(id -u)" -eq 0 ]; then
     echo "postinstall: no console user is logged in (found '${CONSOLE_USER}'): cannot assign data/, logs/ and certs/" >&2
     exit 1
   fi
-  /usr/sbin/chown -R "$CONSOLE_USER" "$BASE/data" "$BASE/logs"
-  /usr/sbin/chown "$CONSOLE_USER" "$BASE/config" "$BASE/config/config.json" "$BASE/certs"
 fi
 
-# Per-install TLS files. The executable keeps an existing CA (a reinstall never replaces it) and prints "CA SHA-256 <fingerprint>".
+# 1. config/config.json. config/ ships in the payload, so it is root-owned on a first install. The file is created only when config/ is a real directory owned by root (never a directory the console user could have swapped), and only when nothing is there: set -C makes the redirection fail on any existing name, a dangling link included, and it never follows a link.
+# config/ stays root-owned: the console user needs to edit config.json, not to replace entries of config/.
+if [ -L "$BASE/config" ] || [ ! -d "$BASE/config" ]; then
+  echo "postinstall: $BASE/config is not a real directory: config.json was not created" >&2
+elif [ -e "$BASE/config/config.json" ] || [ -L "$BASE/config/config.json" ]; then
+  echo "postinstall: config.json already exists: kept untouched"
+elif [ -n "$CONSOLE_USER" ] && [ "$(/usr/bin/stat -f%u "$BASE/config")" != "0" ]; then
+  echo "postinstall: $BASE/config is not owned by root: config.json was not created" >&2
+else
+  if ! ( set -C; /bin/cat "$TEMPLATE" > "$BASE/config/config.json" ) 2>/dev/null; then
+    echo "postinstall: cannot create $BASE/config/config.json" >&2
+    exit 1
+  fi
+  if [ -n "$CONSOLE_USER" ]; then
+    /usr/sbin/chown -h "$CONSOLE_USER" "$BASE/config/config.json"
+  fi
+fi
+
+# 2. data/, logs/ and certs/: create each one only when the name is free. An existing one (directory, link or dangling link) is left exactly as it is.
+# mkdir without -p fails when the name exists. chown -h on the new directory never follows a link. certs/ is 0700 (ADR-008), created here because the base belongs to root and the executable runs as the console user.
+make_user_dir() {
+  if [ -e "$1" ] || [ -L "$1" ]; then
+    echo "postinstall: $1 already exists: kept untouched"
+    return 0
+  fi
+  /bin/mkdir "$1"
+  if [ -n "$CONSOLE_USER" ]; then
+    /usr/sbin/chown -h "$CONSOLE_USER" "$1"
+  fi
+}
+make_user_dir "$BASE/data"
+make_user_dir "$BASE/logs"
+if [ -e "$BASE/certs" ] || [ -L "$BASE/certs" ]; then
+  echo "postinstall: $BASE/certs already exists: kept untouched"
+else
+  /bin/mkdir "$BASE/certs"
+  /bin/chmod 0700 "$BASE/certs"
+  if [ -n "$CONSOLE_USER" ]; then
+    /usr/sbin/chown -h "$CONSOLE_USER" "$BASE/certs"
+  fi
+fi
+
+# 3. Per-install TLS files. The executable keeps an existing CA (a reinstall never replaces it) and prints "CA SHA-256 <fingerprint>".
 # As root it runs under the console user, so the keys are owned by that user with mode 0600 and root never writes them.
 STATUS=0
 if [ -n "$CONSOLE_USER" ]; then
@@ -68,6 +99,41 @@ if [ -z "$FINGERPRINT" ]; then
   exit 1
 fi
 echo "postinstall: CA SHA-256 $FINGERPRINT"
+
+# 4. Trust anchor. Root computes the fingerprint of ca.crt and keeps it where the console user cannot write: <base>/.installer is created by root (0755) and the file is 0644. It cannot live in certs/, which belongs to the console user.
+# ca.crt must be a regular file reached without a link, and its fingerprint must equal the one the executable printed. Any other result stops the installation.
+CA="$BASE/certs/ca.crt"
+if [ -L "$BASE/certs" ] || [ -L "$CA" ] || [ ! -f "$CA" ]; then
+  echo "postinstall: $CA is missing, not a regular file or reached through a link: refused" >&2
+  exit 1
+fi
+ANCHOR_VALUE="$(/usr/bin/openssl x509 -in "$CA" -noout -fingerprint -sha256 2>/dev/null | /usr/bin/sed 's/^.*=//')" || ANCHOR_VALUE=""
+if [ -z "$ANCHOR_VALUE" ]; then
+  echo "postinstall: cannot compute the fingerprint of $CA: the installation is incomplete" >&2
+  exit 1
+fi
+NORMAL_A="$(printf '%s' "$ANCHOR_VALUE" | /usr/bin/tr -d ':' | /usr/bin/tr 'a-f' 'A-F')"
+NORMAL_B="$(printf '%s' "$FINGERPRINT" | /usr/bin/tr -d ':' | /usr/bin/tr 'a-f' 'A-F')"
+if [ "$NORMAL_A" != "$NORMAL_B" ]; then
+  echo "postinstall: the fingerprint of $CA differs from the one sea-runtime printed: refused" >&2
+  exit 1
+fi
+INSTALLER_DIR="$BASE/.installer"
+if [ -L "$INSTALLER_DIR" ] || { [ -e "$INSTALLER_DIR" ] && [ ! -d "$INSTALLER_DIR" ]; }; then
+  echo "postinstall: $INSTALLER_DIR is a link or not a directory: refused" >&2
+  exit 1
+fi
+if [ ! -e "$INSTALLER_DIR" ]; then
+  /bin/mkdir "$INSTALLER_DIR"
+  /bin/chmod 0755 "$INSTALLER_DIR"
+elif [ -n "$CONSOLE_USER" ] && [ "$(/usr/bin/stat -f%u "$INSTALLER_DIR")" != "0" ]; then
+  echo "postinstall: $INSTALLER_DIR is not owned by root: refused" >&2
+  exit 1
+fi
+# The old anchor is removed (one name, in a root-owned directory), then the new one is created exclusively (set -C).
+/bin/rm -f "$INSTALLER_DIR/ca.sha256"
+( set -C; printf '%s\n' "$ANCHOR_VALUE" > "$INSTALLER_DIR/ca.sha256" )
+/bin/chmod 0644 "$INSTALLER_DIR/ca.sha256"
 
 echo "postinstall: base $BASE is ready"
 exit 0
