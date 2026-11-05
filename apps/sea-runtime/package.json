@@ -83,6 +83,22 @@
           "{workspaceRoot}/tools/scripts/smoke-sea.ts",
           "{workspaceRoot}/tools/rspack/**/*"
         ]
+      },
+      "smoke-pg": {
+        "dependsOn": [
+          "package"
+        ],
+        "executor": "nx:run-commands",
+        "cache": false,
+        "options": {
+          "command": "node tools/scripts/smoke-pg.ts",
+          "cwd": "{workspaceRoot}"
+        },
+        "inputs": [
+          "default",
+          "{workspaceRoot}/tools/scripts/smoke-pg.ts",
+          "{workspaceRoot}/libs/db-migrations/pg/migrations/**/*"
+        ]
       }
     }
   }
