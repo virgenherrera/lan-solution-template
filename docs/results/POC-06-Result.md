@@ -82,6 +82,20 @@ Everything ran on macOS 27.2 arm64, Node v26.13.0, Docker 29.9.2 (Docker Desktop
 - Decide in POC-9 whether `smoke-pg` runs in CI (needs Docker on the runner).
 - Re-evaluate `1.0.0-rc.5` when it becomes the stable tag.
 
+### Advisories from the independent verification
+
+The independent verifier returned PASS with advisories. No blocker. Each item below is debt, not a fix of this slice.
+
+- `PgAdapter.connect` does not validate `passwordFile` itself. The config schema regex is the only guard, so a path such as `join(dataDir, '../outside/secret')` or a symlink is followed. This is the same trust model as the SQLite file.
+- The adapter calls `.trim()` on the password. A password with leading or trailing whitespace loses it.
+- `db-parity` writes the `pg.pass` file in its work directory without mode `0600`.
+- `smoke-pg` leaves containers behind when the process gets SIGKILL (label `lan-smoke-pg`; no handler can run). The synchronous `docker run` also delays the signal handler by up to 300 s.
+- `db-parity --pg-port 99999` prints the raw `ERR_SOCKET_BAD_PORT`. The option is not validated as a port number.
+- `numberPlaceholders` does not skip a `?` inside double-quoted identifiers, comments or dollar-quoted strings, so it would number them as placeholders. The current SQL does not use these.
+- No committed APP test runs `insertVector` or `searchSimilar` against PostgreSQL (gap in REQ-TEST-06 coverage; see "Not verified" and the vector table debt above). The verifier marked S6 as partial for this reason.
+- Some commit subjects on this branch write `PostgreSQL` with capitals. [AGENTS.md](../../AGENTS.md) asks for lowercase subjects. History is not rewritten.
+- Pre-existing, not caused by this branch: `nx run-many -t build` without `--exclude=lan-solution-template` fails with `Recursive task invocation`. It fails the same way on `main`.
+
 ## Recipe for the human
 
 ```sh
