@@ -380,10 +380,10 @@ docs[91]:
   - doc: docs/backlog/td-nest-di-by-class.md
     title: "Technical debt: Nest DI by class"
     type: backlog
-    summary: "Technical debt: the supervisor providers CLOCK, RANDOM and SERVICE_ROUTES use Symbol tokens and should become injectable classes like nest-base. Nothing verified."
+    summary: "Resolved technical debt: the supervisor providers CLOCK, RANDOM and SERVICE_ROUTES became the abstract classes Clock, Random and ServiceRoutes. Verified."
     ids: []
     related[3]: docs/backlog/README.md,docs/results/POC-06-Result.md,docs/backlog/persistence-system.md
-    status: proposed
+    status: current
     updated: 2026-11-05
     refs: []
   - doc: docs/backlog/td-windows-linux-distribution.md

@@ -94,7 +94,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | none | [SPIKE PWA HTTPS trust on phones](spike-pwa-https-trust.md) | Done on Chromium, an iOS simulator and an Android emulator; real phones closed as not needed (decided 2026-11-03: a real phone adds no new design information; mDNS, Add to Home Screen and IP change are checked at the first real deployment); see [SPIKE-pwa-https-trust-Result](../results/SPIKE-pwa-https-trust-Result.md) and [RESEARCH-pwa-https-trust](../results/RESEARCH-pwa-https-trust.md) | none |
 | none | [Log service with OpenTelemetry data model and gRPC](log-service-otel-grpc.md) | Idea, TBD, no design. Outside POC-5 | none |
 | none | [Technical debt: Windows and Linux distribution](td-windows-linux-distribution.md) | Technical debt, no design, nothing verified; cut from POC-8 by the human on 2026-11-04, plus the macOS follow-ups that POC-8 left | none (no new id) |
-| none | [Technical debt: Nest DI by class](td-nest-di-by-class.md) | Technical debt, no design, nothing verified; the supervisor tokens use Symbol providers instead of classes | none (no new id) |
+| none | [Technical debt: Nest DI by class](td-nest-di-by-class.md) | Technical debt, resolved and verified; the supervisor tokens are now the abstract classes `Clock`, `Random` and `ServiceRoutes` | none (no new id) |
 | none | [Persistence system](persistence-system.md) | Done and merged in PR #17; decision: [ADR-007](../architecture/adr/ADR-007-persistence-system.md) | AC-07, AC-08, AC-10 (as POC-3) |
 
 ---

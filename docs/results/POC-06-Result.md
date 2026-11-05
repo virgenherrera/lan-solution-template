@@ -35,7 +35,8 @@ Commits after `main` (`git log --oneline main..HEAD`):
 | T6 APP test | `84e2fb3` | `tools/scripts/smoke-pg.ts` and the Nx target `sea-runtime:smoke-pg`. |
 | Config in Nest DI | `883886e`, `14f5da4`, `c188813`, `9a55016`, `e56cb05` | `AppConfigModule` with nestjs-zod namespaces in shared-core; `@InjectConfig` per namespace (sea-runtime db config, api-gateway `DbConfig` and `ServerConfig`); nestjs-zod validation pipe and serializer interceptor registered globally in the gateway; `keep_classnames` in the shared bundler config (see below). |
 | Health | `888d00f` | `GET /api/health` validates its query with a nestjs-zod DTO and answers in the `@nestjs/terminus` shape; e2e test; `smoke-sea` and `verify-platform` read `details.state.state`; ADR-002 and ADR-006 updated. |
-| smoke-sea race | `1c24d2f` | Bounded poll for the `tls: using leaf certificate` line in `tools/scripts/smoke-sea.ts:490`. |
+| smoke-sea poll | `1c24d2f` | Bounded poll for the `tls: using leaf certificate` line in `tools/scripts/smoke-sea.ts`. It did not remove the flake (see Debt). |
+| smoke-sea diagnostic | see git log | When the check "second start uses the TLS files" fails, the message now includes up to 3 `tls:` stderr lines of the second start. The check still requires `using leaf certificate`. |
 | Dependencies | `d6fcded` | Dropped the `supports-color` pin and unused dependencies (see Debt). |
 
 ## Drizzle stable-first (decision 10)
@@ -80,7 +81,8 @@ Checked on 2026-11-05 on the same setup as above.
 | nestjs-zod 5.5.0 runs with @nestjs/common 12.3.2 despite the peer range. | The e2e test passes. | `888d00f` |
 | Invalid `--web` is unchanged. | Same output as the base, exit 1. | `4b5dd0c` |
 | `smoke-pg` with Docker. | exit 0. | `d6fcded` |
-| Unreachable database fails fast. | With `abortOnError: false`: exit 1 and `startup failed: database handshake failed (pg): ...` in under 1 s. Three cases: closed port, missing `passwordFile`, nonexistent host. A bad credential is not verified (no local PostgreSQL). | `d6fcded` |
+| Unreachable database fails fast. | With `abortOnError: false`: exit 1 and `startup failed: database handshake failed (pg): ...` in under 1 s. Three cases: closed port, missing `passwordFile`, nonexistent host. | `d6fcded` |
+| A bad database credential fails fast. | Against PostgreSQL in Docker, a wrong password gives exit 1 and `startup failed: database handshake failed (pg): password authentication failed for user "postgres"` without hanging (`database.module.ts:21`). The control with the right password starts (`https listening 127.0.0.1:38443`). Run with `node apps/api-gateway/dist/main.js`, not the SEA binary. | see git log |
 | Clean clone at `888d00f`. | `install --frozen-lockfile`, build and the `docs/meta.toon` check all exit 0. | `888d00f` |
 | Dependency cleanup keeps one copy. | After removing the `supports-color@8.1.1` pin, a clean clone still has one copy of `@nestjs/config`, `@nestjs/common` and `@nestjs/core`. | `d6fcded` |
 
@@ -93,8 +95,8 @@ Checked on 2026-11-05 on the same setup as above.
 - A second embedded migration. "Pending migration" is simulated with the only one that exists.
 - Concurrent migration runs on PostgreSQL. REQ-DB-05 asks to define locking and concurrency per engine. A search of `migrator.ts` and `pg/adapter.ts` finds retry on SQLite lock errors and no PostgreSQL advisory lock. Not tested.
 - Running without Internet. The first run pulls two images. Once they are local the test needs no network, but this was not run offline.
-- That the `smoke-sea` race is gone. The fix in `1c24d2f` comes from reading the code. The race was never reproduced, so it is not verified that a reproduction disappears.
-- A bad database credential at startup. There is no local PostgreSQL to test it.
+- The cause of the `smoke-sea` flake "second start uses the TLS files" (see Debt). The bounded poll in `1c24d2f` did not remove it, and the investigation did not reproduce it.
+- A bad database credential through the packaged SEA binary. It was checked with `node apps/api-gateway/dist/main.js` only (see Verified).
 - Any CI run. POC-9 is on hold, so `smoke-pg` is not part of a pipeline. It is a manual target because it needs Docker.
 
 ## Debt
@@ -126,7 +128,7 @@ The independent verifier returned PASS with advisories. No blocker. Each item be
 
 ### DI by class debt
 
-- [td-nest-di-by-class](../backlog/td-nest-di-by-class.md): `supervisor.module.ts` registers `CLOCK`, `RANDOM` and `SERVICE_ROUTES` with `Symbol` and `useFactory`, and `persistence-system.md:88` still names the old `DATABASE_ADAPTER`. A separate refactor branch handles it.
+- [td-nest-di-by-class](../backlog/td-nest-di-by-class.md): resolved and verified (commit `b70184d`). `CLOCK`, `RANDOM` and `SERVICE_ROUTES` are now the abstract classes `Clock`, `Random` and `ServiceRoutes`, with `SystemClock`, `SystemRandom` and `SeaServiceRoutes` injected with `useClass` (strategy pattern). `ServiceLifecycle` is unchanged. `persistence-system.md:88` no longer names `DATABASE_ADAPTER`. An independent verifier ran build, lint, test:static, test:dynamic (8 tests) and smoke-pg with exit 0 on the working tree. `smoke-sea` passed 30 checks in 2 of 3 runs; the first run hit the flake described in Debt.
 
 ### Config migration and keep_classnames
 
@@ -141,7 +143,7 @@ The independent verifier returned PASS with advisories. No blocker. Each item be
 - Project decision (not a REQ): `keep_classnames` in `tools/rspack/nest.config.ts` is mandatory. Nest DI by class, nestjs-zod and `Reflector` resolve by class name, and the minifier would rename the classes. The cost, a few tens of KB, is accepted. No guard or regex runs over the bundle.
 - `NetConfig` and `TlsConfig` are exported with no consumer, and the gateway still uses the aggregate `loadConfig` in `main` before Nest starts.
 - `docs/backlog/persistence-system.md:88` mentions `APP_CONFIG` (a historical row).
-- `smoke-sea` read `run.lines` right after ready, and the line `tls: using leaf certificate` (stderr) could arrive later (`libs/shared-core/src/tls/identity.ts:164`). Fixed in `1c24d2f` with a bounded poll at `tools/scripts/smoke-sea.ts:490`. The race was never reproduced (21 runs), so the fix is reasoned from the code: not verified that a reproduction disappears.
+- `smoke-sea` read `run.lines` right after ready, and the line `tls: using leaf certificate` (stderr) could arrive later (`libs/shared-core/src/tls/identity.ts:164`). A bounded poll was added in `1c24d2f` (`tools/scripts/smoke-sea.ts`), but the flake is not fixed. The check "second start uses the TLS files" failed twice more (missing `using leaf certificate`), both times on the first run after `pnpm run build` (one during the build of `888d00f`, one while verifying the DI refactor); both reruns passed. So late stderr is not the only cause. An investigation did not reproduce it: 13 of 13 runs passed, with 6 background CPU processes and one run right after `nx run sea-runtime:package`. Cause: not verified. Hypothesis, not verified: `libs/shared-core/src/tls/identity.ts:160-165` has two branches; if `needsReissue` decides to reissue (host name or network interfaces changed between the two starts), the log is `tls: leaf certificate ... does not match the current host names ...` and the check fails while the gateway works. `smoke-sea` now prints the real `tls:` lines when the check fails, to show the cause at the next failure.
 - `nx run-many` without `--exclude=lan-solution-template` fails by recursion on `main` too.
 
 ## Recipe for the human
