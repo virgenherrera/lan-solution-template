@@ -10,12 +10,26 @@ import { z } from 'zod';
 const root = resolve(import.meta.dirname, '..', '..');
 const { jsonText } = (await import(join(root, 'libs', 'service-registry', 'dist', 'json-text.js'))) as typeof import('../../libs/service-registry/dist/json-text.js');
 const sharedCorePath = join(root, 'libs', 'shared-core', 'dist', 'index.js');
-const sqliteEnginePath = join(root, 'libs', 'shared-core', 'dist', 'db', 'sqlite', 'index.js');
 const contractPath = join(root, 'libs', 'db-migrations', 'dist', 'contract', 'index.js');
 const defaultMigrationsDir = (engine: string): string => join(root, 'libs', 'db-migrations', engine, 'migrations');
 
-// Only sqlite has an adapter wired here; a new engine adds its adapter and the check itself does not change.
-const ENGINES: readonly string[] = ['sqlite'];
+// Strategy registry: one entry per engine with the built module that holds its adapter and how to open it on a throwaway
+// directory. A new engine adds one entry here and the check itself does not change.
+type ParityAdapter = import('../../libs/shared-core/dist/db/port.js').DbAdapter;
+interface EngineEntry {
+  readonly modulePath: string;
+  open(workDir: string): Promise<ParityAdapter>;
+}
+const sqliteModulePath = join(root, 'libs', 'shared-core', 'dist', 'db', 'sqlite', 'index.js');
+const ENGINES: Readonly<Record<string, EngineEntry>> = {
+  sqlite: {
+    modulePath: sqliteModulePath,
+    open: async (workDir) => {
+      const { SqliteAdapter } = (await import(sqliteModulePath)) as typeof import('../../libs/shared-core/dist/db/sqlite/index.js');
+      return new SqliteAdapter({ file: 'parity.db', foreignKeys: true, journalMode: 'DELETE', synchronous: 'NORMAL' }, workDir);
+    },
+  },
+};
 
 function fail(message: string): never {
   throw new Error(message);
@@ -42,23 +56,23 @@ function option(name: string, fallback: string): string {
 
 async function main(): Promise<number> {
   const engine = option('engine', 'sqlite');
-  if (!ENGINES.includes(engine)) fail(`no introspector for engine "${engine}" (known: ${ENGINES.join(', ')})`);
-  for (const path of [sharedCorePath, sqliteEnginePath, contractPath]) {
+  const entry = ENGINES[engine] ?? fail(`no introspector for engine "${engine}" (known: ${Object.keys(ENGINES).join(', ')})`);
+  for (const path of [sharedCorePath, entry.modulePath, contractPath]) {
     if (!existsSync(path)) fail(`${path} missing; build shared-core and db-migrations first`);
   }
   const { runMigrations } = (await import(sharedCorePath)) as typeof import('../../libs/shared-core/dist/index.js');
-  const { SqliteAdapter } = (await import(sqliteEnginePath)) as typeof import('../../libs/shared-core/dist/db/sqlite/index.js');
   const { tablesByEngine, tablesSchema, compareSchema } = (await import(contractPath)) as typeof import('../../libs/db-migrations/dist/contract/index.js');
   const migrations = readMigrations(resolve(option('migrations-dir', defaultMigrationsDir(engine))));
 
   const workDir = mkdtempSync(join(tmpdir(), 'db-parity-'));
-  const db = new SqliteAdapter({ file: 'parity.db', foreignKeys: true, journalMode: 'DELETE', synchronous: 'NORMAL' }, workDir);
+  const db = await entry.open(workDir);
   try {
     await db.connect();
     await runMigrations(db, migrations);
-    const tables = tablesByEngine[engine as keyof typeof tablesByEngine];
+    const key = engine as keyof typeof tablesByEngine;
+    const tables = tablesByEngine[key];
     // Validate the descriptor itself first, then compare it exactly with what the real migrations built.
-    const diff = compareSchema(tablesSchema.parse(tables), await db.introspectSchema(), 'exact').problems;
+    const diff = compareSchema(tablesSchema.parse(tables), await db.introspectSchema(), 'exact', key).problems;
     if (diff.length === 0) {
       console.log(`parity ok: ${tables.length} table(s) match the descriptor (engine ${engine})`);
       return 0;

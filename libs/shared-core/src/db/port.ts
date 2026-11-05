@@ -11,7 +11,9 @@ export interface VectorMatch {
 }
 
 // Live structure of a database, as read from the engine catalog. Structurally the same shape the schema comparator expects.
-export type LiveColumnType = 'text' | 'integer' | 'real' | 'blob';
+// Each engine owns the union of the types its catalog reports; a new engine adds its own union to LiveColumnType.
+export type SqliteLiveColumnType = 'text' | 'integer' | 'real' | 'blob';
+export type LiveColumnType = SqliteLiveColumnType;
 
 export interface LiveColumn {
   readonly type: LiveColumnType;
