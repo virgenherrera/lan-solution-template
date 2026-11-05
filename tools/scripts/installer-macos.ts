@@ -1,11 +1,12 @@
 // Builds the macOS installer `.pkg` with the tools macOS ships: pkgbuild and productbuild. It never installs anything.
 // Payload = the install directory ROOT: the host executable and the sidecar sit side by side so the base directory is the directory of the executable (ADR-007).
 // config/ , data/ , logs/ , certs/ are created by scripts/postinstall, never shipped: the payload holds no certificate, key or user data. postinstall runs `sea-runtime --generate-certs` as the console user (U4b) and records the CA fingerprint in a root-owned <base>/.installer/ca.sha256, which the trust script requires.
+// uninstall.sh sits in the payload root (mode 0755, U5): the human runs `sudo <install>/uninstall.sh`. It keeps data/ and logs/.
 // A second component without payload (identifier + `.trust`) holds trust-scripts/postinstall. Its choice is NOT selected by default in the Distribution XML, so the System keychain is touched only when the user ticks it.
 // No `.app` is installed: writing config/ and data/ inside a bundle breaks its code seal (odd/spikes/M0-result.md section 5, option c).
 // Output: apps/desktop/src-tauri/target/release/lan-solution-desktop-<version>-<triple>.pkg
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -33,12 +34,13 @@ export const buildMacosPkg = (): string => {
   if (arch === undefined) throw new Error(`installer: no macOS architecture mapping for ${process.arch}`);
 
   const { version } = readJson<{ version: string }>(join(desktop, 'package.json'));
-  const { identifier } = readJson<{ identifier: string }>(join(desktop, 'src-tauri', 'tauri.conf.json'));
+  const { identifier, productName } = readJson<{ identifier: string; productName: string }>(join(desktop, 'src-tauri', 'tauri.conf.json'));
   const inputs = {
     host: join(release, HOST_NAME),
     sidecar: join(release, SIDECAR_NAME),
     template: join(root, 'libs', 'shared-core', 'config.example.json'),
     postinstall: join(resources, 'scripts', 'postinstall'),
+    uninstall: join(resources, 'uninstall.sh'),
     trustPostinstall: join(resources, 'trust-scripts', 'postinstall'),
     distribution: join(resources, 'distribution.xml'),
     welcome: join(resources, 'resources', 'welcome.html'),
@@ -55,6 +57,14 @@ export const buildMacosPkg = (): string => {
     copyFileSync(inputs.host, join(payload, HOST_NAME));
     copyFileSync(inputs.sidecar, join(payload, SIDECAR_NAME));
     copyFileSync(inputs.template, join(payload, 'config', 'config.example.json'));
+
+    // The script needs the package identifier (receipts) and the product name (autostart LaunchAgent file name).
+    writeFileSync(
+      join(payload, 'uninstall.sh'),
+      readFileSync(inputs.uninstall, 'utf8').replaceAll('@IDENTIFIER@', identifier).replaceAll('@PRODUCT@', productName),
+      { mode: 0o755 },
+    );
+    chmodSync(join(payload, 'uninstall.sh'), 0o755); // the mode above is subject to the umask
 
     const scripts = join(work, 'scripts');
     mkdirSync(scripts);
