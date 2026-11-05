@@ -1,33 +1,14 @@
 import { Module } from '@nestjs/common';
 import { isSea } from 'node:sea';
 import { join } from 'node:path';
-import {
-  AppConfigModule,
-  CONFIG_FILE,
-  DbConfig,
-  configFileSource,
-  createDbAdapter,
-  derivePaths,
-  resolveBase,
-  type AdapterDeps,
-  type AppPaths,
-  type DbAdapter,
-} from 'shared-core';
+import { AppConfigModule, AppPathsService, CONFIG_FILE, DbConfig, configFileSource } from 'shared-core';
 import { SidecarModule } from '../sidecar/sidecar.module.js';
-import { ASSET_SOURCE, seaAssetSource, type AssetSource } from './asset-source.js';
-import { fsAssetSource } from './dev-assets.js';
+import { AssetSource, SeaAssetSource } from './asset-source.js';
+import { FsAssetSource } from './dev-assets.js';
 import { PersistenceService } from './persistence.service.js';
-import { APP_PATHS, DATABASE_ADAPTER } from './tokens.js';
 
-// Derived once: AppConfigModule needs the config location when the module graph is declared, before Nest builds any provider.
-const paths = derivePaths(resolveBase({ sea: isSea(), execPath: process.execPath, cwd: process.cwd() }));
-
-// Options only for the engine the config selects; the engine module is imported when it is chosen, not when this file loads.
-async function engineDeps(config: DbConfig, paths: AppPaths, source: AssetSource): Promise<AdapterDeps> {
-  if (config.engine !== 'sqlite') return {};
-  const { SqliteVector } = await import('shared-core/sqlite');
-  return { sqlite: { vector: new SqliteVector({ getAsset: (name) => source.readRaw(name), directory: join(paths.dataDir, 'native') }) } };
-}
+// Resolved while the module graph is declared: AppConfigModule needs the config location before Nest builds any provider.
+const { paths } = new AppPathsService();
 
 @Module({
   imports: [
@@ -42,15 +23,10 @@ async function engineDeps(config: DbConfig, paths: AppPaths, source: AssetSource
   ],
   providers: [
     // The SEA executable embeds the assets; a dev launch reads the files the package step produced.
-    { provide: ASSET_SOURCE, useFactory: () => (isSea() ? seaAssetSource : fsAssetSource()) },
-    { provide: APP_PATHS, useValue: paths },
-    {
-      provide: DATABASE_ADAPTER,
-      inject: [AppConfigModule.getToken(DbConfig), ASSET_SOURCE],
-      useFactory: async (db: DbConfig, source: AssetSource): Promise<DbAdapter> => createDbAdapter(db, paths, await engineDeps(db, paths, source)),
-    },
+    { provide: AssetSource, useClass: isSea() ? SeaAssetSource : FsAssetSource },
+    AppPathsService,
     PersistenceService,
   ],
-  exports: [PersistenceService, APP_PATHS, DATABASE_ADAPTER],
+  exports: [PersistenceService],
 })
 export class PersistenceModule {}

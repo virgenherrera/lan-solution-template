@@ -27,7 +27,7 @@ updated: 2026-11-03
 
 Accepted for the design, 2026-11-03. The human asked for the direction and decided the base directory rule. The other details below are agent proposals. The code is implemented in PR #17 (merged). The slices are on the [backlog page](../../backlog/persistence-system.md).
 
-Update 2026-11-03: the lazy loading is `createDbAdapter` in `libs/shared-core/src/db/factory.ts`: an async function with a literal `import()`. The Nest provider `DATABASE_ADAPTER` calls it with the injected `DbConfig` namespace and `APP_PATHS`; no consumer reads the whole config.
+Update 2026-11-03: the lazy loading is `createDbAdapter` in `libs/shared-core/src/db/factory.ts`: an async function with a literal `import()`. In `sea-runtime`, `PersistenceService` calls it in `onModuleInit` with the injected `DbConfig` namespace and `AppPathsService`; no consumer reads the whole config. Providers are classes injected by class, with no Symbol tokens.
 
 ## Context
 

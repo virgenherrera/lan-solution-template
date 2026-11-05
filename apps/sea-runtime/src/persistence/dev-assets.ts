@@ -1,9 +1,10 @@
+import { Injectable } from '@nestjs/common';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { jsonText } from 'service-registry';
 import { z } from 'zod';
-import type { AssetSource } from './asset-source.js';
+import { AssetSource } from './asset-source.js';
 
 // Dev (`nest start`) reads the files the package step already produced. Prerequisite: run
 // `pnpm exec nx run sea-runtime:package` once; it writes dist/sea-package/sea-config.json (the asset map) and dist/db-migrations/.
@@ -37,17 +38,18 @@ function readFile(name: string, path: string): Buffer {
 }
 
 // Same name list the SEA embeds: the assets map of sea-config.json maps each name to its file.
-export function fsAssetSource(base: string = repoRoot()): AssetSource {
-  const assets = readAssetMap(base);
-  return {
-    readText(name) {
-      const path = assets[name];
-      if (path === undefined) throw new Error(`asset "${name}" is not in ${SEA_CONFIG}: ${PACKAGE_HINT}`);
-      return readFile(name, path).toString('utf8');
-    },
-    readRaw(name) {
-      const path = assets[name];
-      return path === undefined ? undefined : readFile(name, path);
-    },
-  };
+@Injectable()
+export class FsAssetSource extends AssetSource {
+  private readonly assets = readAssetMap(repoRoot());
+
+  readText(name: string): string {
+    const path = this.assets[name];
+    if (path === undefined) throw new Error(`asset "${name}" is not in ${SEA_CONFIG}: ${PACKAGE_HINT}`);
+    return readFile(name, path).toString('utf8');
+  }
+
+  readRaw(name: string): Uint8Array | undefined {
+    const path = this.assets[name];
+    return path === undefined ? undefined : readFile(name, path);
+  }
 }
