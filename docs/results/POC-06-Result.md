@@ -107,6 +107,7 @@ The independent verifier returned PASS with advisories. No blocker. Each item be
 
 - nestjs-zod 5.5.0 declares the peer `@nestjs/common` `^10 || ^11`, while 12.3.2 is installed.
 - The bundle depends on `keep_classnames`, and only `smoke-sea` detects a regression.
+- Project decision (not a REQ): `keep_classnames` in `tools/rspack/nest.config.ts` is mandatory. Nest DI by class, nestjs-zod and `Reflector` resolve by class name, and the minifier would rename the classes. The cost, a few tens of KB, is accepted. No guard or regex runs over the bundle.
 - `NetConfig` and `TlsConfig` are exported with no consumer, and the gateway still uses the aggregate `loadConfig` in `main` before Nest starts.
 - `docs/backlog/persistence-system.md:88` mentions `APP_CONFIG` (a historical row).
 - `smoke-sea` reads `run.lines` right after ready, and the line `tls: using leaf certificate` (stderr) can arrive later. The flake was not reproduced in 21 runs and is pre-existing (`tools/scripts/smoke-sea.ts:490`, `libs/shared-core/src/tls/identity.ts:164`).

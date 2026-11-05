@@ -1,4 +1,4 @@
-docs[90]:
+docs[91]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -376,6 +376,15 @@ docs[90]:
     related[5]: docs/results/RESEARCH-pwa-https-trust.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/device-trust-guide.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/results/SPIKE-pwa-https-trust-Result.md
     status: current
     updated: 2026-11-03
+    refs: []
+  - doc: docs/backlog/td-nest-di-by-class.md
+    title: "Technical debt: Nest DI by class"
+    type: backlog
+    summary: "Technical debt: the supervisor providers CLOCK, RANDOM and SERVICE_ROUTES use Symbol tokens and should become injectable classes like nest-base. Nothing verified."
+    ids: []
+    related[3]: docs/backlog/README.md,docs/results/POC-06-Result.md,docs/backlog/persistence-system.md
+    status: proposed
+    updated: 2026-11-05
     refs: []
   - doc: docs/backlog/td-windows-linux-distribution.md
     title: "Technical debt: Windows and Linux distribution"

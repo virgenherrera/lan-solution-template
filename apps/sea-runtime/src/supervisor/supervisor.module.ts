@@ -12,6 +12,8 @@ import { CLOCK, RANDOM, SERVICE_ROUTES } from './tokens.js';
 @Module({
   imports: [PersistenceModule, WebBundleModule, SidecarModule],
   providers: [
+    // TD: CLOCK, RANDOM and SERVICE_ROUTES use a Symbol token with useValue/useFactory. They must become
+    // injectable classes, as in nest-base. Tracked in docs/backlog/td-nest-di-by-class.md (refactor branch).
     { provide: CLOCK, useValue: Date.now },
     { provide: RANDOM, useValue: Math.random },
     { provide: SERVICE_ROUTES, useFactory: loadServiceRoutes },
