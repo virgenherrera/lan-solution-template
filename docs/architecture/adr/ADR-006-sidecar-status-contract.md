@@ -92,7 +92,7 @@ The state and status words are the ones in `states.ts` ([ADR-002](ADR-002-single
 
 ### Independence from `/api/health`
 
-The contract does not depend on `/api/health` of the `api-gateway`. That endpoint is unchanged. It is gateway-owned and keeps its own vocabulary (`{"status":"<aggregate state>"}`). A gateway restart does not interrupt the stdout events, because the supervisor, not the gateway, writes them.
+The contract does not depend on `/api/health` of the `api-gateway`. That endpoint is gateway-owned and keeps its own vocabulary (the `@nestjs/terminus` report; the aggregate state is `details.state.state`). A gateway restart does not interrupt the stdout events, because the supervisor, not the gateway, writes them.
 
 ### Typed service array
 

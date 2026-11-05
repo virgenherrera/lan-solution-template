@@ -219,14 +219,14 @@ function httpProbe(hostHeader: string, path: string): Promise<{ status: number; 
   });
 }
 
-// Only the status field is read from the health body.
-const healthBodySchema = z.looseObject({ status: z.string().optional() });
+// Only the aggregate state is read from the health body: the terminus report keeps it in details.state.state.
+const healthBodySchema = z.looseObject({ details: z.looseObject({ state: z.looseObject({ state: z.string().optional() }) }) });
 
 async function healthState(): Promise<string | undefined> {
   const response = await get(ROUTES.health);
   if (response?.status !== EXPECTED_STATUS.ok) return undefined;
   const parsed = jsonText(healthBodySchema).safeParse(response.body);
-  return parsed.success ? parsed.data.status : undefined;
+  return parsed.success ? parsed.data.details.state.state : undefined;
 }
 
 const waitReady = (timeoutMs: number): Promise<true> =>

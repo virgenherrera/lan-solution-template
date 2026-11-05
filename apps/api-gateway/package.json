@@ -18,7 +18,7 @@
     "lint": "oxlint --type-aware src/ test/",
     "test": "pnpm run test:static && pnpm run test:dynamic",
     "test:static": "tsc --noEmit -p tsconfig.json",
-    "test:dynamic": "echo \"test:dynamic: not defined for this package\"",
+    "test:dynamic": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "package": "echo \"package: not defined for this package\""
   },
   "dependencies": {
@@ -26,6 +26,7 @@
     "@nestjs/config": "catalog:",
     "@nestjs/core": "catalog:nest",
     "@nestjs/platform-node": "catalog:nest",
+    "@nestjs/terminus": "catalog:",
     "nestjs-zod": "catalog:",
     "reflect-metadata": "catalog:",
     "rxjs": "catalog:",
@@ -38,18 +39,19 @@
     "@nestjs/mau": "catalog:nest",
     "@nestjs/schematics": "catalog:nest",
     "@nestjs/testing": "catalog:nest",
+    "@types/jest": "catalog:",
     "@types/node": "catalog:",
     "@types/supertest": "catalog:",
-    "@vitest/coverage-v8": "catalog:",
+    "jest": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "prettier": "catalog:",
     "rimraf": "catalog:",
     "source-map-support": "catalog:",
     "supertest": "catalog:",
+    "ts-jest": "catalog:",
     "typescript": "catalog:",
-    "vite": "catalog:",
-    "vitest": "catalog:"
+    "vite": "catalog:"
   },
   "nx": {
     "targets": {

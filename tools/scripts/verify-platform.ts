@@ -9,6 +9,7 @@ import { request } from 'node:https';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { z } from 'zod';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const { AGGREGATE_STATE, DISPATCHER_CONFIG } = (await import(join(root, 'libs', 'service-registry', 'dist', 'index.js'))) as typeof import('service-registry');
@@ -91,6 +92,14 @@ const exitWithin = async (exited: Promise<number | null>, ms: number, what: stri
   return code;
 };
 
+const healthBodySchema = z.looseObject({ details: z.looseObject({ state: z.looseObject({ state: z.string() }) }) });
+
+// The terminus report keeps the aggregate state in details.state.state.
+function aggregateStateOf(body: unknown): unknown {
+  const parsed = healthBodySchema.safeParse(body);
+  return parsed.success ? parsed.data.details.state.state : undefined;
+}
+
 function health(port: number, ca: string): Promise<string | undefined> {
   return new Promise((done) => {
     const req = request({ host: BIND, port, path: '/api/health', ca, timeout: HTTP_TIMEOUT_MS }, (res) => {
@@ -99,7 +108,7 @@ function health(port: number, ca: string): Promise<string | undefined> {
       res.on('end', () => {
         try {
           const body: unknown = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-          const state = typeof body === 'object' && body !== null && 'status' in body ? body.status : undefined;
+          const state = aggregateStateOf(body);
           done(res.statusCode === 200 && typeof state === 'string' ? state : undefined);
         } catch {
           done(undefined);
