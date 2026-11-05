@@ -1,8 +1,8 @@
 import { Inject, Injectable, Module, type OnApplicationShutdown } from '@nestjs/common';
-import { isSea } from 'node:sea';
 import { catchError, concatMap, defer, firstValueFrom, from, map, type Observable, throwError } from 'rxjs';
-import { createDbAdapter, derivePaths, getConfig, resolveBase, type AppConfig, type AppPaths, type DbAdapter } from 'shared-core';
-import { APP_CONFIG, APP_PATHS, DB_ADAPTER } from './tokens.js';
+import { createDbAdapter, DbConfig, InjectConfig, NetConfig, TlsConfig, type AppPaths, type DbAdapter } from 'shared-core';
+import { APP_PATHS, appPathsProvider } from '../app-paths.js';
+import { DB_ADAPTER } from './tokens.js';
 
 export { DB_ADAPTER };
 
@@ -37,24 +37,29 @@ class DatabaseLifecycle implements OnApplicationShutdown {
   }
 }
 
+// Reassembles the persisted config from its namespaces: the adapter factory takes the whole of it, though only `db` is read.
+@Injectable()
+class DatabaseOpener {
+  constructor(
+    @InjectConfig(DbConfig) private readonly db: DbConfig,
+    @InjectConfig(NetConfig) private readonly net: NetConfig,
+    @InjectConfig(TlsConfig) private readonly tls: TlsConfig,
+    @Inject(APP_PATHS) private readonly paths: AppPaths,
+  ) {}
+
+  async open(): Promise<DbAdapter> {
+    return firstValueFrom(open$(await createDbAdapter({ db: this.db, net: this.net, tls: this.tls }, this.paths)));
+  }
+}
+
 // One connection per service, opened once while Nest builds the module. If the handshake fails, the application does not start.
 @Module({
   providers: [
-    // A child is the same executable as the supervisor, so both resolve the same base and open the same database.
-    {
-      provide: APP_PATHS,
-      useFactory: (): AppPaths =>
-        derivePaths(resolveBase({ sea: isSea(), execPath: process.execPath, cwd: process.cwd() })),
-    },
-    // main.ts already loaded the config before Nest starts (the TLS identity needs it first), so this only hands it out.
-    { provide: APP_CONFIG, useFactory: (): AppConfig => getConfig() },
-    {
-      provide: DB_ADAPTER,
-      inject: [APP_CONFIG, APP_PATHS],
-      useFactory: async (config: AppConfig, paths: AppPaths): Promise<DbAdapter> => firstValueFrom(open$(await createDbAdapter(config, paths))),
-    },
+    appPathsProvider,
+    DatabaseOpener,
+    { provide: DB_ADAPTER, inject: [DatabaseOpener], useFactory: (opener: DatabaseOpener): Promise<DbAdapter> => opener.open() },
     DatabaseLifecycle,
   ],
-  exports: [APP_PATHS, APP_CONFIG, DB_ADAPTER],
+  exports: [DB_ADAPTER],
 })
 export class DatabaseModule {}

@@ -1,7 +1,6 @@
+import { createZodDto } from 'nestjs-zod';
 import { parseArgs } from 'node:util';
 import { z } from 'zod';
-
-export const SERVER_CONFIG = Symbol('SERVER_CONFIG');
 
 // Only what the supervisor passes. The address and ports come from the persisted config `net` block.
 export const serverConfigSchema = z.strictObject({
@@ -9,14 +8,17 @@ export const serverConfigSchema = z.strictObject({
   web: z.enum(['none', 'ipc']).default('none'),
 });
 
-export type ServerConfig = Readonly<z.infer<typeof serverConfigSchema>>;
+// Same mechanics as the persisted namespaces (DbConfig, NetConfig, TlsConfig): a nestjs-zod DTO whose part sits under `namespace`.
+export class ServerConfig extends createZodDto(serverConfigSchema) {
+  static readonly namespace = 'server';
+}
 
 // Parses only its own options from argv (other flags, such as --service, are ignored). No process.env is read.
-export function parseServerConfig(argv: readonly string[]): ServerConfig {
+export function parseServerConfig(argv: readonly string[]): z.output<typeof serverConfigSchema> {
   const { values } = parseArgs({
     args: [...argv],
     options: { web: { type: 'string' } },
     strict: false,
   });
-  return Object.freeze(serverConfigSchema.parse({ web: values.web }));
+  return serverConfigSchema.parse({ web: values.web });
 }

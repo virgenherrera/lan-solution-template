@@ -2,10 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { NodeAdapter } from '@nestjs/platform-node';
 import type { Server } from 'node:http';
 import { hostname, networkInterfaces } from 'node:os';
-import { isSea } from 'node:sea';
+import { join } from 'node:path';
 import { AGGREGATE_STATE, CONTROL_KIND, readyMessageSchema, shutdownMessageSchema } from 'service-registry';
-import { derivePaths, initConfig, resolveBase } from 'shared-core';
+import { CONFIG_FILE, loadConfig } from 'shared-core';
 import { loadTlsIdentity } from 'shared-core/tls';
+import { resolveAppPaths } from './app-paths.js';
 import { AppModule } from './app.module.js';
 import { HealthState } from './health-state.js';
 import { createRedirectServer } from './redirect-listener.js';
@@ -35,8 +36,8 @@ function closeRedirect(server: Server): Promise<void> {
 async function bootstrap() {
   const serverConfig = parseServerConfig(process.argv.slice(2));
   // The one config read of this process: the TLS identity is validated before Nest builds the HTTPS server. A missing or invalid config stops the start here.
-  const paths = derivePaths(resolveBase({ sea: isSea(), execPath: process.execPath, cwd: process.cwd() }));
-  const config = initConfig(paths);
+  const paths = resolveAppPaths();
+  const config = loadConfig(paths);
   // Both listeners bind the same address: equal ports could only fail later with EADDRINUSE, so name the keys now.
   if (config.net.httpPort === config.net.httpsPort) throw new Error('config net.httpPort must differ from net.httpsPort');
   // Read-only: the gateway never creates or renews certificates. Missing or invalid files stop the start here, with the command that fixes them.
@@ -50,7 +51,7 @@ async function bootstrap() {
   });
   // Receive the bundle first, so a missing or invalid one fails before the port opens.
   const web = serverConfig.web === 'ipc' ? await receiveWebBundle() : undefined;
-  const app = await NestFactory.create(AppModule.register(serverConfig), new NodeAdapter(), {
+  const app = await NestFactory.create(AppModule.register(() => ({ ...config, server: serverConfig }), join(paths.configDir, CONFIG_FILE)), new NodeAdapter(), {
     httpsOptions: { key: identity.key, cert: identity.cert },
   });
   app.setGlobalPrefix('api');

@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
-import { type AggregateState } from 'service-registry';
+import { ZodSerializerDto } from 'nestjs-zod';
+import { HealthResponseDto } from './health.dto.js';
 import { HealthState } from './health-state.js';
 
 @Controller('health')
@@ -8,7 +9,8 @@ export class HealthController {
 
   // Minimal unauthenticated body: only the aggregate state (whether more detail may be exposed is not verified).
   @Get()
-  check(): { status: AggregateState } {
+  @ZodSerializerDto(HealthResponseDto)
+  check(): HealthResponseDto {
     return { status: this.state.get() };
   }
 }

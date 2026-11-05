@@ -23,8 +23,10 @@
   },
   "dependencies": {
     "@nestjs/common": "catalog:nest",
+    "@nestjs/config": "catalog:",
     "@nestjs/core": "catalog:nest",
     "@nestjs/platform-node": "catalog:nest",
+    "nestjs-zod": "catalog:",
     "reflect-metadata": "catalog:",
     "rxjs": "catalog:",
     "service-registry": "workspace:*",
