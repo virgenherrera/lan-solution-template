@@ -64,7 +64,7 @@ U6 (installer smoke on macOS) is not done by the agent: every step needs `sudo` 
 
 ## Independent verification findings
 
-Independent verifiers (read-only, high-risk items) reviewed U1, U4a and U4b. They found blockers in each. All were fixed in a later commit and re-checked.
+Independent verifiers (read-only, high-risk items) reviewed U1, U4a, U4b and U5. U1, U4a and U4b had blockers. All were fixed in a later commit and re-checked. U5 had none.
 
 | Unit | Blocker | Fix | Re-check |
 |---|---|---|---|
@@ -118,7 +118,17 @@ U3 (QC):
 - `pkgutil --payload-files` lists `._app`, `._config`, `._sea-runtime` and `config/._config.example.json` (AppleDouble, from `com.apple.provenance`). `COPYFILE_DISABLE=1` and `xattr -rc` do not remove them. The effect at install time is not verified.
 - That the user can change the installation folder in the real Installer is not verified.
 
-U5: no independent verifier report exists yet. The verifier of U5 is in progress. This page does not state its result.
+U5 (independent verifier, commit `e0c8319`): 0 blockers, 7 advisories, all open. The verifier ran the script with stubs and without root, in an isolated copy. It touched no real keychain.
+
+- A1: `pgrep -f` reads the pattern as a regular expression. With `(`, `[` or `+` in the base path the running-application check fails (`pgrep` exit 2 or no match), and the script removes `app` and `sea-runtime` while the application runs. Lower realism: the default path `/usr/local/lan-solution` is not affected. No loss of `data/`, `logs/` or trust.
+- A2: if `remove-trusted-cert` succeeds and `delete-certificate` fails, the re-run fails with "the trust is still there" and needs a manual `security delete-certificate -Z`. State is safe (`certs/` and the anchor stay). Whether the real `remove-trusted-cert` fails when no trust settings exist is not verified.
+- A3: with no usable anchor and no `ca.crt`, while the keychain holds the CA, the script says "nothing to untrust", deletes `ca.key` and exits 0. The CA stays trusted without its key. Reachable only without the root-owned anchor, so not in a normal install.
+- A4: time-of-check to time-of-use race in `certs/`, only on the exact names `ca.crt`, `ca.key`, `leaf.crt` and `leaf.key`. Not demonstrated.
+- A5: the deny list of the base does not cover `/Users/<user>` or `/private/var/root`. It needs a human running `sudo` from there.
+- A6: if `rm -f` fails, `set -e` ends the script with exit 1 and no message. The state stays safe: all 13 injected failures re-ran clean.
+- A7: the `.pkg` payload lists AppleDouble entries `._app`, `._config`, `._sea-runtime`, `._uninstall.sh` and `config/._config.example.json`. If the Installer writes them, the script does not list them and would leave them behind. Not verified (nothing was installed).
+
+The verifier confirmed, with stubs and without root: the database stayed intact (same SHA-256 and same tree in every variant), no deletion went through a link, trust is removed only by the hash of the root-owned anchor with `delete-certificate -Z`, 13 injected `rm` failures re-ran safely, and the payload script is 0755 root. Proposed mitigations are in [technical debt](../backlog/td-windows-linux-distribution.md). None is built.
 
 ## Not verified
 

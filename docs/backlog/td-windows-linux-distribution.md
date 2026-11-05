@@ -70,6 +70,14 @@ Every item is not verified.
 - [ ] Mitigation of A1 of the U4b recheck: a CA pair planted in `certs/` before `postinstall` becomes the trust anchor. Options in [ADR-011](../architecture/adr/ADR-011-macos-installer-and-install-time-trust.md#consequences). Needs a human decision.
 - [ ] A `ca.crt` swapped for a FIFO could hang the trust script (A5 of the U4b recheck). Not probed with a real FIFO.
 - [ ] Smaller installer advisories: the trust script reads `TMPDIR` from the Installer; the refusal of `/`, `/usr` and `/System` relies on the template check and not on an explicit list; `._*` AppleDouble entries in the `.pkg` payload; a reinstall with no console user leaves a partial state.
+- [ ] Mitigations proposed for the 7 advisories of the U5 verifier (A1 to A7 in the [POC-8 result](../results/POC-08-Result.md#advisories-still-open)). Proposals only, none implemented:
+  - A1: escape the path or use `pgrep -x` with the resolved path; treat `pgrep` exit above 1 as an error.
+  - A2: make the recovery idempotent: if `remove-trusted-cert` fails, still try `delete-certificate` and check the listing.
+  - A3: abort instead of deleting `ca.key` when there is no anchor and the keychain holds the CA.
+  - A4: accept and document the race, or check the owner of `certs/` just before the removal.
+  - A5: allow-list for the base (owner root, not writable by others) instead of a deny list.
+  - A6: print a message when `rm -f` fails (`|| { warn ...; FAILED=1; }`).
+  - A7: remove `._*` entries from the payload (`COPYFILE_DISABLE=1` did not remove them in U3); verify the plist name in a real run.
 - [ ] CI validation of branch names and a guard against duplicate tags ([REQ-VERSION-02](../requirements/11-nx-quality-testing.md)), the highest-impact bump when several PRs merge before a release, and GitHub Release. They belong to [POC-9](poc-9-ci-cd-releases.md), which is on hold.
 - [ ] The `display` that the `package` step of `desktop` needs in CI: the E2E opens a window.
 - [ ] Optional guard `cargo check --target <triple>` for the other platforms. It needs `rustup target add`, which is an installation. It needs the approval of the human.
