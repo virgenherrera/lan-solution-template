@@ -36,6 +36,9 @@
     "rimraf": "catalog:"
   },
   "dependencies": {
+    "@nestjs/common": "catalog:nest",
+    "@nestjs/config": "catalog:",
+    "nestjs-zod": "catalog:",
     "pg": "catalog:",
     "rxjs": "catalog:",
     "service-registry": "workspace:*",

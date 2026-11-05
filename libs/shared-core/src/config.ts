@@ -68,16 +68,33 @@ function deepFreeze<T>(value: T): T {
   return value;
 }
 
-// Reads the file and validates it; a missing or invalid config fails fast before readiness (REQ-DB-06). Never created here: it must exist next to the executable (ADR-007).
-export function loadConfig(paths: AppPaths): AppConfig {
+function readConfigText(paths: AppPaths): { file: string; text: string } {
   const file = join(paths.configDir, CONFIG_FILE);
   if (!existsSync(file)) {
     throw new Error(`config ${file} is missing: copy libs/shared-core/config.example.json to ${file} (the installer creates it in a packaged install)`);
   }
+  return { file, text: readFileSync(file, 'utf8') };
+}
+
+// Reads the file and validates it; a missing or invalid config fails fast before readiness (REQ-DB-06). Never created here: it must exist next to the executable (ADR-007).
+export function loadConfig(paths: AppPaths): AppConfig {
+  const { file, text } = readConfigText(paths);
   // One error path: invalid JSON and schema failures are issues of the same list.
-  const parsed = jsonText(configSchema).safeParse(readFileSync(file, 'utf8'));
+  const parsed = jsonText(configSchema).safeParse(text);
   if (!parsed.success) throw new Error(`config ${file} is invalid: ${z.prettifyError(parsed.error)}`);
   return deepFreeze(parsed.data);
+}
+
+// The raw, not yet schema-validated config object: what AppConfigModule takes as its source, so each namespace DTO validates its own part.
+export type ConfigSource = () => unknown | Promise<unknown>;
+
+export function configFileSource(paths: AppPaths): ConfigSource {
+  return () => {
+    const { file, text } = readConfigText(paths);
+    const parsed = jsonText(z.looseObject({})).safeParse(text);
+    if (!parsed.success) throw new Error(`config ${file} is invalid: ${z.prettifyError(parsed.error)}`);
+    return parsed.data;
+  };
 }
 
 let current: AppConfig | undefined;
