@@ -6,7 +6,7 @@ type: architecture
 summary: "Records POC-3: config singleton, DbAdapter strategy port, sqlite-vector SEA asset, custom migrator. Root and defaults rules superseded by ADR-007."
 related[5]: docs/results/POC-03-Result.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-007-persistence-system.md
 status: current
-updated: 2026-11-03
+updated: 2026-11-04
 -->
 
 # ADR-003: Config singleton and database strategy
@@ -41,6 +41,9 @@ POC-3 did not install Drizzle. The adapter and the migrator use `node:sqlite` an
 
 ## Consequences
 
-- A pgvector adapter implements `DbAdapter` and joins without a consumer change. Vector SQL differs per engine and stays inside each adapter.
+- The PostgreSQL adapter (`pg` driver, pgvector) implements `DbAdapter` and joined without a consumer change. Vector SQL differs per engine and stays inside each adapter.
+- `db.engine: "pg"` takes one `pg` block: `host`, `port`, `database`, `user` and `passwordFile`. `passwordFile` is a plain file name inside the data directory, so the secret never lives in `config.json`. The block is validated like the rest of the config.
+- The PostgreSQL adapter never falls back to a non-vector search. `verifyVector` checks `pg_available_extensions` and `pg_extension`, runs `CREATE EXTENSION vector` when the extension is available but not installed, and reports the role, the database and whether the extension is trusted when the server refuses (REQ-DB-08).
+- The adapter keeps one connection. The port uses `?` placeholders, and the adapter rewrites them to `$1`, `$2`, and so on outside quoted literals.
 - The SEA executable is the trust root for the vector binary (see the result page, verification section).
 - The port runs one statement per call. The migrator splits SQL on `;`.

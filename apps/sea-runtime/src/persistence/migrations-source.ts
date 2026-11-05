@@ -1,4 +1,4 @@
-import { manifestSchema, type Engine } from 'db-migrations';
+import { manifestSchema } from 'db-migrations';
 import { jsonText } from 'service-registry';
 import type { Migration } from 'shared-core';
 import type { AssetSource } from './asset-source.js';
@@ -6,7 +6,7 @@ import { manifestAsset, migrationAsset } from './assets.js';
 
 // Builds the migration list from the selected engine's embedded manifest and .sql files. A missing asset or a manifest
 // packed for another engine throws. The manifest sha256 travels with each migration, so the migrator rejects a file that no longer matches the build.
-export function readEmbeddedMigrations(source: AssetSource, engine: Engine): Migration[] {
+export function readEmbeddedMigrations(source: AssetSource, engine: string): Migration[] {
   const manifest = jsonText(manifestSchema).parse(source.readText(manifestAsset(engine)));
   // Widened to string: with a single engine the compiler would otherwise narrow the mismatch branch to never.
   const packed: string = manifest.engine;

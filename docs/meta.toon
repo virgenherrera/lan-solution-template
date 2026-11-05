@@ -24,7 +24,7 @@ docs[89]:
     ids: []
     related[5]: docs/results/POC-03-Result.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-007-persistence-system.md
     status: current
-    updated: 2026-11-03
+    updated: 2026-11-04
     refs[7]: REQ-CFG-01,REQ-DB-01,REQ-DB-02,REQ-DB-06,REQ-DB-08,REQ-DB-09,REQ-STACK-07
   - doc: docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md
     title: ADR-004 Drizzle build-time migrations

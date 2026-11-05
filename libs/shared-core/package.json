@@ -32,9 +32,11 @@
   "types": "dist/index.d.ts",
   "devDependencies": {
     "@types/node": "catalog:",
+    "@types/pg": "catalog:",
     "rimraf": "catalog:"
   },
   "dependencies": {
+    "pg": "catalog:",
     "rxjs": "catalog:",
     "service-registry": "workspace:*",
     "zod": "catalog:"

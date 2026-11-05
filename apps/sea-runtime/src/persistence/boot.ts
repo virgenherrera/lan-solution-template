@@ -35,10 +35,15 @@ export interface PersistenceDeps {
   readonly db: DbAdapter;
 }
 
+// Where the operator looks for the database: the file for SQLite, the server and database name for PostgreSQL.
+function locationOf(paths: AppPaths, { db }: AppConfig): string {
+  return db.engine === 'sqlite' ? resolve(paths.dataDir, db.sqlite.file) : `${db.pg.host}:${db.pg.port}/${db.pg.database}`;
+}
+
 function openDatabase$(log: Log, { paths, config, db }: PersistenceDeps): Observable<PersistenceBoot> {
   return defer(() => {
     log(`root ${paths.root}`);
-    const location = resolve(paths.dataDir, config.db.sqlite.file);
+    const location = locationOf(paths, config);
     return from(db.connect()).pipe(
       // "file is not a database" alone does not say which file; the operator needs the path.
       catchError((error: unknown) => throwError(() => new Error(`cannot open the database at ${location}: ${error instanceof Error ? error.message : String(error)}`))),

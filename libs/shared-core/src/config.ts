@@ -8,22 +8,35 @@ import { HOST_NAME_PATTERN } from './tls/san.js';
 // Persisted, namespaced config (REQ-CFG-01). Nothing is defaulted: a missing or invalid key stops the start (ADR-007).
 // Secrets never live here: they sit in dataDir (decision 11) and never travel in CLI args.
 // `engine` selects exactly one block (REQ-DB-02); a new engine adds one strictObject variant here.
+const plainFileName = z
+  .string()
+  .regex(/^(?!\.+$)[\w.-]+$/, "a plain file name inside the data directory: no path separators, no '..'");
+
+const port = z.int().min(1).max(65535);
+
 const dbSchema = z.discriminatedUnion('engine', [
   z.strictObject({
     engine: z.literal('sqlite'),
     sqlite: z.strictObject({
       // Relative to dataDir; the database stays outside the SEA (REQ-DB-07).
-      file: z
-        .string()
-        .regex(/^(?!\.+$)[\w.-]+$/, "a plain file name inside the data directory: no path separators, no '..'"),
+      file: plainFileName,
       foreignKeys: z.boolean(),
       journalMode: z.enum(['WAL', 'DELETE']),
       synchronous: z.enum(['FULL', 'NORMAL']),
     }),
   }),
+  z.strictObject({
+    engine: z.literal('pg'),
+    pg: z.strictObject({
+      host: z.union([z.ipv4(), z.ipv6(), z.string().max(253).regex(HOST_NAME_PATTERN, 'a DNS host name or an IP address')]),
+      port,
+      database: z.string().min(1).max(63),
+      user: z.string().min(1).max(63),
+      // The password is a secret, so it lives in a file inside dataDir (decision 11), never in this file.
+      passwordFile: plainFileName,
+    }),
+  }),
 ]);
-
-const port = z.int().min(1).max(65535);
 
 // Network binding for the HTTPS listener and the plain-HTTP redirect listener.
 const netSchema = z.strictObject({

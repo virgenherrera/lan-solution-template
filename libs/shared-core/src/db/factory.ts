@@ -1,6 +1,7 @@
 import type { AppConfig } from '../config.js';
 import type { AppPaths } from '../paths.js';
 import type { DbAdapter } from './port.js';
+import type { PgOptions } from './pg/index.js';
 import type { SqliteOptions } from './sqlite/index.js';
 
 type Engine = AppConfig['db']['engine'];
@@ -8,6 +9,7 @@ type Engine = AppConfig['db']['engine'];
 // Per-engine options, keyed by engine. Type-only: nothing engine specific is loaded by importing this file.
 export interface AdapterDeps {
   readonly sqlite?: SqliteOptions;
+  readonly pg?: PgOptions;
 }
 
 interface EngineModule {
@@ -20,6 +22,10 @@ const ENGINES: Readonly<Record<Engine, () => Promise<EngineModule>>> = {
   sqlite: async () => {
     const { createAdapter } = await import('./sqlite/index.js');
     return { createAdapter: (config, paths, deps) => createAdapter(config, paths, deps.sqlite) };
+  },
+  pg: async () => {
+    const { createAdapter } = await import('./pg/index.js');
+    return { createAdapter: (config, paths, deps) => createAdapter(config, paths, deps.pg) };
   },
 };
 

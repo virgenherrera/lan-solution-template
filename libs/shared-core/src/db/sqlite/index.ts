@@ -12,5 +12,6 @@ export interface SqliteOptions {
 }
 
 export function createAdapter(config: AppConfig, paths: AppPaths, options: SqliteOptions = {}): DbAdapter {
+  if (config.db.engine !== 'sqlite') throw new Error(`the sqlite engine cannot open a "${config.db.engine}" config`);
   return new SqliteAdapter(config.db.sqlite, paths.dataDir, options.vector);
 }

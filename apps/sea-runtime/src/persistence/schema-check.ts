@@ -38,8 +38,9 @@ function failUnknownEngine(engine: string): never {
 // Extras that cannot hurt this build are tolerated and only logged.
 export function verifySchema$(db: DbAdapter, location: string, log: Log): Observable<SchemaReport> {
   return defer(() => {
-    const expected = tablesSchema.parse(tablesByEngine[db.engine as Engine] ?? failUnknownEngine(db.engine));
-    return from(db.introspectSchema()).pipe(map((live) => assertMatches(db, location, compareSchema(expected, live, 'required'))));
+    const engine = db.engine as Engine;
+    const expected = tablesSchema.parse(tablesByEngine[engine] ?? failUnknownEngine(db.engine));
+    return from(db.introspectSchema()).pipe(map((live) => assertMatches(db, location, compareSchema(expected, live, 'required', engine))));
   }).pipe(
     // A failure is printed once, in full, by main.ts when the boot stream rejects.
     tap((report) => logOk(log, report.tolerated)),

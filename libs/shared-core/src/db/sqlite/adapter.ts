@@ -23,7 +23,7 @@ export interface SqliteVectorBackend {
   search(db: DatabaseSync, collection: string, query: Float32Array, k: number): readonly VectorMatch[];
 }
 
-type SqliteSettings = AppConfig['db']['sqlite'];
+type SqliteSettings = Extract<AppConfig['db'], { engine: 'sqlite' }>['sqlite'];
 
 const SQLITE_TYPES: Readonly<Record<string, LiveColumnType>> = { TEXT: 'text', INTEGER: 'integer', REAL: 'real', BLOB: 'blob' };
 
