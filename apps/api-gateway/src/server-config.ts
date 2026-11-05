@@ -12,13 +12,13 @@ export class ServerConfig extends createZodDto(
 ) {
   static readonly namespace = 'server';
 
-  // Picks only its own options from argv (other flags, such as --service, are ignored). It validates nothing: the namespace schema above is the one validation. No process.env is read.
-  static fromArgv(argv: readonly string[]): { web: string | boolean | undefined } {
+  // Picks only its own options from argv (other flags, such as --service, are ignored) and validates them with the schema above, the one schema of this block: an invalid value throws the ZodError as is. No process.env is read.
+  static fromArgv(argv: readonly string[]): ServerConfig {
     const { values } = parseArgs({
       args: [...argv],
       options: { web: { type: 'string' } },
       strict: false,
     });
-    return { web: values.web };
+    return this.schema.parse({ web: values.web });
   }
 }

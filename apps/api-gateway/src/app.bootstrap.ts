@@ -19,6 +19,8 @@ export interface AppContext {
 
 export class AppBootstrap {
   static async createAppContext(): Promise<AppContext> {
+    // First, so an invalid --web fails before the config or the TLS files are read.
+    ServerConfig.fromArgv(process.argv.slice(2));
     // Read-only: the gateway never creates or renews certificates. Missing or invalid files (and a missing or invalid config) stop the start here, with the command that fixes them.
     // This is the only use of the config outside Nest: NodeAdapter builds the HTTPS server from `httpsOptions` while the app is created, before ConfigService exists. Creating the app twice instead would open the database twice.
     const { tls } = GatewayConfigSource.file();
@@ -32,6 +34,8 @@ export class AppBootstrap {
     });
     const app = await NestFactory.create(AppModule, new NodeAdapter(), {
       httpsOptions: { key: identity.key, cert: identity.cert },
+      // A startup error reaches HttpAppMain, which prints it as one line, instead of Nest logging it and exiting by itself.
+      abortOnError: false,
     });
     app.setGlobalPrefix(API_PREFIX);
 
