@@ -5,7 +5,7 @@ title: Architecture overview
 type: architecture
 summary: Mermaid architecture diagrams citing SRS sections for runtime and desktop topology.
 ids[0]:
-related[15]: README.md,docs/architecture/platform-matrix.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/device-trust-guide.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
+related[17]: README.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/results/POC-08-Result.md,docs/architecture/platform-matrix.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/device-trust-guide.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
 status: current
 updated: 2026-11-04
 -->
@@ -36,7 +36,7 @@ updated: 2026-11-04
 | Production | One SEA, a supervisor, a gateway, one HTTPS origin | [Production topology](#production-topology) |
 | Desktop | Tauri starts the SEA supervisor as a sidecar | [Tauri sidecar](#tauri-sidecar) |
 | Platforms | Systems and architectures with what was built and verified; only macOS arm64 ran | [Platform matrix](platform-matrix.md) |
-| Decisions | ADR-001 to ADR-010 are written. ADR-009 and ADR-010 are proposed. ADR-011 is a placeholder. | [Architecture decisions](#architecture-decisions) |
+| Decisions | ADR-001 to ADR-011 are written. ADR-009, ADR-010 and ADR-011 are proposed. ADR-012 is a placeholder. | [Architecture decisions](#architecture-decisions) |
 
 ---
 
@@ -139,7 +139,7 @@ Sources:
 
 [Back to navigation](#navigation)
 
-The [ADR index](../roadmap/PROPOSAL.md#adr-index) in the roadmap proposal lists the decisions. The ADR numbers are proposals, not SRS requirements. ADR-009 to ADR-011 are numbered in the order the POCs write them. ADR-010 was written by the POC-5 spike, ahead of POC-7.
+The [ADR index](../roadmap/PROPOSAL.md#adr-index) in the roadmap proposal lists the decisions. The ADR numbers are proposals, not SRS requirements. ADR-009 to ADR-012 are numbered in the order the POCs write them. ADR-010 was written by the POC-5 spike, ahead of POC-7.
 
 | ADR | Topic | Status | Written by |
 | --- | --- | --- | --- |
@@ -153,7 +153,8 @@ The [ADR index](../roadmap/PROPOSAL.md#adr-index) in the roadmap proposal lists 
 | [ADR-008](adr/ADR-008-tls-trust-model.md) | TLS trust model | accepted; implemented on `minor/poc-04-https-gateway` ([device-trust guide](device-trust-guide.md)) | [POC-4](../roadmap/PROPOSAL.md#poc-4-https-gateway-serving-the-angular-pwa) |
 | [ADR-009](adr/ADR-009-desktop-process-model.md) | Desktop process model | proposed; implemented in PR #21 (merged; macOS only) | [POC-5](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar) |
 | [ADR-010](adr/ADR-010-first-run-admin-setup.md) | First admin authentication (the auth mechanism of POC-7) | proposed; not decided, no code | [POC-5](../roadmap/PROPOSAL.md#poc-5-tauri-desktop-shell-with-sea-sidecar) spike, [POC-7](../roadmap/PROPOSAL.md#poc-7-auth-and-roles) |
-| ADR-011 | Release flow | placeholder | [POC-9](../roadmap/PROPOSAL.md#poc-9-github-actions-cicd-and-releases-hold), on HOLD |
+| [ADR-011](adr/ADR-011-macos-installer-and-install-time-trust.md) | macOS installer and install-time trust | proposed; built and inspected on macOS, not installed | [POC-8](../roadmap/PROPOSAL.md#poc-8-msi-credential-dialog-platform-matrix-and-lockstep-versioning), [result](../results/POC-08-Result.md) |
+| ADR-012 | Release flow | placeholder | [POC-9](../roadmap/PROPOSAL.md#poc-9-github-actions-cicd-and-releases-hold), on HOLD |
 
 ### Topics without an ADR number
 

@@ -3,9 +3,9 @@ fmt: TOON
 doc: docs/backlog/td-windows-linux-distribution.md
 title: "Technical debt: Windows and Linux distribution"
 type: backlog
-summary: "Technical debt moved out of POC-8: Windows and Linux installers, matrix runs, client mode and signing. Nothing verified."
+summary: "Technical debt left by POC-8: Windows and Linux installers, matrix runs, client mode, signing and installer follow-ups. Nothing verified."
 ids[0]:
-related[6]: docs/backlog/README.md,docs/backlog/poc-8-msi-matrix-versioning.md,docs/backlog/poc-9-ci-cd-releases.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/results/POC-05-Result.md
+related[8]: docs/results/POC-08-Result.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/backlog/README.md,docs/backlog/poc-8-msi-matrix-versioning.md,docs/backlog/poc-9-ci-cd-releases.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/results/POC-05-Result.md
 status: proposed
 updated: 2026-11-04
 -->
@@ -32,7 +32,7 @@ updated: 2026-11-04
 
 | Item | Value |
 |---|---|
-| Status | Technical debt. No design. Every item is not verified. |
+| Status | Technical debt. No design. Every item is not verified. Updated 2026-11-04 with what POC-8 left on macOS: see [POC-08-Result](../results/POC-08-Result.md). |
 | Appetite | none |
 | Depends on | a way to run Windows and Linux natively (a VM or a native runner, [OQ7](../roadmap/PROPOSAL.md#open-questions)) |
 | Requirements | none new. No id is invented here. The items relate to REQ-TEST-09 and REQ-TEST-10 as written in [POC-8](poc-8-msi-matrix-versioning.md). |
@@ -63,6 +63,15 @@ Every item is not verified.
 - [ ] Black-box smoke of native installers on each OS.
 - [ ] Client mode: the shell loads its UI from a gateway on another machine ([OQ17](../roadmap/PROPOSAL.md#open-questions), pending since POC-5).
 - [ ] CI matrix with `tauri-apps/tauri-action` in [POC-9](poc-9-ci-cd-releases.md). From memory of the agent; check the official documentation when the work starts.
+- [ ] macOS x64: the row is `pending` in the [platform matrix](../architecture/platform-matrix.md). It needs an Intel host or a native runner.
+- [ ] Apple signing and notarization of the `.pkg` and the host. The `.pkg` is unsigned and Gatekeeper behaviour is not verified ([ADR-011](../architecture/adr/ADR-011-macos-installer-and-install-time-trust.md)).
+- [ ] Real run of the macOS installer: install with the Installer, the order of the two components, that an unticked trust box omits the component, the `sudo -u` branch, `add-trusted-cert` from a `postinstall`, a real `uninstall.sh` as root, and AC-18 with the trusted CA. The recipe is in the [POC-8 result](../results/POC-08-Result.md#recipe-for-the-human); the human runs it.
+- [ ] Black-box smoke of the macOS installer without instrumentation (install, start, navigate, close, uninstall), as a repeatable check and not only a recipe.
+- [ ] Mitigation of A1 of the U4b recheck: a CA pair planted in `certs/` before `postinstall` becomes the trust anchor. Options in [ADR-011](../architecture/adr/ADR-011-macos-installer-and-install-time-trust.md#consequences). Needs a human decision.
+- [ ] A `ca.crt` swapped for a FIFO could hang the trust script (A5 of the U4b recheck). Not probed with a real FIFO.
+- [ ] Smaller installer advisories: the trust script reads `TMPDIR` from the Installer; the refusal of `/`, `/usr` and `/System` relies on the template check and not on an explicit list; `._*` AppleDouble entries in the `.pkg` payload; a reinstall with no console user leaves a partial state.
+- [ ] CI validation of branch names and a guard against duplicate tags ([REQ-VERSION-02](../requirements/11-nx-quality-testing.md)), the highest-impact bump when several PRs merge before a release, and GitHub Release. They belong to [POC-9](poc-9-ci-cd-releases.md), which is on hold.
+- [ ] The `display` that the `package` step of `desktop` needs in CI: the E2E opens a window.
 - [ ] Optional guard `cargo check --target <triple>` for the other platforms. It needs `rustup target add`, which is an installation. It needs the approval of the human.
 
 ---
@@ -71,8 +80,7 @@ Every item is not verified.
 
 [Back to navigation](#navigation)
 
-- The macOS installer. It is in [POC-8](poc-8-msi-matrix-versioning.md).
-- Apple signing and notarization are macOS debt, tracked in the POC-8 result.
+- The macOS installer itself. It is in [POC-8](poc-8-msi-matrix-versioning.md). Its result and limits are in the [POC-8 result](../results/POC-08-Result.md); the follow-ups are the macOS items above.
 
 ---
 

@@ -4,7 +4,7 @@ doc: docs/roadmap/PROPOSAL.md
 title: "Roadmap Proposal: lan-solution-template (SRS v1.6)"
 type: roadmap
 summary: "Roadmap proposal with cycles, POC pitches, coverage matrix and open questions."
-related[7]: README.md,docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/results/POC-05-Result.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md
+related[9]: docs/results/POC-08-Result.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,README.md,docs/backlog/README.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/results/POC-05-Result.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md
 status: proposed
 updated: 2026-11-04
 -->
@@ -53,7 +53,7 @@ Why this page exists: it orders the SRS v1.6 POCs and logs 18 human decisions. N
 | Status | Proposal v2. Not approved. | [Decision Log](#decision-log) |
 | Method | Shape Up. 6 weeks of build, then 2 weeks of cooldown. | [Method](#method) |
 | Bets | 3 cycles. 8 active POCs (POC-9 on hold) and POC-6 in the backlog. | [Cycles and bets](#cycles-and-bets) |
-| ADR index | 15 rows: 12 approved, 3 proposed. | [ADR index](#adr-index) |
+| ADR index | 16 rows: 12 approved, 4 proposed. | [ADR index](#adr-index) |
 | Open questions | 25 rows. None blocks. | [Open questions](#open-questions) |
 | Coverage | 13 SRS sections and 36 acceptance criteria map to POCs. | [SRS coverage matrix](#srs-coverage-matrix) |
 
@@ -158,6 +158,7 @@ Each row summarizes one decision. The written ADR files are listed in the [archi
 | Database | We install the current stable Drizzle tag first and use `1.0.0-rc.5` only if it fails. | 10 | approved |
 | Release | Release automation is on HOLD until all POCs are ready. | 9 | approved |
 | Toolchain | Version substitutions in POC-1 (S1 to S5) are recorded in [ADR-001](../architecture/adr/ADR-001-version-substitutions.md). | 1e, human | approved |
+| macOS installer and install-time trust | A `.pkg` with no `.app`, the base next to the executable, one CA per installation created as the console user, system trust only through an unticked box anchored by a root-owned fingerprint, and an uninstall that always keeps the SQLite database. Built and inspected on macOS; not installed ([ADR-011](../architecture/adr/ADR-011-macos-installer-and-install-time-trust.md)). | POC-8, OQ17, OQ24 | proposed |
 | Runtime | One SEA binary per platform, closed service registry, IPC control channel, bounded restart, coordinated shutdown and the package smoke are recorded in [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md). Windows not verified. | POC-2, D1 to D5 | approved as record; SRS owner review not verified |
 
 The [Decision Log](#decision-log) keeps each decision as recorded.
@@ -548,7 +549,7 @@ sequenceDiagram
   - Mark the rest pending or blocked.
   - Reshape the remainder as a new pitch.
 - **Acceptance criteria**: AC-21, AC-25, AC-33, REQ-VERSION-01..03, REQ-TEST-09, REQ-TEST-10, NFR-PORT-01, NFR-TRUTH-01.
-- **Deliverable**: branch `chore/poc-08-matrix-versioning`. PR title: `chore: native platform matrix and lockstep versioning`. Results under `docs/`: `Platform-Matrix` and `POC-08-Result`.
+- **Deliverable**: branch `chore/poc-08-matrix-versioning`. PR title: `chore: native platform matrix and lockstep versioning`. Results under `docs/`: `Platform-Matrix` (as [platform-matrix](../architecture/platform-matrix.md)), [POC-08-Result](../results/POC-08-Result.md) and [ADR-011](../architecture/adr/ADR-011-macos-installer-and-install-time-trust.md) (macOS installer and install-time trust).
 
 ### POC-9: GitHub Actions CI/CD and releases (HOLD)
 
@@ -573,7 +574,7 @@ sequenceDiagram
 - **No-gos**: no cloud deploy. No direct `nx`, `jest`, `ng`, `cargo`, `ncu` or `postject` in the workflow. No `continue-on-error` on audit. No amend or force-push. No untrusted-PR cache. No silent `securityFix` run (REQ-DEPS-02).
 - **Circuit breaker**: if a mandatory platform cannot run, the release is blocked (REQ-CI-02, REQ-CI-06). The release is not green. Ship PR CI only and publish the findings. Reshape CD as a new pitch.
 - **Acceptance criteria**: AC-26, AC-27, AC-35, AC-36, REQ-CI-01..10, REQ-SEC-CI-01..04, AC-02, AC-32.
-- **Deliverable**: branch `chore/poc-09-ci-cd`. PR title: `chore: GitHub Actions CI and release pipeline`. Results under `docs/`: `POC-09-Result` and `ADR-011` (release flow).
+- **Deliverable**: branch `chore/poc-09-ci-cd`. PR title: `chore: GitHub Actions CI and release pipeline`. Results under `docs/`: `POC-09-Result` and the ADR of the release flow (`ADR-011` in this pitch; that number is now the macOS installer, so the release flow takes the next free number).
 
 ---
 
