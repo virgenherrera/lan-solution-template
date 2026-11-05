@@ -60,7 +60,7 @@ type DeepReadonly<T> = { readonly [K in keyof T]: DeepReadonly<T[K]> };
 
 export const CONFIG_FILE = 'config.json';
 
-function deepFreeze<T>(value: T): T {
+export function deepFreeze<T>(value: T): T {
   if (typeof value === 'object' && value !== null) {
     for (const child of Object.values(value)) deepFreeze(child);
     Object.freeze(value);

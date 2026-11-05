@@ -7,3 +7,5 @@ export * from './db/migrator.js';
 export * from './db/migration-events.js';
 export * from './config-dtos.js';
 export * from './app-config.module.js';
+export * from './inject-config.decorator.js';
+export * from './app-paths.service.js';

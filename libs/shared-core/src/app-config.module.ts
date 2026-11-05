@@ -1,7 +1,7 @@
-import { Inject, type DynamicModule } from '@nestjs/common';
+import type { DynamicModule } from '@nestjs/common';
 import { ConfigModule, getConfigToken, registerAs } from '@nestjs/config';
 import { z } from 'zod';
-import type { ConfigSource } from './config.js';
+import { deepFreeze, type ConfigSource } from './config.js';
 import type { ConfigClass } from './config-dtos.js';
 
 export type AppConfigModuleOptions = {
@@ -49,14 +49,3 @@ export class AppConfigModule {
     });
   }
 }
-
-function deepFreeze<T>(value: T): T {
-  if (typeof value === 'object' && value !== null) {
-    for (const child of Object.values(value)) deepFreeze(child);
-    Object.freeze(value);
-  }
-  return value;
-}
-
-// `constructor(@InjectConfig(DbConfig) db: DbConfig)`
-export const InjectConfig = (cls: ConfigClass): ParameterDecorator => Inject(AppConfigModule.getToken(cls));
