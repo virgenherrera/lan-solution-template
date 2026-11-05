@@ -130,10 +130,21 @@ async function main(): Promise<number> {
   }
 }
 
+// A refused connection reaches us as an AggregateError with an empty message (one inner error per address tried), so the inner messages carry the cause.
+function describeError(error: unknown): string {
+  if (error instanceof AggregateError) {
+    const inner = error.errors.map((item) => describeError(item)).join('\n');
+    return error.message === '' ? inner : `${error.message}\n${inner}`;
+  }
+  if (!(error instanceof Error)) return String(error);
+  const code = (error as { code?: unknown }).code;
+  return typeof code === 'string' && !error.message.includes(code) ? `${code}: ${error.message}` : error.message;
+}
+
 main().then(
   (code) => process.exit(code),
   (error: unknown) => {
-    console.error(error instanceof Error ? error.message : error);
+    console.error(describeError(error));
     process.exit(1);
   },
 );
