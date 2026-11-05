@@ -3,11 +3,11 @@ fmt: TOON
 doc: docs/results/POC-06-Result.md
 title: "POC-06 Result"
 type: backlog
-summary: "Result of POC-6: PostgreSQL adapter with pgvector, migrations, parity check and a Docker APP smoke test. Branch built, PR pending."
+summary: "Result of POC-6: PostgreSQL adapter with pgvector, migrations, parity check and a Docker APP smoke test. Branch built, health and dependency cleanup added, PR pending."
 ids[0]:
 related[8]: docs/backlog/poc-6-postgresql-adapter-parity.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/results/POC-05-Result.md,docs/standards/README.md,docs/roadmap/PROPOSAL.md
 status: current
-updated: 2026-11-04
+updated: 2026-11-05
 -->
 
 # POC-06 Result
@@ -34,6 +34,9 @@ Commits after `main` (`git log --oneline main..HEAD`):
 | T5 vector | `4431022` | `db-parity` prints the inner errors when it cannot connect. The vector checks were already in `4656deb`. |
 | T6 APP test | `84e2fb3` | `tools/scripts/smoke-pg.ts` and the Nx target `sea-runtime:smoke-pg`. |
 | Config in Nest DI | `883886e`, `14f5da4`, `c188813`, `9a55016`, `e56cb05` | `AppConfigModule` with nestjs-zod namespaces in shared-core; `@InjectConfig` per namespace (sea-runtime db config, api-gateway `DbConfig` and `ServerConfig`); nestjs-zod validation pipe and serializer interceptor registered globally in the gateway; `keep_classnames` in the shared bundler config (see below). |
+| Health | `888d00f` | `GET /api/health` validates its query with a nestjs-zod DTO and answers in the `@nestjs/terminus` shape; e2e test; `smoke-sea` and `verify-platform` read `details.state.state`; ADR-002 and ADR-006 updated. |
+| smoke-sea race | `1c24d2f` | Bounded poll for the `tls: using leaf certificate` line in `tools/scripts/smoke-sea.ts:490`. |
+| Dependencies | `d6fcded` | Dropped the `supports-color` pin and unused dependencies (see Debt). |
 
 ## Drizzle stable-first (decision 10)
 
@@ -65,6 +68,22 @@ Everything ran on macOS 27.2 arm64, Node v26.13.0, Docker 29.9.2 (Docker Desktop
 | SQLite is unchanged. | `nx run sea-runtime:package` (which runs `smoke-sea`: 30 checks passed) exit 0. `db-parity` for SQLite is identical to the baseline in stdout, stderr and exit. | `6db41ae`, `84e2fb3` |
 | Docs metadata is in sync. | Regeneration of `docs/meta.toon` in a temporary directory and `cmp -s` exit 0 (see the closing commit). | docs commit |
 
+### Health, dependencies and startup failure
+
+Checked on 2026-11-05 on the same setup as above.
+
+| Item | Proof | Commit |
+|---|---|---|
+| `GET /api/health` shape and indicators. | The query is validated by a nestjs-zod DTO (`createZodDto` class). The answer has the `@nestjs/terminus` shape `{status, info, error, details}`. Indicators: `state` (always), `uptime` (on by default, `uptime=false` removes it), `memory` (dummy value 42 MB, `memory=true`), `db` (`SELECT 1` through `DatabaseService`, `db=true`). Truthy values: `true`, `1`, `yes`, `on`; any other value counts as false, like nest-base. | `888d00f` |
+| Health e2e (REQ-TEST-04). | `apps/api-gateway/test/health/get-health.spec.ts`, 8 tests, Jest 30 + ts-jest + Supertest, real SQLite in a temporary directory. | `888d00f` |
+| Health consumers. | `smoke-sea.ts` and `verify-platform.ts` read `details.state.state`. | `888d00f` |
+| nestjs-zod 5.5.0 runs with @nestjs/common 12.3.2 despite the peer range. | The e2e test passes. | `888d00f` |
+| Invalid `--web` is unchanged. | Same output as the base, exit 1. | `4b5dd0c` |
+| `smoke-pg` with Docker. | exit 0. | `d6fcded` |
+| Unreachable database fails fast. | With `abortOnError: false`: exit 1 and `startup failed: database handshake failed (pg): ...` in under 1 s. Three cases: closed port, missing `passwordFile`, nonexistent host. A bad credential is not verified (no local PostgreSQL). | `d6fcded` |
+| Clean clone at `888d00f`. | `install --frozen-lockfile`, build and the `docs/meta.toon` check all exit 0. | `888d00f` |
+| Dependency cleanup keeps one copy. | After removing the `supports-color@8.1.1` pin, a clean clone still has one copy of `@nestjs/config`, `@nestjs/common` and `@nestjs/core`. | `d6fcded` |
+
 ## Not verified
 
 - Windows, Linux and macOS x64. The test is POSIX only (`docker exec`, signals) and ran on macOS arm64.
@@ -74,6 +93,8 @@ Everything ran on macOS 27.2 arm64, Node v26.13.0, Docker 29.9.2 (Docker Desktop
 - A second embedded migration. "Pending migration" is simulated with the only one that exists.
 - Concurrent migration runs on PostgreSQL. REQ-DB-05 asks to define locking and concurrency per engine. A search of `migrator.ts` and `pg/adapter.ts` finds retry on SQLite lock errors and no PostgreSQL advisory lock. Not tested.
 - Running without Internet. The first run pulls two images. Once they are local the test needs no network, but this was not run offline.
+- That the `smoke-sea` race is gone. The fix in `1c24d2f` comes from reading the code. The race was never reproduced, so it is not verified that a reproduction disappears.
+- A bad database credential at startup. There is no local PostgreSQL to test it.
 - Any CI run. POC-9 is on hold, so `smoke-pg` is not part of a pipeline. It is a manual target because it needs Docker.
 
 ## Debt
@@ -95,7 +116,17 @@ The independent verifier returned PASS with advisories. No blocker. Each item be
 - `numberPlaceholders` does not skip a `?` inside double-quoted identifiers, comments or dollar-quoted strings, so it would number them as placeholders. The current SQL does not use these.
 - No committed APP test runs `insertVector` or `searchSimilar` against PostgreSQL (gap in REQ-TEST-06 coverage; see "Not verified" and the vector table debt above). The verifier marked S6 as partial for this reason.
 - Some commit subjects on this branch write `PostgreSQL` with capitals. [AGENTS.md](../../AGENTS.md) asks for lowercase subjects. History is not rewritten.
+- Health: a typo such as `uptime=flase` counts as false and removes `uptime` with a 200. Accepted, same rule as nest-base.
 - Pre-existing, not caused by this branch: `nx run-many -t build` without `--exclude=lan-solution-template` fails with `Recursive task invocation`. It fails the same way on `main`.
+
+### Dependencies
+
+- Removed the `supports-color@8.1.1` pin, and 8 unused dependencies: `tsconfig-paths-webpack-plugin`, `webpack-node-externals`, `@angular/forms`, `@nestjs/mau`, `source-map-support`, `vite` (api-gateway), `@nestjs/testing`, `supertest` and `@types/supertest` (sea-runtime). `vitest` was removed from api-gateway.
+- Added with exact versions in the catalog: `jest` 30.5.2, `ts-jest` 29.4.15, `@types/jest` 30.0.0, `@nestjs/terminus` 12.1.0.
+
+### DI by class debt
+
+- [td-nest-di-by-class](../backlog/td-nest-di-by-class.md): `supervisor.module.ts` registers `CLOCK`, `RANDOM` and `SERVICE_ROUTES` with `Symbol` and `useFactory`, and `persistence-system.md:88` still names the old `DATABASE_ADAPTER`. A separate refactor branch handles it.
 
 ### Config migration and keep_classnames
 
@@ -110,7 +141,7 @@ The independent verifier returned PASS with advisories. No blocker. Each item be
 - Project decision (not a REQ): `keep_classnames` in `tools/rspack/nest.config.ts` is mandatory. Nest DI by class, nestjs-zod and `Reflector` resolve by class name, and the minifier would rename the classes. The cost, a few tens of KB, is accepted. No guard or regex runs over the bundle.
 - `NetConfig` and `TlsConfig` are exported with no consumer, and the gateway still uses the aggregate `loadConfig` in `main` before Nest starts.
 - `docs/backlog/persistence-system.md:88` mentions `APP_CONFIG` (a historical row).
-- `smoke-sea` reads `run.lines` right after ready, and the line `tls: using leaf certificate` (stderr) can arrive later. The flake was not reproduced in 21 runs and is pre-existing (`tools/scripts/smoke-sea.ts:490`, `libs/shared-core/src/tls/identity.ts:164`).
+- `smoke-sea` read `run.lines` right after ready, and the line `tls: using leaf certificate` (stderr) could arrive later (`libs/shared-core/src/tls/identity.ts:164`). Fixed in `1c24d2f` with a bounded poll at `tools/scripts/smoke-sea.ts:490`. The race was never reproduced (21 runs), so the fix is reasoned from the code: not verified that a reproduction disappears.
 - `nx run-many` without `--exclude=lan-solution-template` fails by recursion on `main` too.
 
 ## Recipe for the human

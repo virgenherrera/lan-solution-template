@@ -731,12 +731,12 @@ docs[91]:
   - doc: docs/results/POC-06-Result.md
     title: POC-06 Result
     type: backlog
-    summary: "Result of POC-6: PostgreSQL adapter with pgvector, migrations, parity check and a Docker APP smoke test. Branch built, PR pending."
+    summary: "Result of POC-6: PostgreSQL adapter with pgvector, migrations, parity check and a Docker APP smoke test. Branch built, health and dependency cleanup added, PR pending."
     ids: []
     related[8]: docs/backlog/poc-6-postgresql-adapter-parity.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/results/POC-05-Result.md,docs/standards/README.md,docs/roadmap/PROPOSAL.md
     status: current
-    updated: 2026-11-04
-    refs[5]: AC-09,REQ-DB-01,REQ-DB-05,REQ-DB-08,REQ-TEST-06
+    updated: 2026-11-05
+    refs[6]: AC-09,REQ-DB-01,REQ-DB-05,REQ-DB-08,REQ-TEST-04,REQ-TEST-06
   - doc: docs/results/POC-08-Result.md
     title: POC-08 Result
     type: backlog
