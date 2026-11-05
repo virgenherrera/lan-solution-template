@@ -26,6 +26,7 @@ updated: 2026-11-04
 - [U3 result: the macOS installer](#u3-result-the-macos-installer)
 - [U4a result: the executable creates the per-install TLS files](#u4a-result-the-executable-creates-the-per-install-tls-files)
 - [U4b result: the installer creates the TLS files and offers to trust the CA](#u4b-result-the-installer-creates-the-tls-files-and-offers-to-trust-the-ca)
+- [U5 result: the uninstall script](#u5-result-the-uninstall-script)
 - [Moved to technical debt](#moved-to-technical-debt)
 - [Pitch items without a source id](#pitch-items-without-a-source-id)
 - [Open questions](#open-questions)
@@ -135,7 +136,7 @@ The working document with routes and evidence is kept outside the repository. Ta
 - [ ] U2: platform matrix and local scripts. Declare the OS list ([OQ4](../roadmap/PROPOSAL.md#open-questions)); record `verified`, `pending` or `blocked` per row ([OQ7](../roadmap/PROPOSAL.md#open-questions)); macOS is `verified` only where the command ran natively; every other row says `not verified`. REQ-SEA-06: the rule "validate per platform", macOS only. Source: [REQ-TEST-09](../requirements/11-nx-quality-testing.md), [REQ-TEST-10](../requirements/11-nx-quality-testing.md), [REQ-SEA-06](../requirements/10-node-sea-distribution.md), [AC-21](../requirements/11-nx-quality-testing.md), [AC-33](../requirements/11-nx-quality-testing.md)
 - [x] U3 (commit `0872f84`, built and inspected, NOT installed): the `.pkg` with an assistant, and `config/config.json`. The assistant defines the install path, which is the base directory, and creates `config/config.json` there. The installer ships no `config.default.json`. Depends on M0. Source: [OQ24](../roadmap/PROPOSAL.md#open-questions), [REQ-CFG-05](../requirements/04-configuration.md), [REQ-SEA-05](../requirements/10-node-sea-distribution.md)
 - [ ] U4: `ca.crt` in the `postinstall`, with consent. The installer generates the CA and installs it into the trust store only after the user consents; the tray item `Trust CA...` stays as a repair path. Risk: security (trust store). Depends on U3. Source: [ADR-009](../architecture/adr/ADR-009-desktop-process-model.md) D13, [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md). Status: U4a done (the executable command); U4b built and simulated with stubs, NOT installed; an independent review found two security blockers, fixed and re-probed with stubs, not yet re-reviewed ([result](#u4b-result-the-installer-creates-the-tls-files-and-offers-to-trust-the-ca)).
-- [ ] U5: uninstall script. It removes `config.json` and ALWAYS keeps the SQLite database. Depends on U3. Source: decision of the human, 2026-11-04.
+- [x] U5: uninstall script (built and simulated; NOT run as root, see [U5 result](#u5-result-the-uninstall-script)). It removes `config.json` and ALWAYS keeps the SQLite database. Depends on U3. Source: decision of the human, 2026-11-04.
 - [ ] U6: installer smoke on macOS. Steps that need `sudo` are run by the human from a recipe. Depends on U3, U4 and U5. Source: [REQ-TEST-09](../requirements/11-nx-quality-testing.md), [AC-21](../requirements/11-nx-quality-testing.md)
 - [ ] U7: publish `POC-08-Result` and the ADR for the installer, under `docs/`. Last. Source: [REQ-TEST-10](../requirements/11-nx-quality-testing.md), [AC-21](../requirements/11-nx-quality-testing.md)
 
@@ -273,6 +274,68 @@ sudo pkgutil --forget com.virgenherrera.lansolution.trust
 
 ---
 
+## U5 result: the uninstall script
+
+[Back to navigation](#navigation)
+
+The `.pkg` payload now holds `uninstall.sh` in the ROOT of the install directory, next to `app` and `sea-runtime` (mode 0755, owner root:wheel per the Bom). The human runs `sudo <install>/uninstall.sh`. Source: [apps/desktop/installer/macos/uninstall.sh](../../apps/desktop/installer/macos/uninstall.sh); [installer-macos.ts](../../tools/scripts/installer-macos.ts) copies it into the payload and replaces `@IDENTIFIER@` and `@PRODUCT@` with `identifier` and `productName` of `tauri.conf.json`. No new dependency and no new npm script.
+
+What it removes and what it keeps, and who decided:
+
+| Object | Action | Decision |
+|---|---|---|
+| `data/` (the SQLite database and everything inside) | KEPT, never opened or listed | human ("los datos de la db le pertenecen al usuario") |
+| `config/config.json` | removed | human ("no (pero si la db)", S8) |
+| `config/config.example.json`, `app`, `sea-runtime` | removed | agent |
+| `logs/` | KEPT | agent: logs may be needed to diagnose a failed install |
+| `certs/{ca.crt, ca.key, leaf.crt, leaf.key}`, `.installer/ca.sha256` | removed only when the CA is no longer trusted by the System keychain | agent |
+| trust of the CA in the System keychain | removed (`security remove-trusted-cert -d`, then `security delete-certificate -Z`) | agent |
+| `~/Library/LaunchAgents/LAN Solution Desktop.plist` of the console user | removed if it is a regular file | agent |
+| receipts `<identifier>` and `<identifier>.trust` | `pkgutil --forget`, only when everything above went well | agent |
+| empty `config/`, `.installer/`, `certs/` | `rmdir` | agent |
+| the install directory and the script itself | removed only when nothing else is left (`data/` or `logs/` keep both) | agent |
+
+Behaviour:
+
+- It derives the base from its own location (`dirname` of `$0`, `pwd -P`). It refuses a script that is a symbolic link, is not named `uninstall.sh`, or sits in `/`, `/usr`, `/usr/local`, `/System`, `/Library` and similar. It refuses to run without root (`id -u`). It prints first what it will remove and what it keeps.
+- With the host or the sidecar running (`pgrep -f <base>/app` or `<base>/sea-runtime`) it exits 1 and removes nothing.
+- Trust, from `man security` (macOS 27.2): `security find-certificate -a -Z <keychain>` dumps the attributes and hashes of the certificates (the man page example prints the "SHA-256" line); `remove-trusted-cert [-d] certFile` removes the certificate "from per-user or local Admin Trust Settings" and with `-d` from the admin store, and needs root; `delete-certificate [-c name] [-Z hash]` deletes by "its SHA-256 (or SHA-1) hash", "uniquely specified". The script reads the fingerprint recorded by the installer in the root-owned `.installer/ca.sha256`, looks for it in the System keychain, copies `certs/ca.crt` to a private directory, checks that the copy has that fingerprint, runs `remove-trusted-cert -d` on the copy, runs `delete-certificate -Z <sha256>`, and lists the keychain again to confirm that the CA is gone. If the CA was never trusted it says so and goes on. If any step fails, or the keychain cannot be read, or `ca.crt` was replaced, it keeps `certs/` and the anchor (a later run needs them), still removes the program files, skips the receipts and exits 1. With no usable anchor it never touches the keychain on the word of a file the user can write: it exits 1 and keeps `certs/` if the keychain holds the certificate of `ca.crt`, otherwise it removes `certs/`.
+- Safety: no `rm -r` or `rm -rf` anywhere. Only `rm -f --` on exact file names and `rmdir` on directories that must end empty. Each object is tested before it is touched: a symbolic link is skipped with a warning and nothing inside a linked directory is touched; only a regular file is removed. No glob over `certs/`, `config/` or `data/` (one glob over the root-owned base decides whether the base is empty). Extra files in `certs/` stay, and so does `certs/`. If something was skipped the receipts are kept and the exit is 0.
+- Writes outside the install directory, exact paths: the System keychain entry of the CA (`/Library/Keychains/System.keychain` and its admin trust settings), `<home of the console user>/Library/LaunchAgents/LAN Solution Desktop.plist` (home from `dscl . -read /Users/<user> NFSHomeDirectory`, user from the owner of `/dev/console`), and the receipts of the two package identifiers. It also runs `launchctl bootout gui/<uid> <plist>` before removing the LaunchAgent (failure tolerated). It installs nothing and uses no network. The PATH is fixed to `/usr/bin:/bin:/usr/sbin:/sbin`.
+- Residual risk, accepted: the console user can swap a directory between the check and the removal (a time-of-check to time-of-use race), because the script has no `openat`-style primitive in shell; the checks narrow the window, they do not close it. Hand-edited files: `uninstall.sh` and the lines of `installer-macos.ts` that copy it.
+
+Verified on macOS 27.2 arm64, 2026-11-04 (build, inspection and simulation only; the script was NOT run as root and no real `security`, `pkgutil` or `launchctl` call was made):
+
+- `pnpm exec nx run desktop:package --skip-nx-cache --output-style=static`: exit 0, 3 passing. `pkgutil --payload-files`: `app`, `uninstall.sh`, `config/config.example.json`, `sea-runtime`. `xar -tf` and `pkgutil --expand-full`: the same two components as U4b. `lsbom`: `uninstall.sh` is `100755 0/0`. The expanded script has no `@IDENTIFIER@` or `@PRODUCT@` left. `sh -n`: exit 0. shellcheck is not installed, so it was not run.
+- Simulation without root, in fresh temporary directories (paths with spaces), with stubs for `security`, `pkgutil`, `launchctl`, `pgrep`, `id`, `stat`, `dscl` and `sudo` first in the PATH (the fixed PATH line was removed from a copy for the run) and the real `openssl`:
+  - Full uninstall: everything in the table is removed, `data/` and `logs/` have the same SHA-256 and the same tree before and after, the base stays, the calls are `find-certificate -a -Z`, `remove-trusted-cert -d <private copy>`, `delete-certificate -Z <64 hex> /Library/Keychains/System.keychain`, `find-certificate` again, `launchctl bootout`, `pkgutil --pkg-info` and `--forget` for both identifiers. A second run exits 0 with no change and no error.
+  - Application running: exit 1, nothing removed, no `security` call. Not root: exit 1. Script not named `uninstall.sh`, script reached through a link, base in the deny list: exit 1, nothing removed.
+  - Trust: `remove-trusted-cert` fails, `delete-certificate` fails, `delete-certificate` succeeds but the CA is still listed, keychain unreadable, `ca.crt` replaced by another CA, no anchor with the CA in the keychain: each exits 1, keeps `certs/` and the anchor, forgets no receipt. CA never trusted: no removal call, `certs/` removed, receipts forgotten. No anchor and CA not in the keychain: `certs/` removed.
+  - Traps, zero deletions outside the expected set: `certs/` as a link to a directory with foreign files (also with the CA trusted), `certs/ca.key` as a link to a foreign file, `data/` as a link, hard links in `data/` and `certs/`, `config/` as a link, the LaunchAgent as a link, `LaunchAgents` as a link, extra files in `certs/` (kept, `certs/` kept). When only the script is left, the script and the base go.
+
+Recipe for the human (needs `sudo`; the agent did not run it; none of it is verified):
+
+```sh
+B=/usr/local/lan-solution
+security find-certificate -a -Z /Library/Keychains/System.keychain | grep -c "$(tr -d ':' < "$B/.installer/ca.sha256")"   # 1 if the CA is trusted
+shasum -a 256 "$B"/data/*                       # note the database hash
+sudo "$B/uninstall.sh"                          # quit the application first; exit 0
+ls -l "$B"                                      # only data/, logs/ and uninstall.sh remain
+shasum -a 256 "$B"/data/*                       # the same hash
+security find-certificate -a -Z /Library/Keychains/System.keychain | grep -c "<the fingerprint noted above>"   # 0: the old CA is gone
+pkgutil --pkgs='com.virgenherrera.lansolution.*'   # no receipt
+ls ~/Library/LaunchAgents | grep -i "LAN Solution"   # nothing, if you had ticked "Start at login"
+# reverse: install the .pkg again (same folder). data/ must still open with the same rows,
+# and certs/ must hold a NEW CA: its fingerprint differs from the one noted above.
+sudo installer -pkg "$P" -target /
+shasum -a 256 "$B"/data/*                       # still the same hash
+openssl x509 -noout -fingerprint -sha256 -in "$B/certs/ca.crt"   # a new fingerprint
+```
+
+Not verified: a real run as root; that `find-certificate -a -Z` prints the hash in a form the script matches on the real System keychain (the script strips colons and spaces and compares upper case); that `remove-trusted-cert -d` succeeds on a CA whose admin trust settings exist (and what it returns when they do not); the real behaviour of `delete-certificate -Z` on the System keychain; that the autostart plist is named after `productName` (the `auto-launch` crate writes `~/Library/LaunchAgents/{app_name}.plist`, the plugin takes `app_name` from the package info; both read in the cargo sources, not run); `launchctl bootout gui/<uid> <plist>`; the order of the receipts; `pgrep -f` matching the real process names.
+
+---
+
 ## Moved to technical debt
 
 [Back to navigation](#navigation)
@@ -326,4 +389,5 @@ Source: `docs/roadmap/PROPOSAL.md`, Open questions. No open question blocks.
 - A real install of the `.pkg`: the assistant screens, the install location pane (the Distribution XML sets `customLocation`, which per the Apple reference implies that the user can choose another location, and `enabled="false"` on the choice, which per the same reference only dims the selection of the choice; neither effect is verified in the real Installer), the root run of `postinstall`, the `chown` to the console user, and the reinstall keeping `config.json`. See the recipe in [U3 result](#u3-result-the-macos-installer).
 - The order in which the Installer runs the two components of the `.pkg`, and that an unticked choice omits the trust component. Both follow the documented model only.
 - Gatekeeper behaviour of the unsigned `.pkg`.
+- A real run of `uninstall.sh` as root, and the keychain, `launchctl` and receipt calls it makes. See [U5 result](#u5-result-the-uninstall-script).
 - Windows, Linux, Apple signing and notarization. Nothing here was run on them.

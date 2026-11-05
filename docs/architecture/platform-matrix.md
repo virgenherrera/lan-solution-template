@@ -139,5 +139,6 @@ The script knows two hosts, `darwin-arm64` and `darwin-x64`. Adding Windows or L
 - Every cell outside macOS arm64.
 - That the macOS `.app` in the working copy matches the current sources.
 - Installer on any system: the macOS arm64 `.pkg` was built and inspected (`pkgutil`, `xar`) but NOT installed; the `postinstall` ran only without root. See [U3 result](../backlog/poc-8-msi-matrix-versioning.md#u3-result-the-macos-installer).
+- Uninstall on any system: the macOS arm64 `.pkg` carries `uninstall.sh` in the payload root (built and inspected, mode 100755 root) and the script was simulated without root with stubs for `security`, `pkgutil` and `launchctl`; it was NOT run as root and no real keychain or receipt call was made. See [U5 result](../backlog/poc-8-msi-matrix-versioning.md#u5-result-the-uninstall-script).
 - Tray, WebView, autostart and code signing on any system. See [POC-8](../backlog/poc-8-msi-matrix-versioning.md).
 - Cross builds of the SEA for another triple.
