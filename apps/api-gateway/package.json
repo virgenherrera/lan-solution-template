@@ -36,7 +36,6 @@
   },
   "devDependencies": {
     "@nestjs/cli": "catalog:nest",
-    "@nestjs/mau": "catalog:nest",
     "@nestjs/schematics": "catalog:nest",
     "@nestjs/testing": "catalog:nest",
     "@types/jest": "catalog:",
@@ -47,11 +46,9 @@
     "oxlint-tsgolint": "catalog:",
     "prettier": "catalog:",
     "rimraf": "catalog:",
-    "source-map-support": "catalog:",
     "supertest": "catalog:",
     "ts-jest": "catalog:",
-    "typescript": "catalog:",
-    "vite": "catalog:"
+    "typescript": "catalog:"
   },
   "nx": {
     "targets": {
