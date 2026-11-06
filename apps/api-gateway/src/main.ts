@@ -8,25 +8,43 @@ import { createRedirectServer } from './redirect-listener.js';
 import { receiveWebBundle } from './web-bundle.js';
 import { createWebHandler } from './web-handler.js';
 
+type AppContext = Awaited<ReturnType<typeof AppBootstrap.createAppContext>>;
+
 class HttpAppMain {
+  private closing = false;
+
   static async main(): Promise<void> {
-    // First, before AppBootstrap and NestFactory.create (which gets no `logger` option, so it keeps this one). Plain lines print as text, the Nest lines keep their format, all on stderr.
-    Logger.overrideLogger(new ServiceLogger({ plainContexts: new Set([PLAIN_CONTEXT]), plainPrefix: false, nest: true }));
+    await new HttpAppMain().run();
+  }
+
+  private async run(): Promise<void> {
     try {
-      await this.bootstrapHttpServer();
+      this.initLogger();
+      const context = await this.createApp();
+      await this.configureApp(context);
+      await this.startApp(context);
     } catch (error) {
-      // A rejected top-level await makes Node print a line of the bundled source. The message plus exit code 1 is what the supervisor and the operator need.
-      new Logger(PLAIN_CONTEXT).error(`startup failed: ${error instanceof Error ? error.message : String(error)}`);
-      process.exit(EXIT_CODE.startupFailed);
+      this.handleFatal(error);
     }
   }
 
-  private static async bootstrapHttpServer(): Promise<void> {
-    const { app, netConfig, serverConfig, identity } = await AppBootstrap.createAppContext();
+  private initLogger(): void {
+    // First, before AppBootstrap and NestFactory.create (which gets no `logger` option, so it keeps this one). Plain lines print as text, the Nest lines keep their format, all on stderr.
+    Logger.overrideLogger(new ServiceLogger({ plainContexts: new Set([PLAIN_CONTEXT]), plainPrefix: false, nest: true }));
+  }
+
+  private createApp(): Promise<AppContext> {
+    return AppBootstrap.createAppContext();
+  }
+
+  private async configureApp({ app, serverConfig }: AppContext): Promise<void> {
     // Receive the bundle first, so a missing or invalid one fails before the database opens or a port opens.
     if (serverConfig.web === 'ipc') app.use(createWebHandler(await receiveWebBundle()));
     // Opens the database (DatabaseService.onModuleInit). Done here, not inside listen, so a database failure is not reported as a listen failure.
     await app.init();
+  }
+
+  private async startApp({ app, netConfig, identity }: AppContext): Promise<void> {
     const health = app.get(HealthState, { strict: false });
     const { bind, httpsPort, httpPort } = netConfig;
     try {
@@ -43,38 +61,48 @@ class HttpAppMain {
       health.set(AGGREGATE_STATE.ready);
       return;
     }
-    // Supervised run: tell the supervisor, then follow the aggregate state it sends back.
-    // Stop on a shutdown message, or on disconnect when the supervisor died (REQ-RUNTIME-06). Disconnect logs nothing: the output pipe is gone too.
-    let closing = false;
-    const close = async (announce: boolean): Promise<void> => {
-      if (closing) return;
-      closing = true;
-      await this.closeRedirect(redirect);
-      await app.close();
-      if (announce) new Logger(PLAIN_CONTEXT).log('app.close() completed');
-      process.exit(EXIT_CODE.ok);
-    };
+    this.superviseApp(app, health, redirect, process.send.bind(process));
+  }
+
+  // Supervised run: tell the supervisor, then follow the aggregate state it sends back.
+  // Stop on a shutdown message, or on disconnect when the supervisor died (REQ-RUNTIME-06). Disconnect logs nothing: the output pipe is gone too.
+  private superviseApp(app: AppContext['app'], health: HealthState, redirect: Server, send: NonNullable<typeof process.send>): void {
     process.on('message', (raw) => {
       health.apply(raw);
-      if (shutdownMessageSchema.safeParse(raw).success) void close(true);
+      if (shutdownMessageSchema.safeParse(raw).success) void this.close(app, redirect, true);
     });
-    process.once('disconnect', () => void close(false));
-    process.send(readyMessageSchema.parse({ kind: CONTROL_KIND.ready }));
+    process.once('disconnect', () => void this.close(app, redirect, false));
+    send(readyMessageSchema.parse({ kind: CONTROL_KIND.ready }));
+  }
+
+  private async close(app: AppContext['app'], redirect: Server, announce: boolean): Promise<void> {
+    if (this.closing) return;
+    this.closing = true;
+    await this.closeRedirect(redirect);
+    await app.close();
+    if (announce) new Logger(PLAIN_CONTEXT).log('app.close() completed');
+    process.exit(EXIT_CODE.ok);
+  }
+
+  private handleFatal(error: unknown): void {
+    // A rejected top-level await makes Node print a line of the bundled source. The message plus exit code 1 is what the supervisor and the operator need.
+    new Logger(PLAIN_CONTEXT).error(`startup failed: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(EXIT_CODE.startupFailed);
   }
 
   // One line naming the address, so an operator sees which listener failed (for example a port already in use).
-  private static listenError(address: string, error: unknown): Error {
+  private listenError(address: string, error: unknown): Error {
     return new Error(`cannot listen on ${address}: ${error instanceof Error ? error.message : String(error)}`);
   }
 
-  private static listenRedirect(server: Server, host: string, port: number): Promise<void> {
+  private listenRedirect(server: Server, host: string, port: number): Promise<void> {
     return new Promise((resolve, reject) => {
       server.once('error', (error) => reject(this.listenError(`http://${host}:${port}`, error)));
       server.listen(port, host, resolve);
     });
   }
 
-  private static closeRedirect(server: Server): Promise<void> {
+  private closeRedirect(server: Server): Promise<void> {
     return new Promise((resolve) => {
       server.close(() => resolve());
       server.closeAllConnections();
