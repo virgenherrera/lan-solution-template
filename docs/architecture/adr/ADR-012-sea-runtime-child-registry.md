@@ -112,7 +112,7 @@ This staging is a recommendation. It is not verified that P3's registry survives
 
 - P3 first costs one extra change if P2 follows, because P2 replaces the spawn-hook registry with per-service state.
 - The smoke must assert pids from events or snapshots and include a kill-and-restart step. Without it, a stale pid passes.
-- `smoke-sea` and `smoke-pg` still parse stderr with `SPAWNED_PATTERN` in all three POCs. Migrating them is open work in every option.
+- `smoke-sea` and `smoke-pg` no longer parse stderr with `SPAWNED_PATTERN`: they read pids from the `status` event.
 - ADR-006 needs an amendment for whichever contract change lands (optional `pid`/`restarts`, `children[]`, or the `snapshot` command).
 - Regenerate `docs/meta.toon` after this page is accepted (AGENTS.md write steps).
 - `StatusPublisher` emits a status event only when the aggregate state changes. Comparing the whole service list (status, pid, restarts) was tried and dropped: with one service (`api-gateway`) a restart always moves the aggregate state, so the list comparison adds no observable effect. A mutation that compared only the aggregate state turned no smoke check red in two independent reviews. Revisit it when a second service exists and a restart can leave the aggregate unchanged.
