@@ -1,9 +1,8 @@
-import { Inject, Injectable, type BeforeApplicationShutdown, type OnApplicationBootstrap } from '@nestjs/common';
+import { Inject, Injectable, Logger, type BeforeApplicationShutdown, type OnApplicationBootstrap } from '@nestjs/common';
 import { isSea } from 'node:sea';
 import { AGGREGATE_STATE, EXIT_CODE, SUPERVISOR_CONFIG, startupOrder, type ServiceRoute } from 'service-registry';
 import { PersistenceService } from '../persistence/persistence.service.js';
 import { SidecarInput } from '../sidecar/sidecar-input.js';
-import { SupervisorLogger } from '../sidecar/supervisor-logger.js';
 import { ChildSpawner } from './child-spawner.js';
 import { ServiceLifecycleFactory } from './service-lifecycle.factory.js';
 import { type ServiceLifecycle } from './service-lifecycle.js';
@@ -15,6 +14,7 @@ import { ServiceRoutes } from './service-routes.js';
 @Injectable()
 export class SupervisorService implements OnApplicationBootstrap, BeforeApplicationShutdown {
   private readonly services: ServiceLifecycle[] = [];
+  private readonly logger = new Logger(SUPERVISOR_CONFIG.id);
   private shutdownRun?: Promise<void>;
 
   constructor(
@@ -24,7 +24,6 @@ export class SupervisorService implements OnApplicationBootstrap, BeforeApplicat
     private readonly lifecycles: ServiceLifecycleFactory,
     private readonly status: StatusPublisher,
     private readonly input: SidecarInput,
-    private readonly logger: SupervisorLogger,
   ) {}
 
   onApplicationBootstrap(): void {

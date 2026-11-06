@@ -1,4 +1,6 @@
+import { Logger } from '@nestjs/common';
 import { DISPATCHER_CONFIG, dispatch } from 'service-registry';
+import { PLAIN_CONTEXT, ServiceLogger } from 'shared-core';
 import { SERVICES } from './services.js';
 
 // SEA entry: the dispatcher (libs/service-registry) picks the role. No --service starts the supervisor, --service <id> starts that one service, --generate-certs creates the TLS files next to the executable and exits, anything else exits with the reject code.
@@ -8,7 +10,8 @@ const target = dispatch(
   SERVICES.map((route) => route.id),
 );
 if (target.kind === 'rejected') {
-  console.error(target.message);
+  Logger.overrideLogger(new ServiceLogger({ plainContexts: new Set([PLAIN_CONTEXT]), plainPrefix: false, nest: false }));
+  new Logger(PLAIN_CONTEXT).error(target.message);
   process.exit(DISPATCHER_CONFIG.rejectExitCode);
 } else if (target.kind === 'service') {
   await import(`sea-services/${target.id}.js`);

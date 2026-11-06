@@ -1,8 +1,9 @@
+import { Logger } from '@nestjs/common';
 import { createInterface } from 'node:readline';
 import { type Readable } from 'node:stream';
-import { prefixed } from 'service-registry';
 
-// Re-emits every complete line of a child stream with the service id prefix, on the given supervisor stream.
-export function forwardLines(id: string, source: Readable, target: NodeJS.WritableStream): void {
-  createInterface({ input: source }).on('line', (line) => target.write(`${prefixed(id, line)}\n`));
+// Re-emits every complete line of a child stream through the Nest logger under the service id; the logger writes the id prefix.
+export function forwardLines(id: string, source: Readable): void {
+  const logger = new Logger(id);
+  createInterface({ input: source }).on('line', (line) => logger.log(line));
 }

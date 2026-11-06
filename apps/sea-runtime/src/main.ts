@@ -1,11 +1,16 @@
 import { NestFactory } from '@nestjs/core';
-import { EXIT_CODE, SUPERVISOR_CONFIG, prefixed } from 'service-registry';
+import { Logger } from '@nestjs/common';
+import { EXIT_CODE, SUPERVISOR_CONFIG } from 'service-registry';
+import { ServiceLogger } from 'shared-core';
 import { RuntimeModule } from './runtime/runtime.module.js';
+import { SERVICES } from './services.js';
+
+// The supervisor and every service id print plain `[id] text` lines; Nest's own lines are dropped.
+const logger = new ServiceLogger({ plainContexts: new Set([SUPERVISOR_CONFIG.id, ...SERVICES.map((route) => route.id)]), plainPrefix: true, nest: false });
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(RuntimeModule, {
-    // Nest's own log lines carry no service id prefix; the supervisor writes its own prefixed lines.
-    logger: false,
+    logger,
     // Without this Nest aborts the process; the catch below reports the failure instead.
     abortOnError: false,
   });
@@ -16,6 +21,7 @@ try {
 } catch (error) {
   // A rejected top-level await makes Node print a line of the bundled source. The message, once and prefixed, plus exit code 1 is what the operator needs.
   const lines = error instanceof Error ? error.message.split('\n') : [String(error)];
-  lines.forEach((line, index) => process.stderr.write(`${prefixed(SUPERVISOR_CONFIG.id, `${index === 0 ? 'startup failed: ' : ''}${line}`)}\n`));
+  const failure = new Logger(SUPERVISOR_CONFIG.id);
+  lines.forEach((line, index) => failure.error(`${index === 0 ? 'startup failed: ' : ''}${line}`));
   process.exit(EXIT_CODE.startupFailed);
 }
