@@ -210,7 +210,7 @@ stdout is the machine contract of ADR-006: one JSON object per line, never a log
 
 [Back to navigation](#navigation)
 
-The refactor replaces each magic number with a named `EXIT_CODE` constant in a `constants` folder. The numeric values do not change.
+The refactor replaces each magic number with a named `EXIT_CODE` constant (slice 1: `libs/service-registry/src/exit-code.ts`; the `constants` folder comes in slice 5). The numeric values do not change.
 
 The table lists 26 `process.exit` calls and one `process.exitCode` assignment, as found by mapping. Observable means that a smoke test or a contract comment asserts the value.
 

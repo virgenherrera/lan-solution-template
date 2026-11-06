@@ -1,5 +1,5 @@
 import type { Server } from 'node:http';
-import { AGGREGATE_STATE, CONTROL_KIND, readyMessageSchema, shutdownMessageSchema } from 'service-registry';
+import { AGGREGATE_STATE, CONTROL_KIND, EXIT_CODE, readyMessageSchema, shutdownMessageSchema } from 'service-registry';
 import { AppBootstrap } from './app.bootstrap.js';
 import { HealthState } from './health-state.js';
 import { createRedirectServer } from './redirect-listener.js';
@@ -13,7 +13,7 @@ class HttpAppMain {
     } catch (error) {
       // A rejected top-level await makes Node print a line of the bundled source. The message plus exit code 1 is what the supervisor and the operator need.
       process.stderr.write(`startup failed: ${error instanceof Error ? error.message : String(error)}\n`);
-      process.exit(1);
+      process.exit(EXIT_CODE.startupFailed);
     }
   }
 
@@ -48,7 +48,7 @@ class HttpAppMain {
       await this.closeRedirect(redirect);
       await app.close();
       if (announce) console.log('app.close() completed');
-      process.exit(0);
+      process.exit(EXIT_CODE.ok);
     };
     process.on('message', (raw) => {
       health.apply(raw);

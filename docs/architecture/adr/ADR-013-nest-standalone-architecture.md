@@ -168,7 +168,7 @@ Acceptance criterion of the code phase: a capture of stderr before and after sho
 
 Status: Proposed
 
-One `EXIT_CODE` contract in a `constants/` path replaces the magic numbers of `process.exit` and `process.exitCode`. The values stay: `0`, `1` and `2` keep the meaning of [ADR-006](ADR-006-sidecar-status-contract.md).
+One `EXIT_CODE` contract (slice 1: `libs/service-registry/src/exit-code.ts`, later in a `constants/` path) replaces the magic numbers of `process.exit` and `process.exitCode`. The values stay: `0`, `1` and `2` keep the meaning of [ADR-006](ADR-006-sidecar-status-contract.md).
 
 The constant covers every value found, including `130` on signal in the PostgreSQL smoke. The inventory lists them.
 

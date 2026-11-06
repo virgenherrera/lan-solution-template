@@ -1,11 +1,12 @@
 import { z } from 'zod';
+import { EXIT_CODE } from './exit-code.js';
 
 // Every literal of the supervisor lives here, with its default. Values come from OQ11 (decision D2).
 export const supervisorConfigSchema = z.object({
   // A service that has not announced ready within this time is in error.
   readinessTimeoutMs: z.number().int().min(1).default(30_000),
   // Exit code of the supervisor when the aggregate state reaches error.
-  errorExitCode: z.number().int().min(1).max(255).default(1),
+  errorExitCode: z.number().int().min(1).max(255).default(EXIT_CODE.startupFailed),
   // Log prefix of the supervisor's own lines.
   id: z.string().min(1).default('supervisor'),
   // Bounded restart policy (OQ11, decision D2). Delay n is min(initial * factor^n, max), then spread by +-jitterRatio.

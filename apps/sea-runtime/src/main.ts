@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { SUPERVISOR_CONFIG, prefixed } from 'service-registry';
+import { EXIT_CODE, SUPERVISOR_CONFIG, prefixed } from 'service-registry';
 import { RuntimeModule } from './runtime/runtime.module.js';
 
 async function bootstrap() {
@@ -17,5 +17,5 @@ try {
   // A rejected top-level await makes Node print a line of the bundled source. The message, once and prefixed, plus exit code 1 is what the operator needs.
   const lines = error instanceof Error ? error.message.split('\n') : [String(error)];
   lines.forEach((line, index) => process.stderr.write(`${prefixed(SUPERVISOR_CONFIG.id, `${index === 0 ? 'startup failed: ' : ''}${line}`)}\n`));
-  process.exit(1);
+  process.exit(EXIT_CODE.startupFailed);
 }

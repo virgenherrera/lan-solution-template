@@ -120,9 +120,9 @@ Contract after slice 3:
 | Field | Value |
 |---|---|
 | Goal | Replace numeric `process.exit` and `process.exitCode` arguments with a named `EXIT_CODE` contract. Values stay. |
-| Files | `sea-runtime` (supervisor, sea-entry, main), `api-gateway` main, 13 files in `tools/scripts/`. Mapping: 26 exit calls, 1 assignment. |
-| New file | One constants file, proposed at `libs/shared-core/src/constants/exit-code.ts`. |
-| Accept | Tests and `smoke-sea` pass, no test edit. No numeric literal argument to `process.exit` remains. Startup failure exits 1, bad argument 2, clean shutdown 0. |
+| Files | `sea-runtime` (supervisor, sea-entry, main), `api-gateway` main, the `rejectExitCode` and `errorExitCode` defaults in `service-registry`, and the result of `runGenerateCerts` in `shared-core`. Only `apps/` and `libs/`. `tools/scripts/` (21 sites) is out of this slice: those scripts load the libs with a dynamic import from `dist`, so they cannot import `EXIT_CODE` without a prior build. |
+| New file | `libs/service-registry/src/exit-code.ts`, exported by the barrel `index.ts`. It lives in `service-registry` because `shared-core` depends on `service-registry`, not the reverse. It sits beside `aggregate-state.ts` and `states.ts`; the move to folders is slice 5. |
+| Accept | Tests and `smoke-sea` pass, no test edit. No numeric literal argument to `process.exit` or value of `process.exitCode` remains in `apps/` and `libs/`. Startup failure exits 1, bad argument 2, clean shutdown 0. |
 | Risk | none. Smokes assert the observable exits. Run `smoke-dev` and `smoke-pg` evidence where possible. |
 | Size | under 150 changed lines |
 
@@ -223,5 +223,4 @@ Ideas outside the five slices. They have no slice and no date.
 | `ServiceDefinition`, `serviceRegistrySchema`, `ServiceRegistry` and `entry` have no reader | Mapping claim | QC step of the inventory |
 | `tools/scripts` output and the browser entry belong in slice 2 | Open decision | Human |
 | Location of the constants file, logger decorator and `DeclaredServices` | Proposed paths only | Slice author |
-| `EXIT_CODE` also covers `rejectExitCode` and `errorExitCode` config values | Not checked | Slice 1 |
 | Slice sizes | Estimates, not counts | Slice author |

@@ -1,6 +1,6 @@
 import { Inject, Injectable, type BeforeApplicationShutdown, type OnApplicationBootstrap } from '@nestjs/common';
 import { isSea } from 'node:sea';
-import { AGGREGATE_STATE, SUPERVISOR_CONFIG, startupOrder, type ServiceRoute } from 'service-registry';
+import { AGGREGATE_STATE, EXIT_CODE, SUPERVISOR_CONFIG, startupOrder, type ServiceRoute } from 'service-registry';
 import { PersistenceService } from '../persistence/persistence.service.js';
 import { SidecarInput } from '../sidecar/sidecar-input.js';
 import { SupervisorLogger } from '../sidecar/supervisor-logger.js';
@@ -52,7 +52,7 @@ export class SupervisorService implements OnApplicationBootstrap, BeforeApplicat
 
   // Nest calls this on SIGINT and SIGTERM (enableShutdownHooks).
   beforeApplicationShutdown(signal?: string): Promise<void> {
-    return this.shutdown(signal ?? 'shutdown', 0);
+    return this.shutdown(signal ?? 'shutdown', EXIT_CODE.ok);
   }
 
   private startOrder(): ServiceRoute[] {

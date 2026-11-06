@@ -1,14 +1,11 @@
 import { hostname, networkInterfaces } from 'node:os';
 import { isSea } from 'node:sea';
 import { join } from 'node:path';
+import { EXIT_CODE } from 'service-registry';
 import { derivePaths, resolveBase } from '../paths.js';
 import { loadConfig } from '../config.js';
 import { generateTlsIdentity } from './generate.js';
 import type { WantedNamesInput } from './san.js';
-
-// Exit codes of the operation: 0 done, 1 error.
-export const CERTS_EXIT_OK = 0;
-export const CERTS_EXIT_ERROR = 1;
 
 export interface CertsCommandInput {
   // The folder that holds `config/config.json` and `certs/`: the executable's folder in a packaged run.
@@ -30,10 +27,10 @@ export function generateCertsCommand(input: CertsCommandInput): number {
     input.out(`CA ${result.caCreated ? 'created' : 'kept'}: ${join(paths.certDir, 'ca.crt')}`);
     input.out(`CA SHA-256 ${result.caFingerprint256}`);
     input.out(result.leaf === 'issued' ? `leaf issued: ${result.reasons.join('; ')}` : 'leaf kept: names and validity are current');
-    return CERTS_EXIT_OK;
+    return EXIT_CODE.ok;
   } catch (error) {
     input.err(`generate-certs: ${error instanceof Error ? error.message : String(error)}`);
-    return CERTS_EXIT_ERROR;
+    return EXIT_CODE.startupFailed;
   }
 }
 

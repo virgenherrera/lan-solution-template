@@ -3,6 +3,7 @@ export * from './assembler-config.js';
 export * from './constants.js';
 export * from './control-channel.js';
 export * from './dispatcher.js';
+export * from './exit-code.js';
 export * from './json-text.js';
 export * from './service-definition.js';
 export * from './service-routes.js';
