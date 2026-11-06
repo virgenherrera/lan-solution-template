@@ -6,7 +6,7 @@ type: architecture
 summary: "Compares POCs P1, P2 and P3 for a singleton child registry in sea-runtime and proposes a decision."
 ids[0]:
 related[4]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/proposals/sea-runtime-P1-registry-status-event.md,docs/architecture/proposals/sea-runtime-P2-per-service-singletons.md,docs/architecture/proposals/sea-runtime-P3-minimal-pid-hook.md
-status: proposed
+status: current
 updated: 2026-11-05
 -->
 
@@ -27,7 +27,7 @@ updated: 2026-11-05
 
 ## Status
 
-Proposed, 2026-11-05. The human approves or rejects it. Nothing here is accepted.
+Accepted in part, 2026-11-05. Stage 1 (P3, the minimal pid hook) is implemented and merged (`3795067`, PR #23). The choice between P1 and P2 (stage 2) is still proposed: the human decides it.
 
 QC done (independent re-run, `poc-qc.toon`). All three POCs pass probes a, b and c and the two consecutive `SIGKILL` edge (restarts reaches 2). The QC's own mutation went red in each POC: P1 `restarts` +1 to +0, P2 `restartTotal` += 1 to += 0, P3 registry keeps the first pid on respawn. `tsc --noEmit` and `pnpm test` exit 0 in each. `pnpm test` only runs the build plus `smoke-sea`, because sea-runtime has no unit suites. The `SIGKILL` victim was the only child (`api-gateway`) in every probe. Prefer the QC numbers over the writers' reports.
 
@@ -100,7 +100,7 @@ Ratings are relative among the three and rest on the evidence above. They are no
 
 ## Decision
 
-Proposed. The human decides. The evidence supports a staged path, not a single winner:
+Stage 1 is done. Stage 2 is proposed and the human decides. The evidence supports a staged path, not a single winner:
 
 1. Take P3 first. It passes the same three probes with the smallest diff (+46/-3 in 6 files) and the lowest risk. It gives the real binary a checkable pid and restart count, which every other option needs as its observable surface.
 2. Then choose between P1 and P2 as the next stage, on one question the POCs did not settle: how many services will exist and how much they differ. With one service (`api-gateway`), P2 adds structure without removing a failure mode (P2 proposal, Scale). It is the only option that makes each service a singleton injectable, so it answers the stated rule best. P1 is the smaller step if the rule can be met at registry level.
