@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { NodeAdapter } from '@nestjs/platform-node';
-import type { INestApplication } from '@nestjs/common';
+import { Logger, type INestApplication } from '@nestjs/common';
 import { hostname, networkInterfaces } from 'node:os';
-import { NetConfig } from 'shared-core';
+import { NetConfig, PLAIN_CONTEXT } from 'shared-core';
 import { loadTlsIdentity, type TlsIdentity } from 'shared-core/tls';
 import { API_PREFIX } from './api-prefix.js';
 import { AppModule } from './app.module.js';
@@ -28,7 +28,7 @@ export class AppBootstrap {
       paths: GatewayConfigSource.paths,
       tls,
       now: new Date(),
-      log: (message) => console.error(message),
+      log: (message) => new Logger(PLAIN_CONTEXT).log(message),
       hostname: hostname(),
       interfaces: networkInterfaces(),
     });

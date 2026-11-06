@@ -1,4 +1,6 @@
 import type { Server } from 'node:http';
+import { Logger } from '@nestjs/common';
+import { PLAIN_CONTEXT, ServiceLogger } from 'shared-core';
 import { AGGREGATE_STATE, CONTROL_KIND, EXIT_CODE, readyMessageSchema, shutdownMessageSchema } from 'service-registry';
 import { AppBootstrap } from './app.bootstrap.js';
 import { HealthState } from './health-state.js';
@@ -8,11 +10,13 @@ import { createWebHandler } from './web-handler.js';
 
 class HttpAppMain {
   static async main(): Promise<void> {
+    // First, before AppBootstrap and NestFactory.create (which gets no `logger` option, so it keeps this one). Plain lines print as text, the Nest lines keep their format, all on stderr.
+    Logger.overrideLogger(new ServiceLogger({ plainContexts: new Set([PLAIN_CONTEXT]), plainPrefix: false, nest: true }));
     try {
       await this.bootstrapHttpServer();
     } catch (error) {
       // A rejected top-level await makes Node print a line of the bundled source. The message plus exit code 1 is what the supervisor and the operator need.
-      process.stderr.write(`startup failed: ${error instanceof Error ? error.message : String(error)}\n`);
+      new Logger(PLAIN_CONTEXT).error(`startup failed: ${error instanceof Error ? error.message : String(error)}`);
       process.exit(EXIT_CODE.startupFailed);
     }
   }
@@ -30,10 +34,10 @@ class HttpAppMain {
     } catch (error) {
       throw this.listenError(`https://${bind}:${httpsPort}`, error);
     }
-    console.error(`https: listening on ${bind}:${httpsPort}`);
+    new Logger(PLAIN_CONTEXT).log(`https: listening on ${bind}:${httpsPort}`);
     const redirect = createRedirectServer({ names: identity.names, httpsPort });
     await this.listenRedirect(redirect, bind, httpPort);
-    console.error(`http: redirecting to https on ${bind}:${httpPort}`);
+    new Logger(PLAIN_CONTEXT).log(`http: redirecting to https on ${bind}:${httpPort}`);
     if (process.send === undefined) {
       // Standalone run: no supervisor, so listening is ready.
       health.set(AGGREGATE_STATE.ready);
@@ -47,7 +51,7 @@ class HttpAppMain {
       closing = true;
       await this.closeRedirect(redirect);
       await app.close();
-      if (announce) console.log('app.close() completed');
+      if (announce) new Logger(PLAIN_CONTEXT).log('app.close() completed');
       process.exit(EXIT_CODE.ok);
     };
     process.on('message', (raw) => {
