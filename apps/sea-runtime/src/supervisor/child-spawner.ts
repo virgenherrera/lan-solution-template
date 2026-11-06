@@ -28,7 +28,9 @@ export class ChildSpawner {
     });
     if (child.stdout) forwardLines(route.id, child.stdout, process.stderr);
     if (child.stderr) forwardLines(route.id, child.stderr, process.stderr);
-    if (child.pid !== undefined) this.registry.recordSpawn(route.id, child.pid);
+    this.registry.recordSpawn(route.id, child.pid);
+    // Registered before the lifecycle listens to the same event, so the status it publishes after an exit no longer names this pid.
+    child.once('exit', () => this.registry.recordExit(route.id, child.pid));
     this.logger.log(spawnedMessage(route.id, child.pid));
     // The bundle is sent again on every restart, from memory.
     if (bundle !== undefined) {

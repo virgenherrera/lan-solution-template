@@ -31,12 +31,13 @@ export class StatusPublisher {
 
   publish(services: readonly ServiceLifecycle[]): AggregateState {
     const state = aggregateState(services.map(({ status }) => status), this.stopping);
+    if (state === this.state) return state;
     const entries = new Map(this.registry.entries().map((entry) => [entry.id, entry]));
     const list = services.map(({ id, status }) => {
       const entry = entries.get(id);
-      return entry === undefined ? { id, status } : { id, status, pid: entry.pid, restarts: entry.restarts };
+      if (entry === undefined) return { id, status };
+      return entry.pid === undefined ? { id, status, restarts: entry.restarts } : { id, status, pid: entry.pid, restarts: entry.restarts };
     });
-    if (state === this.state) return state;
     this.state = state;
     this.logger.log(stateMessage(state));
     this.output.emit({ kind: SIDECAR_KIND.status, state, services: list });
