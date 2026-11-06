@@ -134,10 +134,10 @@ Contract after slice 3:
 | Field | Value |
 |---|---|
 | Goal | Use only the Nest `Logger`. No `console.*` and no direct stdout or stderr log writes. Decisions: [ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md). |
-| Design | A `ConsoleLogger` subclass writes every level to stderr and keeps the line `[id] text`. stdout carries only sidecar status events ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)). An injection decorator is proposed under `libs/shared-core/src/logger/`. |
-| Files | `sea-runtime` (main, sea-entry, `sidecar/`), `api-gateway` (main, app.bootstrap), `shared-core` certs-command, 6 `SupervisorLogger` injection sites. Mapping: 68 `console.*` calls. |
+| Design | A `ConsoleLogger` subclass writes every level to stderr and formats `[context] message`, keeping the line `[id] text`. `SupervisorLogger` is removed; no second logger survives. stdout carries only sidecar status events ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)). An injection decorator is proposed under `libs/shared-core/src/logger/`. |
+| Files | `sea-runtime` (main, sea-entry, `sidecar/`), `api-gateway` (main, app.bootstrap), `shared-core` certs-command, 6 `SupervisorLogger` injection sites (the class is removed; callers use the injected Nest `Logger`). Mapping: 68 `console.*` calls. |
 | Open | Keep `tools/scripts` output and the browser entry out of this slice (recommended, awaits the human). |
-| Accept | Tests and `smoke-sea` pass, no test edit. No `console.` or stray `process.stdout.write` in `apps/sea-runtime`, `apps/api-gateway`, `libs`. A captured run shows identical stderr lines and status-only stdout. |
+| Accept | Tests and `smoke-sea` pass, no test edit. No `console.` or stray `process.stdout.write` in `apps/sea-runtime`, `apps/api-gateway`, `libs`. A capture of stderr before and after shows identical lines (fix the subclass or the message if one differs), and stdout is status-only. |
 | Risk | item 3. The Tauri host ([ADR-009](../architecture/adr/ADR-009-desktop-process-model.md)) and the smokes read both streams. |
 | Size | 250 to 400 changed lines. Over 400: split entry points from supervisor classes. |
 

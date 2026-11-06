@@ -195,7 +195,7 @@ stdout is the machine contract of ADR-006: one JSON object per line, never a log
 - Used as is, it would put log lines into the contract channel (the dotted path).
 - The target logger is a `ConsoleLogger` subclass that sends every level to stderr.
 - Its output keeps the line format `[id] text` until the code phase proves no consumer needs it.
-- SupervisorLogger is absorbed only if the emitted lines stay identical.
+- SupervisorLogger is always removed. Its callers use the injected Nest `Logger`, and the subclass formats `[context] message` so the emitted lines stay identical (capture before and after).
 - A later epic may replace the logger behind the Nest `LoggerService` interface. This page does not design it.
 
 | Source | Covers |

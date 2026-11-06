@@ -35,7 +35,7 @@ This ADR governs the refactor. Four pages detail it:
 - [Epic](../../backlog/nest-standalone-refactor.md): the slices.
 - [Cleanup inventory](../../backlog/nest-standalone-cleanup-inventory.md): the dead code candidates, with evidence.
 
-Each decision carries its origin. **Human** means the human decided it in the planning conversation of the branch `docs/nest-standalone-refactor`. **Agent** means the agent proposes it and the human has not reviewed it yet. An Agent decision becomes accepted when the human says so.
+Each decision carries a status. **Accepted** means the human decided it in the planning conversation of the branch `docs/nest-standalone-refactor`. **Proposed** means the agent proposes it and the human has not reviewed it yet. A Proposed decision becomes Accepted when the human says so.
 
 ## Context
 
@@ -64,7 +64,7 @@ flowchart LR
   LOG --> D4["D4 every level to stderr"]
   LOG --> D5["D5 stderr format stays"]
   LOG --> D6["D6 Logger decorator"]
-  LOG --> D7["D7 fold SupervisorLogger"]
+  LOG --> D7["D7 remove SupervisorLogger"]
   LOG --> D14["D14 later library is a seam"]
   SVC --> D10["D10 boot order"]
   SVC --> D11["D11 declared services"]
@@ -104,55 +104,77 @@ flowchart LR
   O --> P["Host status reader"]
 ```
 
-### D1. A true Nest standalone application (Human)
+### D1. A true Nest standalone application
+
+Status: Accepted
 
 Every process of the binary is a Nest application made with `NestFactory.createApplicationContext`. No singleton is wired by hand outside the container.
 
 A shared value is a provider. Code reads configuration through `AppConfigModule` and `InjectConfig`, as `nest-base` does.
 
-### D2. One logger: the Nest Logger (Human)
+### D2. One logger: the Nest Logger
+
+Status: Accepted
 
 All human-readable output uses the Nest `Logger`. Inside the container a class receives it through DI. Entrypoints, before the context exists, use `new Logger(Name)`.
 
 Code makes no `console.*` call and no direct write to `process.stdout` or `process.stderr` for logs. One logging path is easier to guard than two.
 
-### D3. stdout is a machine contract and carries no logs (Human)
+### D3. stdout is a machine contract and carries no logs
+
+Status: Accepted
 
 Stdout carries only the status events of [ADR-006](ADR-006-sidecar-status-contract.md) and the control messages. The bytes of those events do not change.
 
 The event writer `sidecar-output.ts` is the only place that may write to stdout. It is not a log writer.
 
-### D4. The application logger sends every level to stderr (Agent)
+### D4. The application logger sends every level to stderr
+
+Status: Proposed
 
 The application logger is a `ConsoleLogger` subclass that routes every level to stderr. It is installed with `app.useLogger` in each context and as the static logger before the context exists.
 
-Reason: the default `ConsoleLogger` writes `log`, `warn`, `debug` and `verbose` to stdout, which would break D3.
+Reason: the default `ConsoleLogger` writes `log`, `warn`, `debug` and `verbose` to stdout, which would break D3. The host requires only D3 (stdout carries only the ADR-006 events). D4 is this design's consequence of how Nest routes levels, not a host requirement.
 
-### D5. The stderr line format stays `[id] text` (Agent)
+### D5. The stderr line format stays `[id] text`
 
-[ADR-006](ADR-006-sidecar-status-contract.md) names `[id] text` as the stderr contract, and the host forwards stderr to its log ([ADR-009](ADR-009-desktop-process-model.md)). The D4 subclass reproduces it, including `[supervisor] text` and the service prefix.
+Status: Proposed
+
+[ADR-006](ADR-006-sidecar-status-contract.md) names `[id] text` as the stderr line, and the host forwards stderr to its log ([ADR-009](ADR-009-desktop-process-model.md)). The D4 subclass reproduces the line, including `[supervisor] text` and the service prefix.
+
+D5 holds because D13 forbids observable changes, so the lines stay as they are, not because the host asks for them. Whether the host parses the prefix is not verified.
 
 The format changes only after a read of every consumer proves nothing depends on it. The change then needs a new ADR.
 
-### D6. A Logger decorator, proposed (Agent)
+### D6. A Logger decorator
+
+Status: Proposed
 
 A decorator modeled on `InjectConfig` lets a class ask for the logger of its own name without `new Logger(...)`. `nest-base` has no such decorator.
 
 Proposed location: `libs/shared-core/src/decorators/inject-logger.decorator.ts`. The name and path are proposals.
 
-### D7. SupervisorLogger folds into the Nest Logger only if lines stay identical (Agent)
+### D7. SupervisorLogger is always removed
 
-D4 and D6 absorb `SupervisorLogger` only when the stderr lines are byte-identical for the same events. That includes the `spawned service id as pid N` and `state X` lines.
+Status: Proposed
 
-The code phase compares a capture before and after. If one line differs, the class stays.
+The `SupervisorLogger` class is deleted. Its callers (6 injection sites, see [slice 2 of the epic](../../backlog/nest-standalone-refactor.md#slice-2-nest-logger)) use the injected Nest `Logger`, as D2 requires. No second logger survives.
 
-### D8. Exit codes are named constants (Agent)
+The D4 subclass formats `[context] message`, so the stderr lines stay byte-identical. That includes the `spawned service id as pid N` and `state X` lines.
+
+Acceptance criterion of the code phase: a capture of stderr before and after shows identical lines. If a line differs, fix the subclass or the message. Do not keep the class.
+
+### D8. Exit codes are named constants
+
+Status: Proposed
 
 One `EXIT_CODE` contract in a `constants/` path replaces the magic numbers of `process.exit` and `process.exitCode`. The values stay: `0`, `1` and `2` keep the meaning of [ADR-006](ADR-006-sidecar-status-contract.md).
 
 The constant covers every value found, including `130` on signal in the PostgreSQL smoke. The inventory lists them.
 
-### D9. Folders by role and self-describing names (Human)
+### D9. Folders by role and self-describing names
+
+Status: Accepted
 
 Code groups by role. `constants/` holds constants such as `EXIT_CODE` and `SERVICES`. `interfaces/` holds types not derived from a schema. `schemas/` holds zod schemas, `services/` holds providers and `modules/` holds Nest modules.
 
@@ -160,13 +182,17 @@ Events use RxJS and validation uses zod. A declared type is `z.infer` of its sch
 
 Neither `nest-base` nor `virgenherrera` has these folders, so this is a convention of this repository.
 
-### D10. Boot order (Human)
+### D10. Boot order
+
+Status: Accepted
 
 The sea-runtime process starts. Persistence runs its migrations and the schema gate inside the supervisor. The services then start in `startOrder`, with the `api-gateway` among them.
 
 Logging is not a service and has no place in `startOrder`. TLS certificates are made at install time, and the gateway only reads them ([ADR-008](ADR-008-tls-trust-model.md)). The [boot page](../nest-standalone-boot.md) holds the steps and diagrams.
 
-### D11. One declared-services model (Agent)
+### D11. One declared-services model
+
+Status: Proposed
 
 One constant, `SERVICES` of type `DeclaredServices`, replaces `ServiceRoute` and `ServiceDefinition`. The assembler and the supervisor read the same constant. The [declared services page](../declared-services.md) holds the model.
 
@@ -176,19 +202,25 @@ Second, `SERVICES` is a plain constant with no helper function. Zod validates it
 
 The supervisor does not wait for a ready message before it launches the next service. Array order only breaks ties, so `dependsOn` stays ([evidence](../declared-services.md#startup-order-and-shutdown)).
 
-### D12. Cleanup deletes only what has zero references (Agent)
+### D12. Cleanup deletes only what has zero references
+
+Status: Proposed
 
 A symbol is deleted only with zero references in source, tests, tools, scripts and non-TypeScript files. A barrel re-export hit counts as a reference.
 
 The maps report only `ControlMessage` and `StatusSnapshot` as confirmed dead. Everything else stays until a QC check proves it dead. Each inventory row carries evidence and a QC status, initially `pending`.
 
-### D13. Pure refactor: no test or smoke is edited (Human)
+### D13. Pure refactor: no test or smoke is edited
+
+Status: Accepted
 
 Every test and smoke keeps passing without edits. If removing something needs a test edit, the thing is not dead and stays.
 
 A behavior change found on the way is a separate decision with its own ADR.
 
-### D14. A later logging library is only a seam (Agent)
+### D14. A later logging library is only a seam
+
+Status: Proposed
 
 A later epic may add a logging library. It would use OpenTelemetry records, RxJS pipes, an async file sink and a logging child process ([log service backlog](../../backlog/log-service-otel-grpc.md)).
 
@@ -233,7 +265,7 @@ This ADR only requires that all code depends on the Nest `LoggerService` interfa
 | Every file and line cited in the linked pages | They come from agent maps, and no one re-read them for this ADR | Human review, or the QC minion |
 | Whether the overview lists ADR-012 correctly | The maps say lines 39 and 157 call it a placeholder, which contradicts the file in `adr/` | Docs slice of the epic |
 | Whether D2 reaches the scripts under `tools/scripts` | The question is open for the epic | Human decision in the epic |
-| Whether `SupervisorLogger` folds into the Nest `Logger` with identical lines (D7) | It needs a before and after capture of stderr | Code phase |
+| Whether the D4 subclass reproduces the `SupervisorLogger` lines byte-identically (D7) | It needs a before and after capture of stderr | Code phase |
 | Whether the Nest writer changes the lost-output hazard on exit | Nobody ran the writer against a fast exit | Code phase |
 | Placement of `DeclaredServices` in a library, and the path of the Logger decorator | Both are open in the declared services page and in D6 | Human decision at the start of the code phase |
 
