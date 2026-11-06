@@ -97,7 +97,7 @@ flowchart TB
 ```mermaid
 flowchart LR
   C["provideLogger(input): zod defaults"] --> W
-  A["Entrypoint before the context: new Logger(Name)"] --> W
+  A["Entrypoint: passes the logger to the factory, or uses the instance directly"] --> W
   B["Class with @InjectLogger()"] --> W
   W["AppLogger: every level to stderr in the sidecar target"] --> E["stderr: Nest format, prefix and class context"]
   M["sidecar-output: status events"] --> O["stdout: machine events only"]
@@ -117,7 +117,7 @@ A shared value is a provider. Code reads configuration through `AppConfigModule`
 
 Status: Accepted
 
-All human-readable output uses the Nest `Logger`. Inside the container a class receives it through DI. Entrypoints, before the context exists, use `new Logger(Name)`.
+All human-readable output uses the Nest `Logger`. Inside the container a class receives it through DI. Entrypoints create the logger with `provideLogger` and pass it to the factory. Where no Nest app exists, or before the app does, they call the instance directly.
 
 Code makes no `console.*` call and no direct write to `process.stdout` or `process.stderr` for logs. One logging path is easier to guard than two.
 
@@ -135,7 +135,19 @@ The `--generate-certs` command uses the `cli` target of the logger. It is an ins
 
 Status: Accepted
 
-The library lives in `libs/shared-core/src/logger/`. `provideLogger(input)` (`provide-logger.ts:6`) parses the input with `loggerConfigSchema` and returns an `AppLogger`. `NestFactory` takes it as `{ logger }`, and `Logger.overrideLogger` takes it as its argument. It is installed before any class logs, so `new Logger(Context)` reaches it.
+The library lives in `libs/shared-core/src/logger/`. `provideLogger(input)` (`provide-logger.ts:6`) parses the input with `loggerConfigSchema` and returns an `AppLogger`. The entrypoint builds the logger from its config, for example `provideLogger({ prefix })`, which `loggerConfigSchema` validates. Where a Nest app exists, the entrypoint passes the instance to the factory with the `logger` option of `NestFactory.create` or `NestFactory.createApplicationContext`. The factory installs it before it initializes the app, so `new Logger(Context)` and `@InjectLogger()` reach it.
+
+Where no Nest app exists (`sea-entry`, the `--generate-certs` command), the entrypoint uses the instance directly. It also uses the instance for what happens before the app exists: invalid config, the TLS message and `handleFatal`. Nothing is installed globally, and the repository does not call `Logger.overrideLogger`.
+
+Why this form. Passing `{ logger }` to the factory calls `Logger.overrideLogger` internally, so the effect equals a direct call and only the place of the call changes. The official documentation sets no single rule. The common community pattern is to pass the logger to the factory, or to use `bufferLogs` with `app.useLogger`.
+
+| Source | What it says | Reference |
+|---|---|---|
+| `@nestjs/core` installed, `NestFactory` | `registerLoggerConfiguration` calls `Logger.overrideLogger` when `logger` is set, before initialization | `nest-factory.js:75`, `nest-factory.js:160-178` |
+| NestJS logger documentation | Shows the `logger` option and `bufferLogs` with `app.useLogger`; does not document `Logger.overrideLogger` | https://docs.nestjs.com/techniques/logger |
+| `nest-winston` README | Passes `WinstonModule.createLogger(...)` as the `logger` option of `NestFactory.create` | https://github.com/gremo/nest-winston |
+| `nestjs-pino` README | Uses `bufferLogs: true` and `app.useLogger(app.get(Logger))`, with config in `LoggerModule.forRoot` | https://github.com/iamolegga/nestjs-pino |
+| Nest pull request 17893 | A logger must be attached before `init()` or `listen()`; `overrideLogger(levels)` there sets log levels | https://github.com/nestjs/nest/pull/17893 |
 
 `AppLogger` (`app-logger.ts:11`) extends `ConsoleLogger` and keeps the Nest format. In the `sidecar` target it forces every level to stderr (`app-logger.ts:22`). The default `ConsoleLogger` writes `log`, `warn`, `debug` and `verbose` to stdout, which would break D3. The host requires only D3. Stderr is this design's consequence of how Nest routes levels.
 
@@ -282,7 +294,7 @@ This ADR only requires that all code depends on the Nest `LoggerService` interfa
 - **Colors only through the schema.** The `colors` field is the only switch (`logger-config.ts:12`). The logger reads no terminal state, so a caller that needs colors must set it.
 - **JSON without prefix.** With `json` on, the Nest JSON format omits the `prefix` option and keeps only the PID. A reader cannot tell the supervisor from a child by name.
 - **Contexts depend on class names.** `@InjectLogger()` and `new Logger(Name)` use `constructor.name`. A minifier that renames classes breaks the contexts. `keep_classnames` in `tools/rspack/nest.config.ts` is a requirement.
-- **Boot failures before the logger is installed.** A failure before `createApplicationContext` prints nowhere unless the logger is ready. Mitigation: `provideLogger` is the first thing an entrypoint calls.
+- **Boot failures before the app exists.** A failure before the factory runs prints through the default Nest logger unless the entrypoint uses its own instance. Mitigation: `provideLogger` is the first thing an entrypoint calls, and `handleFatal` and early messages use that instance.
 - **Lost output on exit.** `process.exit` right after a log call can truncate a buffered stderr write. Today's `console.error` has the same hazard.
 - **Dead-code false positives.** Barrels and string-based loading hide usage (D12). Mitigation: zero references in every file type, and the QC column.
 

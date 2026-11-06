@@ -175,7 +175,8 @@ The diagram is the target dependency graph. The module names are a proposal, not
 flowchart LR
     Code["Application code"]
     Contract["Sidecar status and control messages, ADR-006"]
-    Factory["provideLogger: zod defaults"]
+    Factory["initLogger: creates the logger with provideLogger and its config"]
+    Create["createApp: passes the logger to the factory"]
     Logger["AppLogger, a ConsoleLogger subclass, every level to stderr"]
     Risk["Plain ConsoleLogger, log warn debug verbose to stdout"]
     Child["Child process: stderr inherited, stdout ignored"]
@@ -184,6 +185,7 @@ flowchart LR
     Code --> Contract
     Code --> Logger
     Factory --> Logger
+    Logger --> Create
     Contract --> Out
     Logger --> Err
     Child --> Err
@@ -196,6 +198,7 @@ stdout is the machine contract of ADR-006: one JSON object per line, never a log
 - The default Nest `ConsoleLogger` writes `log`, `warn`, `debug` and `verbose` to stdout. It writes only `error` and `fatal` to stderr.
 - Used as is, it would put log lines into the contract channel (the dotted path).
 - The logger is `AppLogger` (`libs/shared-core/src/logger/app-logger.ts:11`), a `ConsoleLogger` subclass. `provideLogger()` (`provide-logger.ts:6`) builds it from `loggerConfigSchema` (`libs/shared-core/src/schemas/logger-config.ts:4`). In the `sidecar` target it sends every level to stderr (`app-logger.ts:22`).
+- An entrypoint runs `initLogger` first, which creates the logger. `createApp` then passes it to `NestFactory` with the `logger` option. `sea-entry` and the certs command have no Nest app and use the instance directly, as do errors before the app exists. See D4 of the ADR.
 - The host forwards stderr to its log and parses none of it (`apps/desktop/src-tauri/src/sidecar.rs:150-173`). The line format is not a contract.
 - A child process inherits the stderr of the supervisor and its stdout is ignored. The child writes its own Nest lines, so nothing is re-prefixed.
 - `--generate-certs` uses the `cli` target: plain text, `log` to stdout, `error` to stderr. The installer `postinstall` reads it with an anchored `sed`.
