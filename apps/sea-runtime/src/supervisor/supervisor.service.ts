@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger, type BeforeApplicationShutdown, type OnApplicationBootstrap } from '@nestjs/common';
 import { isSea } from 'node:sea';
-import { AGGREGATE_STATE, EXIT_CODE, SUPERVISOR_CONFIG, startupOrder, type ServiceRoute } from 'service-registry';
+import { AGGREGATE_STATE, EXIT_CODE, SUPERVISOR_CONFIG, startupOrder, type ServiceEntry } from 'service-registry';
 import { PersistenceService } from '../persistence/persistence.service.js';
 import { SidecarInput } from '../sidecar/sidecar-input.js';
 import { ChildSpawner } from './child-spawner.js';
@@ -54,7 +54,7 @@ export class SupervisorService implements OnApplicationBootstrap, BeforeApplicat
     return this.shutdown(signal ?? 'shutdown', EXIT_CODE.ok);
   }
 
-  private startOrder(): ServiceRoute[] {
+  private startOrder(): ServiceEntry[] {
     const routes = this.routes.load();
     const byId = new Map(routes.map((route) => [route.id, route]));
     return startupOrder(routes).flatMap((id) => byId.get(id) ?? []);

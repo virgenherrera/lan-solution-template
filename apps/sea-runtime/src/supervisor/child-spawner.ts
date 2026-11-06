@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { spawn, type ChildProcess } from 'node:child_process';
-import { SUPERVISOR_CONFIG, serviceArgs, spawnedMessage, type ServiceRoute } from 'service-registry';
+import { SUPERVISOR_CONFIG, serviceArgs, spawnedMessage, type ServiceEntry } from 'service-registry';
 import { WebBundleService } from '../web/web-bundle.service.js';
 import { ChildRegistry } from './child-registry.js';
 import { forwardLines } from './forward-lines.js';
@@ -16,7 +16,7 @@ export class ChildSpawner {
     private readonly registry: ChildRegistry,
   ) {}
 
-  spawn(route: ServiceRoute): ChildProcess {
+  spawn(route: ServiceEntry): ChildProcess {
     const bundle = route.web ? this.web.message : undefined;
     const args = bundle === undefined ? serviceArgs(route.id) : [...serviceArgs(route.id), '--web', 'ipc'];
     const child = spawn(process.execPath, args, {

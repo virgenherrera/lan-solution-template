@@ -1,12 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
-import { EXIT_CODE, SUPERVISOR_CONFIG } from 'service-registry';
+import { EXIT_CODE, SUPERVISOR_CONFIG, serviceEntries } from 'service-registry';
 import { ServiceLogger } from 'shared-core';
 import { RuntimeModule } from './runtime/runtime.module.js';
 import { SERVICES } from './services.js';
 
 // The supervisor and every service id print plain `[id] text` lines; Nest's own lines are dropped.
-const logger = new ServiceLogger({ plainContexts: new Set([SUPERVISOR_CONFIG.id, ...SERVICES.map((route) => route.id)]), plainPrefix: true, nest: false });
+const logger = new ServiceLogger({ plainContexts: new Set([SUPERVISOR_CONFIG.id, ...serviceEntries(SERVICES).map((entry) => entry.id)]), plainPrefix: true, nest: false });
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(RuntimeModule, {

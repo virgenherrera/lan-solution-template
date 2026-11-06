@@ -212,7 +212,7 @@ function webBrowserDir(name: string, projectDir: string): string {
 const REGISTRY_LIB = 'service-registry';
 
 type Registry = typeof import('service-registry');
-type ServiceRoute = import('service-registry').ServiceRoute;
+type DeclaredEntry = import('service-registry').ServiceEntry;
 
 // Loads the built contract library; every other literal of the assembler comes from its ASSEMBLER_CONFIG.
 async function loadRegistry(): Promise<Registry> {
@@ -271,13 +271,12 @@ function discoverDependencies(
 }
 
 // Matches each declared route to the built service of its workspace project, so the entry table is keyed by route id. Runs before bundling and before `node --build-sea`.
-function resolveRoutes(routes: readonly ServiceRoute[], built: ServiceEntry[], supervisor: string, serviceEntry: string): ServiceEntry[] {
+function resolveRoutes(routes: readonly DeclaredEntry[], built: ServiceEntry[], supervisor: string, serviceEntry: string): ServiceEntry[] {
   return routes.map((route) => {
-    const project = route.project ?? route.id;
-    const found = built.find((s) => s.service === project);
+    const found = built.find((s) => s.service === route.id);
     if (found === undefined) {
       throw new Error(
-        `service "${route.id}": project "${project}" is not a built workspace dependency of ${supervisor}; add it as "workspace:*" and build it (${serviceEntry})`,
+        `service "${route.id}": project "${route.id}" is not a built workspace dependency of ${supervisor}; add it as "workspace:*" and build it (${serviceEntry})`,
       );
     }
     return { service: route.id, entryPath: found.entryPath };
@@ -464,10 +463,11 @@ async function main(): Promise<void> {
   const built = discoverDependencies(supervisor, supervisorDir, contract.ASSEMBLER_CONFIG.serviceEntry);
   // Loaded after the contract check above: services.ts imports the built service-registry.
   const { SERVICES } = (await import('../../apps/sea-runtime/src/services.ts')) as typeof import('../../apps/sea-runtime/src/services.ts');
-  const services = resolveRoutes(SERVICES, built.services, supervisor, contract.ASSEMBLER_CONFIG.serviceEntry);
+  const declared = contract.serviceEntries(SERVICES);
+  const services = resolveRoutes(declared, built.services, supervisor, contract.ASSEMBLER_CONFIG.serviceEntry);
   const web = built.web;
   console.log(
-    `supervisor ${supervisor}; services: ${SERVICES.filter((r) => r.enabled).map((r) => r.id).join(', ')}; web: ${web?.name ?? 'none'}; target ${target.triple}; code cache ${contract.useCodeCache(hostTriple(), target.triple) ? 'on' : 'off'}`,
+    `supervisor ${supervisor}; services: ${declared.filter((r) => r.enabled).map((r) => r.id).join(', ')}; web: ${web?.name ?? 'none'}; target ${target.triple}; code cache ${contract.useCodeCache(hostTriple(), target.triple) ? 'on' : 'off'}`,
   );
 
   const artifactDir = join(root, 'artifacts', supervisor);
@@ -482,7 +482,7 @@ async function main(): Promise<void> {
   stageServices(services);
   writeFileSync(
     servicesPath,
-    `${JSON.stringify(contract.servicesAssetSchema.parse({ services: SERVICES.map(({ project: _project, ...route }) => route) }), null, 2)}\n`,
+    `${JSON.stringify(contract.servicesAssetSchema.parse({ services: declared }), null, 2)}\n`,
   );
   await bundle(supervisorEntry, certsCommandEntry);
   const vector = await vectorAssets(target);

@@ -1,7 +1,13 @@
 import { parseArgs } from 'node:util';
 import { z } from 'zod';
 import { DISPATCHER_CONFIG } from './constants.js';
-import { serviceIdSchema } from './service-definition.js';
+
+export const serviceIdSchema = z.string().min(1);
+
+// Command line arguments that start one service in a child process.
+export function serviceArgs(id: string): string[] {
+  return [`--${DISPATCHER_CONFIG.serviceFlag}`, serviceIdSchema.parse(id)];
+}
 
 export type DispatchTarget =
   | { readonly kind: 'supervisor' }

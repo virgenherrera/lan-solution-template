@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { DISPATCHER_CONFIG, dispatch } from 'service-registry';
+import { DISPATCHER_CONFIG, dispatch, serviceEntries } from 'service-registry';
 import { PLAIN_CONTEXT, ServiceLogger } from 'shared-core';
 import { SERVICES } from './services.js';
 
@@ -7,7 +7,7 @@ import { SERVICES } from './services.js';
 // tools/scripts/compile-sea.ts bundles this file and aliases the specifiers below to the built bootstraps (typed in sea-modules.d.ts).
 const target = dispatch(
   process.argv.slice(2),
-  SERVICES.map((route) => route.id),
+  serviceEntries(SERVICES).map((entry) => entry.id),
 );
 if (target.kind === 'rejected') {
   Logger.overrideLogger(new ServiceLogger({ plainContexts: new Set([PLAIN_CONTEXT]), plainPrefix: false, nest: false }));
