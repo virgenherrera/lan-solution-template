@@ -63,7 +63,7 @@ Evidence columns read as: references in source, tests, tools, and non-TypeScript
 | `ServiceDefinition` | `libs/service-registry/src/service-definition.ts` | not recorded | Used only as a `Pick` type at `libs/service-registry/src/startup-order.ts` lines 1 and 7. Live today. | keep | pending |
 | field `entry` | `libs/service-registry/src/service-definition.ts` | 9 | No reader found. `ServiceRoute` has no `entry` field. | verify | pending |
 
-Only `ControlMessage` and `StatusSnapshot` are confirmed dead by mapping. The `ServiceDefinition` family (`serviceDefinitionSchema`, `serviceRegistrySchema`, `ServiceRegistry`, `ServiceDefinition`) and the `entry` field are reported with zero code readers, and the QC step must verify that before any delete. `ServiceDefinition` stays until slice 3a of the [epic](nest-standalone-refactor.md) replaces its `Pick` use in `startup-order.ts`.
+Only `ControlMessage` and `StatusSnapshot` are confirmed dead by mapping. The `ServiceDefinition` family (`serviceDefinitionSchema`, `serviceRegistrySchema`, `ServiceRegistry`, `ServiceDefinition`) and the `entry` field are reported with zero code readers, and the QC step must verify that before any delete. `ServiceDefinition` stays until slice 3 of the [epic](nest-standalone-refactor.md) replaces its `Pick` use in `startup-order.ts`.
 
 QC status values: `pending` (not checked), `confirmed` (QC re-ran the search and found zero references), `rejected` (QC found a reference; the row becomes `keep`). Every row starts as `pending`.
 

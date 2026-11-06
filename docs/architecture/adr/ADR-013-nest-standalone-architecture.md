@@ -28,7 +28,7 @@ updated: 2026-11-06
 
 Proposed, 2026-11-06. Documentation only. No file under `apps/`, `libs/` or `tools/` changes with this ADR. This ADR is the governing document of the refactor. Three pages detail it:
 
-- [Declared services](../declared-services.md): the single service model, the derived name and the optional pre and post routines.
+- [Declared services](../declared-services.md): the single service model, the derived name, the startup order and the plain typed array.
 - [Nest standalone boot](../nest-standalone-boot.md): the boot order, with diagrams.
 - [Epic](../../backlog/nest-standalone-refactor.md): the slices. [Cleanup inventory](../../backlog/nest-standalone-cleanup-inventory.md): the dead code candidates.
 
@@ -124,7 +124,14 @@ Traces to: `boot_decision`.
 
 ### D11. One declared-services model (Agent)
 
-One type replaces `ServiceRoute` and `ServiceDefinition`: the exported constant is `SERVICES` of type `DeclaredServices`, whose element is `DeclaredService`. The name derives from the service path. The [declared services page](../declared-services.md) holds the model, the optional pre and post routines and the open decision on compile-time checking of `dependsOn`. Only the principle is fixed here: the assembler and the supervisor read the same constant.
+One type replaces `ServiceRoute` and `ServiceDefinition`: the exported constant is `SERVICES` of type `DeclaredServices`, whose element is `DeclaredService`. The name derives from the service path. The [declared services page](../declared-services.md) holds the model. Only the principle is fixed here: the assembler and the supervisor read the same constant.
+
+Two changes were decided by the human on 2026-11-06 and replace earlier proposals of this ADR:
+
+- The contract carries no per-service routines and no proposed time limits. Work that must run before a service is another service earlier in the array. Work at shutdown is done by the service itself with the Nest lifecycle hooks `onApplicationShutdown` and `beforeApplicationShutdown`. A service is a long-lived process: a task that ends would be restarted, so the migrations stay a step of the supervisor.
+- `SERVICES` is a plain `DeclaredServices` constant with no helper function. Zod validation always runs at run time, in the supervisor and in the assembler, like the route configuration of Angular. The compile-time check of `dependsOn` is lost on purpose and is no longer an open decision.
+
+Verified in code on 2026-11-06: the supervisor does not wait for the ready message of a service before it launches the next one (`apps/sea-runtime/src/supervisor/supervisor.service.ts:41-49`, `service-lifecycle.ts:59-63`). The order of the array alone does not order startup, so `dependsOn` stays in the contract and the array order only breaks ties (`libs/service-registry/src/startup-order.ts:4`). The evidence table is in the [declared services page](../declared-services.md#startup-order-and-shutdown).
 
 Traces to: `services_decisions`.
 
@@ -184,6 +191,6 @@ Traces to: `logging_decisions[6]`.
 - Whether `docs/architecture/overview.md` lists ADR-012 correctly. The mapping reports lines 39 and 157 call it a placeholder, which contradicts the file in `adr/`.
 - Whether D2 reaches the scripts under `tools/scripts`.
 - Whether `SupervisorLogger` can fold into the Nest `Logger` with identical lines (D7).
-- The hook timeout defaults and the placement of `DeclaredServices` in a library: they are open in the [declared services page](../declared-services.md).
+- The placement of `DeclaredServices` in a library and the route of the Logger decorator: they are open in the [declared services page](../declared-services.md) and in D6.
 
 [Back to navigation](#navigation)

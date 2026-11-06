@@ -23,7 +23,7 @@ updated: 2026-11-06
 - [Slice order](#slice-order)
 - [Slice 1: EXIT_CODE constants](#slice-1-exit_code-constants)
 - [Slice 2: Nest Logger](#slice-2-nest-logger)
-- [Slice 3: Unified DeclaredServices with pre and post](#slice-3-unified-declaredservices-with-pre-and-post)
+- [Slice 3: Unified DeclaredServices](#slice-3-unified-declaredservices)
 - [Slice 4: Dead code cleanup](#slice-4-dead-code-cleanup)
 - [Slice 5: Folder reorganization](#slice-5-folder-reorganization)
 - [Out of scope](#out-of-scope)
@@ -67,7 +67,7 @@ updated: 2026-11-06
 |---|---|---|---|
 | 1 | EXIT_CODE constants | Mechanical, no design, shrinks the diff of later slices | under 150 lines |
 | 2 | Nest Logger | Needs the constants of slice 1 for the failure paths | 250 to 400 lines |
-| 3 | Unified DeclaredServices with pre and post | Largest design change. Split into 3a and 3b | 3a under 350, 3b under 250 |
+| 3 | Unified DeclaredServices | Largest design change. One commit | under 350 lines |
 | 4 | Dead code cleanup | Safe after slice 3 settles which model types stay | under 60 lines |
 | 5 | Folder reorganization | Moves files last so earlier diffs stay readable | under 400 lines, mostly moves |
 
@@ -123,34 +123,26 @@ updated: 2026-11-06
 
 ---
 
-## Slice 3: Unified DeclaredServices with pre and post
+## Slice 3: Unified DeclaredServices
 
 [Back to navigation](#navigation)
 
 **Objective.** One model replaces `ServiceRoute` and the `ServiceDefinition` family. The export is `export const SERVICES: DeclaredServices = [...]`. `DeclaredService` is the element type and `DeclaredServices` is the readonly collection type. The design is in [DeclaredServices](../architecture/declared-services.md) and the boot order is in [Nest standalone boot](../architecture/nest-standalone-boot.md).
 
-Split in two commits so each stays reviewable.
-
-**Slice 3a: unify the model.**
-
 - The `id` property is dropped as an input. The name is derived from the path with `path.parse(path).base`.
-- Validation stays internal and runtime: a zod schema with `superRefine` for unique names, unknown `dependsOn` and startup cycles, the same checks `routesSchema` makes today.
+- `SERVICES` is a plain typed array with no helper function. Validation stays internal and always runs at run time, in the supervisor and in the assembler: a zod schema with `superRefine` for unique names, unknown `dependsOn` and startup cycles, the same checks `routesSchema` makes today.
+- The contract has no per-service routines. Work before a service is another service earlier in the array. Work at shutdown is a Nest lifecycle hook of the service. A service is a long-lived process, so the migrations stay a step of the supervisor.
+- `dependsOn` stays: the supervisor does not wait for the ready message of the previous service (`supervisor.service.ts:41-49`), so the array order only breaks ties.
 - The assembler and the supervisor read the same constant.
 - File surface (reported by mapping): `libs/service-registry/src/service-routes.ts`, `service-definition.ts`, `startup-order.ts`, `dispatcher.ts`, `apps/sea-runtime/src/services.ts`, `apps/sea-runtime/src/supervisor/service-routes-source.ts`, `child-spawner.ts`, `supervisor.service.ts`, `apps/sea-runtime/src/sea-entry.ts`, `tools/scripts/compile-sea.ts` (lines 276, 283, 467, 485).
-- Open decision from the design page: today `defineServices` checks `dependsOn` against declared ids at compile time. A plain typed array loses that check. The options and the recommendation live in [DeclaredServices](../architecture/declared-services.md).
+- The compile-time check of `dependsOn` is lost on purpose (human decision, 2026-11-06). See [DeclaredServices](../architecture/declared-services.md#decision-plain-typed-array).
 - The `ServiceDefinition` family is removed only after the [inventory](nest-standalone-cleanup-inventory.md) rows reach QC status `confirmed`. `ServiceDefinition` is still used as a `Pick` type in `startup-order.ts` (reported), so it is not dead today.
 
-**Slice 3b: optional pre and post routines.**
+**Acceptance.** `pnpm test` and `smoke-sea` pass with no test edit. The `services.json` asset produced by `compile-sea.ts` is byte-identical before and after the slice for the current service list. A search for a declared `id` input over `apps` and `libs` returns nothing.
 
-- A service may declare a `pre` routine, run by the supervisor before the spawn, and a `post` routine, run after the child exits for any reason. A failing `pre` means the service does not start and the aggregate state is `failed`. A failing `post` is logged and never thrown. Each hook has a timeout with a default. The default values are proposed in the design page.
-- A service that declares no hook behaves exactly as today.
-- File surface: `apps/sea-runtime/src/supervisor/service-lifecycle.ts` and `supervisor.service.ts` (reported lines 108 to 117 for the restart path).
+**Risk.** item 3 (the `services.json` asset and the dispatcher argument contract are consumed at runtime).
 
-**Acceptance.** `pnpm test` and `smoke-sea` pass with no test edit. The `services.json` asset produced by `compile-sea.ts` is byte-identical before and after slice 3a for the current service list. A search for a declared `id` input over `apps` and `libs` returns nothing. For 3b, a run with no hook declared produces the same state events as before.
-
-**Risk.** item 3 (the `services.json` asset and the dispatcher argument contract are consumed at runtime) and item 4 for 3b (hooks add async ordering in the supervisor).
-
-**Estimated size.** 3a under 350 changed lines, 3b under 250.
+**Estimated size.** under 350 changed lines.
 
 ---
 
