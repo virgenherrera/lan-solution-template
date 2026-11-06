@@ -325,6 +325,13 @@ await check('first start: migration applied, schema ok, pgvector ready', async (
   return history();
 });
 
+// REQ-TEST-06: a genuine vector query, on the server the app just migrated.
+await check('vector: a genuine similarity query runs on the server', async () => {
+  const distance = psql(server, "SELECT '[1,0,0]'::vector <=> '[0,1,0]'::vector");
+  expect(distance === '1', `cosine distance ${distance}`);
+  return `cosine distance ${distance}`;
+});
+
 await check('restart: nothing is applied again', async () => {
   const before = psql(server, 'SELECT applied_at FROM schema_migrations WHERE version = 1');
   await bootAndStop(binary);
