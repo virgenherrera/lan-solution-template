@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { jsonText } from './json-text.js';
+import { jsonText } from '../json-text.js';
 import { serviceStatusSchema, statusSnapshotSchema } from './status-snapshot.js';
 
 // The sidecar contract with the host (Tauri). The host sees the supervisor through four things only: stdout lines, stderr lines, stdin lines and the exit code.

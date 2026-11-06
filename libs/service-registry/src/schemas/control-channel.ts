@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AGGREGATE_STATE, CONTROL_KIND } from './states.js';
+import { AGGREGATE_STATE, CONTROL_KIND } from '../constants/states.js';
 
 // The five aggregate states of the runtime (REQ-RUNTIME-05).
 export const aggregateStateSchema = z.enum(AGGREGATE_STATE);

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EXIT_CODE } from './exit-code.js';
+import { EXIT_CODE } from '../constants/exit-code.js';
 
 // Every literal of the supervisor lives here, with its default. Values come from OQ11 (decision D2).
 export const supervisorConfigSchema = z.object({

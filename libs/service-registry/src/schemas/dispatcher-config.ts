@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EXIT_CODE } from './exit-code.js';
+import { EXIT_CODE } from '../constants/exit-code.js';
 
 // Every literal of the dispatcher contract lives here, with its default. Nothing else in the lib or its callers repeats these values.
 export const dispatcherConfigSchema = z.object({

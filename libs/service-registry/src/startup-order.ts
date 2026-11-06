@@ -1,4 +1,4 @@
-import { type ServiceEntry } from './declared-services.js';
+import { type ServiceEntry } from './schemas/declared-services.js';
 
 // Pure function: service ids ordered so every service comes after the ones it depends on.
 // Only enabled services count. Ties keep registry order. Throws on a cycle.

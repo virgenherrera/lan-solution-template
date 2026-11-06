@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { aggregateStateSchema } from './control-channel.js';
-import { SERVICE_STATUS } from './states.js';
+import { SERVICE_STATUS } from '../constants/states.js';
 
 export const serviceStatusSchema = z.enum(SERVICE_STATUS);
 

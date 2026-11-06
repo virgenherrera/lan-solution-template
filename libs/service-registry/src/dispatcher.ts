@@ -1,6 +1,6 @@
 import { parseArgs } from 'node:util';
 import { z } from 'zod';
-import { DISPATCHER_CONFIG } from './constants.js';
+import { DISPATCHER_CONFIG } from './schemas/dispatcher-config.js';
 
 export const serviceIdSchema = z.string().min(1);
 

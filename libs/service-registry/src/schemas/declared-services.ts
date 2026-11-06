@@ -1,7 +1,7 @@
 import { parse } from 'node:path';
 import { z } from 'zod';
-import { serviceIdSchema } from './dispatcher.js';
-import { startupOrder } from './startup-order.js';
+import { serviceIdSchema } from '../dispatcher.js';
+import { startupOrder } from '../startup-order.js';
 
 // One declared service, in the spirit of an Angular route: add an entry, the runtime supervises a new service.
 export const declaredServiceSchema = z.strictObject({
