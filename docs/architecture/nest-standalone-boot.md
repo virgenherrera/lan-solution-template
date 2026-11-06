@@ -88,8 +88,8 @@ The runtime dispatches the arguments and creates the application context. Persis
 | --- | --- |
 | `apps/sea-runtime/src/sea-entry.ts:6-19` | Dispatch, certificate flag. |
 | `apps/sea-runtime/src/main.ts:6-12` | Application context. |
-| `apps/sea-runtime/src/persistence/persistence.service.ts:26-80` | Migrations and schema gate. |
-| `apps/sea-runtime/src/supervisor/supervisor.service.ts:30-61` | Service start in order. |
+| `apps/sea-runtime/src/services/persistence.service.ts:26-80` | Migrations and schema gate. |
+| `apps/sea-runtime/src/services/supervisor.service.ts:30-61` | Service start in order. |
 | `apps/api-gateway/src/app.bootstrap.ts:22-32` | Gateway listen steps. |
 | `apps/desktop/installer/macos/scripts/postinstall:86-98` | Certificate creation. |
 
@@ -114,7 +114,7 @@ stateDiagram-v2
 
 The status starts as `starting` and changes only on a ready message or after an exit. A child that sends no ready message within `readinessTimeoutMs` receives SIGKILL. The kill ends in the same exit handler, so a startup failure spends the same restart budget. A spent budget sets `failed` and no further spawn happens.
 
-Source: `apps/sea-runtime/src/supervisor/service-lifecycle.ts:46,89,92-96,110-118`.
+Source: `apps/sea-runtime/src/services/service-lifecycle.ts:46,89,92-96,110-118`.
 
 ---
 
@@ -161,8 +161,8 @@ The diagram is the target dependency graph. The module names are a proposal, not
 
 | Source | Covers |
 | --- | --- |
-| `apps/sea-runtime/src/runtime/runtime.module.ts` | Runtime module imports. |
-| `apps/api-gateway/src/core.module.ts` | Gateway module imports. |
+| `apps/sea-runtime/src/modules/runtime.module.ts` | Runtime module imports. |
+| `apps/api-gateway/src/modules/core.module.ts` | Gateway module imports. |
 | Mapping C (nest-base layout) | Role folders and module style. |
 
 ---
@@ -202,7 +202,7 @@ stdout is the machine contract of ADR-006: one JSON object per line, never a log
 | --- | --- |
 | `console-logger.service.js:95-148`, `233-241` in `@nestjs/common` | Default level routing. |
 | `libs/service-registry/src/supervisor-log.ts:5` | Current supervisor log prefix. |
-| `apps/sea-runtime/src/sidecar/sidecar-output.ts:8` | Contract writer. |
+| `apps/sea-runtime/src/services/sidecar-output.ts:8` | Contract writer. |
 
 ---
 
@@ -210,13 +210,13 @@ stdout is the machine contract of ADR-006: one JSON object per line, never a log
 
 [Back to navigation](#navigation)
 
-The refactor replaces each magic number with a named `EXIT_CODE` constant (slice 1: `libs/service-registry/src/exit-code.ts`; the `constants` folder comes in slice 5). The numeric values do not change.
+The refactor replaces each magic number with a named `EXIT_CODE` constant (created in slice 1 at `libs/service-registry/src/exit-code.ts`, moved in slice 5 to `libs/service-registry/src/constants/exit-code.ts`). The numeric values do not change.
 
 The table lists 26 `process.exit` calls and one `process.exitCode` assignment, as found by mapping. Observable means that a smoke test or a contract comment asserts the value.
 
 | File | Line | Value | Observable |
 | --- | --- | --- | --- |
-| `apps/sea-runtime/src/supervisor/supervisor.service.ts` | 84 | 0 or `SUPERVISOR_CONFIG.errorExitCode` | yes, smoke-sea L272-273 expects 0 after shutdown |
+| `apps/sea-runtime/src/services/supervisor.service.ts` | 84 | 0 or `SUPERVISOR_CONFIG.errorExitCode` | yes, smoke-sea L272-273 expects 0 after shutdown |
 | `apps/sea-runtime/src/sea-entry.ts` | 12 | `DISPATCHER_CONFIG.rejectExitCode` | yes, smoke-sea L460-465 |
 | `apps/sea-runtime/src/sea-entry.ts` | 17 | `process.exitCode` from `runGenerateCerts` (assignment, not a call) | yes, smoke-dev L146 checks a nonzero status |
 | `apps/sea-runtime/src/main.ts` | 20 | 1 | yes, smoke-pg L282-283 and smoke-sea start-failure checks |

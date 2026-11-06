@@ -31,7 +31,7 @@ updated: 2026-11-06
 
 Implemented in slice 3, 2026-11-06. Two decisions by the human shaped it: the contract carries no per-service routines, and the array is a plain typed constant validated at run time.
 
-Slice 3 is a pure refactor. The `services.json` asset is byte-identical to the one built before the slice. The model lives in `libs/service-registry/src/declared-services.ts`.
+Slice 3 is a pure refactor. The `services.json` asset is byte-identical to the one built before the slice. The model lives in `libs/service-registry/src/schemas/declared-services.ts`.
 
 The author read the code lines cited in the tables. Claims taken from mapping reports are collected in [Not verified](#not-verified).
 
@@ -79,7 +79,7 @@ Fields of `DeclaredService`:
 | `path` | yes | Workspace-relative path of the service package. The name is derived from it. |
 | `dependsOn` | no, default empty | Names of services that must start earlier. Kept, see [Startup order and shutdown](#startup-order-and-shutdown). |
 | `enabled` | no, default true | A disabled service is declared but never started. |
-| `web` (Deprecated) | no, default false | Deprecated. Today the supervisor sends the embedded web bundle to this service over IPC at every start (`apps/sea-runtime/src/supervisor/child-spawner.ts:20-21`). A service-owned web build will replace it, see [Deprecated: the web flag](#deprecated-the-web-flag). |
+| `web` (Deprecated) | no, default false | Deprecated. Today the supervisor sends the embedded web bundle to this service over IPC at every start (`apps/sea-runtime/src/services/child-spawner.ts:20-21`). A service-owned web build will replace it, see [Deprecated: the web flag](#deprecated-the-web-flag). |
 
 The input has no `id` and no `entry`.
 
@@ -126,8 +126,8 @@ stateDiagram-v2
 
 | Source | Finding |
 | --- | --- |
-| apps/sea-runtime/src/supervisor/service-lifecycle.ts:101 | Any exit, clean or not, goes through the restart plan. |
-| apps/sea-runtime/src/supervisor/service-lifecycle.ts:107-119 | A spent budget sets the status to failed. Otherwise the status is restarting and a timer respawns the child. |
+| apps/sea-runtime/src/services/service-lifecycle.ts:101 | Any exit, clean or not, goes through the restart plan. |
+| apps/sea-runtime/src/services/service-lifecycle.ts:107-119 | A spent budget sets the status to failed. Otherwise the status is restarting and a timer respawns the child. |
 
 ## Name and project derivation
 
@@ -144,12 +144,12 @@ The code was read to settle one question: does the supervisor wait for a service
 
 | Source | Finding |
 | --- | --- |
-| apps/sea-runtime/src/supervisor/supervisor.service.ts:41-49 | One synchronous `for` loop over `startOrder()`. Each iteration creates the lifecycle and calls `lifecycle.start()` without awaiting anything. |
-| apps/sea-runtime/src/supervisor/service-lifecycle.ts:59-63 | `start()` subscribes and returns at once. It returns no promise and no readiness signal. |
-| apps/sea-runtime/src/supervisor/service-lifecycle.ts:83-91 | The ready message only sets the status to ready. Nothing gates the next spawn on it. |
+| apps/sea-runtime/src/services/supervisor.service.ts:41-49 | One synchronous `for` loop over `startOrder()`. Each iteration creates the lifecycle and calls `lifecycle.start()` without awaiting anything. |
+| apps/sea-runtime/src/services/service-lifecycle.ts:59-63 | `start()` subscribes and returns at once. It returns no promise and no readiness signal. |
+| apps/sea-runtime/src/services/service-lifecycle.ts:83-91 | The ready message only sets the status to ready. Nothing gates the next spawn on it. |
 | libs/service-registry/src/startup-order.ts:4,18-20 | `startupOrder` is a topological sort over `dependsOn`. Ties keep registry order. It orders the spawns and does nothing else. |
 | libs/service-registry/src/startup-order.ts:5 | A code comment says ordering of two or more services is unverified. |
-| apps/sea-runtime/src/supervisor/supervisor.service.ts:79-82 | Shutdown runs in reverse start order. |
+| apps/sea-runtime/src/services/supervisor.service.ts:79-82 | Shutdown runs in reverse start order. |
 
 Result:
 

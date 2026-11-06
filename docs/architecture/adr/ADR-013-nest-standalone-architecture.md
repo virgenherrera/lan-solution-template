@@ -168,7 +168,7 @@ Acceptance criterion of the code phase: a capture of stderr before and after sho
 
 Status: Proposed
 
-One `EXIT_CODE` contract (slice 1: `libs/service-registry/src/exit-code.ts`, later in a `constants/` path) replaces the magic numbers of `process.exit` and `process.exitCode`. The values stay: `0`, `1` and `2` keep the meaning of [ADR-006](ADR-006-sidecar-status-contract.md).
+One `EXIT_CODE` contract (created in slice 1 at `libs/service-registry/src/exit-code.ts`, moved in slice 5 to `libs/service-registry/src/constants/exit-code.ts`) replaces the magic numbers of `process.exit` and `process.exitCode`. The values stay: `0`, `1` and `2` keep the meaning of [ADR-006](ADR-006-sidecar-status-contract.md).
 
 The constant covers every value found, including `130` on signal in the PostgreSQL smoke. The inventory lists them.
 
@@ -181,6 +181,14 @@ Code groups by role. `constants/` holds constants such as `EXIT_CODE` and `SERVI
 Events use RxJS and validation uses zod. A declared type is `z.infer` of its schema. A collection export has a plural name, and the use site never types it with `[]`.
 
 Neither `nest-base` nor `virgenherrera` has these folders, so this is a convention of this repository.
+
+Slice 5 applied D9 only in part. It moved the 41 files whose role is a single D9 role, 41 of the 91 `.ts` files in `api-gateway`, `sea-runtime`, `service-registry` and `shared-core`. The other 50 stay, because this is a pure refactor and each of them has a reason:
+
+| Not moved | Files | Reason |
+|---|---|---|
+| Entrypoints and barrels | 6 | The build and the package manifests name them by path: `sea-entry.ts` (`tools/scripts/compile-sea.ts:309`), `services.ts` (`compile-sea.ts:465`), the two `main.ts` (`start:prod` runs `node dist/main`, `package.json:17` in each app) and the two barrels `index.ts` (`"main": "dist/index.js"`). `sea-modules.d.ts` stays with them. |
+| `tls/` and `db/` | 16 | The `shared-core` package exports point at their built path (`libs/shared-core/package.json:11-18`). `tools/scripts/db-parity.ts:28-29` and `compile-sea.ts:459` load the built files by path. |
+| Mixed role or loose functions | 28 | A file holds a module with providers, a controller, or plain functions. No D9 folder fits it. |
 
 ### D10. Boot order
 

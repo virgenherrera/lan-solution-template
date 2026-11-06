@@ -121,7 +121,7 @@ Contract after slice 3:
 |---|---|
 | Goal | Replace numeric `process.exit` and `process.exitCode` arguments with a named `EXIT_CODE` contract. Values stay. |
 | Files | `sea-runtime` (supervisor, sea-entry, main), `api-gateway` main, the `rejectExitCode` and `errorExitCode` defaults in `service-registry`, and the result of `runGenerateCerts` in `shared-core`. Only `apps/` and `libs/`. `tools/scripts/` (21 sites) is out of this slice: those scripts load the libs with a dynamic import from `dist`, so they cannot import `EXIT_CODE` without a prior build. |
-| New file | `libs/service-registry/src/exit-code.ts`, exported by the barrel `index.ts`. It lives in `service-registry` because `shared-core` depends on `service-registry`, not the reverse. It sits beside `aggregate-state.ts` and `states.ts`; the move to folders is slice 5. |
+| New file | `libs/service-registry/src/exit-code.ts`, exported by the barrel `index.ts`; slice 5 moved it to `libs/service-registry/src/constants/exit-code.ts`. It lives in `service-registry` because `shared-core` depends on `service-registry`, not the reverse. In slice 1 it sat beside `aggregate-state.ts` and `states.ts`. |
 | Accept | Tests and `smoke-sea` pass, no test edit. No numeric literal argument to `process.exit` or value of `process.exitCode` remains in `apps/` and `libs/`. Startup failure exits 1, bad argument 2, clean shutdown 0. |
 | Risk | none. Smokes assert the observable exits. Run `smoke-dev` and `smoke-pg` evidence where possible. |
 | Size | under 150 changed lines |
@@ -186,6 +186,15 @@ Contract after slice 3:
 | Accept | Tests and `smoke-sea` pass, no test edit. The SEA build resolves every module. Moves use `git mv`. Only import paths change inside files. |
 | Risk | item 3. Other packages and the build consume barrels and the SEA alias. |
 | Size | under 400 changed lines, mostly renames. Over 400: split by library. |
+| Result | Done with `git mv` in four blocks, 41 moves: `service-registry` 9, `shared-core` 3, `api-gateway` 7, `sea-runtime` 22. One move renames the file: `libs/service-registry/src/constants.ts` became `libs/service-registry/src/schemas/dispatcher-config.ts`. Only import paths changed inside files. `tools/` and the tests were not edited. |
+
+Coverage is partial by design of a pure refactor. The slice moved the 41 files with a single D9 role, 41 of the 91 `.ts` files in the four packages. The other 50 stay:
+
+| Not moved | Files | Reason |
+|---|---|---|
+| Entrypoints and barrels | 6 | The build and the package manifests name them by path: `sea-entry.ts` (`tools/scripts/compile-sea.ts:309`), `services.ts` (`compile-sea.ts:465`), the two `main.ts` (`start:prod` runs `node dist/main`, `package.json:17` in each app) and the two barrels `index.ts` (`"main": "dist/index.js"`). `sea-modules.d.ts` stays with them. |
+| `tls/` and `db/` | 16 | The `shared-core` package exports point at their built path (`libs/shared-core/package.json:11-18`). `tools/scripts/db-parity.ts:28-29` and `compile-sea.ts:459` load the built files by path. |
+| Mixed role or loose functions | 28 | A file holds a module with providers, a controller, or plain functions. No D9 folder fits it. |
 
 ---
 

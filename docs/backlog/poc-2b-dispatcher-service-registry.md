@@ -113,7 +113,7 @@ No unit or integration suite is added ([REQ-TEST-01](../requirements/11-nx-quali
 | `libs/service-registry/package.json`, `tsconfig.json` | `pnpm init`, `pnpm exec tsc --init`, `pnpm pkg set`, the same route as `libs/shared-core` in [POC-1b](../results/POC-01b-Result.md). An Nx library generator (`pnpm dlx nx g --help`) is not verified to exist in this workspace; check it first |
 | `libs/service-registry/src/*.ts` | manual: no CLI writes schema or dispatcher bodies |
 | `apps/sea-runtime/package.json` | `pnpm --filter sea-runtime add service-registry@workspace:*` |
-| `apps/sea-runtime/src/supervisor/supervisor.service.ts` | manual edit of a CLI-generated file |
+| `apps/sea-runtime/src/services/supervisor.service.ts` | manual edit of a CLI-generated file |
 | `tools/scripts/compile-sea.ts` | manual edit: the generated entry calls the dispatcher. Reason: no CLI generates a SEA assembler |
 | `docs/results/POC-02b-dispatcher-registry.md`, `docs/meta.toon` | manual; regeneration command |
 

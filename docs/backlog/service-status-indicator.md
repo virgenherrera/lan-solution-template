@@ -52,7 +52,7 @@ The aggregate state alone hides a restart: a pending restart collapses into `deg
 
 [Back to navigation](#navigation)
 
-- Per-service status exists: `starting`, `ready`, `restarting`, `failed` (`libs/service-registry/src/states.ts`).
+- Per-service status exists: `starting`, `ready`, `restarting`, `failed` (`libs/service-registry/src/constants/states.ts`).
 - The supervisor owns the surface. On each aggregate change it writes one `status` event to stdout: the aggregate state plus one status per service (`StatusPublisher`). The sidecar contract is stdout NDJSON `status` events, stderr logs, stdin NDJSON commands ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)).
 - No HTTP listener. The loopback `GET /status` endpoint and `supervisor.statusPort` of PR #13 were removed on 2026-11-03 by human decision: nothing consumes them and Tauri reads stdio. A future web UI needs a new transport decision.
 - `/api/health` stays gateway-owned and unchanged. The aggregate set is unchanged, so a restart still shows as `degraded` there.
