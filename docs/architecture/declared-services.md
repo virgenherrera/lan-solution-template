@@ -58,7 +58,7 @@ One model replaces both. The export follows the style of Angular routes.
 ```ts
 // Proposed. Not implemented. A plain typed constant: no helper function wraps it.
 export const SERVICES: DeclaredServices = [
-  { path: 'apps/api-gateway', web: true },
+  { path: 'apps/api-gateway', receivesWebBundle: true },
 ];
 ```
 
@@ -78,7 +78,7 @@ Fields of `DeclaredService` (proposed):
 | `path` | yes | Workspace-relative path of the service package. The name is derived from it. |
 | `dependsOn` | no, default empty | Names of services that must start earlier. Kept, see [Startup order and shutdown](#startup-order-and-shutdown). |
 | `enabled` | no, default true | A disabled service is declared but never started. |
-| `web` | no, default false | The service receives the embedded web bundle over IPC on every start. |
+| `receivesWebBundle` (proposed name, was `web`) | no, default false | The supervisor sends the embedded web bundle to this service over IPC at every start (`apps/sea-runtime/src/supervisor/child-spawner.ts:20-21`). |
 
 The input has no `id` and no `entry`.
 
@@ -193,6 +193,7 @@ Boot order around the supervisor, certificates and migrations is in [Nest standa
 | `routesSchema` | internal collection schema | Same checks, applied to names. |
 | `defineServices` | removed | Decided by the human, 2026-11-06. `SERVICES` is a plain `DeclaredServices` constant. See [Decision: plain typed array](#decision-plain-typed-array). |
 | `pre` and `post` (proposed fields, never implemented) | dropped | Decided by the human, 2026-11-06. Work before a service is another service earlier in the array. Work at shutdown is a Nest lifecycle hook of the service. |
+| `web` | `receivesWebBundle` (proposed) | The name now says what the flag does. The supervisor still starts the gateway with the command line argument `--web ipc`: that argument is an existing contract and does not change. |
 | `servicesAssetSchema` | stays, derived from `declaredServiceSchema` | Shape of the asset the supervisor reads. |
 | `entry` | removed | No reader found by mapping. |
 | `project` | derived from `path` | No longer an input. |
