@@ -153,7 +153,7 @@ Contract after slice 3:
 | Goal | One model replaces `ServiceRoute` and the `ServiceDefinition` family: `export const SERVICES: DeclaredServices = [...]`. See the diagram above. |
 | Design | Plain typed array, no helper. A zod schema with `superRefine` validates at run time, as `routesSchema` does today. Name is `path.parse(path).base`. Migrations stay a supervisor step. |
 | Files | In `libs/service-registry/src/`: service-routes, service-definition, startup-order, dispatcher. In `apps/sea-runtime/src/`: services, supervisor files, sea-entry. Also `compile-sea.ts`. |
-| Gate | Remove the `ServiceDefinition` family only after its [inventory](nest-standalone-cleanup-inventory.md) rows reach QC status `confirmed`. |
+| Gate | Remove the `ServiceDefinition` family only after its [inventory](nest-standalone-cleanup-inventory.md) rows reach QC status `confirmed`. Status: implemented in slice 3; the rows are `deleted`/`confirmed`. |
 | Accept | Tests and `smoke-sea` pass, no test edit. The `services.json` asset from `compile-sea.ts` is byte-identical. No declared `id` input remains in `apps` and `libs`. |
 | Risk | item 3. Runtime consumes the `services.json` asset and the dispatcher arguments. |
 | Size | under 350 changed lines |

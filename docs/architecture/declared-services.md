@@ -3,10 +3,10 @@ fmt: TOON
 doc: docs/architecture/declared-services.md
 title: "Declared services contract"
 type: architecture
-summary: "Proposed single DeclaredServices model replacing ServiceRoute and ServiceDefinition, validated at run time, with no per-service routines."
+summary: "Single DeclaredServices model (implemented in slice 3) that replaced ServiceRoute and ServiceDefinition, validated at run time, with no per-service routines."
 ids[0]:
 related[7]: docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/nest-standalone-boot.md,docs/backlog/nest-standalone-refactor.md,docs/backlog/nest-standalone-cleanup-inventory.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/overview.md
-status: proposed
+status: current
 updated: 2026-11-06
 -->
 
@@ -18,7 +18,7 @@ updated: 2026-11-06
 
 - [Status](#status)
 - [Context](#context)
-- [Proposed contract](#proposed-contract)
+- [Contract](#contract)
 - [Name and project derivation](#name-and-project-derivation)
 - [Startup order and shutdown](#startup-order-and-shutdown)
 - [Validation](#validation)
@@ -29,34 +29,34 @@ updated: 2026-11-06
 
 ## Status
 
-Proposed, 2026-11-06. Revised the same day after two decisions by the human: the contract carries no per-service routines, and the array is a plain typed constant validated at run time.
+Implemented in slice 3, 2026-11-06. Two decisions by the human shaped it: the contract carries no per-service routines, and the array is a plain typed constant validated at run time.
 
-This phase changes documentation only. No file under apps/, libs/ or tools/ changes. The later code refactor is a pure refactor: every existing test and smoke passes unchanged.
+Slice 3 is a pure refactor. The `services.json` asset is byte-identical to the one built before the slice. The model lives in `libs/service-registry/src/declared-services.ts`.
 
 The author read the code lines cited in the tables. Claims taken from mapping reports are collected in [Not verified](#not-verified).
 
 ## Context
 
-Two models describe a service today.
+Before slice 3, two models described a service. The table shows the old state; the [migration table](#migration-table) maps each symbol to its replacement.
 
 | Model | Source | Fields | State |
 | --- | --- | --- | --- |
-| `ServiceRoute` | libs/service-registry/src/service-routes.ts | id, project, dependsOn, enabled, web | Live. A helper function builds it. `apps/sea-runtime/src/services.ts` declares one entry, `api-gateway`. |
-| `ServiceDefinition` | libs/service-registry/src/service-definition.ts | id, entry, dependsOn, enabled | Nothing reads `entry`. `startup-order.ts` uses the type only as a `Pick`. QC must confirm before any delete. |
+| `ServiceRoute` (removed) | libs/service-registry/src/service-routes.ts | id, project, dependsOn, enabled, web | Was live. A helper function built it. `apps/sea-runtime/src/services.ts` declared one entry, `api-gateway`. |
+| `ServiceDefinition` (removed) | libs/service-registry/src/service-definition.ts | id, entry, dependsOn, enabled | Nothing read `entry`. `startup-order.ts` used the type only as a `Pick`; it now picks from `ServiceEntry`. |
 
-The two models overlap on three fields and disagree on the rest. Every service id is typed by hand, although the service path already holds the name.
+The two models overlapped on three fields and disagreed on the rest. Every service id was typed by hand, although the service path already holds the name.
 
 A service is a long-lived process. The supervisor spawns it, reads its ready message and restarts it when it exits.
 
 - Work that must run before a service is declared as another service earlier in the array.
 - Work that must run at shutdown belongs to the service itself, through the Nest lifecycle hooks.
 
-## Proposed contract
+## Contract
 
 One model replaces both. The export follows the style of Angular routes.
 
 ```ts
-// Proposed. Not implemented. A plain typed constant: no helper function wraps it.
+// A plain typed constant: no helper function wraps it.
 export const SERVICES: DeclaredServices = [
   { path: 'apps/api-gateway', web: true },
 ];
@@ -67,11 +67,12 @@ Type names:
 | Name | Meaning |
 | --- | --- |
 | `declaredServiceSchema` | zod schema of one service. |
-| `DeclaredService` | `Readonly<z.infer<typeof declaredServiceSchema>>`. The element type. |
+| `DeclaredService` | `Readonly<z.input<typeof declaredServiceSchema>>`. The element type. `z.input` keeps `dependsOn`, `enabled` and `web` optional, so `{ path, web: true }` compiles. |
+| `ServiceEntry` | `Readonly<z.infer<typeof serviceEntrySchema>>`. What the supervisor reads: `id`, `dependsOn`, `enabled`, `web`, in that key order. `serviceEntries(SERVICES)` validates the declaration and derives the entries. |
 | `DeclaredServices` | `readonly DeclaredService[]`. The collection type. Use sites never write `[]`. |
 | `SERVICES` | The one constant of type `DeclaredServices`. |
 
-Fields of `DeclaredService` (proposed):
+Fields of `DeclaredService`:
 
 | Field | Required | Meaning |
 | --- | --- | --- |
@@ -134,8 +135,7 @@ The name of a service is `path.parse(path).base`. The name replaces `id` everywh
 
 - Use `.base`, not `.name`. `.name` strips a dot suffix, so a path ending in `x.y` would lose `.y`.
 - `path.parse` works on a string and touches no disk. It works inside the SEA binary.
-- `project` is the workspace package that holds `dist/main.js`. Under the proposal it comes from the same path, so the assembler reads the path directly and the `project` input disappears.
-- Today project defaults to the id (comment at service-routes.ts:9).
+- `project` is the workspace package that holds `dist/main.js`. It is the derived name, so the assembler compares the name with the workspace dependency and the `project` input is gone. The base of the path must equal the package name (not verified for future services; one service exists).
 - Two services whose paths share a base name collide. Validation rejects them as a duplicate name.
 
 ## Startup order and shutdown
@@ -178,9 +178,9 @@ flowchart TD
     OK -- "no" --> F["Abort with the zod issue path"]
 ```
 
-The checks match what `routesSchema` does today (service-routes.ts:18-35), applied to names instead of ids. The cycle check calls the same ordering function as the supervisor.
+The checks are those of the former `routesSchema`, applied to derived names (`declaredServicesSchema` in declared-services.ts). The cycle check calls the same ordering function as the supervisor.
 
-The type is `z.infer` of the schema. No hand-written interface duplicates it. Each reader validates once, where it first consumes `SERVICES`. The editor does not check `dependsOn` names; see [Decision: plain typed array](#decision-plain-typed-array).
+The type is `z.input` of the schema. No hand-written interface duplicates it. Each reader validates once, where it first consumes `SERVICES`. The editor does not check `dependsOn` names; see [Decision: plain typed array](#decision-plain-typed-array).
 
 ## Who reads DeclaredServices
 
@@ -195,15 +195,16 @@ flowchart TD
     L --> C[child processes]
 ```
 
-- The assembler reads `SERVICES` at build time to find each package and to write the services asset. The asset omits `project` today. Under the proposal it omits path details the supervisor does not need.
+- The assembler reads `SERVICES` at build time to find each package and to write the services asset. The asset holds `ServiceEntry` objects only: no path, no project.
 - The supervisor reads the asset at run time through the routes source. It validates the services, orders them and spawns children.
 - Both read the one constant, so the two views cannot drift.
 - Both validate with the same schema, so a wrong declaration fails in either place.
 
 | Source | Reader |
 | --- | --- |
-| compile-sea.ts:276,467,485 | Assembler. |
-| apps/sea-runtime/src/supervisor/service-routes-source.ts | Supervisor. |
+| tools/scripts/compile-sea.ts (`contract.serviceEntries(SERVICES)`) | Assembler. |
+| apps/sea-runtime/src/supervisor/service-routes-source.ts (`serviceEntries` in dev, `servicesAssetSchema` in SEA) | Supervisor. |
+| apps/sea-runtime/src/sea-entry.ts and main.ts (`serviceEntries(SERVICES)`) | Entrypoints, on import. |
 
 Boot order around the supervisor, certificates and migrations is in [Nest standalone boot](nest-standalone-boot.md).
 
@@ -211,22 +212,24 @@ Boot order around the supervisor, certificates and migrations is in [Nest standa
 
 | Old | New | Note |
 | --- | --- | --- |
-| `ServiceRoute` | `DeclaredService` | One element type, `z.infer` of `declaredServiceSchema`. |
+| `ServiceRoute` | `DeclaredService` (input) and `ServiceEntry` (what the supervisor reads) | Removed in slice 3. `DeclaredService` is `z.input` of `declaredServiceSchema`. |
 | `serviceRouteSchema` | `declaredServiceSchema` | Strict object, as today. |
-| `ServiceDefinition` | removed | Merged into `DeclaredService`. QC to verify zero readers before delete. |
+| `ServiceDefinition` | removed | Removed in slice 3. The only reader, `startupOrder`, now picks from `ServiceEntry`. |
 | `serviceDefinitionSchema` | removed | Same. |
-| `ServiceRegistry` | `DeclaredServices` | Collection type. |
-| `serviceRegistrySchema` | internal collection schema | Not exported unless the assembler needs it. QC to verify before delete. |
-| `routesSchema` | internal collection schema | Same checks, applied to names. |
+| `ServiceRegistry` | `DeclaredServices` | Collection type. Had no reader. |
+| `serviceRegistrySchema` | removed | Zero readers outside its file. |
+| `routesSchema` | `declaredServicesSchema` (internal) | Same checks, applied to names. |
+| `RouteInput` | removed | Went with `defineServices`. |
 | `defineServices` | removed | Decided by the human, 2026-11-06. `SERVICES` is a plain `DeclaredServices` constant. See [Decision: plain typed array](#decision-plain-typed-array). |
 | `pre` and `post` (proposed fields, never implemented) | dropped | Decided by the human, 2026-11-06. Work before a service is another service earlier in the array. Work at shutdown is a Nest lifecycle hook of the service. |
-| `servicesAssetSchema` | stays, derived from `declaredServiceSchema` | Shape of the asset the supervisor reads. |
-| `entry` | removed | No reader found by mapping. |
+| `servicesAssetSchema` | stays, built from `serviceEntrySchema` | Shape of the asset the supervisor reads. Key order `id, dependsOn, enabled, web` keeps the asset byte-identical. |
+| `entry` | removed | No reader found. |
 | `project` | derived from `path` | No longer an input. |
 | `id` | `name`, derived with `path.parse(path).base` | No longer an input. argv flag value, log prefix and status keys change source, not value, for `api-gateway`. |
-| `serviceIdSchema` | `serviceNameSchema` (proposed) | Used by `serviceArgs` and `dependsOn`. |
+| `serviceIdSchema` | stays, moved to `dispatcher.ts` | Used by `serviceArgs`, `dependsOn` and the dispatcher selector. A rename is not part of slice 3. |
+| `serviceArgs` | stays, moved to `dispatcher.ts` | Read by `child-spawner.ts`. |
 
-`api-gateway` keeps the same name, so argv, the `[api-gateway] text` log line and status events are byte identical. This is the pure-refactor condition and needs a proof in the code phase.
+`api-gateway` keeps the same name, so argv, the `[api-gateway] text` log line and status events are byte identical. The `services.json` hash was the same before and after slice 3.
 
 ## Decision: plain typed array
 
@@ -238,8 +241,8 @@ What is lost on purpose: the editor and `tsc` no longer flag a `dependsOn` entry
 
 | Item | Why it is missing | Who verifies |
 | --- | --- | --- |
-| `serviceDefinitionSchema`, `serviceRegistrySchema` and `entry` have no reader | Mapping reported it; nobody repeated the search | QC: search `src`, tests, `tools`, scripts and non-TS files before any delete |
-| `docs/results/POC-02c-assembler-registry.md:20` is stale | It says `compile-sea` validates with `serviceRegistrySchema`; mapping found no such call. Recorded in the cleanup inventory | Code phase |
+| `docs/results/POC-02c-assembler-registry.md:20` is stale | It says `compile-sea` validates with `serviceRegistrySchema`; the symbol is deleted. Recorded in the cleanup inventory | Whoever edits that result page |
+| Windows path separators | `path.parse` follows the host platform; Windows was not run | QC |
 | Package folder name equals the derived name and the Nx project name | Not checked against every package | QC |
 | The supervisor should wait for the ready message before the next launch | Today it does not. Changing it is a behavior change outside this refactor | Human decision |
 | Reverse stop order holds in every shutdown path | Only one path was read | QC |

@@ -119,10 +119,10 @@ docs[100]:
   - doc: docs/architecture/declared-services.md
     title: Declared services contract
     type: architecture
-    summary: "Proposed single DeclaredServices model replacing ServiceRoute and ServiceDefinition, validated at run time, with no per-service routines."
+    summary: "Single DeclaredServices model (implemented in slice 3) that replaced ServiceRoute and ServiceDefinition, validated at run time, with no per-service routines."
     ids: []
     related[7]: docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/nest-standalone-boot.md,docs/backlog/nest-standalone-refactor.md,docs/backlog/nest-standalone-cleanup-inventory.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/overview.md
-    status: proposed
+    status: current
     updated: 2026-11-06
     refs[1]: REQ-NET-02
   - doc: docs/architecture/device-trust-guide.md

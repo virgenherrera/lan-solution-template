@@ -47,7 +47,7 @@ The counts below come from a mapping report (symbol search and the code graph). 
 
 [Back to navigation](#navigation)
 
-Action values: `delete` (confirmed dead by mapping, awaits QC), `verify` (unsure, QC decides), `keep` (live today).
+Action values: `delete` (confirmed dead by mapping, awaits QC), `verify` (unsure, QC decides), `keep` (live today), `deleted` (removed by a slice, evidence in the row).
 
 Evidence columns read as: references in source, tests, tools, and non-TypeScript files.
 
@@ -57,13 +57,13 @@ Evidence columns read as: references in source, tests, tools, and non-TypeScript
 | `StatusSnapshot` | `libs/service-registry/src/status-snapshot.ts` | 13 | 0 source, 0 tests, 0 tools, 0 non-TypeScript. Verdict dead. | delete | pending |
 | `sharedCoreName` | `libs/shared-core/src/index.ts` | 1 | 0 source, 0 tests, 0 tools, 1 non-TypeScript. Verdict unsure; the non-TypeScript hit is not identified. | verify | pending |
 | `SPAWNED_PATTERN` | `libs/service-registry/src/supervisor-log.ts` | 9 | 0 source, 0 tests, 0 tools, 7 non-TypeScript. Verdict unsure; the hits are not identified. | verify | pending |
-| `serviceRegistrySchema` | `libs/service-registry/src/service-definition.ts` | 17 | 0 source, 0 tests, 0 tools, 1 non-TypeScript (a documentation claim, see below). Verdict unsure. | verify | pending |
-| `ServiceRegistry` | `libs/service-registry/src/service-definition.ts` | 36 | 0 source, 0 tests, 0 tools, 6 non-TypeScript. Verdict unsure. | verify | pending |
-| `serviceDefinitionSchema` | `libs/service-registry/src/service-definition.ts` | not recorded | Mapping reports zero code readers outside its own file. Line not recorded. | verify | pending |
-| `ServiceDefinition` | `libs/service-registry/src/service-definition.ts` | not recorded | Used only as a `Pick` type at `libs/service-registry/src/startup-order.ts` lines 1 and 7. Live today. | keep | pending |
-| field `entry` | `libs/service-registry/src/service-definition.ts` | 9 | No reader found. `ServiceRoute` has no `entry` field. | verify | pending |
+| `serviceRegistrySchema` | `libs/service-registry/src/service-definition.ts` | 17 | Deleted in slice 3 (commit `task: unify the declared services model`). Evidence: `rg -w serviceRegistrySchema apps libs tools` returns 0; build and test exit 0. | deleted | confirmed |
+| `ServiceRegistry` | `libs/service-registry/src/service-definition.ts` | 36 | Deleted in slice 3. Evidence: `rg -w ServiceRegistry apps libs tools` returns 0 and the build passes. | deleted | confirmed |
+| `serviceDefinitionSchema` | `libs/service-registry/src/service-definition.ts` | not recorded | Deleted in slice 3. Evidence: `rg -w serviceDefinitionSchema apps libs tools` returns 0 and the build passes. | deleted | confirmed |
+| `ServiceDefinition` | `libs/service-registry/src/service-definition.ts` | not recorded | Deleted in slice 3. Its only use, the `Pick` in `startup-order.ts`, now picks from `ServiceEntry`. Evidence: `rg -w ServiceDefinition apps libs tools` returns 0 and the build passes. | deleted | confirmed |
+| field `entry` | `libs/service-registry/src/service-definition.ts` | 9 | Deleted in slice 3 with `ServiceDefinition`. No reader existed; the build passes. | deleted | confirmed |
 
-Only `ControlMessage` and `StatusSnapshot` are confirmed dead by mapping. The `ServiceDefinition` family (`serviceDefinitionSchema`, `serviceRegistrySchema`, `ServiceRegistry`, `ServiceDefinition`) and the `entry` field are reported with zero code readers, and the QC step must verify that before any delete. `ServiceDefinition` stays until slice 3 of the [epic](nest-standalone-refactor.md) replaces its `Pick` use in `startup-order.ts`.
+Only `ControlMessage` and `StatusSnapshot` are confirmed dead by mapping. The `ServiceDefinition` family (`serviceDefinitionSchema`, `serviceRegistrySchema`, `ServiceRegistry`, `ServiceDefinition`) and the `entry` field are reported with zero code readers, and the QC step must verify that before any delete. Slice 3 of the [epic](nest-standalone-refactor.md) deleted the family and replaced the `Pick` use in `startup-order.ts`. Their rows are `deleted`/`confirmed` with the evidence in the row.
 
 QC status values: `pending` (not checked), `confirmed` (QC re-ran the search and found zero references), `rejected` (QC found a reference; the row becomes `keep`). Every row starts as `pending`.
 
@@ -81,7 +81,7 @@ The barrel files `libs/service-registry/src/index.ts` and `libs/shared-core/src/
 
 [Back to navigation](#navigation)
 
-`docs/results/POC-02c-assembler-registry.md`, line 20, says `compile-sea` validates with `serviceRegistrySchema`. Mapping found no such use in the code. This page only records the mismatch. It does not edit that document. Whoever deletes `serviceRegistrySchema` decides how to correct the sentence.
+`docs/results/POC-02c-assembler-registry.md`, line 20, says `compile-sea` validates with `serviceRegistrySchema`. Mapping found no such use in the code. This page only records the mismatch. It does not edit that document. `serviceRegistrySchema` was deleted in slice 3; the sentence stays stale until someone edits that result page.
 
 ---
 
