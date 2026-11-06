@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { createZodValidationPipe, ZodSerializerInterceptor } from 'nestjs-zod';
 import { AppConfigModule, DbConfig, NetConfig, TlsConfig } from 'shared-core';
-import { GatewayConfigSource } from './config-source.js';
-import { DatabaseModule } from './database/database.module.js';
-import { ServerConfig } from './server-config.js';
+import { GatewayConfigSource } from '../services/config-source.js';
+import { DatabaseModule } from '../database/database.module.js';
+import { ServerConfig } from '../schemas/server-config.js';
 
 @Module({
   imports: [

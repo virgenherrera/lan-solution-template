@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { AppPathsService, CONFIG_FILE, configFileSource } from 'shared-core';
-import { ServerConfig } from './server-config.js';
+import { ServerConfig } from '../schemas/server-config.js';
 
 // The config of this process, read once. The TLS identity is needed before Nest builds the HTTPS server (`httpsOptions` is read while the app is created, and the config namespaces only exist inside the app),
 // so AppBootstrap reads `file()` first and AppConfigModule takes the same memoized, frozen object as its source: one read, one instance.

@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { PLAIN_CONTEXT, ServiceLogger } from 'shared-core';
 import { AGGREGATE_STATE, CONTROL_KIND, EXIT_CODE, readyMessageSchema, shutdownMessageSchema } from 'service-registry';
 import { AppBootstrap } from './app.bootstrap.js';
-import { HealthState } from './health-state.js';
+import { HealthState } from './services/health-state.js';
 import { createRedirectServer } from './redirect-listener.js';
 import { receiveWebBundle } from './web-bundle.js';
 import { createWebHandler } from './web-handler.js';

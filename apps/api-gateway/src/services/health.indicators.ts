@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HealthIndicatorService, type HealthIndicatorResult } from '@nestjs/terminus';
-import { DatabaseService } from './database/database.module.js';
+import { DatabaseService } from '../database/database.module.js';
 import { HealthState } from './health-state.js';
 
 // The aggregate state of the runtime as last told by the supervisor. Always up: it reports the state, it does not judge it.

@@ -1,8 +1,8 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { HealthCheckService, type HealthIndicatorFunction } from '@nestjs/terminus';
 import { ZodSerializerDto } from 'nestjs-zod';
-import { HealthQueryDto, HealthResponseDto } from './health.dto.js';
-import { DbIndicator, MemoryIndicator, StateIndicator, UptimeIndicator } from './health.indicators.js';
+import { HealthQueryDto, HealthResponseDto } from './schemas/health.dto.js';
+import { DbIndicator, MemoryIndicator, StateIndicator, UptimeIndicator } from './services/health.indicators.js';
 
 @Controller('health')
 export class HealthController {

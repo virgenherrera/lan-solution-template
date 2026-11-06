@@ -7,8 +7,8 @@ import { NetConfig, PLAIN_CONTEXT } from 'shared-core';
 import { loadTlsIdentity, type TlsIdentity } from 'shared-core/tls';
 import { API_PREFIX } from './api-prefix.js';
 import { AppModule } from './app.module.js';
-import { GatewayConfigSource } from './config-source.js';
-import { ServerConfig } from './server-config.js';
+import { GatewayConfigSource } from './services/config-source.js';
+import { ServerConfig } from './schemas/server-config.js';
 
 export interface AppContext {
   app: INestApplication;
