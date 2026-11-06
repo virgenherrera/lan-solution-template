@@ -26,7 +26,7 @@ updated: 2026-11-06
 
 ## Status
 
-Proposed, 2026-11-06. Documentation only: no file under `apps/`, `libs/` or `tools/` changes with this ADR.
+Proposed, 2026-11-06. The human has not yet accepted the Proposed decisions. The code slices are built on the branches `chore/nest-standalone-s1-exit-codes` (slices 1 and 2), `chore/nest-standalone-s3-declared-services`, `chore/nest-standalone-s4-dead-code` and `chore/nest-standalone-s5-folders`. See the [epic result](../../backlog/nest-standalone-refactor.md#result).
 
 This ADR governs the refactor. Four pages detail it:
 

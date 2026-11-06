@@ -236,7 +236,7 @@ docs[100]:
   - doc: docs/backlog/nest-standalone-refactor.md
     title: "Epic: Nest standalone refactor"
     type: backlog
-    summary: "Proposed pure-refactor epic: exit code constants, Nest Logger, unified DeclaredServices, dead code cleanup and folder reorganization, in five ordered slices."
+    summary: "Pure-refactor epic, built on branches (pull requests pending): exit code constants, Nest Logger, unified DeclaredServices, dead code cleanup and folder reorganization, in five ordered slices."
     ids: []
     related[5]: docs/backlog/README.md,docs/backlog/nest-standalone-cleanup-inventory.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/declared-services.md,docs/architecture/nest-standalone-boot.md
     status: proposed

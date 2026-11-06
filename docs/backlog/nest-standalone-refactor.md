@@ -3,7 +3,7 @@ fmt: TOON
 doc: docs/backlog/nest-standalone-refactor.md
 title: "Epic: Nest standalone refactor"
 type: backlog
-summary: "Proposed pure-refactor epic: exit code constants, Nest Logger, unified DeclaredServices, dead code cleanup and folder reorganization, in five ordered slices."
+summary: "Pure-refactor epic, built on branches (pull requests pending): exit code constants, Nest Logger, unified DeclaredServices, dead code cleanup and folder reorganization, in five ordered slices."
 ids[0]:
 related[5]: docs/backlog/README.md,docs/backlog/nest-standalone-cleanup-inventory.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/declared-services.md,docs/architecture/nest-standalone-boot.md
 status: proposed
@@ -28,6 +28,7 @@ updated: 2026-11-06
 - [Slice 5: Folder reorganization](#slice-5-folder-reorganization)
 - [Follow-ups](#follow-ups)
 - [Out of scope](#out-of-scope)
+- [Result](#result)
 - [Not verified](#not-verified)
 
 ---
@@ -40,7 +41,7 @@ This epic is a pure refactor in five ordered slices. Behavior, output bytes and 
 
 | Item | Value |
 |---|---|
-| Status | Proposed. Nothing is built. This branch carries documentation only. |
+| Status | Built on branches, pull requests pending. Human acceptance of the Proposed decisions is pending. See [Result](#result). |
 | Requirements | None. No REQ or AC id exists for this epic. |
 | Design | [ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md), [DeclaredServices](../architecture/declared-services.md), [Nest standalone boot](../architecture/nest-standalone-boot.md) |
 | Related | [Cleanup inventory](nest-standalone-cleanup-inventory.md), [Technical debt: Nest DI by class](td-nest-di-by-class.md) |
@@ -218,6 +219,48 @@ Ideas outside the five slices. They have no slice and no date.
 - Logging as a service in the startup order.
 - Any change to TLS certificate creation.
 - Any new feature, new requirement, or change to a test or smoke.
+
+---
+
+## Result
+
+[Back to navigation](#navigation)
+
+The five slices are built on stacked branches. The tip of `chore/nest-standalone-s5-folders` contains slices 1 to 5. Each slice was checked by an independent QC step.
+
+| Slice | Branch | Commits | What it did | QC | Observable result |
+|---|---|---|---|---|---|
+| 1 | `chore/nest-standalone-s1-exit-codes` | `93cd45e` | `EXIT_CODE` in `libs/service-registry/src/constants/exit-code.ts` (ok=0, startupFailed=1, argumentRejected=2). | 9/9 | Exit codes unchanged. |
+| 2 | Same branch as slice 1. It was committed there by mistake. The branch was already pushed, so history was not rewritten. | `2fc9ae4` `ServiceLogger` in shared-core, `f72d65e` sea-runtime, `cac5533` api-gateway | `SupervisorLogger` removed. Decorator D6 rejected. `generate-certs` keeps stdout by `by-level`. | 10/10 | stderr identical, 0 differences. |
+| 3 | `chore/nest-standalone-s3-declared-services` | `61e18dc`, `4f04586` | One `DeclaredServices` model. The `project` field and `entry` removed. | 10/10 | Same `services.json` hash. |
+| 4 | `chore/nest-standalone-s4-dead-code` | `a63e906` | Deleted `ControlMessage`, `StatusSnapshot`, `sharedCoreName`, `SPAWNED_PATTERN`. | 9/9 | Same output and hash. |
+| 5 | `chore/nest-standalone-s5-folders` | `8cd6922` service-registry (9 moves), `c41e07b` shared-core (3), `277acef` api-gateway (7), `4406bde` sea-runtime (22), `dfdf519` docs | 41 moves of 91 `.ts` files. | 11/11, cumulative check from `main` to HEAD | Same output and hash. |
+
+Verification evidence:
+
+| Item | Value |
+|---|---|
+| Baseline | `main` at `3126021` |
+| `pnpm test` | Exit 0, 15 of 15 Nx tasks |
+| `smoke-sea` | 30 checks |
+| `services.json` sha256 | `6a6b83e8e17f4a22d03d47a8db4bac524c6c9293753decb2754db644539e0986` |
+| stderr | 33 lines |
+| stdout | 3 events |
+| After each slice | stdout, stderr and the hash stayed identical |
+| Tests and smokes | No test or smoke file was edited in the whole refactor |
+
+Open items:
+
+| Item | Reason |
+|---|---|
+| `tools/scripts` | 21 exits with a literal and their console output. They cannot import the libs without a build. Out of the refactor. |
+| `apps/web-angular/src/main.ts` | Browser console. Out of the refactor. |
+| `controlMessageSchema` | Chain candidate. Its inventory row stays `verify`. |
+| Mixed-role files, entrypoints, `tls/`, `db/`, loose functions without a folder | Partial coverage of D9. |
+| A folder for helpers | Decision open. |
+| Deprecated web flag and the follow-up "Service-owned web build" | Not done. See [Follow-ups](#follow-ups). |
+| Acceptance of the Proposed decisions | Pending, by the human. |
+| Pull requests | Documentation pull request #25 is a draft. No pull request exists for the code branches. |
 
 ---
 
