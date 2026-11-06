@@ -104,7 +104,7 @@ docs[95]:
     summary: "Compares POCs P1, P2 and P3 for a singleton child registry in sea-runtime and proposes a decision."
     ids: []
     related[4]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/proposals/sea-runtime-P1-registry-status-event.md,docs/architecture/proposals/sea-runtime-P2-per-service-singletons.md,docs/architecture/proposals/sea-runtime-P3-minimal-pid-hook.md
-    status: proposed
+    status: current
     updated: 2026-11-05
     refs[3]: REQ-RUNTIME-05,REQ-TEST-01,REQ-TEST-04
   - doc: docs/architecture/device-trust-guide.md

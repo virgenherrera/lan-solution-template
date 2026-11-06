@@ -167,6 +167,13 @@ class Run {
     return [...new Set(this.events().flatMap((event) => event.services.flatMap((entry) => (entry.id === SERVICE_ID && entry.pid !== undefined ? [entry.pid] : []))))];
   }
 
+  // Service entries that name a pid while no child runs (restarting or failed): the pid of an exited process.
+  deadPids(): number[] {
+    return this.events().flatMap((event) =>
+      event.services.flatMap((entry) => (entry.id === SERVICE_ID && (entry.status === 'restarting' || entry.status === 'failed') && entry.pid !== undefined ? [entry.pid] : [])),
+    );
+  }
+
   async exit(timeoutMs: number, what: string): Promise<number | null> {
     const code = await Promise.race([this.exited, sleep(timeoutMs).then(() => 'timeout' as const)]);
     if (code === 'timeout') throw new Error(`${what}: no exit within ${timeoutMs} ms`);
@@ -593,6 +600,7 @@ await check(`child killed (SIGKILL) returns to ${AGGREGATE_STATE.ready}`, async 
   expect(next !== childPid, 'restart reused the pid');
   await waitReady(RESTART_WAIT_MS);
   expect(!alive(childPid), `old pid ${childPid} is still alive`);
+  expect(run.deadPids().length === 0, `events named the pid of an exited child: [${run.deadPids().join(', ')}]`);
   expect(run.service()?.pid === next && run.service()?.restarts === 1, `last event: pid ${run.service()?.pid}, restarts ${run.service()?.restarts}`);
   expect(childrenOf(run.pid).join() === String(next), `children of the supervisor: [${childrenOf(run.pid).join(', ')}], expected [${next}]`);
   expect(identityOf(next).argv0 === realpathSync(binary), `pid ${next} does not run the executable`);
@@ -815,6 +823,7 @@ await check(`restart budget (${SUPERVISOR_CONFIG.maxRestarts}) ends in ${AGGREGA
   expect(budget.service()?.status === 'failed', `last service status ${budget.service()?.status}`);
   const spawns = budget.servicePids();
   expect(spawns.length === SUPERVISOR_CONFIG.maxRestarts + 1, `events reported ${spawns.length} distinct pids`);
+  expect(budget.deadPids().length === 0 && budget.service()?.pid === undefined, `a restarting or failed service named a dead pid: [${budget.deadPids().join(', ')}]`);
   expect(budget.service()?.restarts === SUPERVISOR_CONFIG.maxRestarts, `last event restarts ${budget.service()?.restarts}`);
   await allGone([...knownPids, ...spawns], 'after the budget');
   expect(processesRunning(binary).length === 0, 'processes left running the executable');

@@ -165,7 +165,7 @@ Two new kinds in `SIDECAR_KIND`, both strict zod objects, additive to ADR-006:
 - New attack surface: a larger stdin parser. Mitigations: `z.strictObject`, one JSON object per line (existing rule in `sidecar-protocol.ts:5-6`), `requestId` length bounded, unknown kinds rejected and logged (existing invalid-line path, `sidecar-input.ts:21` per the sea-modules map; not re-read this turn).
 - Output: the snapshot contains pid, state, counters, timestamps. No paths, no config, no secrets. Do not add the executable path or arguments to it without a separate review.
 - Rejected variant: adding the same data to `GET /api/health`. It would put pids on a LAN route. Whether health is authenticated is "no verificado" (see [Not verified](#not-verified)).
-- Host compatibility: the Rust host matches only `kind == "status"` (`sidecar.rs:153-155` per the arch plan, read in an earlier step). A new stdout kind is ignored if that claim holds. "no verificado" in this turn for the exact line numbers.
+- Host compatibility: the Rust host matches only `kind == "status"` (`sidecar.rs:153-155` per the arch plan, read in an earlier step). Read in `apps/desktop/src-tauri/src/sidecar.rs:154,168`: the host parses each line as `serde_json::Value`, handles `kind == "status"`, and logs a `warn` for any other kind (`sidecar stdout event with unknown kind`). A new stdout kind is not acted on, but it is not silent either: it produces a warning line per event.
 
 ## Smoke impact
 
@@ -271,7 +271,7 @@ The last mutation shows a real gap: with one service, the one feature P2 adds (i
 2. Rule deviations (see [Design](#design)). The human must accept `useFactory` for the set and runtime-generated classes, or this proposal fails its own rule.
 3. Boundary files stay outside the container. `main.ts` catch and `sea-entry.ts` argv dispatch run before Nest; a startup failure has no provider to report it. P2 does not change that.
 4. Command routing change touches the shared shutdown path (`supervisor.service.ts:37-40`). A mistake silently disables shutdown by stdin.
-5. Host compatibility. A host that fails on unknown kinds would break. Unverified beyond the Rust claim above.
+5. Host compatibility. A host that fails on unknown kinds would break. Verified at `sidecar.rs:168`: the host warns, it does not fail.
 6. Over-fit. One service today; value appears only when a second service exists.
 7. Restart total versus the windowed policy. Two counters with different meanings invite misuse. Name them `restarts` (total) and `window` (budget) in code.
 8. Ordering. Generated providers are created in an order Nest decides. Start order must come from `startupOrder(routes)`, not from provider order.
@@ -282,7 +282,7 @@ The last mutation shows a real gap: with one service, the one feature P2 adds (i
 
 - Bodies of `smoke-sea.ts:143-148`, `smoke-pg.ts`, `verify-platform.ts`, `e2e-desktop.ts` helpers: line numbers come from the earlier map only.
 - `sea-entry.ts` has no logic beyond argv dispatch: map only.
-- `sidecar-input.ts:21` invalid-line handling and `sidecar.rs:153-155` (host ignores unknown kinds): earlier steps only, not re-read now.
+- `sidecar-input.ts:21` invalid-line handling and (handling of an invalid line): earlier steps only, not re-read now. `sidecar.rs:154,168` was re-read: an unknown kind logs a warning.
 - Whether `GET /api/health` is unauthenticated.
 - Resolved by a QC spike (`@nestjs/core` 12.3.2): a class built by a factory function with `Inject(token)(cls, undefined, index)` and `Injectable()(cls)` applied programmatically gets constructor injection. Without the `Inject` calls the dependency is `undefined`. Not checked: duplicate provider names for generated classes with the same name.
 - Whether a stop-order oracle exists in the smoke today.

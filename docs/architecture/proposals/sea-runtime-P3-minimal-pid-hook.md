@@ -198,7 +198,7 @@ Mutation 5 is the one a log-based smoke would never catch; it needs the event-ba
 
 [Back to navigation](#navigation)
 
-- The Rust sidecar parser (`sidecar.rs`) and whether it tolerates an extra `pid` key: not read.
+- The Rust sidecar parser tolerates the extra `pid` and `restarts` keys: verified, `sidecar.rs:153` parses a loose `serde_json::Value` and reads only `kind` and `state`.
 - `service-lifecycle.factory.ts` and `service-routes-source.ts` bodies: only the lines cited above were read; no claim is made beyond them.
 - `sea-entry.ts` and `main.ts` content beyond the boundary role: no verificado.
 - Whether `docs/meta.toon` regeneration and the metadata check pass for this file: not run, by instruction.
