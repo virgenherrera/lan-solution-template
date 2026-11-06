@@ -1,4 +1,4 @@
-import type { DbConfig } from '../config-dtos.js';
+import type { DbConfig } from '../schemas/config-dtos.js';
 import type { AppPaths } from '../paths.js';
 import type { DbAdapter } from './port.js';
 import type { PgOptions } from './pg/index.js';

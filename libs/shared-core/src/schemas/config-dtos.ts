@@ -1,6 +1,6 @@
 import { createZodDto } from 'nestjs-zod';
 import type { z } from 'zod';
-import { configSchema, type AppConfig } from './config.js';
+import { configSchema, type AppConfig } from '../config.js';
 
 // What AppConfigModule needs from a nestjs-zod DTO class: its zod schema, and the key of its part of the config.
 export type ConfigClass = { new (): object; readonly isZodDto: true; readonly schema: z.ZodType; readonly namespace: string };

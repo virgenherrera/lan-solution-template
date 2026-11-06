@@ -1,8 +1,8 @@
 import type { DynamicModule } from '@nestjs/common';
 import { ConfigModule, getConfigToken, registerAs } from '@nestjs/config';
 import { z } from 'zod';
-import { deepFreeze, type ConfigSource } from './config.js';
-import type { ConfigClass } from './config-dtos.js';
+import { deepFreeze, type ConfigSource } from '../config.js';
+import type { ConfigClass } from '../schemas/config-dtos.js';
 
 export type AppConfigModuleOptions = {
   configClasses: [ConfigClass, ...ConfigClass[]];

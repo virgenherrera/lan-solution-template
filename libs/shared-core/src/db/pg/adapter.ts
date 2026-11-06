@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import pg from 'pg';
-import type { DbConfig } from '../../config-dtos.js';
+import type { DbConfig } from '../../schemas/config-dtos.js';
 import {
   VectorUnavailableError,
   type DbAdapter,
