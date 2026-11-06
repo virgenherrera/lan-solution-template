@@ -10,6 +10,9 @@
     "module": "nodenext",
     "target": "esnext",
     "types": ["node"],
+    // Nest decorators: emit them lowered (as the apps and nest-base do), not as native syntax the apps bundler rejects.
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],

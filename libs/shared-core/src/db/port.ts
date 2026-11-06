@@ -1,5 +1,5 @@
 // Strategy port for database engines (REQ-DB-01, REQ-DB-02). Consumers import this file only, never an engine driver.
-// SQLite is the sole adapter in POC-3; a pgvector adapter implements the same port later without a consumer change.
+// SQLite and PostgreSQL (pgvector) implement the same port, so a consumer never changes with the engine.
 
 export type SqlValue = string | number | bigint | Uint8Array | null;
 export type Row = Readonly<Record<string, SqlValue>>;
@@ -11,7 +11,10 @@ export interface VectorMatch {
 }
 
 // Live structure of a database, as read from the engine catalog. Structurally the same shape the schema comparator expects.
-export type LiveColumnType = 'text' | 'integer' | 'real' | 'blob';
+// Each engine owns the union of the types its catalog reports; a new engine adds its own union to LiveColumnType.
+export type SqliteLiveColumnType = 'text' | 'integer' | 'real' | 'blob';
+export type PgLiveColumnType = 'text' | 'integer' | 'real' | 'bytea' | 'vector';
+export type LiveColumnType = SqliteLiveColumnType | PgLiveColumnType;
 
 export interface LiveColumn {
   readonly type: LiveColumnType;
@@ -45,7 +48,7 @@ export interface DbAdapter {
   transaction<T>(fn: () => Promise<T>): Promise<T>;
   insertVector(collection: string, id: number, vector: Float32Array): Promise<void>;
   searchSimilar(collection: string, query: Float32Array, k: number): Promise<readonly VectorMatch[]>;
-  // Reads the live schema. Each engine implements it from its own catalog (SQLite PRAGMA; PostgreSQL information_schema, pending).
+  // Reads the live schema. Each engine implements it from its own catalog (SQLite PRAGMA; PostgreSQL information_schema).
   introspectSchema(): Promise<LiveSchema>;
   close(): Promise<void>;
 }

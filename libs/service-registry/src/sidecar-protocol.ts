@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { jsonText } from './json-text.js';
-import { statusSnapshotSchema } from './status-snapshot.js';
+import { serviceStatusSchema, statusSnapshotSchema } from './status-snapshot.js';
 
 // The sidecar contract with the host (Tauri). The host sees the supervisor through four things only: stdout lines, stderr lines, stdin lines and the exit code.
 // stdout carries machine events and nothing else; stderr carries every human log line; stdin carries host commands. One JSON object per line, always validated.
@@ -10,10 +10,19 @@ export const SIDECAR_KIND = {
   shutdown: 'shutdown',
 } as const;
 
+// One service in a status event. pid and restarts are absent until the first spawn; restarts counts spawns after the first since process start.
+export const sidecarServiceStatusSchema = z.object({
+  id: z.string().min(1),
+  status: serviceStatusSchema,
+  pid: z.number().int().positive().optional(),
+  restarts: z.number().int().nonnegative().optional(),
+});
+
 // stdout, supervisor to host: the aggregate state plus one status per service, sent on every change.
 export const sidecarStatusEventSchema = z.strictObject({
   kind: z.literal(SIDECAR_KIND.status),
   ...statusSnapshotSchema.shape,
+  services: z.array(sidecarServiceStatusSchema),
 });
 
 export const sidecarEventSchema = z.discriminatedUnion('kind', [sidecarStatusEventSchema]);

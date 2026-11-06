@@ -34,9 +34,7 @@
     "@rspack/core": "catalog:",
     "nx": "catalog:",
     "rimraf": "catalog:",
-    "tsconfig-paths-webpack-plugin": "catalog:",
     "typescript": "catalog:",
-    "webpack-node-externals": "catalog:",
     "zod": "catalog:"
   },
   "nx": {},

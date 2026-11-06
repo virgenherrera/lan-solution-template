@@ -136,10 +136,10 @@ flowchart TD
 
 ### 6.3 Local LAN TLS, no cost and no Internet dependency
 
-- **REQ-TLS-01.** The setup **MUST** generate/provision a TLS identity for **this gateway**, keep keys in protected persistent storage and reuse/renew according to SAN and identity. The certificate **identifies hostname/IP, never the port**; HTTPS is served only on the listeners the app opens.
+- **REQ-TLS-01.** The setup **MUST** generate/provision a TLS identity for **this gateway**, keep keys in protected persistent storage and reuse/renew according to SAN and identity. The certificate **identifies hostname/IP, never the port**; HTTPS is served only on the listeners the app opens. The automatic names are localhost, the loopback addresses, the host name and the LAN IPv4 addresses. An IPv6 address, or any other name, goes in `tls.extraNames`.
 - **REQ-TLS-02.** TLS trust on the host computer **SHOULD** be facilitated with explicit consent. Mobile devices and client PCs require installing/verifying trust of the corresponding CA/certificate. The system **MUST NOT** promise automatic trust between devices.
 - **REQ-TLS-03.** The setup **MUST NOT** do four things. It never alters the HTTPS servers or configuration of other LAN devices. It never distributes private keys. It never uses `rejectUnauthorized=false`. It never disables certificate validation in production.
-- **REQ-TLS-04.** If the IP/hostname changes, the system **MUST** do three things. It detects the SAN mismatch. It reports it clearly. It reissues the certificate where applicable. Document how to establish trust on iOS, Android, Windows and macOS, including PWA requirements.
+- **REQ-TLS-04.** If the IP/hostname changes, the system **MUST** do three things. It detects the SAN mismatch. It reports it clearly. It reissues the certificate where applicable. Automatic IPv6 addresses are not part of the compared names, because temporary IPv6 addresses rotate daily; a stable IPv6 is listed in `tls.extraNames`. Document how to establish trust on iOS, Android, Windows and macOS, including PWA requirements.
 
 ```mermaid
 flowchart LR

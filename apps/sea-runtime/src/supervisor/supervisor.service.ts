@@ -9,7 +9,7 @@ import { ServiceLifecycleFactory } from './service-lifecycle.factory.js';
 import { type ServiceLifecycle } from './service-lifecycle.js';
 import { stopTree } from './process-tree.js';
 import { StatusPublisher } from './status-publisher.js';
-import { SERVICE_ROUTES } from './tokens.js';
+import { ServiceRoutes } from './service-routes.js';
 
 // Orchestration only: starts the services in order, stops them in reverse order, and turns every reason to stop into the same shutdown.
 @Injectable()
@@ -18,7 +18,7 @@ export class SupervisorService implements OnApplicationBootstrap, BeforeApplicat
   private shutdownRun?: Promise<void>;
 
   constructor(
-    @Inject(SERVICE_ROUTES) private readonly routes: readonly ServiceRoute[],
+    @Inject(ServiceRoutes) private readonly routes: ServiceRoutes,
     private readonly persistence: PersistenceService,
     private readonly spawner: ChildSpawner,
     private readonly lifecycles: ServiceLifecycleFactory,
@@ -56,8 +56,9 @@ export class SupervisorService implements OnApplicationBootstrap, BeforeApplicat
   }
 
   private startOrder(): ServiceRoute[] {
-    const byId = new Map(this.routes.map((route) => [route.id, route]));
-    return startupOrder(this.routes).flatMap((id) => byId.get(id) ?? []);
+    const routes = this.routes.load();
+    const byId = new Map(routes.map((route) => [route.id, route]));
+    return startupOrder(routes).flatMap((id) => byId.get(id) ?? []);
   }
 
   private refresh(): void {

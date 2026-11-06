@@ -1,4 +1,5 @@
 import type { ColumnDescriptor, IndexDescriptor, TableShape } from './descriptor.js';
+import type { Engine } from './engines.js';
 
 // Pure comparator shared by build and runtime (S5). It has no dependency on shared-core: it only reads
 // the structural LiveSchema an introspector reports. 'exact' (build) fails on any difference; 'required' (runtime)
@@ -21,8 +22,11 @@ export interface SchemaReport {
   readonly tolerated: readonly string[];
 }
 
-// Tables the check never reports as extra: migrator bookkeeping and engine internals.
-const IGNORED_TABLE = /^(schema_migrations|sqlite_.*)$/;
+// Tables the check never reports as extra: migrator bookkeeping and engine internals. A new engine adds one entry.
+const IGNORED_TABLE: Readonly<Record<Engine, RegExp>> = {
+  sqlite: /^(schema_migrations|sqlite_.*)$/,
+  pg: /^(schema_migrations|pg_.*)$/,
+};
 
 const indexKey = (index: IndexDescriptor): string => `${index.unique ? 'unique ' : ''}(${index.columns.join(', ')})`;
 
@@ -77,12 +81,13 @@ function compareTable(expected: TableShape, live: LiveTable | undefined, mode: C
   return merge([compareColumns(expected, live, mode), compareIndexes(expected.name, expected.indexes, live.indexes, mode)]);
 }
 
-function compareExtraTables(expected: readonly TableShape[], live: LiveSchema, mode: CompareMode): SchemaReport {
+function compareExtraTables(expected: readonly TableShape[], live: LiveSchema, mode: CompareMode, engine: Engine): SchemaReport {
   const known = new Set(expected.map((table) => table.name));
-  const extra = [...live.keys()].filter((name) => !known.has(name) && !IGNORED_TABLE.test(name));
+  const extra = [...live.keys()].filter((name) => !known.has(name) && !IGNORED_TABLE[engine].test(name));
   return merge(extra.map((name) => classifyExtra(mode, true, `${name}: unexpected table`)));
 }
 
-export function compareSchema(expected: readonly TableShape[], live: LiveSchema, mode: CompareMode): SchemaReport {
-  return merge([...expected.map((table) => compareTable(table, live.get(table.name), mode)), compareExtraTables(expected, live, mode)]);
+// `engine` selects the engine-internal tables to skip. It defaults to sqlite so existing callers keep compiling; a caller of another engine must pass it.
+export function compareSchema(expected: readonly TableShape[], live: LiveSchema, mode: CompareMode, engine: Engine = 'sqlite'): SchemaReport {
+  return merge([...expected.map((table) => compareTable(table, live.get(table.name), mode)), compareExtraTables(expected, live, mode, engine)]);
 }

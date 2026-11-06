@@ -105,7 +105,7 @@ Decision (agent, 2026-11-03, after the instruction in [Status](#status)). The ga
   - It issues only the leaf, when it is missing, expired, within 30 days of expiry, not issued by the CA, not matched by its key, or when its SAN set differs from the wanted set.
   - It prints the SHA-256 fingerprint of the CA. After it creates a new CA it warns that every device that trusts an older CA must trust this one; the older CA stays in their stores until removed.
 - The command is the setup that [REQ-TLS-01](../../requirements/06-web-gateway-https-pwa.md) asks for ("the setup MUST generate/provision"). No requirement text changes.
-- Code: `libs/shared-core/src/tls/identity.ts` (`loadTlsIdentity`, read-only) and `generate.ts` (used only by the command, not exported from `shared-core/tls`).
+- Code: `libs/shared-core/src/tls/identity.ts` (`loadTlsIdentity`, read-only; it takes only the `tls` block of the config) and `generate.ts` (used only by the command, not exported from `shared-core/tls`). The gateway loads the identity in `AppBootstrap` before `NestFactory.create`, because `httpsOptions` is read while the app is created, before the config namespaces exist. The same memoized, frozen config object then feeds `AppConfigModule`, so the file is read once.
 
 ### Strict config blocks
 

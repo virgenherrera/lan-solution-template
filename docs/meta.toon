@@ -1,4 +1,4 @@
-docs[89]:
+docs[95]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -24,7 +24,7 @@ docs[89]:
     ids: []
     related[5]: docs/results/POC-03-Result.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-007-persistence-system.md
     status: current
-    updated: 2026-11-03
+    updated: 2026-11-04
     refs[7]: REQ-CFG-01,REQ-DB-01,REQ-DB-02,REQ-DB-06,REQ-DB-08,REQ-DB-09,REQ-STACK-07
   - doc: docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md
     title: ADR-004 Drizzle build-time migrations
@@ -51,7 +51,7 @@ docs[89]:
     ids: []
     related[5]: docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/overview.md,docs/backlog/service-status-indicator.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/requirements/traceability.md
     status: current
-    updated: 2026-11-03
+    updated: 2026-11-05
     refs[1]: REQ-RUNTIME-05
   - doc: docs/architecture/adr/ADR-007-persistence-system.md
     title: ADR-007 Persistence system
@@ -98,6 +98,15 @@ docs[89]:
     status: proposed
     updated: 2026-11-04
     refs[4]: AC-18,REQ-CFG-05,REQ-SEA-06,REQ-VERSION-01
+  - doc: docs/architecture/adr/ADR-012-sea-runtime-child-registry.md
+    title: ADR-012 sea-runtime child registry
+    type: architecture
+    summary: "Compares POCs P1, P2 and P3 for a singleton child registry in sea-runtime and proposes a decision."
+    ids: []
+    related[4]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/proposals/sea-runtime-P1-registry-status-event.md,docs/architecture/proposals/sea-runtime-P2-per-service-singletons.md,docs/architecture/proposals/sea-runtime-P3-minimal-pid-hook.md
+    status: proposed
+    updated: 2026-11-05
+    refs[3]: REQ-RUNTIME-05,REQ-TEST-01,REQ-TEST-04
   - doc: docs/architecture/device-trust-guide.md
     title: Device trust guide
     type: architecture
@@ -125,6 +134,33 @@ docs[89]:
     status: current
     updated: 2026-11-04
     refs[4]: AC-21,REQ-SEA-06,REQ-TEST-09,REQ-TEST-10
+  - doc: docs/architecture/proposals/sea-runtime-P1-registry-status-event.md
+    title: Proposal P1 sea-runtime child registry and status event
+    type: architecture
+    summary: "Proposes a singleton ChildRegistry and HostModule ports, exposed as children[] on the stdout status event."
+    ids: []
+    related[3]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/proposals/sea-runtime-P2-per-service-singletons.md,docs/architecture/proposals/sea-runtime-P3-minimal-pid-hook.md
+    status: proposed
+    updated: 2026-11-05
+    refs[4]: REQ-RUNTIME-05,REQ-TEST-01,REQ-TEST-04,REQ-TEST-07
+  - doc: docs/architecture/proposals/sea-runtime-P2-per-service-singletons.md
+    title: "SEA runtime proposal P2: per-service singletons"
+    type: architecture
+    summary: "Proposal: each registered service becomes its own singleton provider owning pid and restarts, with a stdin snapshot command."
+    ids: []
+    related[3]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/proposals/sea-runtime-P1-registry-status-event.md,docs/architecture/proposals/sea-runtime-P3-minimal-pid-hook.md
+    status: proposed
+    updated: 2026-11-05
+    refs[2]: REQ-TEST-01,REQ-TEST-07
+  - doc: docs/architecture/proposals/sea-runtime-P3-minimal-pid-hook.md
+    title: Proposal P3 sea-runtime minimal child registry
+    type: architecture
+    summary: "Smallest sea-runtime change: one injectable ChildRegistry fed by the spawn hook, with pid added to the status event."
+    ids: []
+    related[3]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/proposals/sea-runtime-P1-registry-status-event.md,docs/architecture/proposals/sea-runtime-P2-per-service-singletons.md
+    status: proposed
+    updated: 2026-11-05
+    refs[3]: REQ-RUNTIME-05,REQ-TEST-01,REQ-TEST-04
   - doc: docs/backlog/README.md
     title: Backlog index
     type: backlog
@@ -324,13 +360,13 @@ docs[89]:
     updated: 2026-11-04
     refs[16]: AC-03,AC-18,AC-20,AC-30,REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-04,REQ-DESK-05,REQ-DESK-06,REQ-ECO-01,REQ-ECO-06,REQ-SEC-05,REQ-TEST-08,REQ-TEST-09,REQ-TLS-02
   - doc: docs/backlog/poc-6-postgresql-adapter-parity.md
-    title: POC-6 PostgreSQL adapter parity (BACKLOG)
+    title: POC-6 PostgreSQL adapter parity (built on branch)
     type: backlog
-    summary: "Backlog item for PostgreSQL adapter parity, parked in backlog."
+    summary: "PostgreSQL adapter parity with pgvector: built on a branch, pull request pending."
     ids: []
-    related[4]: docs/backlog/README.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/persistence-system.md
+    related[5]: docs/results/POC-06-Result.md,docs/backlog/README.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/persistence-system.md
     status: current
-    updated: 2026-11-03
+    updated: 2026-11-04
     refs[7]: AC-09,REQ-DB-01,REQ-DB-02,REQ-DB-03,REQ-DB-05,REQ-DB-08,REQ-TEST-06
   - doc: docs/backlog/poc-7-auth-roles.md
     title: POC-7 Auth and roles
@@ -376,6 +412,15 @@ docs[89]:
     related[5]: docs/results/RESEARCH-pwa-https-trust.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/device-trust-guide.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/results/SPIKE-pwa-https-trust-Result.md
     status: current
     updated: 2026-11-03
+    refs: []
+  - doc: docs/backlog/td-nest-di-by-class.md
+    title: "Technical debt: Nest DI by class"
+    type: backlog
+    summary: "Resolved technical debt: the supervisor providers CLOCK, RANDOM and SERVICE_ROUTES became the abstract classes Clock, Random and ServiceRoutes. Verified."
+    ids: []
+    related[3]: docs/backlog/README.md,docs/results/POC-06-Result.md,docs/backlog/persistence-system.md
+    status: current
+    updated: 2026-11-05
     refs: []
   - doc: docs/backlog/td-windows-linux-distribution.md
     title: "Technical debt: Windows and Linux distribution"
@@ -719,6 +764,15 @@ docs[89]:
     status: current
     updated: 2026-11-04
     refs[12]: REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-04,REQ-DESK-05,REQ-DESK-06,REQ-ECO-01,REQ-ECO-06,REQ-SEC-05,REQ-TEST-08,REQ-TEST-09,REQ-TLS-02
+  - doc: docs/results/POC-06-Result.md
+    title: POC-06 Result
+    type: backlog
+    summary: "Result of POC-6: PostgreSQL adapter with pgvector, migrations, parity check and a Docker APP smoke test. Branch built, health and dependency cleanup added, PR pending."
+    ids: []
+    related[8]: docs/backlog/poc-6-postgresql-adapter-parity.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/results/POC-05-Result.md,docs/standards/README.md,docs/roadmap/PROPOSAL.md
+    status: current
+    updated: 2026-11-05
+    refs[6]: AC-09,REQ-DB-01,REQ-DB-05,REQ-DB-08,REQ-TEST-04,REQ-TEST-06
   - doc: docs/results/POC-08-Result.md
     title: POC-08 Result
     type: backlog

@@ -7,7 +7,7 @@ const name = z.string().regex(NAME_PATTERN);
 
 export const columnSchema = z
   .strictObject({
-    type: z.enum(['text', 'integer', 'real', 'blob', 'vector']),
+    type: z.enum(['text', 'integer', 'real', 'blob', 'bytea', 'vector']),
     nullable: z.boolean(),
     primaryKey: z.boolean(),
   })

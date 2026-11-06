@@ -1,5 +1,5 @@
 {
-  // Build ships only the logical contract and the manifest schema. sqlite/ is type-checked, never emitted:
+  // Build ships only the logical contract and the manifest schema. sqlite/ and pg/ are type-checked, never emitted:
   // Drizzle is build-time only (S7) and must not reach dist.
   "extends": "./tsconfig.json",
   "compilerOptions": { "rootDir": ".", "outDir": "dist" },

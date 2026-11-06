@@ -51,7 +51,7 @@ flowchart LR
   P5 --> P7
   P5 --> P8
   P8 --> P9["POC-9 CI/CD: on hold (decision 9)"]
-  P6["POC-6 PostgreSQL parity: BACKLOG"]
+  P6["POC-6 PostgreSQL parity: built, PR pending"]
 ```
 
 Edges follow "Depends on" in [PROPOSAL.md](../roadmap/PROPOSAL.md#cycles-and-bets).
@@ -85,7 +85,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | DBM schema gate | [Live schema validation at startup](dbm-schema-gate.md) | Done and merged in PR #12, slices DBM-i to DBM-n (DBM-n is the api-gateway database module); see [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md); extends DBM | AC-07, AC-08, AC-10 (as POC-3) |
 | POC-4 | [HTTPS gateway serving the Angular PWA](poc-4-https-gateway-angular-pwa.md) | Done and merged in PR #18 (T0 to T8, independent verification included); decision: [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md); result: [POC-04-Result](../results/POC-04-Result.md) | AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17 |
 | POC-5 | [Tauri desktop shell with SEA sidecar](poc-5-tauri-sidecar-desktop-shell.md) | Done and merged in PR #21 (squash `35525d9`), server mode, verified on macOS only; client mode pending; see [POC-05-Result](../results/POC-05-Result.md), [ADR-009](../architecture/adr/ADR-009-desktop-process-model.md) and the proposed [ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md) | AC-03, AC-18, AC-20, AC-30 |
-| POC-6 | [PostgreSQL adapter parity (BACKLOG)](poc-6-postgresql-adapter-parity.md) | BACKLOG | AC-09 |
+| POC-6 | [PostgreSQL adapter parity (built on branch)](poc-6-postgresql-adapter-parity.md) | Built on `minor/poc-06-postgresql-parity` (adapter, migrations, parity check and the Docker APP smoke test `sea-runtime:smoke-pg`). Pull request pending. Verified on macOS arm64 with `pgvector/pgvector:pg17` only; see [POC-06-Result](../results/POC-06-Result.md) | AC-09 |
 | POC-7 | [Auth and roles](poc-7-auth-roles.md) | Cycle 3 (planned) | AC-06 |
 | POC-8 | [MSI credential dialog, platform matrix and lockstep versioning](poc-8-msi-matrix-versioning.md) | Built on `chore/poc-08-matrix-versioning` in macOS only (human decision, 2026-11-04): lockstep versioning, platform matrix, macOS `.pkg` installer with per-install CA and uninstall. The `.pkg` is built and inspected, NOT installed. Pull request pending. Result: [POC-08-Result](../results/POC-08-Result.md); decisions: the proposed [ADR-011](../architecture/adr/ADR-011-macos-installer-and-install-time-trust.md). Windows and Linux are [technical debt](td-windows-linux-distribution.md) | AC-21, AC-25, AC-33 |
 | POC-9 | [GitHub Actions CI/CD and releases (HOLD)](poc-9-ci-cd-releases.md) | HOLD (decision 9) | AC-26, AC-27, AC-35, AC-36, AC-02, AC-32 |
@@ -94,6 +94,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | none | [SPIKE PWA HTTPS trust on phones](spike-pwa-https-trust.md) | Done on Chromium, an iOS simulator and an Android emulator; real phones closed as not needed (decided 2026-11-03: a real phone adds no new design information; mDNS, Add to Home Screen and IP change are checked at the first real deployment); see [SPIKE-pwa-https-trust-Result](../results/SPIKE-pwa-https-trust-Result.md) and [RESEARCH-pwa-https-trust](../results/RESEARCH-pwa-https-trust.md) | none |
 | none | [Log service with OpenTelemetry data model and gRPC](log-service-otel-grpc.md) | Idea, TBD, no design. Outside POC-5 | none |
 | none | [Technical debt: Windows and Linux distribution](td-windows-linux-distribution.md) | Technical debt, no design, nothing verified; cut from POC-8 by the human on 2026-11-04, plus the macOS follow-ups that POC-8 left | none (no new id) |
+| none | [Technical debt: Nest DI by class](td-nest-di-by-class.md) | Technical debt, resolved and verified; the supervisor tokens are now the abstract classes `Clock`, `Random` and `ServiceRoutes` | none (no new id) |
 | none | [Persistence system](persistence-system.md) | Done and merged in PR #17; decision: [ADR-007](../architecture/adr/ADR-007-persistence-system.md) | AC-07, AC-08, AC-10 (as POC-3) |
 
 ---

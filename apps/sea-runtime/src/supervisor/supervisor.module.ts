@@ -2,19 +2,26 @@ import { Module } from '@nestjs/common';
 import { PersistenceModule } from '../persistence/persistence.module.js';
 import { SidecarModule } from '../sidecar/sidecar.module.js';
 import { WebBundleModule } from '../web/web-bundle.module.js';
+import { ChildRegistry } from './child-registry.js';
 import { ChildSpawner } from './child-spawner.js';
+import { Clock } from './clock.js';
+import { InMemoryChildRegistry } from './in-memory-child-registry.js';
+import { Random } from './random.js';
+import { SeaServiceRoutes } from './sea-service-routes.js';
 import { ServiceLifecycleFactory } from './service-lifecycle.factory.js';
-import { loadServiceRoutes } from './service-routes-source.js';
+import { ServiceRoutes } from './service-routes.js';
 import { StatusPublisher } from './status-publisher.js';
 import { SupervisorService } from './supervisor.service.js';
-import { CLOCK, RANDOM, SERVICE_ROUTES } from './tokens.js';
+import { SystemClock } from './system-clock.js';
+import { SystemRandom } from './system-random.js';
 
 @Module({
   imports: [PersistenceModule, WebBundleModule, SidecarModule],
   providers: [
-    { provide: CLOCK, useValue: Date.now },
-    { provide: RANDOM, useValue: Math.random },
-    { provide: SERVICE_ROUTES, useFactory: loadServiceRoutes },
+    { provide: Clock, useClass: SystemClock },
+    { provide: Random, useClass: SystemRandom },
+    { provide: ServiceRoutes, useClass: SeaServiceRoutes },
+    { provide: ChildRegistry, useClass: InMemoryChildRegistry },
     ServiceLifecycleFactory,
     ChildSpawner,
     StatusPublisher,

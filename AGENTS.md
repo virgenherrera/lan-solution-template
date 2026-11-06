@@ -12,6 +12,7 @@ Traceability: `docs/requirements/traceability.md`.
 - Generate every project file with its official CLI via `pnpm dlx` (`nx`, `@nestjs/cli`, `@angular/cli`, `@tauri-apps/cli`). Never hardcode what a CLI generates. If a CLI is unknown, run `--help` first. Hand-edit a file only where no CLI exists, and list that edit in the slice result page.
 - Generators such as `nest generate` may create `*.spec.ts` files. Delete them in the same commit (REQ-TEST-01: no unit or integration suites).
 - Run CLIs through `pnpm dlx` and `pnpm` only. Other installs (`brew`, `apt`) stay forbidden.
+- Pin every dependency to an exact version (no `^` or `~`). `savePrefix: ''` in `pnpm-workspace.yaml` enforces it for `pnpm add`, including `--save-catalog`. The `.npmrc` key `save-exact` is ignored by pnpm 12.
 - Branch prefixes follow the SRS (REQ-VERSION-02): `major/`, `minor/`, `fix/`, `docs/`, `chore/`.
 - Do not invent requirements the SRS does not state. Mark unverified claims "not verified".
 - Commit freely on a feature branch (human decision). Push, pull request, `gh` and any other GitHub write need explicit user approval.

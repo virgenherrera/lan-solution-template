@@ -8,29 +8,47 @@ import { HOST_NAME_PATTERN } from './tls/san.js';
 // Persisted, namespaced config (REQ-CFG-01). Nothing is defaulted: a missing or invalid key stops the start (ADR-007).
 // Secrets never live here: they sit in dataDir (decision 11) and never travel in CLI args.
 // `engine` selects exactly one block (REQ-DB-02); a new engine adds one strictObject variant here.
+const plainFileName = z
+  .string()
+  .regex(/^(?!\.+$)[\w.-]+$/, "a plain file name inside the data directory: no path separators, no '..'");
+
+const port = z.int().min(1).max(65535);
+
 const dbSchema = z.discriminatedUnion('engine', [
   z.strictObject({
     engine: z.literal('sqlite'),
     sqlite: z.strictObject({
       // Relative to dataDir; the database stays outside the SEA (REQ-DB-07).
-      file: z
-        .string()
-        .regex(/^(?!\.+$)[\w.-]+$/, "a plain file name inside the data directory: no path separators, no '..'"),
+      file: plainFileName,
       foreignKeys: z.boolean(),
       journalMode: z.enum(['WAL', 'DELETE']),
       synchronous: z.enum(['FULL', 'NORMAL']),
     }),
   }),
+  z.strictObject({
+    engine: z.literal('pg'),
+    pg: z.strictObject({
+      host: z.union([z.ipv4(), z.ipv6(), z.string().max(253).regex(HOST_NAME_PATTERN, 'a DNS host name or an IP address')]),
+      port,
+      database: z.string().min(1).max(63),
+      user: z.string().min(1).max(63),
+      // The password is a secret, so it lives in a file inside dataDir (decision 11), never in this file.
+      passwordFile: plainFileName,
+    }),
+  }),
 ]);
 
-const port = z.int().min(1).max(65535);
-
 // Network binding for the HTTPS listener and the plain-HTTP redirect listener.
-const netSchema = z.strictObject({
-  bind: z.union([z.ipv4(), z.ipv6()]),
-  httpsPort: port,
-  httpPort: port,
-});
+const netSchema = z
+  .strictObject({
+    bind: z.union([z.ipv4(), z.ipv6()]),
+    httpsPort: port,
+    httpPort: port,
+  })
+  .superRefine((net, ctx) => {
+    // Both listeners bind the same address: equal ports could only fail later with EADDRINUSE, so name the keys now.
+    if (net.httpPort === net.httpsPort) ctx.addIssue({ code: 'custom', message: 'net.httpPort must differ from net.httpsPort', path: ['httpPort'] });
+  });
 
 // Names added to the certificate on top of the detected ones: DNS names or IP addresses.
 const tlsSchema = z.strictObject({
@@ -47,7 +65,7 @@ type DeepReadonly<T> = { readonly [K in keyof T]: DeepReadonly<T[K]> };
 
 export const CONFIG_FILE = 'config.json';
 
-function deepFreeze<T>(value: T): T {
+export function deepFreeze<T>(value: T): T {
   if (typeof value === 'object' && value !== null) {
     for (const child of Object.values(value)) deepFreeze(child);
     Object.freeze(value);
@@ -67,16 +85,11 @@ export function loadConfig(paths: AppPaths): AppConfig {
   return deepFreeze(parsed.data);
 }
 
-let current: AppConfig | undefined;
+// The config object AppConfigModule takes as its source. The file is checked against the whole schema once, so an unknown root key still stops the start (ADR-007); each namespace DTO then validates its own part.
+export type ConfigSource = () => unknown | Promise<unknown>;
 
-// One immutable config per process (REQ-CFG-06). The app reads it only through getConfig (REQ-CFG-02).
-export function initConfig(paths: AppPaths): AppConfig {
-  if (current !== undefined) throw new Error('config is already initialized');
-  current = loadConfig(paths);
-  return current;
-}
-
-export function getConfig(): AppConfig {
-  if (current === undefined) throw new Error('config is not initialized');
-  return current;
+// The first call reads and validates the file; every later call returns the same frozen object, so one process holds one read and one instance.
+export function configFileSource(paths: AppPaths): () => AppConfig {
+  let config: AppConfig | undefined;
+  return () => (config ??= loadConfig(paths));
 }

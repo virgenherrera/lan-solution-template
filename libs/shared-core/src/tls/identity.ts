@@ -30,7 +30,7 @@ export function tlsFiles(certDir: string): TlsFiles {
 
 export interface TlsIdentityInput {
   readonly paths: { readonly certDir: string };
-  readonly config: { readonly tls: { readonly extraNames: readonly string[] } };
+  readonly tls: { readonly extraNames: readonly string[] };
   readonly now: Date;
   readonly log: (message: string) => void;
   readonly hostname: WantedNamesInput['hostname'];
@@ -111,7 +111,7 @@ function sanNames(certificate: X509Certificate): WantedNames {
 // Reads <certDir>/{ca.crt, leaf.crt, leaf.key} and validates them (REQ-TLS-01). It never creates, renews or deletes a file and never reads ca.key: `pnpm dev:certs` owns the files.
 // A problem with the files throws one error that lists every problem. A leaf that does not cover the current host names, or is close to expiry, is only logged (REQ-TLS-04).
 export function loadTlsIdentity(input: TlsIdentityInput): TlsIdentity {
-  const { paths, config, now, log } = input;
+  const { paths, tls, now, log } = input;
   const files = tlsFiles(paths.certDir);
   const caPem = readIfPresent(files.caCrt);
   const leafPem = readIfPresent(files.leafCrt);
@@ -156,7 +156,7 @@ export function loadTlsIdentity(input: TlsIdentityInput): TlsIdentity {
   }
 
   const names = sanNames(leafCertificate);
-  const wanted = wantedNames({ hostname: input.hostname, interfaces: input.interfaces, extraNames: config.tls.extraNames });
+  const wanted = wantedNames({ hostname: input.hostname, interfaces: input.interfaces, extraNames: tls.extraNames });
   const decision = needsReissue(leafPem, [...wanted.dnsNames, ...wanted.ipAddresses], now, RENEW_BEFORE_DAYS);
   if (decision.reissue) {
     log(`tls: leaf certificate ${files.leafCrt} does not match the current host names or is close to expiry (${decision.reasons.join('; ')}): the gateway keeps using it, run ${CERTS_COMMAND} to renew it`);

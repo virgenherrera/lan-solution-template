@@ -80,7 +80,7 @@ Nothing here adds or changes a requirement.
 | [REQ-STACK-07](02-technology-baseline.md) | AC-07, AC-08, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [DBM][b-dbm-drizzle-migrations] / [brief][b-dbm-drizzle-migrations] |
 | [REQ-STACK-08](02-technology-baseline.md) | AC-01, AC-02, AC-13, AC-19, AC-22, AC-23, AC-24, AC-32, AC-33, AC-34 | [POC-1][p-poc-1] / [brief][b-README-epics] |
 | [REQ-STACK-09](02-technology-baseline.md) | AC-07, AC-08, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] |
-| [REQ-STACK-10](02-technology-baseline.md) | AC-09 | [Backlog (POC-6)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] |
+| [REQ-STACK-10](02-technology-baseline.md) | AC-09 | [POC-6 (built on branch)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] |
 | [REQ-SUPPLY-01](02-technology-baseline.md) | AC-01, AC-02, AC-13, AC-19, AC-22, AC-23, AC-24, AC-32, AC-33, AC-34 | [POC-1][p-poc-1] / [brief][b-README-epics] |
 | [REQ-SUPPLY-02](02-technology-baseline.md) | AC-01, AC-02, AC-13, AC-19, AC-22, AC-23, AC-24, AC-32, AC-33, AC-34 | [POC-1][p-poc-1] / [brief][b-README-epics] |
 | [REQ-REP-01](03-file-structure.md) | AC-01, AC-02, AC-13, AC-19, AC-22, AC-23, AC-24, AC-32, AC-33, AC-34 | [POC-1][p-poc-1] / [brief][b-README-epics] |
@@ -94,14 +94,14 @@ Nothing here adds or changes a requirement.
 | [REQ-CFG-04](04-configuration.md) | AC-07, AC-08, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] |
 | [REQ-CFG-05](04-configuration.md) | AC-07, AC-08, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] |
 | [REQ-CFG-06](04-configuration.md) | AC-07, AC-08, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] |
-| [REQ-DB-01](05-persistence.md) | AC-07, AC-08, AC-09, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [Backlog (POC-6)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] |
-| [REQ-DB-02](05-persistence.md) | AC-07, AC-08, AC-09, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [Backlog (POC-6)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] |
-| [REQ-DB-03](05-persistence.md) | AC-07, AC-08, AC-09, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [Backlog (POC-6)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] |
+| [REQ-DB-01](05-persistence.md) | AC-07, AC-08, AC-09, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [POC-6 (built on branch)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] |
+| [REQ-DB-02](05-persistence.md) | AC-07, AC-08, AC-09, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [POC-6 (built on branch)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] |
+| [REQ-DB-03](05-persistence.md) | AC-07, AC-08, AC-09, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [POC-6 (built on branch)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] |
 | [REQ-DB-04](05-persistence.md) | AC-07, AC-08, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [DBM][b-dbm-drizzle-migrations] / [brief][b-dbm-drizzle-migrations] |
-| [REQ-DB-05](05-persistence.md) | AC-07, AC-08, AC-09, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [Backlog (POC-6)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] ; [DBM][b-dbm-drizzle-migrations] / [brief][b-dbm-drizzle-migrations] |
+| [REQ-DB-05](05-persistence.md) | AC-07, AC-08, AC-09, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [POC-6 (built on branch)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] ; [DBM][b-dbm-drizzle-migrations] / [brief][b-dbm-drizzle-migrations] |
 | [REQ-DB-06](05-persistence.md) | AC-07, AC-08, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [DBM schema gate][b-dbm-schema-gate] / [brief][b-dbm-schema-gate], slices DBM-j to DBM-m, [ADR-005][b-ADR-005-live-schema-validation] |
 | [REQ-DB-07](05-persistence.md) | AC-07, AC-08, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] |
-| [REQ-DB-08](05-persistence.md) | AC-07, AC-08, AC-09, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [Backlog (POC-6)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] |
+| [REQ-DB-08](05-persistence.md) | AC-07, AC-08, AC-09, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [POC-6 (built on branch)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] |
 | [REQ-DB-09](05-persistence.md) | AC-07, AC-08, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] |
 | [REQ-DB-10](05-persistence.md) (approved 2026-11-02) | AC-07, AC-08, AC-10 | [DBM schema gate][b-dbm-schema-gate] / [brief][b-dbm-schema-gate], slices DBM-j to DBM-m, [ADR-005][b-ADR-005-live-schema-validation] |
 | [REQ-DEV-01](06-web-gateway-https-pwa.md) | AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17 | [POC-4][p-poc-4] / [brief][b-poc-4-https-gateway-angular-pwa] |
@@ -168,7 +168,7 @@ Nothing here adds or changes a requirement.
 | [REQ-TEST-03](11-nx-quality-testing.md) | AC-01, AC-02, AC-13, AC-19, AC-22, AC-23, AC-24, AC-32, AC-33, AC-34 | [POC-1][p-poc-1] / [brief][b-README-epics] |
 | [REQ-TEST-04](11-nx-quality-testing.md) | AC-07, AC-08, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] |
 | [REQ-TEST-05](11-nx-quality-testing.md) | AC-04, AC-05, AC-06, AC-12, AC-14, AC-15, AC-16, AC-17 | [POC-4][p-poc-4] / [brief][b-poc-4-https-gateway-angular-pwa] ; [POC-7][p-poc-7] / [brief][b-poc-7-auth-roles] |
-| [REQ-TEST-06](11-nx-quality-testing.md) | AC-07, AC-08, AC-09, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [Backlog (POC-6)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] |
+| [REQ-TEST-06](11-nx-quality-testing.md) | AC-07, AC-08, AC-09, AC-10 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] ; [POC-6 (built on branch)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] |
 | [REQ-TEST-07](11-nx-quality-testing.md) | AC-11, AC-28, AC-29, AC-30, AC-31 | [POC-2][p-poc-2] / [brief][b-poc-2-single-sea-runtime-supervisor] |
 | [REQ-TEST-08](11-nx-quality-testing.md) | AC-03, AC-18, AC-20, AC-30 | [POC-5][p-poc-5] / [brief][b-poc-5-tauri-sidecar-desktop-shell] |
 | [REQ-TEST-09](11-nx-quality-testing.md) | AC-03, AC-18, AC-20, AC-21, AC-25, AC-30, AC-33 | [POC-5][p-poc-5] / [brief][b-poc-5-tauri-sidecar-desktop-shell] ; [POC-8][p-poc-8] / [brief][b-poc-8-msi-matrix-versioning] |
@@ -213,7 +213,7 @@ Nothing here adds or changes a requirement.
 | [AC-06](11-nx-quality-testing.md) | REQ-CFG-03, REQ-SEC-01, REQ-SEC-02, REQ-SEC-03, REQ-SEC-04, REQ-SEC-06, REQ-WEB-02, REQ-WEB-03, REQ-WEB-04, REQ-TEST-05 | [POC-7][p-poc-7] / [brief][b-poc-7-auth-roles] |
 | [AC-07](11-nx-quality-testing.md) | REQ-STACK-07, REQ-STACK-09, REQ-CFG-01, REQ-CFG-02, REQ-CFG-03, REQ-CFG-04, REQ-CFG-05, REQ-CFG-06, REQ-DB-01, REQ-DB-02, REQ-DB-03, REQ-DB-04, REQ-DB-05, REQ-DB-06, REQ-DB-07, REQ-DB-08, REQ-DB-09, REQ-SEC-06, REQ-RUNTIME-07, REQ-SEA-05, REQ-TEST-04, REQ-TEST-06 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] |
 | [AC-08](11-nx-quality-testing.md) | REQ-STACK-07, REQ-STACK-09, REQ-CFG-01, REQ-CFG-02, REQ-CFG-03, REQ-CFG-04, REQ-CFG-05, REQ-CFG-06, REQ-DB-01, REQ-DB-02, REQ-DB-03, REQ-DB-04, REQ-DB-05, REQ-DB-06, REQ-DB-07, REQ-DB-08, REQ-DB-09, REQ-SEC-06, REQ-RUNTIME-07, REQ-SEA-05, REQ-TEST-04, REQ-TEST-06 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] |
-| [AC-09](11-nx-quality-testing.md) | REQ-STACK-10, REQ-DB-01, REQ-DB-02, REQ-DB-03, REQ-DB-05, REQ-DB-08, REQ-TEST-06 | [Backlog (POC-6)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] |
+| [AC-09](11-nx-quality-testing.md) | REQ-STACK-10, REQ-DB-01, REQ-DB-02, REQ-DB-03, REQ-DB-05, REQ-DB-08, REQ-TEST-06 | [POC-6 (built on branch)][p-poc-6] / [brief][b-poc-6-postgresql-adapter-parity] |
 | [AC-10](11-nx-quality-testing.md) | REQ-STACK-07, REQ-STACK-09, REQ-CFG-01, REQ-CFG-02, REQ-CFG-03, REQ-CFG-04, REQ-CFG-05, REQ-CFG-06, REQ-DB-01, REQ-DB-02, REQ-DB-03, REQ-DB-04, REQ-DB-05, REQ-DB-06, REQ-DB-07, REQ-DB-08, REQ-DB-09, REQ-SEC-06, REQ-RUNTIME-07, REQ-SEA-05, REQ-TEST-04, REQ-TEST-06 | [POC-3][p-poc-3] / [brief][b-poc-3-config-sqlite-vector] |
 | [AC-11](11-nx-quality-testing.md) | REQ-NET-01, REQ-RUNTIME-01, REQ-RUNTIME-02, REQ-RUNTIME-03, REQ-RUNTIME-04, REQ-RUNTIME-05, REQ-RUNTIME-06, REQ-RUNTIME-07, REQ-RUNTIME-08, REQ-SEA-01, REQ-SEA-02, REQ-SEA-03, REQ-SEA-04, REQ-SEA-05, REQ-TEST-07 | [POC-2][p-poc-2] / [brief][b-poc-2-single-sea-runtime-supervisor] |
 | [AC-12](11-nx-quality-testing.md) | REQ-DEV-01, REQ-DEV-02, REQ-DEV-03, REQ-DEV-04, REQ-DEV-05, REQ-NET-01, REQ-NET-02, REQ-NET-03, REQ-NET-04, REQ-NET-05, REQ-NET-06, REQ-NET-07, REQ-NET-08, REQ-TLS-01, REQ-TLS-02, REQ-TLS-03, REQ-TLS-04, REQ-PWA-01, REQ-PWA-02, REQ-PWA-03, REQ-WEB-01, REQ-WEB-04, REQ-SEA-01, REQ-SEA-02, REQ-SEA-03, REQ-SEA-04, REQ-SEA-05, REQ-TEST-05 | [POC-4][p-poc-4] / [brief][b-poc-4-https-gateway-angular-pwa] |
@@ -273,7 +273,7 @@ None.
 [p-poc-3]: ../roadmap/PROPOSAL.md#poc-3-config-and-sqlite-vector-persistence-inside-the-sea
 [b-poc-3-config-sqlite-vector]: ../backlog/poc-3-config-sqlite-vector.md
 [b-dbm-drizzle-migrations]: ../backlog/dbm-drizzle-migrations.md
-[p-poc-6]: ../roadmap/PROPOSAL.md#poc-6-postgresql-adapter-parity-backlog
+[p-poc-6]: ../roadmap/PROPOSAL.md#poc-6-postgresql-adapter-parity-built-on-branch
 [b-poc-6-postgresql-adapter-parity]: ../backlog/poc-6-postgresql-adapter-parity.md
 [p-poc-7]: ../roadmap/PROPOSAL.md#poc-7-auth-and-roles
 [b-poc-7-auth-roles]: ../backlog/poc-7-auth-roles.md

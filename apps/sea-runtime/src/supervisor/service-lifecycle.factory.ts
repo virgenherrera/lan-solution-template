@@ -1,16 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SUPERVISOR_CONFIG, type ServiceRoute } from 'service-registry';
 import { ServiceLifecycle, type LifecycleHooks } from './service-lifecycle.js';
-import { CLOCK, RANDOM } from './tokens.js';
+import { Clock } from './clock.js';
+import { Random } from './random.js';
 
 @Injectable()
 export class ServiceLifecycleFactory {
   constructor(
-    @Inject(CLOCK) private readonly now: () => number,
-    @Inject(RANDOM) private readonly random: () => number,
+    @Inject(Clock) private readonly clock: Clock,
+    @Inject(Random) private readonly random: Random,
   ) {}
 
   create(route: ServiceRoute, hooks: LifecycleHooks): ServiceLifecycle {
-    return new ServiceLifecycle(route.id, hooks, SUPERVISOR_CONFIG, this.random, this.now);
+    return new ServiceLifecycle(route.id, hooks, SUPERVISOR_CONFIG, () => this.random.next(), () => this.clock.now());
   }
 }

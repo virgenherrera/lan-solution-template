@@ -73,7 +73,7 @@ The migrator already checks the history in `schema_migrations` ([REQ-DB-05](../.
 ### Descriptor and shared comparator
 
 - The descriptor is a Zod schema in `libs/db-migrations/contract/descriptor.ts`. `tables.ts` stays the single source. The types come from `z.infer`.
-- One pure function, `compareSchema(expected, live, mode)`, lives in `libs/db-migrations/contract/compare.ts`. It does not depend on `shared-core`.
+- One pure function, `compareSchema(expected, live, mode, engine)`, where `engine` picks the engine-internal tables to skip (default `sqlite`), lives in `libs/db-migrations/contract/compare.ts`. It does not depend on `shared-core`.
 - The mode is `exact` or `required`. The build parity check uses `exact`. It reports every extra as an error. The runtime gate uses `required`. It applies the policy table.
 - The parity check from ADR-004 uses this shared comparator. Its decisions do not change.
 - `tablesSchema.parse` validates the descriptor in the build and once at runtime.

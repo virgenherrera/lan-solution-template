@@ -1,10 +1,6 @@
-import { Inject, Injectable, Module, type OnApplicationShutdown } from '@nestjs/common';
-import { isSea } from 'node:sea';
+import { Injectable, Module, type OnApplicationShutdown, type OnModuleInit } from '@nestjs/common';
 import { catchError, concatMap, defer, firstValueFrom, from, map, type Observable, throwError } from 'rxjs';
-import { createDbAdapter, derivePaths, getConfig, resolveBase, type AppConfig, type AppPaths, type DbAdapter } from 'shared-core';
-import { APP_CONFIG, APP_PATHS, DB_ADAPTER } from './tokens.js';
-
-export { DB_ADAPTER };
+import { AppPathsService, createDbAdapter, DbConfig, InjectConfig, type DbAdapter } from 'shared-core';
 
 // The question every engine can answer: proves the connection works, not that the schema is right (the supervisor checked that before spawning this service).
 function handshake$(db: DbAdapter): Observable<void> {
@@ -28,33 +24,32 @@ function open$(db: DbAdapter): Observable<DbAdapter> {
   );
 }
 
+// One connection per service, opened once while the application initializes (`app.init()`, which main awaits before it listens). If the handshake fails, the application does not start.
 @Injectable()
-class DatabaseLifecycle implements OnApplicationShutdown {
-  constructor(@Inject(DB_ADAPTER) private readonly db: DbAdapter) {}
+export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
+  private db: DbAdapter | undefined;
+
+  constructor(
+    @InjectConfig(DbConfig) private readonly config: DbConfig,
+    private readonly appPaths: AppPathsService,
+  ) {}
+
+  async onModuleInit(): Promise<void> {
+    this.db = await firstValueFrom(open$(await createDbAdapter(this.config, this.appPaths.paths)));
+  }
 
   async onApplicationShutdown(): Promise<void> {
-    await this.db.close();
+    await this.db?.close();
+  }
+
+  get adapter(): DbAdapter {
+    if (this.db === undefined) throw new Error('the database is not open yet');
+    return this.db;
   }
 }
 
-// One connection per service, opened once while Nest builds the module. If the handshake fails, the application does not start.
 @Module({
-  providers: [
-    // A child is the same executable as the supervisor, so both resolve the same base and open the same database.
-    {
-      provide: APP_PATHS,
-      useFactory: (): AppPaths =>
-        derivePaths(resolveBase({ sea: isSea(), execPath: process.execPath, cwd: process.cwd() })),
-    },
-    // main.ts already loaded the config before Nest starts (the TLS identity needs it first), so this only hands it out.
-    { provide: APP_CONFIG, useFactory: (): AppConfig => getConfig() },
-    {
-      provide: DB_ADAPTER,
-      inject: [APP_CONFIG, APP_PATHS],
-      useFactory: async (config: AppConfig, paths: AppPaths): Promise<DbAdapter> => firstValueFrom(open$(await createDbAdapter(config, paths))),
-    },
-    DatabaseLifecycle,
-  ],
-  exports: [APP_PATHS, APP_CONFIG, DB_ADAPTER],
+  providers: [AppPathsService, DatabaseService],
+  exports: [DatabaseService],
 })
 export class DatabaseModule {}

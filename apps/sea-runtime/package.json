@@ -32,19 +32,14 @@
   },
   "devDependencies": {
     "@nestjs/cli": "catalog:nest",
-    "@nestjs/mau": "catalog:nest",
     "@nestjs/schematics": "catalog:nest",
-    "@nestjs/testing": "catalog:nest",
     "@types/node": "catalog:",
-    "@types/supertest": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "api-gateway": "workspace:*",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "prettier": "catalog:",
     "rimraf": "catalog:",
-    "source-map-support": "catalog:",
-    "supertest": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:",
@@ -82,6 +77,22 @@
           "{workspaceRoot}/libs/db-migrations/sqlite/migrations/**/*",
           "{workspaceRoot}/tools/scripts/smoke-sea.ts",
           "{workspaceRoot}/tools/rspack/**/*"
+        ]
+      },
+      "smoke-pg": {
+        "dependsOn": [
+          "package"
+        ],
+        "executor": "nx:run-commands",
+        "cache": false,
+        "options": {
+          "command": "node tools/scripts/smoke-pg.ts",
+          "cwd": "{workspaceRoot}"
+        },
+        "inputs": [
+          "default",
+          "{workspaceRoot}/tools/scripts/smoke-pg.ts",
+          "{workspaceRoot}/libs/db-migrations/pg/migrations/**/*"
         ]
       }
     }

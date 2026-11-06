@@ -1,8 +1,9 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { API_PREFIX } from './api-prefix.js';
 import type { WebBundle } from './web-bundle.js';
 
 const INDEX = 'index.html';
-const API_PREFIX = '/api';
+const API_ROUTE = `/${API_PREFIX}`;
 // Angular names built files "<name>-<8 character hash>.<ext>" (letters of both cases, digits, `_` and `-`); such a name changes whenever the content does.
 const CONTENT_HASHED = /-[A-Za-z0-9_-]{8}\.[A-Za-z0-9]+$/;
 // Entry points the browser must revalidate on every load, or an update (or a stale service worker) would stick.
@@ -35,7 +36,7 @@ export function createWebHandler(bundle: WebBundle) {
     }
     // Lower-cased: the router matches /API/x as an API route too, so it must not get index.html.
     const route = pathname.toLowerCase();
-    if (route === API_PREFIX || route.startsWith(`${API_PREFIX}/`)) return next();
+    if (route === API_ROUTE || route.startsWith(`${API_ROUTE}/`)) return next();
 
     const requested = pathname.slice(1);
     const hit = bundle.get(requested);

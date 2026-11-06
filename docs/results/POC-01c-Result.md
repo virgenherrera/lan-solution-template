@@ -18,7 +18,7 @@ This page describes the final state of the branch. The first version of this sli
 ## Summary
 
 - `sea-runtime` is the single sidecar entry and supervisor. Its `package` target runs `tools/scripts/compile-sea.ts` and writes one executable.
-- The script bundles a generated role-map entry and the `dist/main.js` of each service into one ESM file. It runs native `node --build-sea` and, on macOS, `codesign --sign -`.
+- The script bundles the TypeScript role entry (`apps/sea-runtime/src/sea-entry.ts`) and the `dist/main.js` of each service into one ESM file. It runs native `node --build-sea` and, on macOS, `codesign --sign -`.
 - Services are the workspace dependencies of `sea-runtime`. Today that is `api-gateway` only.
 - Each Nest app builds to one self-contained ESM `dist/main.js` through the Nest CLI rspack builder, with one shared config in `tools/rspack/nest.config.ts`.
 - With no argument the binary runs the supervisor. The supervisor spawns `process.execPath --service <id>` for each service listed in the SEA asset `services.json`. The asset is validated with Zod.
@@ -46,7 +46,7 @@ The `dist/sea-package/` working folder is git-ignored through the `dist/` rule.
 
 1. `nx show project <name> --json` finds each service folder. Services are read from `sea-runtime/package.json` entries with a `workspace:` range.
 2. Each service must have a built `dist/main.js`. If it is missing, the script stops and names the build target to run.
-3. The generated entry (`dist/sea-package/entry.mjs`) maps each service id to `import()` of its `dist/main.js`. No argument imports the supervisor. `--service <id>` imports that one service. An unknown id exits 2.
+3. The entry (`apps/sea-runtime/src/sea-entry.ts`) maps each service id to `import()` of its staged `dist/main.js`. No argument imports the supervisor. `--service <id>` imports that one service. An unknown id exits 2.
 4. `@rspack/core` (Node API) bundles the entry into `sea-app.mjs`. Externals and ignore rules come from the shared config. A banner gives CommonJS dependencies a `require` for built-ins.
 5. `node --build-sea` writes the executable. Assets: `services.json`.
 6. The supervisor (`apps/sea-runtime/src/supervisor/supervisor.service.ts`) reads `services.json` with `isSea()` and `getAsset()`. It validates the content with `z.object({ services: z.array(z.string().min(1)) })`. It spawns `process.execPath` with `['--service', id]`, `shell: false`, `stdio: 'inherit'`. Outside a SEA it logs and spawns nothing.

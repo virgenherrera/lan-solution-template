@@ -18,7 +18,7 @@ Branch: `minor/poc-02-supervisor`. Epic: [POC-2b](../backlog/poc-2b-dispatcher-s
 
 - Yes. `libs/service-registry` holds the contract: `ServiceDefinition` (`id`, `entry`, `dependsOn`, `enabled`), the closed registry schema, the services asset schema and `dispatch()`. It imports only `zod` and `node:util`.
 - Every literal (the `service` flag, exit code `2`, the `services.json` asset name) is a default of one Zod schema, `dispatcherConfigSchema`. The assembler and the supervisor read the value from the built library.
-- The generated entry now lists only the registered services and calls `dispatch()`. No argument starts the supervisor. `--service <id>` starts one registered service. Anything else exits 2.
+- The entry (`sea-entry.ts`, later TypeScript source) now reaches only the registered services and calls `dispatch()`. No argument starts the supervisor. `--service <id>` starts one registered service. Anything else exits 2.
 - The supervisor reads `services.json` through `servicesAssetSchema` and builds the child arguments with `serviceArgs(id)`. Asset name and fields are unchanged (2c owns the change).
 - The assembler classifies a workspace dependency that has a built `main` and no `dist/main.js` or web output as a library, and requires `service-registry` among them.
 
