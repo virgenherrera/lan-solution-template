@@ -20,6 +20,7 @@ See also: [ADR-013](adr/ADR-013-nest-standalone-architecture.md) | [Declared ser
 
 - [At a glance](#at-a-glance)
 - [Boot order](#boot-order)
+- [Service lifecycle](#service-lifecycle)
 - [Target module graph](#target-module-graph)
 - [Output channels](#output-channels)
 - [Exit codes](#exit-codes)
@@ -32,13 +33,14 @@ See also: [ADR-013](adr/ADR-013-nest-standalone-architecture.md) | [Declared ser
 
 [Back to navigation](#navigation)
 
-This page supports the refactor proposed in [ADR-013](adr/ADR-013-nest-standalone-architecture.md). The refactor is a pure structure change: the stdout contract of [ADR-006](adr/ADR-006-sidecar-status-contract.md), the exit code numbers and the boot order do not change. The service model is described in [declared services](declared-services.md).
+This page supports the refactor proposed in [ADR-013](adr/ADR-013-nest-standalone-architecture.md). The refactor is a pure structure change. The stdout contract of [ADR-006](adr/ADR-006-sidecar-status-contract.md), the exit code numbers and the boot order do not change. The service model is in [declared services](declared-services.md).
 
-Evidence rule. Every file and line below comes from mapping reports of the current code. They are reported, not verified. A QC check must confirm them before the code phase relies on them.
+Every file and line cited below comes from mapping reports of the current code. [Not verified](#not-verified) lists what a QC check must confirm before the code phase relies on it.
 
 | Topic | What you find | Section |
 | --- | --- | --- |
 | Boot | Order from the runtime to the gateway, with certificates | [Boot order](#boot-order) |
+| Lifecycle | States of one supervised service | [Service lifecycle](#service-lifecycle) |
 | Modules | Target dependency graph of Nest modules | [Target module graph](#target-module-graph) |
 | Channels | stdout contract against stderr logs | [Output channels](#output-channels) |
 | Exit codes | Every current `process.exit` and the `EXIT_CODE` contract | [Exit codes](#exit-codes) |
@@ -76,7 +78,43 @@ sequenceDiagram
     Sup-->>Host: "status events on stdout"
 ```
 
-The diagram shows the boot order chosen for the refactor. The runtime dispatches the arguments and creates the application context. Persistence then runs the migrations and the schema gate inside the supervisor process. Only after that does the supervisor start the services in `startOrder`, the gateway among them. Logging is not a service and has no step. The certificates are created before the boot, by the installer (`--generate-certs`), and the gateway only reads them. If they are missing, the gateway fails to start and the supervisor restarts it within its budget. Source: mapping D (boot steps 1 to 8, certs, migrations): `apps/sea-runtime/src/sea-entry.ts:6-19`, `apps/sea-runtime/src/main.ts:6-12`, `apps/sea-runtime/src/persistence/persistence.service.ts:26-80`, `apps/sea-runtime/src/supervisor/supervisor.service.ts:30-61`, `apps/api-gateway/src/app.bootstrap.ts:22-32`, `apps/desktop/installer/macos/scripts/postinstall:86-98`. Reported, not verified. The exact timing of the child exit when certificates are missing is not verified.
+The runtime dispatches the arguments and creates the application context. Persistence then runs the migrations and the schema gate inside the supervisor process. Only after that does the supervisor start the services in `startOrder`, the gateway among them.
+
+- Logging is not a service and has no step.
+- The installer creates the certificates before the boot with `--generate-certs`. The gateway only reads them.
+- If the certificates are missing, the gateway fails to start. The supervisor restarts it within its budget.
+
+| Source | Covers |
+| --- | --- |
+| `apps/sea-runtime/src/sea-entry.ts:6-19` | Dispatch, certificate flag. |
+| `apps/sea-runtime/src/main.ts:6-12` | Application context. |
+| `apps/sea-runtime/src/persistence/persistence.service.ts:26-80` | Migrations and schema gate. |
+| `apps/sea-runtime/src/supervisor/supervisor.service.ts:30-61` | Service start in order. |
+| `apps/api-gateway/src/app.bootstrap.ts:22-32` | Gateway listen steps. |
+| `apps/desktop/installer/macos/scripts/postinstall:86-98` | Certificate creation. |
+
+---
+
+## Service lifecycle
+
+[Back to navigation](#navigation)
+
+```mermaid
+stateDiagram-v2
+    [*] --> starting: lifecycle created
+    starting --> ready: ready message
+    starting --> restarting: exit and budget left
+    ready --> restarting: exit and budget left
+    restarting --> ready: ready message
+    starting --> failed: exit and budget spent
+    ready --> failed: exit and budget spent
+    restarting --> failed: exit and budget spent
+    failed --> [*]
+```
+
+The status starts as `starting` and changes only on a ready message or after an exit. A child that sends no ready message within `readinessTimeoutMs` receives SIGKILL. The kill ends in the same exit handler, so a startup failure spends the same restart budget. A spent budget sets `failed` and no further spawn happens.
+
+Source: `apps/sea-runtime/src/supervisor/service-lifecycle.ts:46,89,92-96,110-118`.
 
 ---
 
@@ -114,7 +152,18 @@ flowchart TD
     end
 ```
 
-The diagram shows the target dependency graph. Every module reads configuration from the validated config singleton, every logger goes through the Nest `Logger`, and both the assembler and the supervisor read the same `SERVICES` constant. Each module folder uses the five role folders described in the [folder tree](#target-folder-tree). The module names are a proposal, not current code. Source: mapping D (`apps/sea-runtime/src/runtime/runtime.module.ts`, `apps/api-gateway/src/core.module.ts`, consumers of the services constant) and mapping C (nest-base layout). Reported, not verified.
+The diagram is the target dependency graph. The module names are a proposal, not current code.
+
+- Every module reads configuration from the validated config singleton.
+- Every logger goes through the Nest `Logger`.
+- The assembler and the supervisor read the same `SERVICES` constant.
+- Each module folder uses the five role folders in the [folder tree](#target-folder-tree).
+
+| Source | Covers |
+| --- | --- |
+| `apps/sea-runtime/src/runtime/runtime.module.ts` | Runtime module imports. |
+| `apps/api-gateway/src/core.module.ts` | Gateway module imports. |
+| Mapping C (nest-base layout) | Role folders and module style. |
 
 ---
 
@@ -140,7 +189,20 @@ flowchart LR
     Risk -.->|"RISK: contaminates the contract"| Out
 ```
 
-The diagram separates the contract from the logs. stdout is the machine contract of ADR-006: one JSON object per line, never a log, and its bytes do not change. All logs go through the Nest `Logger` to stderr. The default Nest `ConsoleLogger` writes `log`, `warn`, `debug` and `verbose` to stdout and only `error` and `fatal` to stderr. Used as is, it would put log lines into the contract channel (the dotted path). The target logger is therefore a `ConsoleLogger` subclass that sends every level to stderr. Its output must keep the current line format `[id] text` until the code phase proves that no consumer needs it. SupervisorLogger is absorbed only if the emitted lines stay identical. A later epic may replace the logger behind the Nest `LoggerService` interface; this page does not design it. Source: mapping C (`console-logger.service.js:95-148`, `233-241` in `@nestjs/common`) and mapping B (`libs/service-registry/src/supervisor-log.ts:5`, `apps/sea-runtime/src/sidecar/sidecar-output.ts:8`). Reported, not verified. Mapping C could not confirm that the runtime links that version of `@nestjs/common`, and mapping B found no smoke assertion on the stderr prefix.
+stdout is the machine contract of ADR-006: one JSON object per line, never a log, with unchanged bytes. All logs go through the Nest `Logger` to stderr.
+
+- The default Nest `ConsoleLogger` writes `log`, `warn`, `debug` and `verbose` to stdout. It writes only `error` and `fatal` to stderr.
+- Used as is, it would put log lines into the contract channel (the dotted path).
+- The target logger is a `ConsoleLogger` subclass that sends every level to stderr.
+- Its output keeps the line format `[id] text` until the code phase proves no consumer needs it.
+- SupervisorLogger is absorbed only if the emitted lines stay identical.
+- A later epic may replace the logger behind the Nest `LoggerService` interface. This page does not design it.
+
+| Source | Covers |
+| --- | --- |
+| `console-logger.service.js:95-148`, `233-241` in `@nestjs/common` | Default level routing. |
+| `libs/service-registry/src/supervisor-log.ts:5` | Current supervisor log prefix. |
+| `apps/sea-runtime/src/sidecar/sidecar-output.ts:8` | Contract writer. |
 
 ---
 
@@ -148,7 +210,9 @@ The diagram separates the contract from the logs. stdout is the machine contract
 
 [Back to navigation](#navigation)
 
-The refactor replaces each magic number with a named `EXIT_CODE` constant in a `constants` folder. The numeric values do not change. The table lists the values as reported by mapping B for the 26 `process.exit` calls and the one `process.exitCode` assignment. Observable means that a smoke test or a contract comment asserts the value.
+The refactor replaces each magic number with a named `EXIT_CODE` constant in a `constants` folder. The numeric values do not change.
+
+The table lists 26 `process.exit` calls and one `process.exitCode` assignment, as found by mapping. Observable means that a smoke test or a contract comment asserts the value.
 
 | File | Line | Value | Observable |
 | --- | --- | --- | --- |
@@ -180,7 +244,7 @@ The refactor replaces each magic number with a named `EXIT_CODE` constant in a `
 | `tools/scripts/branch-name.ts` | 37 | 2 | no |
 | `tools/scripts/branch-name.ts` | 47 | 1 | no |
 
-The table shows what the mapping found: six observable sites in `apps/`, and the rest in `tools/scripts`. The count of 27 rows matches 26 calls plus one assignment. Source: mapping B (`exit` list). Reported, not verified. The mapping states that no `*.spec.ts` or `*.test.ts` under `apps` or `libs` touches these sites.
+Six observable sites sit in `apps/`. The rest are in `tools/scripts`. The 27 rows match 26 calls plus one assignment. The mapping found no `*.spec.ts` or `*.test.ts` under `apps` or `libs` that touches these sites.
 
 ---
 
@@ -199,7 +263,9 @@ apps/<app>/src/
   constants/       constants, including EXIT_CODE and SERVICES
 ```
 
-The tree shows the target layout of one app, one line per folder. The role folders (`interfaces`, `schemas`, `services`, `modules`, `constants`) are a proposal of the refactor. Mapping C found that they do not exist in `nest-base` or in `virgenherrera`, which use feature folders with a barrel `index.ts`, a `dto` subfolder, and `*.module.ts`, `*.controller.ts` and `*.filter.ts` files. The layout is therefore a decision of this project, not a copy of the reference. Source: mapping C (`folder_convention_check`, `nest_base_tree`). Reported, not verified.
+The role folders (`interfaces`, `schemas`, `services`, `modules`, `constants`) are a proposal of the refactor. Mapping C found that `nest-base` and `virgenherrera` do not use them. They use feature folders with a barrel `index.ts`, a `dto` subfolder, and `*.module.ts`, `*.controller.ts` and `*.filter.ts` files. The layout is therefore a decision of this project, not a copy of the reference.
+
+Source: mapping C (`folder_convention_check`, `nest_base_tree`).
 
 ---
 
@@ -207,7 +273,9 @@ The tree shows the target layout of one app, one line per folder. The role folde
 
 [Back to navigation](#navigation)
 
-- Every file and line in this page comes from mapping reports and has not been re-read.
-- Whether the runtime links the `@nestjs/common` version that mapping C inspected.
-- The timing of the gateway exit when the certificates are missing.
-- Whether any consumer reads the `[id] text` stderr format.
+| Item | Why it is missing | Who verifies |
+| --- | --- | --- |
+| Every file and line cited on this page | Mapping reports supplied them; nobody re-read the code | QC before the code phase |
+| The runtime links the `@nestjs/common` version that mapping C inspected | Mapping C could not confirm it | QC |
+| The timing of the gateway exit when certificates are missing | Not observed | Code phase smoke |
+| Any consumer reads the `[id] text` stderr format | Mapping B found no smoke assertion on the prefix | QC |
