@@ -200,6 +200,8 @@ The human decided two points on 2026-11-06. First, a service has no pre or post 
 
 Second, `SERVICES` is a plain constant with no helper function. Zod validates it at run time, in the supervisor and in the assembler. The compile-time check of `dependsOn` is lost on purpose.
 
+The `web` field is deprecated and this refactor does not touch it ([details](../declared-services.md#deprecated-the-web-flag)).
+
 The supervisor does not wait for a ready message before it launches the next service. Array order only breaks ties, so `dependsOn` stays ([evidence](../declared-services.md#startup-order-and-shutdown)).
 
 ### D12. Cleanup deletes only what has zero references
@@ -268,5 +270,6 @@ This ADR only requires that all code depends on the Nest `LoggerService` interfa
 | Whether the D4 subclass reproduces the `SupervisorLogger` lines byte-identically (D7) | It needs a before and after capture of stderr | Code phase |
 | Whether the Nest writer changes the lost-output hazard on exit | Nobody ran the writer against a fast exit | Code phase |
 | Placement of `DeclaredServices` in a library, and the path of the Logger decorator | Both are open in the declared services page and in D6 | Human decision at the start of the code phase |
+| Whether a child of the same SEA binary reads the embedded assets, and whether rspack can embed the web bundle | No run exists. The maps found no code that reads assets from a child | The later epic on the service-owned web build |
 
 [Back to navigation](#navigation)

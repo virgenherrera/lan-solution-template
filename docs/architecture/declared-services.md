@@ -58,7 +58,7 @@ One model replaces both. The export follows the style of Angular routes.
 ```ts
 // Proposed. Not implemented. A plain typed constant: no helper function wraps it.
 export const SERVICES: DeclaredServices = [
-  { path: 'apps/api-gateway', receivesWebBundle: true },
+  { path: 'apps/api-gateway', web: true },
 ];
 ```
 
@@ -78,9 +78,36 @@ Fields of `DeclaredService` (proposed):
 | `path` | yes | Workspace-relative path of the service package. The name is derived from it. |
 | `dependsOn` | no, default empty | Names of services that must start earlier. Kept, see [Startup order and shutdown](#startup-order-and-shutdown). |
 | `enabled` | no, default true | A disabled service is declared but never started. |
-| `receivesWebBundle` (proposed name, was `web`) | no, default false | The supervisor sends the embedded web bundle to this service over IPC at every start (`apps/sea-runtime/src/supervisor/child-spawner.ts:20-21`). |
+| `web` (Deprecated) | no, default false | Deprecated. Today the supervisor sends the embedded web bundle to this service over IPC at every start (`apps/sea-runtime/src/supervisor/child-spawner.ts:20-21`). A service-owned web build will replace it, see [Deprecated: the web flag](#deprecated-the-web-flag). |
 
 The input has no `id` and no `entry`.
+
+### Deprecated: the web flag
+
+The `web` field stays in the contract unchanged and is marked deprecated. Nothing moves in this refactor, and the command line argument `--web ipc` does not change.
+
+Today the Angular build output is embedded in the SEA binary. The supervisor reads it and sends it to the gateway over IPC at every start. The IPC path exists because the gateway must run without SEA (REQ-NET-02, `docs/roadmap/PROPOSAL.md:808`).
+
+The target is an idea of the human, not scheduled. The build script of the service takes care of what it needs, for example a pre-step that runs the Angular build and leaves the bundle next to the service. The `web` flag and the `--web ipc` argument then disappear. See the follow-up in the [epic](../backlog/nest-standalone-refactor.md#follow-ups).
+
+```mermaid
+flowchart LR
+    subgraph Today
+        A1["Angular build"] --> A2["asset embedded in the SEA"]
+        A2 --> A3["supervisor"]
+        A3 -->|IPC| A4["gateway"]
+    end
+    subgraph Target
+        B1["service build pre-step"] --> B2["bundle next to the service"]
+        B2 --> B3["service serves it"]
+    end
+```
+
+| Blocker | Evidence |
+| --- | --- |
+| The gateway must run without SEA. | REQ-NET-02, `docs/roadmap/PROPOSAL.md:808`. |
+| Removing the field and the argument changes contracts, so it is not a pure refactor. | High-risk items 3 and 5 of the task size rules. |
+| Child access to the embedded assets and bundling with rspack are not verified. | No run exists. The epic that takes the idea verifies both. |
 
 A service is one long-lived process. A task that ends is not a service: the supervisor would treat its exit as a crash and restart it. For that reason the database migrations stay a step of the supervisor, not a declared service ([Nest standalone boot](nest-standalone-boot.md)).
 
@@ -193,7 +220,6 @@ Boot order around the supervisor, certificates and migrations is in [Nest standa
 | `routesSchema` | internal collection schema | Same checks, applied to names. |
 | `defineServices` | removed | Decided by the human, 2026-11-06. `SERVICES` is a plain `DeclaredServices` constant. See [Decision: plain typed array](#decision-plain-typed-array). |
 | `pre` and `post` (proposed fields, never implemented) | dropped | Decided by the human, 2026-11-06. Work before a service is another service earlier in the array. Work at shutdown is a Nest lifecycle hook of the service. |
-| `web` | `receivesWebBundle` (proposed) | The name now says what the flag does. The supervisor still starts the gateway with the command line argument `--web ipc`: that argument is an existing contract and does not change. |
 | `servicesAssetSchema` | stays, derived from `declaredServiceSchema` | Shape of the asset the supervisor reads. |
 | `entry` | removed | No reader found by mapping. |
 | `project` | derived from `path` | No longer an input. |

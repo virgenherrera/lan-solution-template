@@ -26,6 +26,7 @@ updated: 2026-11-06
 - [Slice 3: Unified DeclaredServices](#slice-3-unified-declaredservices)
 - [Slice 4: Dead code cleanup](#slice-4-dead-code-cleanup)
 - [Slice 5: Folder reorganization](#slice-5-folder-reorganization)
+- [Follow-ups](#follow-ups)
 - [Out of scope](#out-of-scope)
 - [Not verified](#not-verified)
 
@@ -185,6 +186,18 @@ Contract after slice 3:
 | Accept | Tests and `smoke-sea` pass, no test edit. The SEA build resolves every module. Moves use `git mv`. Only import paths change inside files. |
 | Risk | item 3. Other packages and the build consume barrels and the SEA alias. |
 | Size | under 400 changed lines, mostly renames. Over 400: split by library. |
+
+---
+
+## Follow-ups
+
+[Back to navigation](#navigation)
+
+Ideas outside the five slices. They have no slice and no date.
+
+| Item | Status | Blockers and evidence |
+| --- | --- | --- |
+| Service-owned web build | Idea (not scheduled) | The build script of the service runs the Angular build and leaves the bundle next to the service, so the `web` flag and `--web ipc` disappear. Blockers: the gateway must run without SEA (REQ-NET-02, `docs/roadmap/PROPOSAL.md:808`); removing the field and the argument changes contracts (high-risk items 3 and 5), so it is not a pure refactor. See [the web flag](../architecture/declared-services.md#deprecated-the-web-flag). |
 
 ---
 

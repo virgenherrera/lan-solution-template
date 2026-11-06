@@ -124,7 +124,7 @@ docs[100]:
     related[7]: docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/nest-standalone-boot.md,docs/backlog/nest-standalone-refactor.md,docs/backlog/nest-standalone-cleanup-inventory.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/overview.md
     status: proposed
     updated: 2026-11-06
-    refs: []
+    refs[1]: REQ-NET-02
   - doc: docs/architecture/device-trust-guide.md
     title: Device trust guide
     type: architecture
@@ -241,7 +241,7 @@ docs[100]:
     related[5]: docs/backlog/README.md,docs/backlog/nest-standalone-cleanup-inventory.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/declared-services.md,docs/architecture/nest-standalone-boot.md
     status: proposed
     updated: 2026-11-06
-    refs: []
+    refs[1]: REQ-NET-02
   - doc: docs/backlog/persistence-system.md
     title: Persistence system
     type: backlog
