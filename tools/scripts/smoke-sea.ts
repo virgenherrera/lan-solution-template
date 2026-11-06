@@ -7,7 +7,8 @@ import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { createServer } from 'node:net';
 import { DatabaseSync } from 'node:sqlite';
-import { X509Certificate } from 'node:crypto';
+import { X509Certificate, createHash } from 'node:crypto';
+import { checkServerIdentity, connect as tlsConnect } from 'node:tls';
 import { networkInterfaces, tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
@@ -16,7 +17,7 @@ import { z } from 'zod';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const { jsonText } = (await import(join(root, 'libs', 'service-registry', 'dist', 'json-text.js'))) as typeof import('../../libs/service-registry/dist/json-text.js');
-const { AGGREGATE_STATE, DISPATCHER_CONFIG, SIDECAR_KIND, SPAWNED_PATTERN, SUPERVISOR_CONFIG, sidecarEventSchema, stateMessage } = (await import(
+const { AGGREGATE_STATE, DISPATCHER_CONFIG, SIDECAR_KIND, SUPERVISOR_CONFIG, sidecarEventSchema } = (await import(
   join(root, 'libs', 'service-registry', 'dist', 'index.js')
 )) as typeof import('service-registry');
 
@@ -35,6 +36,7 @@ const RESTART_WAIT_MS = SUPERVISOR_CONFIG.backoffMaxMs + READY_WAIT_MS;
 const STOP_WAIT_MS = SUPERVISOR_CONFIG.gracefulStopMs + SLACK_MS;
 const ROUTES = { health: '/api/health', index: '/', missing: '/api/nope' } as const;
 const EXPECTED_STATUS = { ok: 200, notFound: 404 } as const;
+const WEB_INDEX = join(root, 'apps', 'web-angular', 'dist', 'web-angular', 'browser', 'index.html');
 const FORBIDDEN_NAMES = ['node', 'node.exe'];
 const BAD_SELECTORS: readonly (readonly string[])[] = [
   [`--${DISPATCHER_CONFIG.serviceFlag}`, 'nope'],
@@ -47,6 +49,7 @@ const BAD_SELECTORS: readonly (readonly string[])[] = [
 const { values } = parseArgs({ options: { artifacts: { type: 'string' } } });
 const artifactsDir = resolve(values.artifacts ?? join(root, 'artifacts', 'sea-runtime'));
 type SidecarEvent = import('service-registry').SidecarEvent;
+type ServiceStatus = SidecarEvent['services'][number];
 const sleep = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms));
 const smokeRoot = mkdtempSync(join(tmpdir(), 'lan-smoke-'));
 process.on('exit', () => rmSync(smokeRoot, { recursive: true, force: true }));
@@ -140,11 +143,28 @@ class Run {
     this.child.kill(name);
   }
 
-  spawnedPids(): number[] {
-    return this.lines.flatMap((line) => {
-      const match = SPAWNED_PATTERN.exec(line);
-      return match?.[1] === SERVICE_ID ? [Number(match[2])] : [];
-    });
+  // The supervisor's own claim about the service, read from the status events on stdout and never from stderr text.
+  // Every claim is cross-checked against the process table (childrenOf), which does not depend on the supervisor.
+  service(): ServiceStatus | undefined {
+    return this.events()
+      .flatMap((event) => event.services)
+      .filter((entry) => entry.id === SERVICE_ID)
+      .at(-1);
+  }
+
+  // The first service entry the events reported with this restart count and a pid.
+  serviceAt(restarts: number): (ServiceStatus & { pid: number }) | undefined {
+    for (const event of this.events()) {
+      for (const entry of event.services) {
+        if (entry.id === SERVICE_ID && entry.restarts === restarts && entry.pid !== undefined) return { ...entry, pid: entry.pid };
+      }
+    }
+    return undefined;
+  }
+
+  // Every distinct service pid the events ever reported.
+  servicePids(): number[] {
+    return [...new Set(this.events().flatMap((event) => event.services.flatMap((entry) => (entry.id === SERVICE_ID && entry.pid !== undefined ? [entry.pid] : []))))];
   }
 
   async exit(timeoutMs: number, what: string): Promise<number | null> {
@@ -251,6 +271,69 @@ async function allGone(pids: Iterable<number>, what: string): Promise<void> {
   for (const pid of pids) await until(() => (alive(pid) ? undefined : true), STOP_WAIT_MS, `${what}: pid ${pid} gone`);
 }
 
+// The process table, read from the OS and not from the supervisor: pid to parent pid and argv0. Linux reads /proc, macOS asks ps.
+interface ProcessInfo {
+  ppid: number;
+  argv0: string;
+}
+function processTable(): Map<number, ProcessInfo> {
+  const table = new Map<number, ProcessInfo>();
+  if (process.platform === 'linux') {
+    for (const entry of readdirSync('/proc')) {
+      if (!/^\d+$/.test(entry)) continue;
+      try {
+        const stat = readFileSync(`/proc/${entry}/stat`, 'utf8');
+        const ppid = Number(stat.slice(stat.lastIndexOf(')') + 2).split(' ')[1]);
+        table.set(Number(entry), { ppid, argv0: readFileSync(`/proc/${entry}/cmdline`, 'utf8').split('\0')[0] });
+      } catch {
+        // The process ended while the table was read.
+      }
+    }
+    return table;
+  }
+  if (process.platform === 'darwin') {
+    const text = execFileSync('ps', ['-A', '-o', 'pid=,ppid=,comm='], { encoding: 'utf8' });
+    for (const line of text.split('\n')) {
+      const match = /^\s*(\d+)\s+(\d+)\s+(.*)$/.exec(line);
+      if (match) table.set(Number(match[1]), { ppid: Number(match[2]), argv0: match[3].trim() });
+    }
+    return table;
+  }
+  throw new Error(`unsupported platform ${process.platform}: not verified (decision D3)`);
+}
+
+const childrenOf = (parent: number): number[] => [...processTable()].filter(([, info]) => info.ppid === parent).map(([pid]) => pid);
+
+function descendantsOf(parent: number): number[] {
+  const table = processTable();
+  const found: number[] = [];
+  const queue = [parent];
+  while (queue.length > 0) {
+    const next = queue.shift() as number;
+    for (const [pid, info] of table) {
+      if (info.ppid === next && !found.includes(pid)) {
+        found.push(pid);
+        queue.push(pid);
+      }
+    }
+  }
+  return found;
+}
+
+// Every live process running this exact executable file. After a failed start the answer must be none: nothing was left behind.
+function processesRunning(binaryPath: string): number[] {
+  const real = realpathSync(binaryPath);
+  return [...processTable()]
+    .filter(([, info]) => {
+      try {
+        return info.argv0 !== '' && realpathSync(info.argv0) === real;
+      } catch {
+        return false;
+      }
+    })
+    .map(([pid]) => pid);
+}
+
 async function check(name: string, body: () => Promise<string | void>): Promise<void> {
   const begun = Date.now();
   try {
@@ -287,9 +370,52 @@ async function startReady(binary: string): Promise<Run> {
   const run = new Run(binary, []);
   current = run;
   await waitReady(READY_WAIT_MS);
-  for (const pid of run.spawnedPids()) knownPids.add(pid);
+  trackTree(run);
   return run;
 }
+
+// Remembers every service pid the events reported plus every real descendant, so a failed check can kill what is left.
+function trackTree(target: Run): void {
+  for (const pid of [...target.servicePids(), ...descendantsOf(target.pid)]) knownPids.add(pid);
+}
+
+const SETTLE_MS = 2_500;
+// What a start that must stop leaves behind: exit code 1, an empty stdout, no process running the executable and no listener.
+// The wait lets a service spawned by mistake come up first, so a leaked one is seen.
+async function expectFailedStart(failed: Run, executable: string, what: string): Promise<void> {
+  const code = await failed.exit(SLACK_MS, what);
+  expect(code === 1, `${what}: exited ${code}`);
+  expect(failed.stdoutLines.length === 0, `${what}: stdout is not empty: ${failed.stdoutLines.length} lines`);
+  await sleep(SETTLE_MS);
+  const left = processesRunning(executable);
+  expect(left.length === 0, `${what}: processes left running the executable: ${left.join(', ')}`);
+  expect(await portsFree(), `${what}: a gateway port is listening`);
+}
+
+// One TLS handshake that trusts only the given CA and verifies the host name `name` against the served certificate. SNI is sent for DNS names only.
+function tlsHandshake(name: string, ca: string): Promise<string> {
+  return new Promise((done, fail) => {
+    const isIp = /^[\d.]+$/.test(name) || name.includes(':');
+    const wanted = name.includes(':') ? new URL(`http://[${name}]`).hostname.slice(1, -1) : name;
+    const socket = tlsConnect(
+      { host: HOST, port: HTTPS_PORT, ca, ...(isIp ? {} : { servername: name }), checkServerIdentity: (_host, cert) => checkServerIdentity(wanted, cert), timeout: HTTP_TIMEOUT_MS },
+      () => {
+        const fingerprint = socket.getPeerCertificate().fingerprint256;
+        socket.destroy();
+        done(fingerprint);
+      },
+    );
+    socket.on('timeout', () => socket.destroy(new Error('timeout')));
+    socket.on('error', fail);
+  });
+}
+
+// The SAN names of a leaf, ready for a handshake.
+const sanNames = (cert: X509Certificate): string[] =>
+  (cert.subjectAltName ?? '')
+    .split(', ')
+    .filter((entry) => entry !== '')
+    .map((entry) => entry.slice(entry.indexOf(':') + 1).replace(/^"|"$/g, ''));
 
 let artifact = '';
 
@@ -339,11 +465,13 @@ let childPid = -1;
 
 await check(`no arguments: supervisor ${AGGREGATE_STATE.ready}`, async () => {
   run = await startReady(binary);
-  expect(run.lines.some((line) => line.includes(stateMessage(AGGREGATE_STATE.ready))), `no stderr line "${stateMessage(AGGREGATE_STATE.ready)}"`);
   expect(run.hasState(AGGREGATE_STATE.ready), `no ${SIDECAR_KIND.status} event with state ${AGGREGATE_STATE.ready} on stdout`);
-  const pids = run.spawnedPids();
-  expect(pids.length === 1, `expected 1 spawned service, saw ${pids.length}`);
-  childPid = pids[0];
+  // The status event names the pid; the process table, which the supervisor does not write, must agree.
+  const claimed = await until(() => (run.service()?.pid === undefined ? undefined : run.service()), SLACK_MS, 'a status event with the service pid');
+  expect(claimed.status === 'ready' && claimed.restarts === 0, `service ${claimed.status}, restarts ${claimed.restarts}`);
+  const real = childrenOf(run.pid);
+  expect(real.length === 1 && real[0] === claimed.pid, `the event says pid ${claimed.pid}, the process table shows children of ${run.pid}: [${real.join(', ')}]`);
+  childPid = claimed.pid as number;
   return `${SERVICE_ID} pid ${childPid}`;
 });
 
@@ -353,6 +481,7 @@ await check('child runs the same executable as the supervisor', async () => {
   expect(supervisor.exe === child.exe, `supervisor ${supervisor.exe} != child ${child.exe}`);
   expect(supervisor.argv0 === child.argv0, `supervisor argv0 ${supervisor.argv0} != child argv0 ${child.argv0}`);
   expect(child.argv0 === realpathSync(binary), `${child.argv0} is not ${realpathSync(binary)}`);
+  expect(processTable().get(childPid)?.ppid === run.pid, `pid ${childPid} is not a child of the supervisor ${run.pid}`);
 });
 
 await check('TLS files made by generate-certs have private modes', async () => {
@@ -363,8 +492,13 @@ await check('TLS files made by generate-certs have private modes', async () => {
   for (const name of ['ca.crt', 'leaf.crt']) expect(statSync(join(certs, name)).isFile(), `${name} is missing`);
 });
 
+// The health body exposes the aggregate state and nothing about the processes behind it: no pids, no child list (the sidecar event is the only place for them).
+const HEALTH_KEYS = { top: ['details', 'error', 'info', 'status'], details: ['state', 'uptime'], state: ['state', 'status'] };
 await check(`GET ${ROUTES.health} over HTTPS with the CA`, async () => {
   expect((await healthState()) === AGGREGATE_STATE.ready, `${ROUTES.health} is not ${AGGREGATE_STATE.ready}`);
+  const body = jsonText(z.looseObject({ details: z.looseObject({ state: z.looseObject({}) }) })).parse((await get(ROUTES.health))?.body);
+  const shape = { top: Object.keys(body).sort(), details: Object.keys(body.details).sort(), state: Object.keys(body.details.state).sort() };
+  expect(JSON.stringify(shape) === JSON.stringify(HEALTH_KEYS), `health keys ${JSON.stringify(shape)}`);
 });
 
 await check(`GET ${ROUTES.health} without the CA fails verification`, async () => {
@@ -388,11 +522,18 @@ await check('HTTP redirect: known host gets 308, unknown host gets 400', async (
 await check(`GET ${ROUTES.index}`, async () => {
   const response = await get(ROUTES.index);
   expect(response?.status === EXPECTED_STATUS.ok, `status ${response?.status}`);
+  // The embedded web bundle is the built app: its index.html is served byte for byte.
+  const served = createHash('sha256').update(response?.body ?? '').digest('hex');
+  const built = createHash('sha256').update(readFileSync(WEB_INDEX)).digest('hex');
+  expect(served === built, `served index sha256 ${served.slice(0, 12)} != built ${built.slice(0, 12)} (${(response?.body ?? '').length} bytes)`);
 });
 
 await check(`GET ${ROUTES.missing}`, async () => {
   const response = await get(ROUTES.missing);
   expect(response?.status === EXPECTED_STATUS.notFound, `status ${response?.status}`);
+  expect((response?.body ?? '') !== '', 'the 404 has an empty body');
+  const index = await get(ROUTES.index);
+  expect(response?.body !== index?.body, 'the unknown api path served the web index instead of a 404');
 });
 
 // Keys the boot code writes to app_meta (S4). db_engine is deliberately absent.
@@ -430,6 +571,8 @@ await check('stdout carries only valid sidecar events', async () => {
   const events = run.events();
   expect(events.length > 0, 'stdout is empty');
   expect(events.every((event) => event.kind === SIDECAR_KIND.status), 'unexpected event kind');
+  // Every pid an event reports is a real child; no event names a pid outside the process table.
+  expect(events.every((event) => event.services.every((entry) => entry.pid === undefined || entry.pid === childPid)), 'an event names a pid that is not the service');
   return `${events.length} events`;
 });
 
@@ -444,16 +587,21 @@ await check('invalid stdin line is ignored', async () => {
 
 await check(`child killed (SIGKILL) returns to ${AGGREGATE_STATE.ready}`, async () => {
   process.kill(childPid, 'SIGKILL');
-  const next = await until(() => run.spawnedPids()[1], RESTART_WAIT_MS, 'second spawn');
+  const respawned = await until(() => run.serviceAt(1), RESTART_WAIT_MS, 'status event of the first restart');
+  const next = respawned.pid;
   knownPids.add(next);
   expect(next !== childPid, 'restart reused the pid');
   await waitReady(RESTART_WAIT_MS);
   expect(!alive(childPid), `old pid ${childPid} is still alive`);
+  expect(run.service()?.pid === next && run.service()?.restarts === 1, `last event: pid ${run.service()?.pid}, restarts ${run.service()?.restarts}`);
+  expect(childrenOf(run.pid).join() === String(next), `children of the supervisor: [${childrenOf(run.pid).join(', ')}], expected [${next}]`);
+  expect(identityOf(next).argv0 === realpathSync(binary), `pid ${next} does not run the executable`);
   childPid = next;
   return `new pid ${next}`;
 });
 
 await check('SIGTERM: exit 0, no process left', async () => {
+  trackTree(run);
   run.signal('SIGTERM');
   const code = await run.exit(STOP_WAIT_MS, 'supervisor after SIGTERM');
   expect(code === 0, `supervisor exited ${code}`);
@@ -464,6 +612,7 @@ await check('SIGTERM: exit 0, no process left', async () => {
 await check('stdin shutdown command: exit 0, no process left', async () => {
   knownPids.clear();
   const stopping = await startReady(binary);
+  expect(childrenOf(stopping.pid).length === 1, `children of the supervisor: [${childrenOf(stopping.pid).join(', ')}]`);
   stopping.send(JSON.stringify({ kind: SIDECAR_KIND.shutdown }));
   const code = await stopping.exit(STOP_WAIT_MS, 'supervisor after the shutdown command');
   expect(code === 0, `supervisor exited ${code}`);
@@ -473,6 +622,7 @@ await check('stdin shutdown command: exit 0, no process left', async () => {
 
 // Stops a run the way the host does and waits until nothing is left.
 async function stopClean(target: Run): Promise<void> {
+  trackTree(target);
   target.send(JSON.stringify({ kind: SIDECAR_KIND.shutdown }));
   const code = await target.exit(STOP_WAIT_MS, 'supervisor after the shutdown command');
   expect(code === 0, `supervisor exited ${code}`);
@@ -488,12 +638,16 @@ await check('second start uses the TLS files and changes none', async () => {
   const before = TLS_FILES.map((name) => certFile(installDir, name));
   const again = await startReady(binary);
   TLS_FILES.forEach((name, index) => expect(certFile(installDir, name).equals(before[index]), `${name} changed`));
-  // Health answering ready does not mean the stderr pipe has been drained: the line can still be in flight, so poll for it.
-  const logged = await until(() => (again.lines.some((line) => line.includes('using leaf certificate')) ? true : undefined), SLACK_MS, 'stderr line "using leaf certificate"').catch(() => false);
-  // Diagnostic only: on failure show the real `tls:` lines (for example a reissue because the host names changed), the check itself is not relaxed.
-  const tlsLines = again.lines.filter((line) => line.includes('tls:')).slice(0, 3);
-  expect(logged, `no stderr line with "using leaf certificate"; tls: lines of the second start: ${tlsLines.length > 0 ? tlsLines.join(' | ') : 'none'}`);
+  // The running gateway serves the file's leaf, and a client that trusts only the CA connects under every name the leaf carries.
+  const leaf = new X509Certificate(before[TLS_FILES.indexOf('leaf.crt')]);
+  const ca = before[TLS_FILES.indexOf('ca.crt')].toString('utf8');
+  const names = sanNames(leaf);
+  for (const name of names) {
+    const served = await tlsHandshake(name, ca);
+    expect(served === leaf.fingerprint256, `served leaf ${served} != leaf.crt ${leaf.fingerprint256} (handshake as ${name})`);
+  }
   await stopClean(again);
+  return `${names.length} names`;
 });
 
 await check('leaf SAN holds every LAN IPv4 of the host and no IPv6 other than ::1', async () => {
@@ -514,9 +668,18 @@ await check('a configured name missing from the leaf is reported, the gateway ke
   writeConfig(installDir, JSON.stringify(config));
   try {
     const mismatched = await startReady(binary);
-    const reported = await until(() => (mismatched.lines.some((line) => line.includes('does not match') && line.includes('missing name: lan.test')) ? true : undefined), SLACK_MS, 'stderr line "does not match" with "missing name: lan.test"').catch(() => false);
-    const tlsLines = mismatched.lines.filter((line) => line.includes('tls:')).slice(0, 3);
-    expect(reported, `no mismatch line for lan.test; tls: lines: ${tlsLines.length > 0 ? tlsLines.join(' | ') : 'none'}`);
+    // Effects: the old leaf stays (the gateway does not reissue), the gateway still serves, and the new name does not verify while the IP does.
+    const ca = certFile(installDir, 'ca.crt').toString('utf8');
+    expect(await tlsHandshake(HOST, ca).then(() => true, () => false), `handshake as ${HOST} failed`);
+    const code = await tlsHandshake('lan.test', ca).then(
+      () => 'no error',
+      (error: NodeJS.ErrnoException) => error.code,
+    );
+    expect(code === 'ERR_TLS_CERT_ALTNAME_INVALID', `handshake as lan.test: ${code}`);
+    expect((await healthState()) === AGGREGATE_STATE.ready, `${ROUTES.health} is not ${AGGREGATE_STATE.ready}`);
+    // REQ-TLS-04 asks to report the mismatch clearly: the message is the one place a log line is the requirement.
+    const reported = await until(() => (mismatched.lines.some((line) => line.includes('does not match') && line.includes('missing name: lan.test')) ? true : undefined), SLACK_MS, 'the REQ-TLS-04 mismatch report').catch(() => false);
+    expect(reported, 'REQ-TLS-04: no report names the missing name lan.test');
     await stopClean(mismatched);
   } finally {
     writeConfig(installDir);
@@ -540,6 +703,7 @@ await check('generate-certs again: nothing changes; with tls.extraNames: new lea
   const probe = await httpProbe(`lan.test:${HTTP_PORT}`, ROUTES.index);
   expect(probe.status === 308, `status ${probe.status}`);
   expect(probe.location === `https://lan.test:${HTTPS_PORT}${ROUTES.index}`, `Location ${probe.location}`);
+  expect(await tlsHandshake('lan.test', certFile(installDir, 'ca.crt').toString('utf8')).then(() => true, () => false), 'handshake as lan.test failed with the reissued leaf');
   await stopClean(renamed);
 });
 
@@ -557,22 +721,11 @@ await check('sidecar simulation: spawn from an unrelated cwd, ready event on std
   sim = new Run(sidecar.binary, [], tmpdir());
   current = sim;
   await until(() => (sim.hasState(AGGREGATE_STATE.ready) ? true : undefined), READY_WAIT_MS, `${SIDECAR_KIND.status} event ${AGGREGATE_STATE.ready}`);
-  for (const pid of sim.spawnedPids()) knownPids.add(pid);
-  expect(sim.lines.some((line) => line.includes('tls:')), 'no tls identity line on stderr');
-  return `cwd ${tmpdir()}`;
-});
-
-await check('sidecar simulation: stdout holds only valid events', async () => {
-  const events = sim.events();
-  expect(events.length > 0, 'stdout is empty');
-  expect(events.every((event) => event.kind === SIDECAR_KIND.status), 'unexpected event kind');
-  return `${events.length} events`;
-});
-
-await check('sidecar simulation: HTTPS with the CA from the install dir', async () => {
-  const response = await get(ROUTES.health, sidecar.dir);
-  expect(response?.status === EXPECTED_STATUS.ok, `status ${response?.status}`);
+  trackTree(sim);
   expect(readCa(sidecar.dir) !== undefined, 'certs are missing next to the executable');
+  expect(((await get(ROUTES.health, sidecar.dir))?.status ?? 0) === EXPECTED_STATUS.ok, 'no HTTPS health 200 from the simulated sidecar');
+  expect(sim.events().length > 0, 'stdout is empty');
+  return `cwd ${tmpdir()}`;
 });
 
 await check('sidecar simulation: shutdown line on stdin, exit 0, no listener left', async () => {
@@ -581,7 +734,7 @@ await check('sidecar simulation: shutdown line on stdin, exit 0, no listener lef
 });
 
 // The shipped build expects app_meta.value (S1): a database without it must stop the start before any service spawns.
-await check('schema mismatch (app_meta.value missing): exit 1, no service spawned', async () => {
+await check('schema mismatch (app_meta.value missing): exit 1, nothing left running', async () => {
   const mismatched = install(artifact);
   mkdirSync(join(mismatched.dir, 'data'));
   copyFileSync(join(installDir, 'data', 'lan.db'), join(mismatched.dir, 'data', 'lan.db'));
@@ -593,84 +746,80 @@ await check('schema mismatch (app_meta.value missing): exit 1, no service spawne
   }
   const broken = new Run(mismatched.binary, []);
   current = broken;
-  const code = await broken.exit(SLACK_MS, 'start on a mismatched schema');
-  expect(code === 1, `exited ${code}`);
-  expect(broken.lines.some((line) => line.includes('schema check FAILED')), 'no "schema check FAILED" line');
-  expect(broken.spawnedPids().length === 0, 'a service was spawned');
+  await expectFailedStart(broken, mismatched.binary, 'start on a mismatched schema');
   return 'exit 1';
 });
 
 // A missing or invalid config must stop the start before any service spawns and before anything reaches stdout.
-await check('config missing: exit 1, no service spawned', async () => {
-  const bare = new Run(install(artifact, false).binary, []);
+await check('config missing: exit 1, nothing left running', async () => {
+  const bareInstall = install(artifact, false);
+  const bare = new Run(bareInstall.binary, []);
   current = bare;
-  const code = await bare.exit(SLACK_MS, 'start without a config');
-  expect(code === 1, `exited ${code}`);
-  expect(bare.lines.some((line) => line.includes('is missing')), 'no "is missing" line');
-  expect(bare.spawnedPids().length === 0, 'a service was spawned');
-  expect(bare.stdoutLines.length === 0, `stdout is not empty: ${bare.stdoutLines.length} lines`);
+  await expectFailedStart(bare, bareInstall.binary, 'start without a config');
+  expect(!existsSync(join(bareInstall.dir, 'config')) && !existsSync(join(bareInstall.dir, 'certs')) && !existsSync(join(bareInstall.dir, 'data')), 'the failed start created config/, certs/ or data/');
   return 'exit 1';
 });
 
 // The gateway never creates certificates: missing or invalid files stop the start and name the command that fixes them.
 // The gateway runs alone (service selector) here, so its own exit code is the one observed.
 const gatewayArgs = [`--${DISPATCHER_CONFIG.serviceFlag}`, SERVICE_ID];
-await check('TLS files missing: exit 1, the message names pnpm dev:certs, no file created', async () => {
+await check('TLS files missing: exit 1, no file created, nothing left running', async () => {
   const bare = install(artifact, true, undefined, false);
   const run = new Run(bare.binary, gatewayArgs);
   current = run;
-  const code = await run.exit(SLACK_MS, 'start without TLS files');
-  expect(code === 1, `exited ${code}`);
-  expect(run.lines.some((line) => line.includes('pnpm dev:certs')), 'stderr does not name "pnpm dev:certs"');
-  expect(run.lines.some((line) => line.includes('ca.crt is missing')), 'stderr does not name the missing ca.crt');
+  await expectFailedStart(run, bare.binary, 'start without TLS files');
   expect(!existsSync(join(bare.dir, 'certs')), 'the gateway created the certs/ folder');
   return 'exit 1';
 });
 
-await check('leaf.key that does not match leaf.crt: exit 1, the mismatch is named, files untouched', async () => {
+await check('leaf.key that does not match leaf.crt: exit 1, files untouched, nothing left running', async () => {
   const broken = install(artifact);
   const other = install(artifact);
   copyFileSync(join(other.dir, 'certs', 'leaf.key'), join(broken.dir, 'certs', 'leaf.key'));
   const before = TLS_FILES.map((name) => certFile(broken.dir, name));
   const run = new Run(broken.binary, gatewayArgs);
   current = run;
-  const code = await run.exit(SLACK_MS, 'start with a mismatched leaf.key');
-  expect(code === 1, `exited ${code}`);
-  expect(run.lines.some((line) => line.includes('leaf.key does not belong to')), 'stderr does not name the key mismatch');
+  await expectFailedStart(run, broken.binary, 'start with a mismatched leaf.key');
   TLS_FILES.forEach((name, index) => expect(certFile(broken.dir, name).equals(before[index]), `${name} changed`));
   return 'exit 1';
 });
 
-await check('config with an unknown key: exit 1, the key is named', async () => {
+await check('config with an unknown key: exit 1, nothing left running', async () => {
   const config = smokeConfig();
   config.db['bogusKey'] = true;
-  const bad = new Run(install(artifact, true, JSON.stringify(config)).binary, []);
+  const badInstall = install(artifact, true, JSON.stringify(config));
+  const bad = new Run(badInstall.binary, []);
   current = bad;
-  const code = await bad.exit(SLACK_MS, 'start with an invalid config');
-  expect(code === 1, `exited ${code}`);
-  expect(bad.lines.some((line) => line.includes('bogusKey')), 'stderr does not name "bogusKey"');
-  expect(bad.spawnedPids().length === 0, 'a service was spawned');
+  await expectFailedStart(bad, badInstall.binary, 'start with an invalid config');
   return 'exit 1';
 });
 
 await check(`restart budget (${SUPERVISOR_CONFIG.maxRestarts}) ends in ${AGGREGATE_STATE.error}, exit ${SUPERVISOR_CONFIG.errorExitCode}`, async () => {
   knownPids.clear();
   const budget = await startReady(binary);
-  for (let n = 1; n <= SUPERVISOR_CONFIG.maxRestarts; n += 1) {
-    const pid = budget.spawnedPids()[n - 1];
+  // Each kill hits the pid the process table shows under the supervisor, and the next spawn is seen in the table and in the events.
+  for (let n = 0; n < SUPERVISOR_CONFIG.maxRestarts; n += 1) {
+    const [pid] = childrenOf(budget.pid);
+    expect(pid !== undefined, `no child to kill before restart ${n + 1}`);
     process.kill(pid, 'SIGKILL');
-    knownPids.add(pid);
-    const next = await until(() => budget.spawnedPids()[n], RESTART_WAIT_MS, `restart ${n}`);
-    knownPids.add(next);
+    const next = await until(() => budget.serviceAt(n + 1), RESTART_WAIT_MS, `status event of restart ${n + 1}`);
+    expect(next.pid !== pid, `restart ${n + 1} reused pid ${pid}`);
+    knownPids.add(next.pid);
+    await until(() => (childrenOf(budget.pid).includes(next.pid) ? true : undefined), RESTART_WAIT_MS, `pid ${next.pid} under the supervisor`);
   }
-  process.kill(budget.spawnedPids()[SUPERVISOR_CONFIG.maxRestarts], 'SIGKILL');
+  const last = childrenOf(budget.pid)[0];
+  process.kill(last, 'SIGKILL');
   const code = await budget.exit(STOP_WAIT_MS, 'supervisor after the budget');
   expect(code === SUPERVISOR_CONFIG.errorExitCode, `supervisor exited ${code}`);
-  expect(budget.lines.some((line) => line.includes(stateMessage(AGGREGATE_STATE.error))), `no stderr line "${stateMessage(AGGREGATE_STATE.error)}"`);
   expect(budget.hasState(AGGREGATE_STATE.error), `no ${SIDECAR_KIND.status} event with state ${AGGREGATE_STATE.error} on stdout`);
-  expect(budget.spawnedPids().length === SUPERVISOR_CONFIG.maxRestarts + 1, `spawned ${budget.spawnedPids().length} times`);
-  await allGone(knownPids, 'after the budget');
-  return `${budget.spawnedPids().length} spawns`;
+  expect(budget.service()?.status === 'failed', `last service status ${budget.service()?.status}`);
+  const spawns = budget.servicePids();
+  expect(spawns.length === SUPERVISOR_CONFIG.maxRestarts + 1, `events reported ${spawns.length} distinct pids`);
+  expect(budget.service()?.restarts === SUPERVISOR_CONFIG.maxRestarts, `last event restarts ${budget.service()?.restarts}`);
+  await allGone([...knownPids, ...spawns], 'after the budget');
+  expect(processesRunning(binary).length === 0, 'processes left running the executable');
+  expect(await portsFree(), 'a gateway port is still in use');
+  return `${spawns.length} spawns`;
 });
 
 console.log(`${TAG} smoke: ${passed} checks passed in ${((Date.now() - startedAt) / 1000).toFixed(1)} s`);

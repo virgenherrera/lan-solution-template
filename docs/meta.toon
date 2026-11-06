@@ -1,4 +1,4 @@
-docs[91]:
+docs[95]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -51,7 +51,7 @@ docs[91]:
     ids: []
     related[5]: docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/overview.md,docs/backlog/service-status-indicator.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/requirements/traceability.md
     status: current
-    updated: 2026-11-03
+    updated: 2026-11-05
     refs[1]: REQ-RUNTIME-05
   - doc: docs/architecture/adr/ADR-007-persistence-system.md
     title: ADR-007 Persistence system
@@ -98,6 +98,15 @@ docs[91]:
     status: proposed
     updated: 2026-11-04
     refs[4]: AC-18,REQ-CFG-05,REQ-SEA-06,REQ-VERSION-01
+  - doc: docs/architecture/adr/ADR-012-sea-runtime-child-registry.md
+    title: ADR-012 sea-runtime child registry
+    type: architecture
+    summary: "Compares POCs P1, P2 and P3 for a singleton child registry in sea-runtime and proposes a decision."
+    ids: []
+    related[4]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/proposals/sea-runtime-P1-registry-status-event.md,docs/architecture/proposals/sea-runtime-P2-per-service-singletons.md,docs/architecture/proposals/sea-runtime-P3-minimal-pid-hook.md
+    status: proposed
+    updated: 2026-11-05
+    refs[3]: REQ-RUNTIME-05,REQ-TEST-01,REQ-TEST-04
   - doc: docs/architecture/device-trust-guide.md
     title: Device trust guide
     type: architecture
@@ -125,6 +134,33 @@ docs[91]:
     status: current
     updated: 2026-11-04
     refs[4]: AC-21,REQ-SEA-06,REQ-TEST-09,REQ-TEST-10
+  - doc: docs/architecture/proposals/sea-runtime-P1-registry-status-event.md
+    title: Proposal P1 sea-runtime child registry and status event
+    type: architecture
+    summary: "Proposes a singleton ChildRegistry and HostModule ports, exposed as children[] on the stdout status event."
+    ids: []
+    related[3]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/proposals/sea-runtime-P2-per-service-singletons.md,docs/architecture/proposals/sea-runtime-P3-minimal-pid-hook.md
+    status: proposed
+    updated: 2026-11-05
+    refs[4]: REQ-RUNTIME-05,REQ-TEST-01,REQ-TEST-04,REQ-TEST-07
+  - doc: docs/architecture/proposals/sea-runtime-P2-per-service-singletons.md
+    title: "SEA runtime proposal P2: per-service singletons"
+    type: architecture
+    summary: "Proposal: each registered service becomes its own singleton provider owning pid and restarts, with a stdin snapshot command."
+    ids: []
+    related[3]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/proposals/sea-runtime-P1-registry-status-event.md,docs/architecture/proposals/sea-runtime-P3-minimal-pid-hook.md
+    status: proposed
+    updated: 2026-11-05
+    refs[2]: REQ-TEST-01,REQ-TEST-07
+  - doc: docs/architecture/proposals/sea-runtime-P3-minimal-pid-hook.md
+    title: Proposal P3 sea-runtime minimal child registry
+    type: architecture
+    summary: "Smallest sea-runtime change: one injectable ChildRegistry fed by the spawn hook, with pid added to the status event."
+    ids: []
+    related[3]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/proposals/sea-runtime-P1-registry-status-event.md,docs/architecture/proposals/sea-runtime-P2-per-service-singletons.md
+    status: proposed
+    updated: 2026-11-05
+    refs[3]: REQ-RUNTIME-05,REQ-TEST-01,REQ-TEST-04
   - doc: docs/backlog/README.md
     title: Backlog index
     type: backlog

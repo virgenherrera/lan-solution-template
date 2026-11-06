@@ -3,6 +3,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { serviceArgs, spawnedMessage, type ServiceRoute } from 'service-registry';
 import { SupervisorLogger } from '../sidecar/supervisor-logger.js';
 import { WebBundleService } from '../web/web-bundle.service.js';
+import { ChildRegistry } from './child-registry.js';
 import { forwardLines } from './forward-lines.js';
 import { treeSpawnOptions } from './process-tree.js';
 
@@ -12,6 +13,7 @@ export class ChildSpawner {
   constructor(
     private readonly web: WebBundleService,
     private readonly logger: SupervisorLogger,
+    private readonly registry: ChildRegistry,
   ) {}
 
   spawn(route: ServiceRoute): ChildProcess {
@@ -26,6 +28,7 @@ export class ChildSpawner {
     });
     if (child.stdout) forwardLines(route.id, child.stdout, process.stderr);
     if (child.stderr) forwardLines(route.id, child.stderr, process.stderr);
+    if (child.pid !== undefined) this.registry.recordSpawn(route.id, child.pid);
     this.logger.log(spawnedMessage(route.id, child.pid));
     // The bundle is sent again on every restart, from memory.
     if (bundle !== undefined) {

@@ -7,7 +7,7 @@ summary: "Defines the stdio contract with the host, no HTTP listener, and one ty
 ids[0]:
 related[5]: docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/overview.md,docs/backlog/service-status-indicator.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/requirements/traceability.md
 status: current
-updated: 2026-11-03
+updated: 2026-11-05
 -->
 
 # ADR-006: Sidecar status contract and typed service array
@@ -81,7 +81,7 @@ sequenceDiagram
 
 Rules:
 
-- **stdout** carries one event kind today: `status`. Its body is the aggregate `state` and `services`, a list of `{id, status}`. The supervisor sends it on every change, also at start and at `stopping`. Nothing else is written to stdout. Schema: `sidecarEventSchema` in `libs/service-registry/src/sidecar-protocol.ts`.
+- **stdout** carries one event kind today: `status`. Its body is the aggregate `state` and `services`, a list of `{id, status}` plus the optional `pid` and `restarts` of the current child (absent until the first spawn; `restarts` counts spawns after the first since process start, not the restart-policy window). The supervisor sends it on every change of the aggregate state or of the services list, also at start and at `stopping`. Nothing else is written to stdout. Schema: `sidecarEventSchema` in `libs/service-registry/src/sidecar-protocol.ts`.
 - **stderr** carries every human log line. Supervisor lines are `[supervisor] text`. Child output is re-emitted with the service prefix, `[<id>] text`.
 - **stdin** carries host commands. One kind today: `shutdown`. Schema: `sidecarCommandSchema`. A stdin line that is not valid JSON, or does not match the schema, is logged to stderr and ignored.
 - **stdin EOF** also triggers shutdown. This is a design assumption: the host going away closes the pipe, so the sidecar must not outlive it. It is not verified against Tauri.

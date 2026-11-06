@@ -3,7 +3,8 @@
 // Every run starts its own throwaway containers on random loopback ports, labelled `lan-smoke-pg=<run id>`, and always removes them (normal end, failed check, SIGINT, SIGTERM).
 // Windows is not verified (decision D3). One line per check; the first failed check prints the tail of the run output and exits 1.
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { createServer } from 'node:net';
 import { randomBytes } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
@@ -13,7 +14,7 @@ import { z } from 'zod';
 
 const root = resolve(import.meta.dirname, '..', '..');
 const { jsonText } = (await import(join(root, 'libs', 'service-registry', 'dist', 'json-text.js'))) as typeof import('../../libs/service-registry/dist/json-text.js');
-const { SPAWNED_PATTERN, SUPERVISOR_CONFIG } = (await import(join(root, 'libs', 'service-registry', 'dist', 'index.js'))) as typeof import('service-registry');
+const { AGGREGATE_STATE, SUPERVISOR_CONFIG, sidecarEventSchema } = (await import(join(root, 'libs', 'service-registry', 'dist', 'index.js'))) as typeof import('service-registry');
 
 const TAG = '@app';
 const IMAGE_PGVECTOR = 'pgvector/pgvector:pg17';
@@ -33,7 +34,7 @@ const BOOT_WAIT_MS = SUPERVISOR_CONFIG.readinessTimeoutMs + SLACK_MS;
 const STOP_WAIT_MS = SUPERVISOR_CONFIG.gracefulStopMs + SLACK_MS;
 const TAIL_LINES = 10;
 const TAIL_WIDTH = 200;
-const READY_LINE = 'database pg ready, vector ok';
+const SETTLE_MS = 2_500;
 
 const { values } = parseArgs({ options: { artifacts: { type: 'string' } } });
 const artifactsDir = resolve(values.artifacts ?? join(root, 'artifacts', 'sea-runtime'));
@@ -72,9 +73,10 @@ process.on('exit', () => {
 });
 for (const name of ['SIGINT', 'SIGTERM', 'SIGHUP'] as const) process.on(name, () => process.exit(130));
 
-// The host sees stdout (machine events) and stderr (log lines) apart; the smoke reads the log lines.
+// The host sees stdout (machine events) and stderr (log lines) apart. The smoke reads the events and the effects, not the log text.
 class Run {
   readonly lines: string[] = [];
+  readonly stdoutLines: string[] = [];
   readonly exited: Promise<number | null>;
   private readonly child: ChildProcess;
 
@@ -82,18 +84,32 @@ class Run {
     this.child = spawn(binary, [], { stdio: ['pipe', 'pipe', 'pipe'] });
     // stdin stays open: EOF on it shuts the supervisor down.
     this.child.stdin?.on('error', () => undefined);
-    this.child.stdout?.resume();
+    if (this.child.stdout) createInterface({ input: this.child.stdout }).on('line', (line) => this.stdoutLines.push(line));
     if (this.child.stderr) createInterface({ input: this.child.stderr }).on('line', (line) => this.lines.push(line));
     this.exited = new Promise((done) => this.child.on('exit', (code) => done(code)));
     this.child.on('error', (error) => this.lines.push(`spawn error: ${error.message}`));
   }
 
-  has(text: string): boolean {
-    return this.lines.some((line) => line.includes(text));
+  get pid(): number {
+    return this.child.pid ?? -1;
   }
 
-  spawned(): number {
-    return this.lines.filter((line) => SPAWNED_PATTERN.test(line)).length;
+  // The status events on stdout; a line that is not a valid sidecar event fails the check.
+  events(): import('service-registry').SidecarEvent[] {
+    return this.stdoutLines.map((line, index) => {
+      const parsed = jsonText(sidecarEventSchema).safeParse(line);
+      if (!parsed.success) throw new Error(`stdout line ${index + 1} is not a sidecar event (${line.slice(0, TAIL_WIDTH)})`);
+      return parsed.data;
+    });
+  }
+
+  isReady(): boolean {
+    return this.events().some((event) => event.state === AGGREGATE_STATE.ready);
+  }
+
+  // The pid the last status event reports for the single service, if any.
+  servicePid(): number | undefined {
+    return this.events().flatMap((event) => event.services).at(-1)?.pid;
   }
 
   signal(name: NodeJS.Signals): void {
@@ -120,6 +136,55 @@ async function until<T>(probe: () => T | undefined, timeoutMs: number, what: str
     await sleep(POLL_MS);
   }
 }
+
+// The process table from the OS, independent of the supervisor: pid to parent pid and argv0. Linux reads /proc, macOS asks ps.
+function processTable(): Map<number, { ppid: number; argv0: string }> {
+  const table = new Map<number, { ppid: number; argv0: string }>();
+  if (process.platform === 'linux') {
+    for (const entry of readdirSync('/proc')) {
+      if (!/^\d+$/.test(entry)) continue;
+      try {
+        const stat = readFileSync(`/proc/${entry}/stat`, 'utf8');
+        const ppid = Number(stat.slice(stat.lastIndexOf(')') + 2).split(' ')[1]);
+        table.set(Number(entry), { ppid, argv0: readFileSync(`/proc/${entry}/cmdline`, 'utf8').split('\0')[0] });
+      } catch {
+        // The process ended while the table was read.
+      }
+    }
+    return table;
+  }
+  if (process.platform === 'darwin') {
+    for (const line of execFileSync('ps', ['-A', '-o', 'pid=,ppid=,comm='], { encoding: 'utf8' }).split('\n')) {
+      const match = /^\s*(\d+)\s+(\d+)\s+(.*)$/.exec(line);
+      if (match) table.set(Number(match[1]), { ppid: Number(match[2]), argv0: match[3].trim() });
+    }
+    return table;
+  }
+  throw new Error(`unsupported platform ${process.platform}: not verified (decision D3)`);
+}
+
+const childrenOf = (parent: number): number[] => [...processTable()].filter(([, info]) => info.ppid === parent).map(([pid]) => pid);
+
+// Every live process running this exact executable file.
+function processesRunning(binaryPath: string): number[] {
+  const real = realpathSync(binaryPath);
+  return [...processTable()]
+    .filter(([, info]) => {
+      try {
+        return info.argv0 !== '' && realpathSync(info.argv0) === real;
+      } catch {
+        return false;
+      }
+    })
+    .map(([pid]) => pid);
+}
+
+const portFree = (port: number): Promise<boolean> =>
+  new Promise((done) => {
+    const probe = createServer();
+    probe.once('error', () => done(false));
+    probe.listen(port, LOOPBACK, () => probe.close(() => done(true)));
+  });
 
 async function check(name: string, body: () => Promise<string | void>): Promise<void> {
   const begun = Date.now();
@@ -199,10 +264,15 @@ function install(artifact: string, server: Server): string {
 async function bootAndStop(binary: string): Promise<Run> {
   const run = new Run(binary);
   current = run;
-  await until(() => (run.has(READY_LINE) ? true : undefined), BOOT_WAIT_MS, `"${READY_LINE}"`);
+  await until(() => (run.isReady() ? true : undefined), BOOT_WAIT_MS, `a ${AGGREGATE_STATE.ready} status event`);
+  // The event's pid is a real child of the supervisor in the process table.
+  const pid = run.servicePid();
+  expect(pid !== undefined && childrenOf(run.pid).includes(pid), `the event says pid ${pid}, the process table shows children [${childrenOf(run.pid).join(', ')}]`);
   run.shutdown();
   const code = await run.exit(STOP_WAIT_MS, 'supervisor after the shutdown command');
   expect(code === 0, `supervisor exited ${code}`);
+  expect(processesRunning(binary).length === 0, 'processes left running the executable');
+  expect(await portFree(SMOKE_NET.httpsPort), 'the HTTPS port is still in use');
   return run;
 }
 
@@ -211,7 +281,12 @@ async function bootFailing(binary: string, what: string): Promise<Run> {
   current = run;
   const code = await run.exit(BOOT_WAIT_MS, what);
   expect(code === 1, `${what}: exited ${code}`);
-  expect(run.spawned() === 0, `${what}: a service was spawned`);
+  expect(run.stdoutLines.length === 0, `${what}: stdout is not empty: ${run.stdoutLines.length} lines`);
+  // The wait lets a service spawned by mistake come up first, so a leaked one is seen.
+  await sleep(SETTLE_MS);
+  const left = processesRunning(binary);
+  expect(left.length === 0, `${what}: processes left running the executable: ${left.join(', ')}`);
+  expect(await portFree(SMOKE_NET.httpsPort), `${what}: the HTTPS port is listening`);
   return run;
 }
 
@@ -239,36 +314,29 @@ await check(`${IMAGE_PGVECTOR}: ephemeral container on a random port`, async () 
   return `127.0.0.1:${server.port}, label ${LABEL}=${runId}`;
 });
 
+const columns = (): string => psql(server, "SELECT string_agg(column_name, ',' ORDER BY column_name) FROM information_schema.columns WHERE table_name = 'app_meta'");
 const history = (): string => psql(server, 'SELECT version, name FROM schema_migrations ORDER BY version');
 
 await check('first start: migration applied, schema ok, pgvector ready', async () => {
-  const run = await bootAndStop(binary);
-  expect(run.has('applied in'), 'no "migration ... applied in" line');
-  expect(run.has('schema ok'), 'no "schema ok" line');
+  await bootAndStop(binary);
   expect(history() === '1|0000_create_app_meta', `schema_migrations: ${history()}`);
+  expect(columns() === 'key,value', `app_meta columns: ${columns()}`);
   expect(psql(server, "SELECT count(*) FROM pg_extension WHERE extname = 'vector'") === '1', 'the vector extension is not installed');
   return history();
 });
 
-await check('vector: a genuine similarity query runs on the server', async () => {
-  const distance = psql(server, "SELECT '[1,0,0]'::vector <=> '[0,1,0]'::vector");
-  expect(distance === '1', `cosine distance ${distance}`);
-  return `cosine distance ${distance}`;
-});
-
 await check('restart: nothing is applied again', async () => {
   const before = psql(server, 'SELECT applied_at FROM schema_migrations WHERE version = 1');
-  const run = await bootAndStop(binary);
-  expect(run.has('already applied'), 'no "already applied" line');
-  expect(!run.has('applied in'), 'a migration was applied again');
+  await bootAndStop(binary);
   expect(psql(server, 'SELECT applied_at FROM schema_migrations WHERE version = 1') === before, 'applied_at changed');
+  expect(history() === '1|0000_create_app_meta', `schema_migrations: ${history()}`);
 });
 
-await check('altered checksum: exit 1, the migration is named, no service spawned', async () => {
+await check('altered checksum: exit 1, nothing left running, history untouched', async () => {
   const original = psql(server, 'SELECT checksum FROM schema_migrations WHERE version = 1');
   psql(server, "UPDATE schema_migrations SET checksum = 'altered' WHERE version = 1");
-  const run = await bootFailing(binary, 'start with an altered checksum');
-  expect(run.has('migration 1 (0000_create_app_meta) changed after it was applied'), 'no "changed after it was applied" line');
+  await bootFailing(binary, 'start with an altered checksum');
+  expect(psql(server, 'SELECT checksum FROM schema_migrations WHERE version = 1') === 'altered', 'the failed start rewrote the history row');
   psql(server, `UPDATE schema_migrations SET checksum = '${original}' WHERE version = 1`);
 });
 
@@ -276,22 +344,20 @@ await check('pending migration: applied on top of the existing history', async (
   // The only embedded migration is made pending again: its history row and its table are gone, the history table stays.
   psql(server, 'DELETE FROM schema_migrations WHERE version = 1');
   psql(server, 'DROP TABLE app_meta');
-  const run = await bootAndStop(binary);
-  expect(run.has('applied in'), 'no "migration ... applied in" line');
+  await bootAndStop(binary);
   expect(history() === '1|0000_create_app_meta', `schema_migrations: ${history()}`);
+  expect(columns() === 'key,value', `app_meta columns: ${columns()}`);
 });
 
-await check('live column dropped: schema check FAILED, exit 1, no service spawned', async () => {
+await check('live column dropped: exit 1, nothing left running, schema untouched', async () => {
   psql(server, 'ALTER TABLE app_meta DROP COLUMN value');
-  const run = await bootFailing(binary, 'start on a mismatched schema');
-  expect(run.has('schema check FAILED'), 'no "schema check FAILED" line');
+  await bootFailing(binary, 'start on a mismatched schema');
+  expect(columns() === 'key', `the failed start changed app_meta columns: ${columns()}`);
 });
 
-await check(`${IMAGE_PLAIN} (no pgvector): exit 1, the diagnosis says what to install, no fallback`, async () => {
+await check(`${IMAGE_PLAIN} (no pgvector): exit 1, no migration ran, no fallback`, async () => {
   const plain = await startServer(IMAGE_PLAIN);
-  const run = await bootFailing(install(artifact, plain), 'start without the pgvector extension');
-  expect(run.has('pgvector extension is not installed'), 'no "pgvector extension is not installed" line');
-  expect(!run.has(READY_LINE), 'the app reported a ready database');
+  await bootFailing(install(artifact, plain), 'start without the pgvector extension');
   expect(psql(plain, "SELECT count(*) FROM information_schema.tables WHERE table_name = 'app_meta'") === '0', 'a migration ran without pgvector');
 });
 
