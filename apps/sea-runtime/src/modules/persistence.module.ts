@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { isSea } from 'node:sea';
 import { join } from 'node:path';
 import { AppConfigModule, AppPathsService, CONFIG_FILE, DbConfig, configFileSource } from 'shared-core';
-import { SidecarModule } from '../sidecar/sidecar.module.js';
-import { AssetSource, SeaAssetSource } from './asset-source.js';
-import { FsAssetSource } from './dev-assets.js';
-import { PersistenceService } from './persistence.service.js';
+import { SidecarModule } from './sidecar.module.js';
+import { AssetSource, SeaAssetSource } from '../persistence/asset-source.js';
+import { FsAssetSource } from '../persistence/dev-assets.js';
+import { PersistenceService } from '../services/persistence.service.js';
 
 // Resolved while the module graph is declared: AppConfigModule needs the config location before Nest builds any provider.
 const { paths } = new AppPathsService();

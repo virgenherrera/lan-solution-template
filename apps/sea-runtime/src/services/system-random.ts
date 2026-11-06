@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Random } from './random.js';
+import { Random } from '../interfaces/random.js';
 
 @Injectable()
 export class SystemRandom extends Random {

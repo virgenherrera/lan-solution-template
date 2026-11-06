@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { SUPERVISOR_CONFIG, serviceArgs, spawnedMessage, type ServiceEntry } from 'service-registry';
-import { WebBundleService } from '../web/web-bundle.service.js';
-import { ChildRegistry } from './child-registry.js';
-import { forwardLines } from './forward-lines.js';
-import { treeSpawnOptions } from './process-tree.js';
+import { WebBundleService } from './web-bundle.service.js';
+import { ChildRegistry } from '../interfaces/child-registry.js';
+import { forwardLines } from '../supervisor/forward-lines.js';
+import { treeSpawnOptions } from '../supervisor/process-tree.js';
 
 // Spawns one process of a service with the IPC control channel. Called again on every restart.
 @Injectable()

@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { EXIT_CODE, SUPERVISOR_CONFIG, serviceEntries } from 'service-registry';
 import { ServiceLogger } from 'shared-core';
-import { RuntimeModule } from './runtime/runtime.module.js';
+import { RuntimeModule } from './modules/runtime.module.js';
 import { SERVICES } from './services.js';
 
 // The supervisor and every service id print plain `[id] text` lines; Nest's own lines are dropped.

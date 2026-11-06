@@ -3,11 +3,11 @@ import { join, resolve } from 'node:path';
 import { catchError, concatMap, defer, from, lastValueFrom, map, type Observable, tap, throwError, toArray } from 'rxjs';
 import { AppPathsService, DbConfig, InjectConfig, createDbAdapter, migrate$, type AdapterDeps, type DbAdapter, type MigrationEvent } from 'shared-core';
 import { SUPERVISOR_CONFIG } from 'service-registry';
-import { writeAppMeta$ } from './app-meta.js';
-import { AssetSource } from './asset-source.js';
-import { readBuildInfo } from './build-info.js';
-import { readEmbeddedMigrations } from './migrations-source.js';
-import { verifySchema$ } from './schema-check.js';
+import { writeAppMeta$ } from '../persistence/app-meta.js';
+import { AssetSource } from '../persistence/asset-source.js';
+import { readBuildInfo } from '../persistence/build-info.js';
+import { readEmbeddedMigrations } from '../persistence/migrations-source.js';
+import { verifySchema$ } from '../persistence/schema-check.js';
 
 // Opens and checks the database while Nest builds the modules. Invalid config or an incompatible database stops the start, before any service is spawned (REQ-DB-06).
 @Injectable()

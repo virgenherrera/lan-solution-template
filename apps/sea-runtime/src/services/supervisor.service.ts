@@ -1,14 +1,14 @@
 import { Inject, Injectable, Logger, type BeforeApplicationShutdown, type OnApplicationBootstrap } from '@nestjs/common';
 import { isSea } from 'node:sea';
 import { AGGREGATE_STATE, EXIT_CODE, SUPERVISOR_CONFIG, startupOrder, type ServiceEntry } from 'service-registry';
-import { PersistenceService } from '../persistence/persistence.service.js';
-import { SidecarInput } from '../sidecar/sidecar-input.js';
+import { PersistenceService } from './persistence.service.js';
+import { SidecarInput } from './sidecar-input.js';
 import { ChildSpawner } from './child-spawner.js';
 import { ServiceLifecycleFactory } from './service-lifecycle.factory.js';
 import { type ServiceLifecycle } from './service-lifecycle.js';
-import { stopTree } from './process-tree.js';
+import { stopTree } from '../supervisor/process-tree.js';
 import { StatusPublisher } from './status-publisher.js';
-import { ServiceRoutes } from './service-routes.js';
+import { ServiceRoutes } from '../interfaces/service-routes.js';
 
 // Orchestration only: starts the services in order, stops them in reverse order, and turns every reason to stop into the same shutdown.
 @Injectable()

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type ChildEntry, ChildRegistry } from './child-registry.js';
+import { type ChildEntry, ChildRegistry } from '../interfaces/child-registry.js';
 
 @Injectable()
 export class InMemoryChildRegistry extends ChildRegistry {

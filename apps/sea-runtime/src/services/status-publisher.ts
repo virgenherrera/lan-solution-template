@@ -8,8 +8,8 @@ import {
   stateMessageSchema,
   type AggregateState,
 } from 'service-registry';
-import { ChildRegistry } from './child-registry.js';
-import { SidecarOutput } from '../sidecar/sidecar-output.js';
+import { ChildRegistry } from '../interfaces/child-registry.js';
+import { SidecarOutput } from './sidecar-output.js';
 import { type ServiceLifecycle } from './service-lifecycle.js';
 
 // Owns the aggregate state. A change goes to the log (stderr), to the host (stdout event) and to the running services (IPC).

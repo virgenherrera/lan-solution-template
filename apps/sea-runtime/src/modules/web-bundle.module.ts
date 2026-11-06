@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { SidecarModule } from '../sidecar/sidecar.module.js';
-import { WebBundleService } from './web-bundle.service.js';
+import { SidecarModule } from './sidecar.module.js';
+import { WebBundleService } from '../services/web-bundle.service.js';
 
 @Module({
   imports: [SidecarModule],
