@@ -1,5 +1,5 @@
 import type { Server } from 'node:http';
-import { Logger } from '@nestjs/common';
+import type { Logger, LoggerService } from '@nestjs/common';
 import { InjectLogger, provideLogger } from 'shared-core';
 import { AGGREGATE_STATE, CONTROL_KIND, EXIT_CODE, readyMessageSchema, shutdownMessageSchema } from 'service-registry';
 import { AppBootstrap } from './app.bootstrap.js';
@@ -21,23 +21,23 @@ class HttpAppMain {
   }
 
   private async run(): Promise<void> {
+    const logger = this.initLogger();
     try {
-      this.initLogger();
-      const context = await this.createApp();
+      const context = await this.createApp(logger);
       await this.configureApp(context);
       await this.startApp(context);
     } catch (error) {
-      this.handleFatal(error);
+      this.handleFatal(logger, error);
     }
   }
 
-  private initLogger(): void {
-    // First, before AppBootstrap and NestFactory.create (which gets no `logger` option, so it keeps this one).
-    Logger.overrideLogger(provideLogger({ prefix: GATEWAY_NAME }));
+  private initLogger(): LoggerService {
+    // First, before AppBootstrap. NestFactory.create receives this logger and installs it for the app.
+    return provideLogger({ prefix: GATEWAY_NAME });
   }
 
-  private createApp(): Promise<AppContext> {
-    return AppBootstrap.createAppContext();
+  private createApp(logger: LoggerService): Promise<AppContext> {
+    return AppBootstrap.createAppContext(logger);
   }
 
   private async configureApp({ app, serverConfig }: AppContext): Promise<void> {
@@ -87,9 +87,10 @@ class HttpAppMain {
     process.exit(EXIT_CODE.ok);
   }
 
-  private handleFatal(error: unknown): never {
+  private handleFatal(logger: LoggerService, error: unknown): never {
     // A rejected top-level await makes Node print a line of the bundled source. The message plus exit code 1 is what the supervisor and the operator need.
-    this.logger.error(`startup failed: ${error instanceof Error ? error.message : String(error)}`);
+    // The instance directly: a startup failure can happen before the factory installed the logger.
+    logger.error(`startup failed: ${error instanceof Error ? error.message : String(error)}`, HttpAppMain.name);
     process.exit(EXIT_CODE.startupFailed);
   }
 

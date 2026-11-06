@@ -1,4 +1,3 @@
-import { Logger } from '@nestjs/common';
 import { DISPATCHER_CONFIG, SUPERVISOR_CONFIG, dispatch, serviceEntries } from 'service-registry';
 import { provideLogger } from 'shared-core';
 import { SERVICES } from './services.js';
@@ -10,8 +9,8 @@ const target = dispatch(
   serviceEntries(SERVICES).map((entry) => entry.id),
 );
 if (target.kind === 'rejected') {
-  Logger.overrideLogger(provideLogger({ prefix: SUPERVISOR_CONFIG.id }));
-  new Logger('SeaEntry').error(target.message);
+  const logger = provideLogger({ prefix: SUPERVISOR_CONFIG.id });
+  logger.error(target.message, 'SeaEntry');
   process.exit(DISPATCHER_CONFIG.rejectExitCode);
 } else if (target.kind === 'service') {
   await import(`sea-services/${target.id}.js`);

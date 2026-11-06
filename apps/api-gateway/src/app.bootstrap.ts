@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { NodeAdapter } from '@nestjs/platform-node';
-import { Logger, type INestApplication } from '@nestjs/common';
+import type { INestApplication, LoggerService } from '@nestjs/common';
 import { hostname, networkInterfaces } from 'node:os';
 import { NetConfig } from 'shared-core';
 import { loadTlsIdentity, type TlsIdentity } from 'shared-core/tls';
@@ -18,10 +18,8 @@ export interface AppContext {
 }
 
 export class AppBootstrap {
-  // Static methods have no instance for `@InjectLogger()`, so the Nest pattern: a logger with the class name as context.
-  private static readonly logger = new Logger(AppBootstrap.name);
-
-  static async createAppContext(): Promise<AppContext> {
+  // The logger arrives as a parameter: this runs before the app exists, so the TLS line goes out through the instance, and the same instance is handed to the factory.
+  static async createAppContext(logger: LoggerService): Promise<AppContext> {
     // First, so an invalid --web fails before the config or the TLS files are read.
     ServerConfig.fromArgv(process.argv.slice(2));
     // Read-only: the gateway never creates or renews certificates. Missing or invalid files (and a missing or invalid config) stop the start here, with the command that fixes them.
@@ -31,11 +29,12 @@ export class AppBootstrap {
       paths: GatewayConfigSource.paths,
       tls,
       now: new Date(),
-      log: (message) => AppBootstrap.logger.log(message),
+      log: (message) => logger.log(message, AppBootstrap.name),
       hostname: hostname(),
       interfaces: networkInterfaces(),
     });
     const app = await NestFactory.create(AppModule, new NodeAdapter(), {
+      logger,
       httpsOptions: { key: identity.key, cert: identity.cert },
       // A startup error reaches HttpAppMain, which prints it as one line, instead of Nest logging it and exiting by itself.
       abortOnError: false,
