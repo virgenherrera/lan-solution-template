@@ -1,4 +1,5 @@
-import { Inject, Injectable, Logger, type BeforeApplicationShutdown, type OnApplicationBootstrap } from '@nestjs/common';
+import { Inject, Injectable, type BeforeApplicationShutdown, type OnApplicationBootstrap } from '@nestjs/common';
+import { InjectLogger, type Logger } from 'shared-core';
 import { isSea } from 'node:sea';
 import { AGGREGATE_STATE, EXIT_CODE, SUPERVISOR_CONFIG, startupOrder, type ServiceEntry } from 'service-registry';
 import { PersistenceService } from './persistence.service.js';
@@ -14,7 +15,7 @@ import { ServiceRoutes } from '../interfaces/service-routes.js';
 @Injectable()
 export class SupervisorService implements OnApplicationBootstrap, BeforeApplicationShutdown {
   private readonly services: ServiceLifecycle[] = [];
-  private readonly logger = new Logger(SUPERVISOR_CONFIG.id);
+  @InjectLogger() private declare readonly logger: Logger;
   private shutdownRun?: Promise<void>;
 
   constructor(

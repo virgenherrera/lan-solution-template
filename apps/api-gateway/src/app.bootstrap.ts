@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { NodeAdapter } from '@nestjs/platform-node';
 import { Logger, type INestApplication } from '@nestjs/common';
 import { hostname, networkInterfaces } from 'node:os';
-import { NetConfig, PLAIN_CONTEXT } from 'shared-core';
+import { NetConfig } from 'shared-core';
 import { loadTlsIdentity, type TlsIdentity } from 'shared-core/tls';
 import { API_PREFIX } from './api-prefix.js';
 import { AppModule } from './app.module.js';
@@ -18,6 +18,9 @@ export interface AppContext {
 }
 
 export class AppBootstrap {
+  // Static methods have no instance for `@InjectLogger()`, so the Nest pattern: a logger with the class name as context.
+  private static readonly logger = new Logger(AppBootstrap.name);
+
   static async createAppContext(): Promise<AppContext> {
     // First, so an invalid --web fails before the config or the TLS files are read.
     ServerConfig.fromArgv(process.argv.slice(2));
@@ -28,7 +31,7 @@ export class AppBootstrap {
       paths: GatewayConfigSource.paths,
       tls,
       now: new Date(),
-      log: (message) => new Logger(PLAIN_CONTEXT).log(message),
+      log: (message) => AppBootstrap.logger.log(message),
       hostname: hostname(),
       interfaces: networkInterfaces(),
     });

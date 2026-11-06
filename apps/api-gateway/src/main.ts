@@ -1,8 +1,9 @@
 import type { Server } from 'node:http';
 import { Logger } from '@nestjs/common';
-import { PLAIN_CONTEXT, ServiceLogger } from 'shared-core';
+import { InjectLogger, provideLogger } from 'shared-core';
 import { AGGREGATE_STATE, CONTROL_KIND, EXIT_CODE, readyMessageSchema, shutdownMessageSchema } from 'service-registry';
 import { AppBootstrap } from './app.bootstrap.js';
+import { GATEWAY_NAME } from './constants/gateway-name.js';
 import { HealthState } from './services/health-state.js';
 import { createRedirectServer } from './redirect-listener.js';
 import { receiveWebBundle } from './web-bundle.js';
@@ -11,6 +12,8 @@ import { createWebHandler } from './web-handler.js';
 type AppContext = Awaited<ReturnType<typeof AppBootstrap.createAppContext>>;
 
 class HttpAppMain {
+  @InjectLogger() private declare readonly logger: Logger;
+
   private closing = false;
 
   static async main(): Promise<void> {
@@ -29,8 +32,8 @@ class HttpAppMain {
   }
 
   private initLogger(): void {
-    // First, before AppBootstrap and NestFactory.create (which gets no `logger` option, so it keeps this one). Plain lines print as text, the Nest lines keep their format, all on stderr.
-    Logger.overrideLogger(new ServiceLogger({ plainContexts: new Set([PLAIN_CONTEXT]), plainPrefix: false, nest: true }));
+    // First, before AppBootstrap and NestFactory.create (which gets no `logger` option, so it keeps this one).
+    Logger.overrideLogger(provideLogger({ prefix: GATEWAY_NAME }));
   }
 
   private createApp(): Promise<AppContext> {
@@ -52,10 +55,10 @@ class HttpAppMain {
     } catch (error) {
       throw this.listenError(`https://${bind}:${httpsPort}`, error);
     }
-    new Logger(PLAIN_CONTEXT).log(`https: listening on ${bind}:${httpsPort}`);
+    this.logger.log(`https: listening on ${bind}:${httpsPort}`);
     const redirect = createRedirectServer({ names: identity.names, httpsPort });
     await this.listenRedirect(redirect, bind, httpPort);
-    new Logger(PLAIN_CONTEXT).log(`http: redirecting to https on ${bind}:${httpPort}`);
+    this.logger.log(`http: redirecting to https on ${bind}:${httpPort}`);
     if (process.send === undefined) {
       // Standalone run: no supervisor, so listening is ready.
       health.set(AGGREGATE_STATE.ready);
@@ -80,13 +83,13 @@ class HttpAppMain {
     this.closing = true;
     await this.closeRedirect(redirect);
     await app.close();
-    if (announce) new Logger(PLAIN_CONTEXT).log('app.close() completed');
+    if (announce) this.logger.log('app.close() completed');
     process.exit(EXIT_CODE.ok);
   }
 
-  private handleFatal(error: unknown): void {
+  private handleFatal(error: unknown): never {
     // A rejected top-level await makes Node print a line of the bundled source. The message plus exit code 1 is what the supervisor and the operator need.
-    new Logger(PLAIN_CONTEXT).error(`startup failed: ${error instanceof Error ? error.message : String(error)}`);
+    this.logger.error(`startup failed: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(EXIT_CODE.startupFailed);
   }
 

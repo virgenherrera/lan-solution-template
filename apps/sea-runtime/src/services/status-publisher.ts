@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { InjectLogger, type Logger } from 'shared-core';
 import {
   CONTROL_KIND,
   SIDECAR_KIND,
-  SUPERVISOR_CONFIG,
   aggregateState,
   stateMessage,
   stateMessageSchema,
@@ -15,7 +15,7 @@ import { type ServiceLifecycle } from './service-lifecycle.js';
 // Owns the aggregate state. A change goes to the log (stderr), to the host (stdout event) and to the running services (IPC).
 @Injectable()
 export class StatusPublisher {
-  private readonly logger = new Logger(SUPERVISOR_CONFIG.id);
+  @InjectLogger() private declare readonly logger: Logger;
   private state?: AggregateState;
   private stopping = false;
 

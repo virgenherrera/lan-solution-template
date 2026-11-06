@@ -8,4 +8,6 @@ export * from './schemas/config-dtos.js';
 export * from './modules/app-config.module.js';
 export * from './inject-config.decorator.js';
 export * from './services/app-paths.service.js';
-export * from './logger/service-logger.js';
+export { provideLogger } from './logger/provide-logger.js';
+export { InjectLogger, type Logger } from './logger/inject-logger.decorator.js';
+export { loggerConfigSchema, type LoggerConfig, type LoggerConfigInput } from './schemas/logger-config.js';

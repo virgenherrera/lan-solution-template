@@ -1,13 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { InjectLogger, type Logger } from 'shared-core';
 import { createInterface } from 'node:readline';
 import { Observable } from 'rxjs';
-import { SUPERVISOR_CONFIG, decodeSidecarCommand, type SidecarCommand } from 'service-registry';
+import { decodeSidecarCommand, type SidecarCommand } from 'service-registry';
 import { z } from 'zod';
 
 // The only reader of stdin: one validated command per line.
 @Injectable()
 export class SidecarInput {
-  private readonly logger = new Logger(SUPERVISOR_CONFIG.id);
+  @InjectLogger() private declare readonly logger: Logger;
 
   // Completes when stdin ends, which means the host is gone. An invalid line is logged and dropped.
   listen(): Observable<SidecarCommand> {

@@ -1,6 +1,6 @@
-import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import { Injectable, type OnModuleInit } from '@nestjs/common';
+import { InjectLogger, type Logger } from 'shared-core';
 import { isSea } from 'node:sea';
-import { SUPERVISOR_CONFIG } from 'service-registry';
 import { hasWebBundle, loadWebBundle, webBundleMessageSchema, type WebBundleMessage } from '../web/web-bundle.js';
 
 // Reads the web bundle from the executable once and keeps the validated message in memory. Nothing is written to disk.
@@ -9,7 +9,7 @@ export class WebBundleService implements OnModuleInit {
   // Undefined when the build embeds no bundle: the services then start without the --web flag.
   message?: WebBundleMessage;
 
-  private readonly logger = new Logger(SUPERVISOR_CONFIG.id);
+  @InjectLogger() private declare readonly logger: Logger;
 
   onModuleInit(): void {
     if (!isSea()) return;

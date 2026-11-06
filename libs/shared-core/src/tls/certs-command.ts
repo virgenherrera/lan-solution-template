@@ -5,7 +5,7 @@ import { Logger } from '@nestjs/common';
 import { EXIT_CODE } from 'service-registry';
 import { derivePaths, resolveBase } from '../paths.js';
 import { loadConfig } from '../config.js';
-import { PLAIN_CONTEXT, ServiceLogger } from '../logger/service-logger.js';
+import { provideLogger } from '../logger/provide-logger.js';
 import { generateTlsIdentity } from './generate.js';
 import type { WantedNamesInput } from './san.js';
 
@@ -39,8 +39,8 @@ export function generateCertsCommand(input: CertsCommandInput): number {
 // Wires the real process: base from `resolveBase`, the real host name and network interfaces.
 export function runGenerateCerts(): number {
   // The result lines keep their channels: they go to stdout because this is an install operation, not the sidecar (ADR-013 D3).
-  Logger.overrideLogger(new ServiceLogger({ plainContexts: new Set([PLAIN_CONTEXT]), plainPrefix: false, nest: false, stream: 'by-level' }));
-  const logger = new Logger(PLAIN_CONTEXT);
+  Logger.overrideLogger(provideLogger({ prefix: 'generate-certs', target: 'cli' }));
+  const logger = new Logger('generate-certs');
   return generateCertsCommand({
     base: resolveBase({ sea: isSea(), execPath: process.execPath, cwd: process.cwd() }),
     now: new Date(),

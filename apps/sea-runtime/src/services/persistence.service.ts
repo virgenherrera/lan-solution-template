@@ -1,8 +1,7 @@
-import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { join, resolve } from 'node:path';
 import { catchError, concatMap, defer, from, lastValueFrom, map, type Observable, tap, throwError, toArray } from 'rxjs';
-import { AppPathsService, DbConfig, InjectConfig, createDbAdapter, migrate$, type AdapterDeps, type DbAdapter, type MigrationEvent } from 'shared-core';
-import { SUPERVISOR_CONFIG } from 'service-registry';
+import { AppPathsService, DbConfig, InjectConfig, InjectLogger, createDbAdapter, migrate$, type AdapterDeps, type DbAdapter, type Logger, type MigrationEvent } from 'shared-core';
 import { writeAppMeta$ } from '../persistence/app-meta.js';
 import { AssetSource } from '../persistence/asset-source.js';
 import { readBuildInfo } from '../persistence/build-info.js';
@@ -12,7 +11,7 @@ import { verifySchema$ } from '../persistence/schema-check.js';
 // Opens and checks the database while Nest builds the modules. Invalid config or an incompatible database stops the start, before any service is spawned (REQ-DB-06).
 @Injectable()
 export class PersistenceService implements OnModuleInit {
-  private readonly logger = new Logger(SUPERVISOR_CONFIG.id);
+  @InjectLogger() private declare readonly logger: Logger;
   private db?: DbAdapter;
 
   constructor(
