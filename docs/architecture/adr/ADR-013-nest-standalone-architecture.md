@@ -61,9 +61,9 @@ flowchart LR
   ADR --> PRC["Process"]
   LOG --> D2["D2 one Nest Logger"]
   LOG --> D3["D3 stdout is a contract"]
-  LOG --> D4["D4 every level to stderr"]
-  LOG --> D5["D5 stderr format stays"]
-  LOG --> D6["D6 Logger decorator, rejected"]
+  LOG --> D4["D4 provideLogger, stderr forced"]
+  LOG --> D5["D5 stderr format stays, rejected"]
+  LOG --> D6["D6 InjectLogger decorator"]
   LOG --> D7["D7 remove SupervisorLogger"]
   LOG --> D14["D14 later library is a seam"]
   SVC --> D10["D10 boot order"]
@@ -85,20 +85,21 @@ flowchart TB
       GW["api-gateway"]
       Other["other services"]
     end
-    Log["Logger: ConsoleLogger subclass"]
+    Log["AppLogger: ConsoleLogger subclass"]
   end
   Sup --> Pers --> Svc
   Sup -.-> Log
   Svc -.-> Log
   Sup -- "stdout: status events and control messages (contract)" --> Host
-  Log -- "stderr: every log line as [id] text" --> Host
+  Log -- "stderr: Nest logger lines, free format" --> Host
 ```
 
 ```mermaid
 flowchart LR
+  C["provideLogger(input): zod defaults"] --> W
   A["Entrypoint before the context: new Logger(Name)"] --> W
-  B["Class inside the container: injected Logger"] --> W
-  W["LoggerService subclass: every level to stderr"] --> E["stderr: [id] text"]
+  B["Class with @InjectLogger()"] --> W
+  W["AppLogger: every level to stderr in the sidecar target"] --> E["stderr: Nest format, prefix and class context"]
   M["sidecar-output: status events"] --> O["stdout: machine events only"]
   E --> H["Host log"]
   O --> P["Host status reader"]
@@ -128,41 +129,61 @@ Stdout carries only the status events of [ADR-006](ADR-006-sidecar-status-contra
 
 The event writer `sidecar-output.ts` is the only place that may write to stdout. It is not a log writer.
 
-The `--generate-certs` command prints its result lines to stdout because it is an install operation, not the sidecar.
+The `--generate-certs` command uses the `cli` target of the logger. It is an install operation, not the sidecar. The target prints plain text: `log` to stdout and `error` to stderr (`app-logger.ts:8`, `app-logger.ts:26`). The installer `postinstall` (`apps/desktop/installer`, line 95) reads the output with an anchored `sed`, `^CA SHA-256 `. A prefix, PID, date or level would break it.
 
-### D4. The application logger sends every level to stderr
+### D4. One logger factory: `provideLogger`, stderr forced in the sidecar target
 
-Status: Proposed
+Status: Accepted
 
-The application logger is `ServiceLogger`, a `ConsoleLogger` subclass in `libs/shared-core/src/logger/service-logger.ts`. By default it routes every level to stderr. It is installed with `Logger.overrideLogger` (or the `logger` option of `createApplicationContext`) before any class logs, so `new Logger(Context)` in every class reaches it.
+The library lives in `libs/shared-core/src/logger/`. `provideLogger(input)` (`provide-logger.ts:6`) parses the input with `loggerConfigSchema` and returns an `AppLogger`. `NestFactory` takes it as `{ logger }`, and `Logger.overrideLogger` takes it as its argument. It is installed before any class logs, so `new Logger(Context)` reaches it.
 
-Reason: the default `ConsoleLogger` writes `log`, `warn`, `debug` and `verbose` to stdout, which would break D3. The host requires only D3 (stdout carries only the ADR-006 events). D4 is this design's consequence of how Nest routes levels, not a host requirement.
+`AppLogger` (`app-logger.ts:11`) extends `ConsoleLogger` and keeps the Nest format. In the `sidecar` target it forces every level to stderr (`app-logger.ts:22`). The default `ConsoleLogger` writes `log`, `warn`, `debug` and `verbose` to stdout, which would break D3. The host requires only D3. Stderr is this design's consequence of how Nest routes levels.
 
-### D5. The stderr line format stays `[id] text`
+All input comes through one zod object, `loggerConfigSchema` (`schemas/logger-config.ts:4`). The logger reads nothing from argv, the environment or the terminal.
 
-Status: Proposed
+| Field | Default | Effect |
+|---|---|---|
+| `prefix` | none, required (`logger-config.ts:6`) | Process name. It goes in the `prefix` option of `ConsoleLogger`. |
+| `target` | `sidecar` (`logger-config.ts:8`) | `sidecar`: Nest format on stderr. `cli`: plain text, see D3. |
+| `json` | `false` (`logger-config.ts:10`) | One JSON object per line, in the Nest JSON format. |
+| `colors` | `false` (`logger-config.ts:12`) | ANSI colors, so a redirected stream stays clean. |
 
-[ADR-006](ADR-006-sidecar-status-contract.md) names `[id] text` as the stderr line, and the host forwards stderr to its log ([ADR-009](ADR-009-desktop-process-model.md)). The D4 subclass reproduces the line, including `[supervisor] text` and the service prefix.
+The line carries the process in the prefix and the layer in the context. The context equals the class name. With `json` on, the prefix does not appear and only the PID identifies the process.
 
-D5 holds because D13 forbids observable changes, so the lines stay as they are, not because the host asks for them. Whether the host parses the prefix is not verified.
-
-The format changes only after a read of every consumer proves nothing depends on it. The change then needs a new ADR.
-
-### D6. A Logger decorator
+### D5. The stderr line format `[id] text` stays
 
 Status: Rejected
 
-Reason: `new Logger(Context)` per class already routes to the installed logger. A decorator adds a layer and no gain. `nest-base` has no such decorator.
+Reason: nothing consumes the prefix. The host forwards stderr to its log and parses none of it (`apps/desktop/src-tauri/src/sidecar.rs:150-173`). The criterion of byte-identical lines was a refactor criterion, not a host requirement. The stderr line is now the Nest format, and [ADR-006](ADR-006-sidecar-status-contract.md) no longer makes it a contract.
+
+### D6. A logger decorator, `@InjectLogger()`
+
+Status: Accepted
+
+`InjectLogger()` (`inject-logger.decorator.ts:21`) defines a getter on the class prototype. The getter returns one `Logger` per class from a `WeakMap` (`inject-logger.decorator.ts:5`). The context is the class name. A subclass gets its own logger. The `Logger` type is exported from the same file (`inject-logger.decorator.ts:3`).
+
+The field uses `private declare readonly`:
+
+```ts
+@InjectLogger() private declare readonly logger: Logger;
+```
+
+Evidence from a test with `tsc` and `swc`:
+
+| Variant | Result |
+|---|---|
+| Original decorator, assignment to the prototype | Fails with target ES2023, and in the bundler that ignores the `tsconfig`. |
+| Variant F: getter on the prototype, cached per class, field with `declare` | Works in `tsc` and `swc`. |
+
+With ES2022 and later, a normal class field is defined on the instance and hides the prototype getter. `declare` avoids that. The contexts also depend on class names, so `keep_classnames` in `tools/rspack/nest.config.ts` is a requirement.
 
 ### D7. SupervisorLogger is always removed
 
-Status: Proposed
+Status: Accepted
 
-The `SupervisorLogger` class is deleted. Its callers (6 injection sites, see [slice 2 of the epic](../../backlog/nest-standalone-refactor.md#slice-2-nest-logger)) use the injected Nest `Logger`, as D2 requires. No second logger survives.
+The `SupervisorLogger` class is deleted. Its callers (6 injection sites, see [slice 2 of the epic](../../backlog/nest-standalone-refactor.md#slice-2-nest-logger)) use the Nest `Logger`, as D2 requires. No second logger survives.
 
-The D4 subclass formats `[context] message`, so the stderr lines stay byte-identical. That includes the `spawned service id as pid N` and `state X` lines.
-
-Acceptance criterion of the code phase: a capture of stderr before and after shows identical lines. If a line differs, fix the subclass or the message. Do not keep the class.
+D7 is met. Its original byte-identical criterion fell with D5.
 
 ### D8. Exit codes are named constants
 
@@ -234,7 +255,7 @@ Status: Proposed
 
 A later epic may add a logging library. It would use OpenTelemetry records, RxJS pipes, an async file sink and a logging child process ([log service backlog](../../backlog/log-service-otel-grpc.md)).
 
-This ADR only requires that all code depends on the Nest `LoggerService` interface. The later library can then replace the D4 writer without touching callers.
+This ADR only requires that all code depends on the Nest `LoggerService` interface. The later library can then replace `AppLogger` without touching callers.
 
 ## Options rejected
 
@@ -250,18 +271,18 @@ This ADR only requires that all code depends on the Nest `LoggerService` interfa
 
 ## Consequences
 
-- One writer, the D4 subclass, owns every log byte. Only the ADR-006 events use stdout.
-- Entrypoints and tools use the same `Logger` API as the services, so call sites read the same everywhere.
+- One writer, `AppLogger`, owns every log byte of the sidecar. Only the ADR-006 events use stdout.
+- Entrypoints and tools use the same `Logger` API as the services, so call sites read the same everywhere. The text of stderr is not a contract, so a test must not assert on it.
 - Exit values are readable and searchable by name. The numbers stay as they are.
 - The repository gains a folder convention its reference repository lacks. The epic applies it slice by slice.
-- The old stderr text must be reproduced, which constrains the logger design (D5 and D7).
 - Tools under `tools/scripts` use `console.*` for command output, for example `version-check.ts` and `installer-build.ts`. Whether D2 reaches them or only `apps/` and `libs/` is a question for the epic.
 
 ## Risks
 
-- **stderr line format.** A consumer may depend on a detail of `[id] text` the maps did not show, such as spacing, a trailing newline or timestamps. The new logger would break it. Mitigation: D5 and D7 require a before and after capture. `ConsoleLogger` adds a prefix, a timestamp and colors by default. The subclass must switch them off or override the formatting.
-- **ConsoleLogger channel.** The claim that `warn` goes to stdout rests on one map of version 12.3.2, and the linked version is unknown. If it differs, D4 may be unneeded or wrong. Mitigation: the first slice checks the version in use and the stream of each level with a small run. It does this before the subclass exists.
-- **Boot failures before the logger is installed.** A failure before `createApplicationContext` prints nowhere unless the static logger is ready. Mitigation: the static logger of D4 is the first thing an entrypoint creates.
+- **Colors only through the schema.** The `colors` field is the only switch (`logger-config.ts:12`). The logger reads no terminal state, so a caller that needs colors must set it.
+- **JSON without prefix.** With `json` on, the Nest JSON format omits the `prefix` option and keeps only the PID. A reader cannot tell the supervisor from a child by name.
+- **Contexts depend on class names.** `@InjectLogger()` and `new Logger(Name)` use `constructor.name`. A minifier that renames classes breaks the contexts. `keep_classnames` in `tools/rspack/nest.config.ts` is a requirement.
+- **Boot failures before the logger is installed.** A failure before `createApplicationContext` prints nowhere unless the logger is ready. Mitigation: `provideLogger` is the first thing an entrypoint calls.
 - **Lost output on exit.** `process.exit` right after a log call can truncate a buffered stderr write. Today's `console.error` has the same hazard.
 - **Dead-code false positives.** Barrels and string-based loading hide usage (D12). Mitigation: zero references in every file type, and the QC column.
 
@@ -270,11 +291,10 @@ This ADR only requires that all code depends on the Nest `LoggerService` interfa
 | Item | Why it is missing | Who verifies |
 |---|---|---|
 | Version of `@nestjs/common` linked at run time, and the stream of each level in it | The maps read version 12.3.2 and did not find the top-level link in this repository | Epic slice 1, with a small run |
-| Whether any smoke or consumer reads the `[id] text` prefix | The maps found none, and a code comment says one does | Code phase, by reading every consumer |
+| Inheritance of the child stderr and the Nest format on a real terminal | Nobody ran a supervisor with a child on a TTY | Code phase |
 | Every file and line cited in the linked pages | They come from agent maps, and no one re-read them for this ADR | Human review, or the QC minion |
 | Whether the overview lists ADR-012 correctly | The maps say lines 39 and 157 call it a placeholder, which contradicts the file in `adr/` | Docs slice of the epic |
 | Whether D2 reaches the scripts under `tools/scripts` | The question is open for the epic | Human decision in the epic |
-| Whether the D4 subclass reproduces the `SupervisorLogger` lines byte-identically (D7) | It needs a before and after capture of stderr | Code phase |
 | Whether the Nest writer changes the lost-output hazard on exit | Nobody ran the writer against a fast exit | Code phase |
 | Placement of `DeclaredServices` in a library, | It is open in the declared services page | Human decision at the start of the code phase |
 | Whether a child of the same SEA binary reads the embedded assets, and whether rspack can embed the web bundle | No run exists. The maps found no code that reads assets from a child | The later epic on the service-owned web build |

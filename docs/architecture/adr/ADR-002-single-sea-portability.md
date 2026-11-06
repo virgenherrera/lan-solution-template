@@ -52,7 +52,7 @@ Update 2026-11-03: PR #15 rebuilt `sea-runtime` as Nest modules, removed any HTT
 - `aggregateState` is a pure function: `stopping` wins; a failed service with no ready one is `error`, with a ready one `degraded`; all ready is `ready`; otherwise `starting`. `restarting` maps to `degraded`. `error` stops the others and ends the supervisor with `errorExitCode` 1.
 - Each state change reaches the host as one JSON `status` event on the supervisor stdout, validated by zod. The supervisor opens no HTTP listener. The channel contract is in [ADR-006](ADR-006-sidecar-status-contract.md). Not verified against Tauri (POC-5).
 - `/api/health` returns the `@nestjs/terminus` report (`status`, `info`, `error`, `details`) with 200; the aggregate state is `details.state.state`. Query flags `uptime` (default on), `memory` and `db` add or remove indicators. The gateway child serves it, so it does not answer while the gateway is down (see Limits).
-- Logs go to the supervisor stderr, never to stdout: each child line is re-emitted as `[<id>] <line>`; supervisor lines are `[supervisor] <line>`. Internal services listen on `127.0.0.1` ([REQ-RUNTIME-07](../../requirements/09-desktop-tauri.md), [REQ-NET-01](../../requirements/06-web-gateway-https-pwa.md)).
+- Logs go to the supervisor stderr, never to stdout: every process writes its own Nest log lines to stderr, which each child inherits from the supervisor; the format is free ([ADR-006](ADR-006-sidecar-status-contract.md)). Internal services listen on `127.0.0.1` ([REQ-RUNTIME-07](../../requirements/09-desktop-tauri.md), [REQ-NET-01](../../requirements/06-web-gateway-https-pwa.md)).
 
 ### Bounded restart and the D2 window
 

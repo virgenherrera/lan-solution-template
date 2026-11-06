@@ -175,16 +175,18 @@ The diagram is the target dependency graph. The module names are a proposal, not
 flowchart LR
     Code["Application code"]
     Contract["Sidecar status and control messages, ADR-006"]
-    Logger["Nest Logger"]
-    Sub["ServiceLogger, a ConsoleLogger subclass, every level to stderr"]
+    Factory["provideLogger: zod defaults"]
+    Logger["AppLogger, a ConsoleLogger subclass, every level to stderr"]
     Risk["Plain ConsoleLogger, log warn debug verbose to stdout"]
+    Child["Child process: stderr inherited, stdout ignored"]
     Out["stdout: machine contract, bytes do not change"]
-    Err["stderr: logs, prefixed line format kept"]
+    Err["stderr: Nest logger lines, free format"]
     Code --> Contract
     Code --> Logger
+    Factory --> Logger
     Contract --> Out
-    Logger --> Sub
-    Sub --> Err
+    Logger --> Err
+    Child --> Err
     Logger -.-> Risk
     Risk -.->|"RISK: contaminates the contract"| Out
 ```
@@ -193,10 +195,20 @@ stdout is the machine contract of ADR-006: one JSON object per line, never a log
 
 - The default Nest `ConsoleLogger` writes `log`, `warn`, `debug` and `verbose` to stdout. It writes only `error` and `fatal` to stderr.
 - Used as is, it would put log lines into the contract channel (the dotted path).
-- The target logger is `ServiceLogger` (`libs/shared-core/src/logger/service-logger.ts`), a `ConsoleLogger` subclass that sends every level to stderr. The `--generate-certs` command is the one exception: its result lines go to stdout because it is an install operation, not the sidecar.
-- Its output keeps the line format `[id] text` until the code phase proves no consumer needs it.
-- SupervisorLogger is always removed. Its callers use the injected Nest `Logger`, and the subclass formats `[context] message` so the emitted lines stay identical (capture before and after).
+- The logger is `AppLogger` (`libs/shared-core/src/logger/app-logger.ts:11`), a `ConsoleLogger` subclass. `provideLogger()` (`provide-logger.ts:6`) builds it from `loggerConfigSchema` (`libs/shared-core/src/schemas/logger-config.ts:4`). In the `sidecar` target it sends every level to stderr (`app-logger.ts:22`).
+- The host forwards stderr to its log and parses none of it (`apps/desktop/src-tauri/src/sidecar.rs:150-173`). The line format is not a contract.
+- A child process inherits the stderr of the supervisor and its stdout is ignored. The child writes its own Nest lines, so nothing is re-prefixed.
+- `--generate-certs` uses the `cli` target: plain text, `log` to stdout, `error` to stderr. The installer `postinstall` reads it with an anchored `sed`.
 - A later epic may replace the logger behind the Nest `LoggerService` interface. This page does not design it.
+
+Line format in the `sidecar` target:
+
+| Part | Source | Example |
+| --- | --- | --- |
+| Process | `prefix` option, from `prefix` in the schema | `supervisor`, `api-gateway` |
+| Layer | Context, equal to the class name | `SupervisorService` |
+| Colors | `colors`, default `false` | Off |
+| JSON | `json`, default `false` | With `json`, the prefix does not appear and only the PID is left |
 
 | Source | Covers |
 | --- | --- |
@@ -278,4 +290,4 @@ Source: mapping C (`folder_convention_check`, `nest_base_tree`).
 | Every file and line cited on this page | Mapping reports supplied them; nobody re-read the code | QC before the code phase |
 | The runtime links the `@nestjs/common` version that mapping C inspected | Mapping C could not confirm it | QC |
 | The timing of the gateway exit when certificates are missing | Not observed | Code phase smoke |
-| Any consumer reads the `[id] text` stderr format | Mapping B found no smoke assertion on the prefix | QC |
+| Child stderr inheritance and the Nest format on a real terminal | Nobody ran a supervisor with a child on a TTY | Code phase smoke |

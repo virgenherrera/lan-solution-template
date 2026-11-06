@@ -136,10 +136,10 @@ Contract after slice 3:
 | Field | Value |
 |---|---|
 | Goal | Use only the Nest `Logger`. No `console.*` and no direct stdout or stderr log writes. Decisions: [ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md). |
-| Design | `ServiceLogger` (`libs/shared-core/src/logger/service-logger.ts`) is a `ConsoleLogger` subclass that writes every level to stderr and formats `[context] message`, keeping the line `[id] text`. `SupervisorLogger` is removed; no second logger survives. There is no decorator: classes use `new Logger(Context)`. The supervisor classes use `new Logger(SUPERVISOR_CONFIG.id)` and the line forwarding uses `new Logger(<service id>)`. The `--generate-certs` command is the one exception: it uses the `by-level` stream, so its result lines keep stdout and stderr. stdout carries only sidecar status events ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)). |
+| Design | Two steps. Step 1 (the slice commits) removed `SupervisorLogger` and moved the code to a `ConsoleLogger` subclass named `ServiceLogger`. Step 2 is the logging redesign, which replaced `ServiceLogger`: `provideLogger()` builds `AppLogger` from `loggerConfigSchema` (`libs/shared-core/src/logger/provide-logger.ts:6`, `app-logger.ts:11`, `libs/shared-core/src/schemas/logger-config.ts:4`). The process name is the `prefix` option and the layer is the context, equal to the class name. The `sidecar` target forces stderr (`app-logger.ts:22`). `json` and `colors` are off by default. Classes use `@InjectLogger()` (`inject-logger.decorator.ts:21`), and entrypoints use `new Logger(Name)`. The `--generate-certs` command uses the `cli` target: plain text, `log` to stdout and `error` to stderr, because the installer `postinstall` reads it with an anchored `sed`. A child inherits stderr and its stdout is ignored. stdout carries only sidecar status events ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)). Decisions: D3 to D7 of [ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md). |
 | Files | `sea-runtime` (main, sea-entry, `sidecar/`), `api-gateway` (main, app.bootstrap), `shared-core` certs-command, 6 `SupervisorLogger` injection sites (the class is removed; callers use the injected Nest `Logger`). Mapping: 68 `console.*` calls. |
 | Open | Scope is `apps/` and `libs/`. `web-angular` and `tools/scripts` stay outside this slice. |
-| Accept | Tests and `smoke-sea` pass, no test edit. No `console.` or stray `process.stdout.write` in `apps/sea-runtime`, `apps/api-gateway`, `libs`. A capture of stderr before and after shows identical lines (fix the subclass or the message if one differs), and stdout is status-only. |
+| Accept | Tests and `smoke-sea` pass, no test edit. No `console.` or stray `process.stdout.write` in `apps/sea-runtime`, `apps/api-gateway`, `libs`. Stdout is status-only. The format of stderr is free, so no test asserts on log text. |
 | Risk | item 3. The Tauri host ([ADR-009](../architecture/adr/ADR-009-desktop-process-model.md)) and the smokes read both streams. |
 | Size | 250 to 400 changed lines. Over 400: split entry points from supervisor classes. |
 
@@ -208,6 +208,8 @@ Ideas outside the five slices. They have no slice and no date.
 | Item | Status | Blockers and evidence |
 | --- | --- | --- |
 | Service-owned web build | Idea (not scheduled) | The build script of the service runs the Angular build and leaves the bundle next to the service, so the `web` flag and `--web ipc` disappear. Blockers: the gateway must run without SEA (REQ-NET-02, `docs/roadmap/PROPOSAL.md:808`); removing the field and the argument changes contracts (high-risk items 3 and 5), so it is not a pure refactor. See [the web flag](../architecture/declared-services.md#deprecated-the-web-flag). |
+| Tests that assert on log text | Idea (not scheduled) | The smokes read log text at `tools/scripts/smoke-sea.ts:689`, `tools/scripts/smoke-dev.ts:180`, `tools/scripts/smoke-dev.ts:162` and `tools/scripts/smoke-dev.ts:170`. `tools/scripts/smoke-sea.ts:395` and `tools/scripts/smoke-pg.ts:284` expect an empty stdout after a failed start. Move readiness to events or health, and failures to an exit code plus a message. Blocker: it edits smokes, so it is not a pure refactor (D13). |
+| Machine-readable generate-certs output | Idea (not scheduled) | The installer `postinstall` (`apps/desktop/installer/macos/scripts/postinstall:95`) reads the fingerprint with the anchored `sed -n 's/^CA SHA-256 //p'`. Replace it with a structured output. Blocker: it changes the install script and the `cli` target text, which the installer consumes (high-risk item 3). |
 
 ---
 
@@ -231,7 +233,7 @@ The five slices are built on stacked branches. The tip of `chore/nest-standalone
 | Slice | Branch | Commits | What it did | QC | Observable result |
 |---|---|---|---|---|---|
 | 1 | `chore/nest-standalone-s1-exit-codes` | `93cd45e` | `EXIT_CODE` in `libs/service-registry/src/constants/exit-code.ts` (ok=0, startupFailed=1, argumentRejected=2). | 9/9 | Exit codes unchanged. |
-| 2 | Same branch as slice 1. It was committed there by mistake. The branch was already pushed, so history was not rewritten. | `2fc9ae4` `ServiceLogger` in shared-core, `f72d65e` sea-runtime, `cac5533` api-gateway | `SupervisorLogger` removed. Decorator D6 rejected. `generate-certs` keeps stdout by `by-level`. | 10/10 | stderr identical, 0 differences. |
+| 2 | Same branch as slice 1. It was committed there by mistake. The branch was already pushed, so history was not rewritten. | `2fc9ae4` `ServiceLogger` in shared-core, `f72d65e` sea-runtime, `cac5533` api-gateway | `SupervisorLogger` removed in step 1. The logging redesign then replaced `ServiceLogger` with `AppLogger` and accepted the D6 decorator. | 10/10 | Step 1: stderr identical, 0 differences. |
 | 3 | `chore/nest-standalone-s3-declared-services` | `61e18dc`, `4f04586` | One `DeclaredServices` model. The `project` field and `entry` removed. | 10/10 | Same `services.json` hash. |
 | 4 | `chore/nest-standalone-s4-dead-code` | `a63e906` | Deleted `ControlMessage`, `StatusSnapshot`, `sharedCoreName`, `SPAWNED_PATTERN`. | 9/9 | Same output and hash. |
 | 5 | `chore/nest-standalone-s5-folders` | `8cd6922` service-registry (9 moves), `c41e07b` shared-core (3), `277acef` api-gateway (7), `4406bde` sea-runtime (22), `dfdf519` docs | 41 moves of 91 `.ts` files. | 11/11, cumulative check from `main` to HEAD | Same output and hash. |
@@ -272,6 +274,7 @@ Open items:
 |---|---|---|
 | All file and line references | Mapping reports them. The author did not re-check them. | Slice author at slice start |
 | `ConsoleLogger` writes four levels to stdout and two to stderr | Mapping claim, no run | Slice 2, first step |
+| Child stderr inheritance and the Nest format on a real terminal | Nobody ran a supervisor with a child on a TTY | Code phase |
 | `ServiceDefinition`, `serviceRegistrySchema`, `ServiceRegistry` and `entry` have no reader | Mapping claim | QC step of the inventory |
 | `tools/scripts` output and the browser entry belong in slice 2 | Open decision | Human |
 | Location of the constants file and `DeclaredServices` | Proposed paths only | Slice author |
