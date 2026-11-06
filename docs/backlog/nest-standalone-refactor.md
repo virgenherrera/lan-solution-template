@@ -167,10 +167,10 @@ Contract after slice 3:
 | Field | Value |
 |---|---|
 | Goal | Delete code with zero references, each row confirmed by the QC step of the [cleanup inventory](nest-standalone-cleanup-inventory.md). |
-| Scope | Mapping confirms two symbols dead: `ControlMessage` and `StatusSnapshot`. All others stay `verify` or `keep` until confirmed. |
-| Files | `control-channel.ts`, `status-snapshot.ts`, and the barrel `index.ts` if it re-exports them. All in `libs/service-registry/src/`. |
+| Scope | Result: deleted `ControlMessage`, `StatusSnapshot`, `sharedCoreName` and `SPAWNED_PATTERN` (0 references each, QC confirmed 2026-11-06). Kept: `controlMessageSchema`, a chain candidate whose only use was `ControlMessage`; its inventory row is `verify`. |
+| Files | `control-channel.ts`, `status-snapshot.ts` and `supervisor-log.ts` in `libs/service-registry/src/`, and `libs/shared-core/src/index.ts`. The barrels keep their other exports. |
 | Accept | Tests and `smoke-sea` pass, no test edit. A repository search for each deleted symbol returns nothing. A needed test edit means the symbol was not dead. |
-| Risk | none for the two symbols. Re-assess later rows against item 3, because a barrel export is published. |
+| Risk | none for the four symbols. Re-assess later rows against item 3, because a barrel export is published. |
 | Size | under 60 changed lines |
 
 ---

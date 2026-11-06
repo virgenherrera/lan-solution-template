@@ -21,5 +21,3 @@ export const controlMessageSchema = z.discriminatedUnion('kind', [
   stateMessageSchema,
   shutdownMessageSchema,
 ]);
-
-export type ControlMessage = z.infer<typeof controlMessageSchema>;

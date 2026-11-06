@@ -6,4 +6,3 @@ export const prefixed = (id: string, text: string): string => `[${id}] ${text}`;
 
 export const spawnedMessage = (id: string, pid: number | undefined): string => `spawned service "${id}" as pid ${pid}`;
 export const stateMessage = (state: string): string => `state ${state}`;
-export const SPAWNED_PATTERN = /spawned service "([^"]+)" as pid (\d+)/;

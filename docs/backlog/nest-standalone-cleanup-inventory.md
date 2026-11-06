@@ -53,17 +53,18 @@ Evidence columns read as: references in source, tests, tools, and non-TypeScript
 
 | Symbol | File | Line | Evidence | Action | QC status |
 |---|---|---|---|---|---|
-| `ControlMessage` | `libs/service-registry/src/control-channel.ts` | 25 | 0 source, 0 tests, 0 tools, 0 non-TypeScript. Verdict dead. | delete | pending |
-| `StatusSnapshot` | `libs/service-registry/src/status-snapshot.ts` | 13 | 0 source, 0 tests, 0 tools, 0 non-TypeScript. Verdict dead. | delete | pending |
-| `sharedCoreName` | `libs/shared-core/src/index.ts` | 1 | 0 source, 0 tests, 0 tools, 1 non-TypeScript. Verdict unsure; the non-TypeScript hit is not identified. | verify | pending |
-| `SPAWNED_PATTERN` | `libs/service-registry/src/supervisor-log.ts` | 9 | 0 source, 0 tests, 0 tools, 7 non-TypeScript. Verdict unsure; the hits are not identified. | verify | pending |
+| `ControlMessage` | `libs/service-registry/src/control-channel.ts` | 25 | Deleted in slice 4 (2026-11-06). Evidence: `rg -nw ControlMessage apps libs tools` returned only the definition; after the delete it returns 0. | deleted | confirmed (2026-11-06, deleted in slice 4) |
+| `StatusSnapshot` | `libs/service-registry/src/status-snapshot.ts` | 13 | Deleted in slice 4 (2026-11-06). Type only; `statusSnapshotSchema` is live in `sidecar-protocol.ts`, so the file stays. Evidence: `rg -nw StatusSnapshot apps libs tools` returned only the definition; after the delete it returns 0. | deleted | confirmed (2026-11-06, deleted in slice 4) |
+| `sharedCoreName` | `libs/shared-core/src/index.ts` | 1 | Deleted in slice 4 (2026-11-06). The only non-TypeScript hit is doc text in `docs/results/POC-01b-Result.md`. Evidence: `rg -nw sharedCoreName apps libs tools` returned only the definition; after the delete it returns 0. | deleted | confirmed (2026-11-06, deleted in slice 4) |
+| `SPAWNED_PATTERN` | `libs/service-registry/src/supervisor-log.ts` | 9 | Deleted in slice 4 (2026-11-06). The non-TypeScript hits are stale doc text (proposals P1-P3, ADR-012). Evidence: `rg -nw SPAWNED_PATTERN apps libs tools` returned only the definition; after the delete it returns 0. | deleted | confirmed (2026-11-06, deleted in slice 4) |
+| `controlMessageSchema` | `libs/service-registry/src/control-channel.ts` | 19 | Chain candidate found in slice 4: its only use was the `ControlMessage` type. `rg -nw controlMessageSchema apps libs tools` now returns only the definition. Not deleted in slice 4. | verify | pending |
 | `serviceRegistrySchema` | `libs/service-registry/src/service-definition.ts` | 17 | Deleted in slice 3 (commit `task: unify the declared services model`). Evidence: `rg -w serviceRegistrySchema apps libs tools` returns 0; build and test exit 0. | deleted | confirmed |
 | `ServiceRegistry` | `libs/service-registry/src/service-definition.ts` | 36 | Deleted in slice 3. Evidence: `rg -w ServiceRegistry apps libs tools` returns 0 and the build passes. | deleted | confirmed |
 | `serviceDefinitionSchema` | `libs/service-registry/src/service-definition.ts` | not recorded | Deleted in slice 3. Evidence: `rg -w serviceDefinitionSchema apps libs tools` returns 0 and the build passes. | deleted | confirmed |
 | `ServiceDefinition` | `libs/service-registry/src/service-definition.ts` | not recorded | Deleted in slice 3. Its only use, the `Pick` in `startup-order.ts`, now picks from `ServiceEntry`. Evidence: `rg -w ServiceDefinition apps libs tools` returns 0 and the build passes. | deleted | confirmed |
 | field `entry` | `libs/service-registry/src/service-definition.ts` | 9 | Deleted in slice 3 with `ServiceDefinition`. No reader existed; the build passes. | deleted | confirmed |
 
-Only `ControlMessage` and `StatusSnapshot` are confirmed dead by mapping. The `ServiceDefinition` family (`serviceDefinitionSchema`, `serviceRegistrySchema`, `ServiceRegistry`, `ServiceDefinition`) and the `entry` field are reported with zero code readers, and the QC step must verify that before any delete. Slice 3 of the [epic](nest-standalone-refactor.md) deleted the family and replaced the `Pick` use in `startup-order.ts`. Their rows are `deleted`/`confirmed` with the evidence in the row.
+Slice 4 deleted `ControlMessage`, `StatusSnapshot`, `sharedCoreName` and `SPAWNED_PATTERN`. The `ServiceDefinition` family (`serviceDefinitionSchema`, `serviceRegistrySchema`, `ServiceRegistry`, `ServiceDefinition`) and the `entry` field are reported with zero code readers, and the QC step must verify that before any delete. Slice 3 of the [epic](nest-standalone-refactor.md) deleted the family and replaced the `Pick` use in `startup-order.ts`. Their rows are `deleted`/`confirmed` with the evidence in the row.
 
 QC status values: `pending` (not checked), `confirmed` (QC re-ran the search and found zero references), `rejected` (QC found a reference; the row becomes `keep`). Every row starts as `pending`.
 
@@ -90,6 +91,6 @@ The barrel files `libs/service-registry/src/index.ts` and `libs/shared-core/src/
 [Back to navigation](#navigation)
 
 - Every count and line number above is reported by mapping and was not re-checked here.
-- The non-TypeScript references to `sharedCoreName`, `SPAWNED_PATTERN` and `ServiceRegistry` are not identified. They may be documentation text.
+- The non-TypeScript references to `ServiceRegistry` are not identified. Those of `sharedCoreName` and `SPAWNED_PATTERN` are doc text.
 - The lines of `serviceDefinitionSchema` and `ServiceDefinition` were not recorded.
 - No dynamic reference (string lookup, reflection) was searched for.

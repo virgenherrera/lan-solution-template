@@ -9,5 +9,3 @@ export const statusSnapshotSchema = z.object({
   state: aggregateStateSchema,
   services: z.array(z.object({ id: z.string().min(1), status: serviceStatusSchema })),
 });
-
-export type StatusSnapshot = z.infer<typeof statusSnapshotSchema>;
