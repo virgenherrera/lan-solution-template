@@ -176,7 +176,7 @@ flowchart LR
     Code["Application code"]
     Contract["Sidecar status and control messages, ADR-006"]
     Logger["Nest Logger"]
-    Sub["ConsoleLogger subclass, every level to stderr"]
+    Sub["ServiceLogger, a ConsoleLogger subclass, every level to stderr"]
     Risk["Plain ConsoleLogger, log warn debug verbose to stdout"]
     Out["stdout: machine contract, bytes do not change"]
     Err["stderr: logs, prefixed line format kept"]
@@ -193,7 +193,7 @@ stdout is the machine contract of ADR-006: one JSON object per line, never a log
 
 - The default Nest `ConsoleLogger` writes `log`, `warn`, `debug` and `verbose` to stdout. It writes only `error` and `fatal` to stderr.
 - Used as is, it would put log lines into the contract channel (the dotted path).
-- The target logger is a `ConsoleLogger` subclass that sends every level to stderr.
+- The target logger is `ServiceLogger` (`libs/shared-core/src/logger/service-logger.ts`), a `ConsoleLogger` subclass that sends every level to stderr. The `--generate-certs` command is the one exception: its result lines go to stdout because it is an install operation, not the sidecar.
 - Its output keeps the line format `[id] text` until the code phase proves no consumer needs it.
 - SupervisorLogger is always removed. Its callers use the injected Nest `Logger`, and the subclass formats `[context] message` so the emitted lines stay identical (capture before and after).
 - A later epic may replace the logger behind the Nest `LoggerService` interface. This page does not design it.

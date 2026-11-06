@@ -1,9 +1,11 @@
 import { hostname, networkInterfaces } from 'node:os';
 import { isSea } from 'node:sea';
 import { join } from 'node:path';
+import { Logger } from '@nestjs/common';
 import { EXIT_CODE } from 'service-registry';
 import { derivePaths, resolveBase } from '../paths.js';
 import { loadConfig } from '../config.js';
+import { PLAIN_CONTEXT, ServiceLogger } from '../logger/service-logger.js';
 import { generateTlsIdentity } from './generate.js';
 import type { WantedNamesInput } from './san.js';
 
@@ -36,12 +38,15 @@ export function generateCertsCommand(input: CertsCommandInput): number {
 
 // Wires the real process: base from `resolveBase`, the real host name and network interfaces.
 export function runGenerateCerts(): number {
+  // The result lines keep their channels: they go to stdout because this is an install operation, not the sidecar (ADR-013 D3).
+  Logger.overrideLogger(new ServiceLogger({ plainContexts: new Set([PLAIN_CONTEXT]), plainPrefix: false, nest: false, stream: 'by-level' }));
+  const logger = new Logger(PLAIN_CONTEXT);
   return generateCertsCommand({
     base: resolveBase({ sea: isSea(), execPath: process.execPath, cwd: process.cwd() }),
     now: new Date(),
     hostname: hostname(),
     interfaces: networkInterfaces(),
-    out: (line) => console.log(line),
-    err: (line) => console.error(line),
+    out: (line) => logger.log(line),
+    err: (line) => logger.error(line),
   });
 }

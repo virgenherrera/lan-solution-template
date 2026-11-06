@@ -63,7 +63,7 @@ flowchart LR
   LOG --> D3["D3 stdout is a contract"]
   LOG --> D4["D4 every level to stderr"]
   LOG --> D5["D5 stderr format stays"]
-  LOG --> D6["D6 Logger decorator"]
+  LOG --> D6["D6 Logger decorator, rejected"]
   LOG --> D7["D7 remove SupervisorLogger"]
   LOG --> D14["D14 later library is a seam"]
   SVC --> D10["D10 boot order"]
@@ -128,11 +128,13 @@ Stdout carries only the status events of [ADR-006](ADR-006-sidecar-status-contra
 
 The event writer `sidecar-output.ts` is the only place that may write to stdout. It is not a log writer.
 
+The `--generate-certs` command prints its result lines to stdout because it is an install operation, not the sidecar.
+
 ### D4. The application logger sends every level to stderr
 
 Status: Proposed
 
-The application logger is a `ConsoleLogger` subclass that routes every level to stderr. It is installed with `app.useLogger` in each context and as the static logger before the context exists.
+The application logger is `ServiceLogger`, a `ConsoleLogger` subclass in `libs/shared-core/src/logger/service-logger.ts`. By default it routes every level to stderr. It is installed with `Logger.overrideLogger` (or the `logger` option of `createApplicationContext`) before any class logs, so `new Logger(Context)` in every class reaches it.
 
 Reason: the default `ConsoleLogger` writes `log`, `warn`, `debug` and `verbose` to stdout, which would break D3. The host requires only D3 (stdout carries only the ADR-006 events). D4 is this design's consequence of how Nest routes levels, not a host requirement.
 
@@ -148,11 +150,9 @@ The format changes only after a read of every consumer proves nothing depends on
 
 ### D6. A Logger decorator
 
-Status: Proposed
+Status: Rejected
 
-A decorator modeled on `InjectConfig` lets a class ask for the logger of its own name without `new Logger(...)`. `nest-base` has no such decorator.
-
-Proposed location: `libs/shared-core/src/decorators/inject-logger.decorator.ts`. The name and path are proposals.
+Reason: `new Logger(Context)` per class already routes to the installed logger. A decorator adds a layer and no gain. `nest-base` has no such decorator.
 
 ### D7. SupervisorLogger is always removed
 
@@ -256,7 +256,6 @@ This ADR only requires that all code depends on the Nest `LoggerService` interfa
 - **Boot failures before the logger is installed.** A failure before `createApplicationContext` prints nowhere unless the static logger is ready. Mitigation: the static logger of D4 is the first thing an entrypoint creates.
 - **Lost output on exit.** `process.exit` right after a log call can truncate a buffered stderr write. Today's `console.error` has the same hazard.
 - **Dead-code false positives.** Barrels and string-based loading hide usage (D12). Mitigation: zero references in every file type, and the QC column.
-- **Decorator as a new public name.** D6 adds a name to `shared-core` that other code would then use. It stays proposed until the human accepts it.
 
 ## Not verified
 
@@ -269,7 +268,7 @@ This ADR only requires that all code depends on the Nest `LoggerService` interfa
 | Whether D2 reaches the scripts under `tools/scripts` | The question is open for the epic | Human decision in the epic |
 | Whether the D4 subclass reproduces the `SupervisorLogger` lines byte-identically (D7) | It needs a before and after capture of stderr | Code phase |
 | Whether the Nest writer changes the lost-output hazard on exit | Nobody ran the writer against a fast exit | Code phase |
-| Placement of `DeclaredServices` in a library, and the path of the Logger decorator | Both are open in the declared services page and in D6 | Human decision at the start of the code phase |
+| Placement of `DeclaredServices` in a library, | It is open in the declared services page | Human decision at the start of the code phase |
 | Whether a child of the same SEA binary reads the embedded assets, and whether rspack can embed the web bundle | No run exists. The maps found no code that reads assets from a child | The later epic on the service-owned web build |
 
 [Back to navigation](#navigation)
