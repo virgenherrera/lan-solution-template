@@ -96,6 +96,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | none | [Technical debt: Windows and Linux distribution](td-windows-linux-distribution.md) | Technical debt, no design, nothing verified; cut from POC-8 by the human on 2026-11-04, plus the macOS follow-ups that POC-8 left | none (no new id) |
 | none | [Technical debt: Nest DI by class](td-nest-di-by-class.md) | Technical debt, resolved and verified; the supervisor tokens are now the abstract classes `Clock`, `Random` and `ServiceRoutes` | none (no new id) |
 | none | [Persistence system](persistence-system.md) | Done and merged in PR #17; decision: [ADR-007](../architecture/adr/ADR-007-persistence-system.md) | AC-07, AC-08, AC-10 (as POC-3) |
+| none | [Epic: Nest standalone refactor](nest-standalone-refactor.md) | Proposed, nothing built: five ordered slices (exit code constants, Nest Logger, unified DeclaredServices, dead code cleanup, folder reorganization); decision: [ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md); evidence: [cleanup inventory](nest-standalone-cleanup-inventory.md) | none (no new id) |
 
 ---
 
