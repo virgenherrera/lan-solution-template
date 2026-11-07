@@ -16,7 +16,7 @@ Status: proposed. Nothing here is implemented. The sibling proposals P2 and P3 a
 
 ## Problem
 
-The `sea-runtime` supervisor already uses Nest providers for `Clock`, `Random` and `ServiceRoutes` (abstract class token plus `useClass` in `apps/sea-runtime/src/supervisor/supervisor.module.ts:19-21`). The child processes themselves have no typed owner, and several process and IO touches bypass the container.
+The `sea-runtime` supervisor already uses Nest providers. `ServiceRoutes` is a concrete injectable class (`SeaServiceRoutes`) registered directly in `providers`. `Clock` and `Random` no longer exist; the code uses `Date.now` and `Math.random`. The child processes themselves have no typed owner, and several process and IO touches bypass the container.
 
 - The pid of a child exists only in a log line (`apps/sea-runtime/src/supervisor/child-spawner.ts:29`).
 - The `ChildProcess` handle is a public field of `ServiceLifecycle` (`service-lifecycle.ts:47`, set at `:79`). `SupervisorService` reads it to stop the tree (`supervisor.service.ts:81`).
@@ -39,20 +39,20 @@ Two additions, one contract change.
 2. `HostModule` (new, `apps/sea-runtime/src/host/host.module.ts`): ports for the process and IO bypasses listed above.
 3. `ChildEntry[]` is added to the existing `status` stdout event as `children`. No new route, no new event kind, no new stdin command.
 
-Human rules applied: every service is a singleton injectable; the token is an abstract class and `useClass` appears in modules only.
+Rules applied: every service is a singleton injectable. A service with one implementation is a concrete `@Injectable()` class listed directly in `providers`. Only a provider with several real implementations chosen at runtime uses an abstract class as the token with `{ provide, useClass }`. Today that is `AssetSource` (`SeaAssetSource` or `FsAssetSource`) in `apps/sea-runtime/src/modules/persistence.module.ts`.
 
 ### Provider map
 
-| Token (abstract class) | Implementation (`useClass`) | Module | Replaces |
+| Provider | Registration | Module | Replaces |
 | --- | --- | --- | --- |
-| `ChildRegistry` (new) | `InMemoryChildRegistry` | `SupervisorModule` | pid in log, public `child`, hidden restart count |
-| `ProcessStreams` (new) | `SystemProcessStreams` | `HostModule` | `process.stdout/stderr` in `sidecar-output.ts:8`, `child-spawner.ts:27-28` |
-| `HostProcess` (new) | `SystemHostProcess` (execPath, platform, `exit`) | `HostModule` | `process.execPath`, `process.platform` (`process-tree.ts:4`), `process.exit` |
-| `RuntimeEnvironment` (new) | `SystemRuntimeEnvironment` (wraps `node:sea`) | `HostModule` | `isSea()` in `supervisor.service.ts:32` |
-| `ProcessTree` (today free functions) | `ProcessTree` as a plain singleton `@Injectable()` | `SupervisorModule` | `stopTree`, `treeSpawnOptions` |
-| `Clock`, `Random`, `ServiceRoutes` | unchanged | `SupervisorModule` | none |
+| `InMemoryChildRegistry` (new, concrete class) | listed in `providers` | `SupervisorModule` | pid in log, public `child`, hidden restart count |
+| `SystemProcessStreams` (new, concrete class) | listed in `providers` | `HostModule` | `process.stdout/stderr` in `sidecar-output.ts:8`, `child-spawner.ts:27-28` |
+| `SystemHostProcess` (new, concrete class: execPath, platform, `exit`) | listed in `providers` | `HostModule` | `process.execPath`, `process.platform` (`process-tree.ts:4`), `process.exit` |
+| `SystemRuntimeEnvironment` (new, concrete class: wraps `node:sea`) | listed in `providers` | `HostModule` | `isSea()` in `supervisor.service.ts:32` |
+| `ProcessTree` (today free functions) | plain singleton `@Injectable()`, listed in `providers` | `SupervisorModule` | `stopTree`, `treeSpawnOptions` |
+| `SeaServiceRoutes` (exists, concrete class) | unchanged | `SupervisorModule` | none |
 
-`ProcessTree` is a concrete injectable, not a port: it has one implementation and nothing needs to swap it. Only the other tokens are abstract. The `persistence.module.ts` decorator-time `isSea()` ternary stays as the one module-level exception (Occam: no `RuntimeAssetSource` indirection). That choice is open; see Risks.
+Every provider in the table is a concrete injectable: each has one implementation and nothing swaps it at runtime, so none needs an abstract token. The `persistence.module.ts` decorator-time `isSea()` ternary stays as the one module-level exception (Occam: no `RuntimeAssetSource` indirection). That choice is open; see Risks.
 
 ### Contract
 
@@ -66,42 +66,46 @@ export const childEntrySchema = z.strictObject({
   pid: z.number().int().positive().optional(), // absent while restarting
   state: z.enum(CHILD_STATE),
   restarts: z.number().int().nonnegative(), // total spawns after the first, since supervisor start
-  spawnedAt: z.number().int().nonnegative(), // ms epoch from Clock
+  spawnedAt: z.number().int().nonnegative(), // ms epoch from `Date.now()`
 });
 export type ChildEntry = z.infer<typeof childEntrySchema>;
 ```
 
 The status event gains `children: z.array(childEntrySchema)` in `libs/service-registry/src/sidecar-protocol.ts:14-17`. The `strictObject` there rejects unknown keys, so the field must be added to the schema before any producer emits it.
 
-Abstract ports (DI only; REQ-TEST-01 forbids isolated unit suites, so these exist for wiring, never for mocks):
+Provider shapes (concrete classes; REQ-TEST-01 forbids isolated unit suites, so these exist for wiring, never for mocks):
 
 ```ts
-export abstract class ChildRegistry {
-  abstract register(serviceId: string, child: ChildProcess, spawnedAt: number): void;
-  abstract markState(serviceId: string, state: ChildEntry['state']): void;
-  abstract entries(): readonly ChildEntry[];
-  abstract handle(serviceId: string): ChildProcess | undefined; // used only by ProcessTree
-  abstract readonly changes$: Observable<void>;
+@Injectable()
+export class InMemoryChildRegistry {
+  register(serviceId: string, child: ChildProcess, spawnedAt: number): void;
+  markState(serviceId: string, state: ChildEntry['state']): void;
+  entries(): readonly ChildEntry[];
+  handle(serviceId: string): ChildProcess | undefined; // used only by ProcessTree
+  readonly changes$: Observable<void>;
 }
 
-export abstract class ProcessStreams {
-  abstract readonly stdout: Writable;
-  abstract readonly stderr: Writable;
-  abstract readonly stdin: Readable;
+@Injectable()
+export class SystemProcessStreams {
+  readonly stdout: Writable;
+  readonly stderr: Writable;
+  readonly stdin: Readable;
 }
 
-export abstract class HostProcess {
-  abstract readonly execPath: string;
-  abstract readonly platform: NodeJS.Platform;
-  abstract exit(code: number): never;
+@Injectable()
+export class SystemHostProcess {
+  readonly execPath: string;
+  readonly platform: NodeJS.Platform;
+  exit(code: number): never;
 }
 
-export abstract class RuntimeEnvironment {
-  abstract isSea(): boolean;
+@Injectable()
+export class SystemRuntimeEnvironment {
+  isSea(): boolean;
 }
 ```
 
-Flow: `ChildSpawner.spawn` calls `registry.register` with the real `child.pid` and `Clock.now()`. `ServiceLifecycle` calls `markState` where it already calls `setStatus` (`service-lifecycle.ts:70`, `:89`, `:114`, `:118`). The restart counter increments in `afterExit$` when a restart is planned. `StatusPublisher.publish` drops the aggregate-only dedupe: it emits when the aggregate state or `children` differ from the last event (change from `status-publisher.ts:32`). `ServiceLifecycle` stops exposing `child`.
+Flow: `ChildSpawner.spawn` calls `registry.register` with the real `child.pid` and `Date.now()`. `ServiceLifecycle` calls `markState` where it already calls `setStatus` (`service-lifecycle.ts:70`, `:89`, `:114`, `:118`). The restart counter increments in `afterExit$` when a restart is planned. `StatusPublisher.publish` drops the aggregate-only dedupe: it emits when the aggregate state or `children` differ from the last event (change from `status-publisher.ts:32`). `ServiceLifecycle` stops exposing `child`.
 
 ## Exposure and security
 
@@ -144,9 +148,9 @@ Each unit carries its code and docs. Edit surfaces are disjoint.
 
 | Unit | Edit surface | Depends on | Risk |
 | --- | --- | --- | --- |
-| U1 contract | `libs/service-registry/src/child-entry.ts` (new), `sidecar-protocol.ts`, `index.ts`; `apps/sea-runtime/src/host/*.port.ts` (new), `apps/sea-runtime/src/supervisor/child-registry.ts` (new, abstract only); ADR-006 amendment; `docs/meta.toon` regeneration | none | item 3: additive field on a `strictObject` event |
+| U1 contract | `libs/service-registry/src/child-entry.ts` (new), `sidecar-protocol.ts`, `index.ts`; `apps/sea-runtime/src/host/*.ts` (new), `apps/sea-runtime/src/supervisor/in-memory-child-registry.ts` (new, signatures first); ADR-006 amendment; `docs/meta.toon` regeneration | none | item 3: additive field on a `strictObject` event |
 | U2 host IO | `apps/sea-runtime/src/host/system-*.ts` and `host.module.ts` (new); `sidecar/**`; `web/**`; `persistence/**`; `runtime/runtime.module.ts`; `main.ts`; `sea-entry.ts`; `supervisor/service-routes-source.ts`, `sea-service-routes.ts` | U1 | item 6 partly: stdout purity and exit codes are covered by the smoke, the asset hash path less so |
-| U3 registry and supervisor | `apps/sea-runtime/src/supervisor/**` except the two U2 files and U1's abstract `child-registry.ts`; adds `in-memory-child-registry.ts` | U1 (compiles against abstracts); U2 for the bound `HostProcess` | item 4: rxjs `expand` restart, ordering of registry writes against exit events, shutdown against restart (`supervisor.service.ts:69`, not verified) |
+| U3 registry and supervisor | `apps/sea-runtime/src/supervisor/**` except the two U2 files and U1's `in-memory-child-registry.ts` | U1 (compiles against the U1 classes); U2 for the bound `HostProcess` | item 4: rxjs `expand` restart, ordering of registry writes against exit events, shutdown against restart (`supervisor.service.ts:69`, not verified) |
 | U4 smoke | `tools/scripts/smoke-sea.ts`, `smoke-pg.ts`, `smoke-dev.ts` (duplicates only), optional `verify-platform.ts` | U1 to write, U3 to run green | item 6: suite can hollow-pass |
 
 Order: U1 alone, then U2 and U3 in parallel, then U4. Final seam check: lint, build, and one `smoke-sea` run. `main.ts` and `sea-entry.ts` keep their argv dispatch and top-level catch outside the container; startup failures happen while the graph is built (`persistence.module.ts:15` comment), so no provider exists to report them. Whether `sea-entry.ts` holds more logic: no verificado.
@@ -160,7 +164,7 @@ Order: U1 alone, then U2 and U3 in parallel, then U4. Final seam check: lint, bu
 ## Maintainability
 
 - One owner for child state replaces three places (log, public field, policy closure).
-- Cost: five new abstract classes and one module for a runtime of about 500 lines (`wc -l` over `supervisor/` and `sidecar/`). Several abstractions have exactly one implementation. They exist to satisfy the "singleton injectable, abstract token" rule and to give the smoke a typed surface, not for swapping.
+- Cost: five new injectable classes and one module for a runtime of about 500 lines (`wc -l` over `supervisor/` and `sidecar/`). Every class has exactly one implementation. They exist to satisfy the "singleton injectable" rule and to give the smoke a typed surface, not for swapping.
 - A new service needs no registry change: `ServiceLifecycle` registers itself through the spawner.
 
 ## Testability
@@ -183,7 +187,7 @@ Mutation list (each must turn the smoke red):
 | Registry keeps `ready` after child exit or failed budget | `failed` expectation and exit-code check; `restarting` then `ready` at `:445` |
 | Publisher keeps aggregate-only dedupe (`status-publisher.ts:32`) | new pid must appear in an event while aggregate stays `ready` |
 | Registry not updated on stop | final-event and `ps` check on stop |
-| `useClass` for `ChildRegistry` removed | Nest fails at boot, exit 1 |
+| `InMemoryChildRegistry` removed from `providers` | Nest fails at boot, exit 1 |
 | `SidecarOutput` writes unvalidated JSON again | stdout-only-valid-events check |
 | `HostProcess.execPath` returns a wrong binary | child-same-executable check |
 | `children` added to `/api/health` | extend the health check to assert the exact keys; option C stays red |

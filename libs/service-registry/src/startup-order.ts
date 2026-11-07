@@ -1,10 +1,10 @@
-import { type ServiceDefinition } from './service-definition.js';
+import { type ServiceEntry } from './schemas/declared-services.js';
 
 // Pure function: service ids ordered so every service comes after the ones it depends on.
 // Only enabled services count. Ties keep registry order. Throws on a cycle.
 // Verified with one service only; ordering of two or more services is not verified.
 export function startupOrder(
-  services: readonly Pick<ServiceDefinition, 'id' | 'dependsOn' | 'enabled'>[],
+  services: readonly Pick<ServiceEntry, 'id' | 'dependsOn' | 'enabled'>[],
 ): string[] {
   const enabled = services.filter((service) => service.enabled);
   const ids = new Set(enabled.map((service) => service.id));

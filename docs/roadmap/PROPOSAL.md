@@ -53,7 +53,7 @@ Why this page exists: it orders the SRS v1.6 POCs and logs 18 human decisions. N
 | Status | Proposal v2. Not approved. | [Decision Log](#decision-log) |
 | Method | Shape Up. 6 weeks of build, then 2 weeks of cooldown. | [Method](#method) |
 | Bets | 3 cycles. 8 active POCs (POC-9 on hold) and POC-6 built on a branch (PR pending). | [Cycles and bets](#cycles-and-bets) |
-| ADR index | 16 rows: 12 approved, 4 proposed. | [ADR index](#adr-index) |
+| ADR index | 17 rows: 12 approved, 5 proposed. | [ADR index](#adr-index) |
 | Open questions | 25 rows. None blocks. | [Open questions](#open-questions) |
 | Coverage | 13 SRS sections and 36 acceptance criteria map to POCs. | [SRS coverage matrix](#srs-coverage-matrix) |
 
@@ -160,6 +160,7 @@ Each row summarizes one decision. The written ADR files are listed in the [archi
 | Toolchain | Version substitutions in POC-1 (S1 to S5) are recorded in [ADR-001](../architecture/adr/ADR-001-version-substitutions.md). | 1e, human | approved |
 | macOS installer and install-time trust | A `.pkg` with no `.app`, the base next to the executable, one CA per installation created as the console user, system trust only through an unticked box anchored by a root-owned fingerprint, and an uninstall that always keeps the SQLite database. Built and inspected on macOS; not installed ([ADR-011](../architecture/adr/ADR-011-macos-installer-and-install-time-trust.md)). | POC-8, OQ17, OQ24 | proposed |
 | Runtime | One SEA binary per platform, closed service registry, IPC control channel, bounded restart, coordinated shutdown and the package smoke are recorded in [ADR-002](../architecture/adr/ADR-002-single-sea-portability.md). Windows not verified. | POC-2, D1 to D5 | approved as record; SRS owner review not verified |
+| Nest standalone architecture | The runtime is a standalone Nest application that uses the Nest Logger only, a unified `DeclaredServices` model, and named exit codes ([ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md)). Built on branches, pull requests pending. | human | proposed |
 
 The [Decision Log](#decision-log) keeps each decision as recorded.
 

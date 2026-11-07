@@ -1,11 +1,14 @@
-export const sharedCoreName = 'shared-core';
 export * from './paths.js';
 export * from './config.js';
 export * from './db/port.js';
 export * from './db/factory.js';
 export * from './db/migrator.js';
 export * from './db/migration-events.js';
-export * from './config-dtos.js';
-export * from './app-config.module.js';
+export * from './schemas/config-dtos.js';
+export * from './modules/app-config.module.js';
 export * from './inject-config.decorator.js';
-export * from './app-paths.service.js';
+export * from './services/app-paths.service.js';
+export { provideLogger } from './logger/provide-logger.js';
+export { InjectLogger, type Logger } from './logger/inject-logger.decorator.js';
+export { loggerConfigSchema, type LoggerConfig, type LoggerConfigInput } from './schemas/logger-config.js';
+export { logRecordSchema, type LogRecord } from './schemas/log-record.js';

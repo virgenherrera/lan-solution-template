@@ -100,8 +100,8 @@ Values: [OQ11](../roadmap/PROPOSAL.md#open-questions), decision D2. Backoff 1, 2
 
 | File | Written by |
 |---|---|
-| `apps/sea-runtime/src/supervisor/service-lifecycle.ts` | manual: no CLI writes it. If it is a Nest provider, `pnpm dlx nest generate` may create the shell; run `--help` first |
-| `apps/sea-runtime/src/supervisor/supervisor.service.ts` | manual edit of a CLI-generated file |
+| `apps/sea-runtime/src/services/service-lifecycle.ts` | manual: no CLI writes it. If it is a Nest provider, `pnpm dlx nest generate` may create the shell; run `--help` first |
+| `apps/sea-runtime/src/services/supervisor.service.ts` | manual edit of a CLI-generated file |
 | `docs/results/POC-02e-bounded-restart.md`, `docs/meta.toon` | manual; regeneration command |
 
 ---

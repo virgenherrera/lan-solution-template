@@ -1,7 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { DatabaseSync, type SQLInputValue } from 'node:sqlite';
 import { dirname, isAbsolute, join } from 'node:path';
-import type { DbConfig } from '../../config-dtos.js';
+import type { DbConfig } from '../../schemas/config-dtos.js';
 import type { AppPaths } from '../../paths.js';
 import {
   VectorUnavailableError,

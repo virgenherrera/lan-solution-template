@@ -1,0 +1,96 @@
+<!-- toon-meta
+fmt: TOON
+doc: docs/backlog/nest-standalone-cleanup-inventory.md
+title: "Nest standalone cleanup inventory"
+type: backlog
+summary: "Evidence table of dead code candidates for the Nest standalone refactor; two symbols confirmed by mapping, the rest to verify."
+ids[0]:
+related[6]: docs/backlog/nest-standalone-refactor.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/declared-services.md,docs/architecture/nest-standalone-boot.md,docs/backlog/README.md,docs/results/POC-02c-assembler-registry.md
+status: proposed
+updated: 2026-11-06
+-->
+
+# Nest standalone cleanup inventory
+
+[Home](../../README.md) | [Requirements](../requirements/README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](../roadmap/PROPOSAL.md) | [Traceability](../requirements/traceability.md) | [Backlog](README.md)
+
+[Up](README.md)
+
+See also: [ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md) | [Declared services](../architecture/declared-services.md) | [Nest standalone boot](../architecture/nest-standalone-boot.md)
+
+## Navigation
+
+- [At a glance](#at-a-glance)
+- [Inventory](#inventory)
+- [Barrels hide usage](#barrels-hide-usage)
+- [Stale documentation](#stale-documentation)
+- [Not verified](#not-verified)
+
+---
+
+## At a glance
+
+[Back to navigation](#navigation)
+
+| Item | Value |
+|---|---|
+| Status | Proposed. Nothing is deleted. |
+| Used by | Slice 4 of [Epic: Nest standalone refactor](nest-standalone-refactor.md) |
+| Requirements | none. No REQ or AC id is invented here. |
+| Rule | Delete only what has zero references in source, tests, tools, scripts and non-TypeScript files. No test or smoke is edited by the refactor. If a deletion needs a test edit, the symbol is not dead. |
+
+The counts below come from a mapping report (symbol search and the code graph). They are reported by mapping, not verified by the author of this page. Runtime behavior was not executed.
+
+---
+
+## Inventory
+
+[Back to navigation](#navigation)
+
+Action values: `delete` (confirmed dead by mapping, awaits QC), `verify` (unsure, QC decides), `keep` (live today), `deleted` (removed by a slice, evidence in the row).
+
+Evidence columns read as: references in source, tests, tools, and non-TypeScript files.
+
+| Symbol | File | Line | Evidence | Action | QC status |
+|---|---|---|---|---|---|
+| `ControlMessage` | `libs/service-registry/src/schemas/control-channel.ts` | 25 | Deleted in slice 4 (2026-11-06). Evidence: `rg -nw ControlMessage apps libs tools` returned only the definition; after the delete it returns 0. | deleted | confirmed (2026-11-06, deleted in slice 4) |
+| `StatusSnapshot` | `libs/service-registry/src/schemas/status-snapshot.ts` | 13 | Deleted in slice 4 (2026-11-06). Type only; `statusSnapshotSchema` is live in `sidecar-protocol.ts`, so the file stays. Evidence: `rg -nw StatusSnapshot apps libs tools` returned only the definition; after the delete it returns 0. | deleted | confirmed (2026-11-06, deleted in slice 4) |
+| `sharedCoreName` | `libs/shared-core/src/index.ts` | 1 | Deleted in slice 4 (2026-11-06). The only non-TypeScript hit is doc text in `docs/results/POC-01b-Result.md`. Evidence: `rg -nw sharedCoreName apps libs tools` returned only the definition; after the delete it returns 0. | deleted | confirmed (2026-11-06, deleted in slice 4) |
+| `SPAWNED_PATTERN` | `libs/service-registry/src/supervisor-log.ts` | 9 | Deleted in slice 4 (2026-11-06). The non-TypeScript hits are stale doc text (proposals P1-P3, ADR-012). Evidence: `rg -nw SPAWNED_PATTERN apps libs tools` returned only the definition; after the delete it returns 0. | deleted | confirmed (2026-11-06, deleted in slice 4) |
+| `controlMessageSchema` | `libs/service-registry/src/schemas/control-channel.ts` | 19 | Chain candidate found in slice 4: its only use was the `ControlMessage` type. `rg -nw controlMessageSchema apps libs tools` now returns only the definition. Not deleted in slice 4. | verify | pending |
+| `serviceRegistrySchema` | `libs/service-registry/src/service-definition.ts` | 17 | Deleted in slice 3 (commit `task: unify the declared services model`). Evidence: `rg -w serviceRegistrySchema apps libs tools` returns 0; build and test exit 0. | deleted | confirmed |
+| `ServiceRegistry` | `libs/service-registry/src/service-definition.ts` | 36 | Deleted in slice 3. Evidence: `rg -w ServiceRegistry apps libs tools` returns 0 and the build passes. | deleted | confirmed |
+| `serviceDefinitionSchema` | `libs/service-registry/src/service-definition.ts` | not recorded | Deleted in slice 3. Evidence: `rg -w serviceDefinitionSchema apps libs tools` returns 0 and the build passes. | deleted | confirmed |
+| `ServiceDefinition` | `libs/service-registry/src/service-definition.ts` | not recorded | Deleted in slice 3. Its only use, the `Pick` in `startup-order.ts`, now picks from `ServiceEntry`. Evidence: `rg -w ServiceDefinition apps libs tools` returns 0 and the build passes. | deleted | confirmed |
+| field `entry` | `libs/service-registry/src/service-definition.ts` | 9 | Deleted in slice 3 with `ServiceDefinition`. No reader existed; the build passes. | deleted | confirmed |
+
+Slice 4 deleted `ControlMessage`, `StatusSnapshot`, `sharedCoreName` and `SPAWNED_PATTERN`. The `ServiceDefinition` family (`serviceDefinitionSchema`, `serviceRegistrySchema`, `ServiceRegistry`, `ServiceDefinition`) and the `entry` field are reported with zero code readers, and the QC step must verify that before any delete. Slice 3 of the [epic](nest-standalone-refactor.md) deleted the family and replaced the `Pick` use in `startup-order.ts`. Their rows are `deleted`/`confirmed` with the evidence in the row.
+
+QC status values: `pending` (not checked), `confirmed` (QC re-ran the search and found zero references), `rejected` (QC found a reference; the row becomes `keep`). Every row starts as `pending`.
+
+---
+
+## Barrels hide usage
+
+[Back to navigation](#navigation)
+
+The barrel files `libs/service-registry/src/index.ts` and `libs/shared-core/src/index.ts` re-export symbols. A symbol that only a barrel mentions looks used to a text search and looks unused to a search for importers. QC must search for the symbol and for the barrel path, and must check that no other package imports it through the barrel. Mapping did not report which symbols pass through a barrel (not verified).
+
+---
+
+## Stale documentation
+
+[Back to navigation](#navigation)
+
+`docs/results/POC-02c-assembler-registry.md`, line 20, says `compile-sea` validates with `serviceRegistrySchema`. Mapping found no such use in the code. This page only records the mismatch. It does not edit that document. `serviceRegistrySchema` was deleted in slice 3; the sentence stays stale until someone edits that result page.
+
+---
+
+## Not verified
+
+[Back to navigation](#navigation)
+
+- Every count and line number above is reported by mapping and was not re-checked here.
+- The non-TypeScript references to `ServiceRegistry` are not identified. Those of `sharedCoreName` and `SPAWNED_PATTERN` are doc text.
+- The lines of `serviceDefinitionSchema` and `ServiceDefinition` were not recorded.
+- No dynamic reference (string lookup, reflection) was searched for.

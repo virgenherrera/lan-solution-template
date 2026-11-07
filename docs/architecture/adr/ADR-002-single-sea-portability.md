@@ -43,16 +43,16 @@ Update 2026-11-03: PR #15 rebuilt `sea-runtime` as Nest modules, removed any HTT
 ### Control channel and states
 
 - Services are spawned with `stdio: ['inherit', 'pipe', 'pipe', 'ipc']` and `serialization: 'advanced'`. The channel stays open for the life of the child ([2d](../../results/POC-02d-readiness-logs.md)).
-- Messages are Zod schemas in `libs/service-registry/src/control-channel.ts`: `ready` (child to supervisor), `state` and `shutdown` (supervisor to child). The web bundle message keeps its schema in `api-gateway` (POC-1f).
+- Messages are Zod schemas in `libs/service-registry/src/schemas/control-channel.ts`: `ready` (child to supervisor), `state` and `shutdown` (supervisor to child). The web bundle message keeps its schema in `api-gateway` (POC-1f).
 - The gateway sends `ready` after `app.listen` resolves. With no IPC channel it sets `ready` itself after listen. That standalone rule is the gateway's, outside [REQ-RUNTIME-05](../../requirements/09-desktop-tauri.md) (not verified as a requirement).
 
 ### State words in `states.ts`
 
-- `libs/service-registry/src/states.ts` is the only place state words are spelled: `AGGREGATE_STATE` (`starting`, `ready`, `degraded`, `error`, `stopping`), `SERVICE_STATUS` (`starting`, `ready`, `restarting`, `failed`) and the control message kinds. The Zod enums and types derive from them (commit `ef5c429`).
+- `libs/service-registry/src/constants/states.ts` is the only place state words are spelled: `AGGREGATE_STATE` (`starting`, `ready`, `degraded`, `error`, `stopping`), `SERVICE_STATUS` (`starting`, `ready`, `restarting`, `failed`) and the control message kinds. The Zod enums and types derive from them (commit `ef5c429`).
 - `aggregateState` is a pure function: `stopping` wins; a failed service with no ready one is `error`, with a ready one `degraded`; all ready is `ready`; otherwise `starting`. `restarting` maps to `degraded`. `error` stops the others and ends the supervisor with `errorExitCode` 1.
 - Each state change reaches the host as one JSON `status` event on the supervisor stdout, validated by zod. The supervisor opens no HTTP listener. The channel contract is in [ADR-006](ADR-006-sidecar-status-contract.md). Not verified against Tauri (POC-5).
 - `/api/health` returns the `@nestjs/terminus` report (`status`, `info`, `error`, `details`) with 200; the aggregate state is `details.state.state`. Query flags `uptime` (default on), `memory` and `db` add or remove indicators. The gateway child serves it, so it does not answer while the gateway is down (see Limits).
-- Logs go to the supervisor stderr, never to stdout: each child line is re-emitted as `[<id>] <line>`; supervisor lines are `[supervisor] <line>`. Internal services listen on `127.0.0.1` ([REQ-RUNTIME-07](../../requirements/09-desktop-tauri.md), [REQ-NET-01](../../requirements/06-web-gateway-https-pwa.md)).
+- Logs go to the supervisor stderr, never to stdout: every process writes its own Nest log lines to stderr, which each child inherits from the supervisor; the format is free ([ADR-006](ADR-006-sidecar-status-contract.md)). Internal services listen on `127.0.0.1` ([REQ-RUNTIME-07](../../requirements/09-desktop-tauri.md), [REQ-NET-01](../../requirements/06-web-gateway-https-pwa.md)).
 
 ### Bounded restart and the D2 window
 

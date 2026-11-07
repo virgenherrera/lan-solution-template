@@ -109,7 +109,7 @@ Values come from [OQ11](../roadmap/PROPOSAL.md#open-questions) (proposed, decisi
 
 | File | Written by |
 |---|---|
-| `libs/service-registry/src/control-channel.ts` | manual: no CLI writes message schemas |
+| `libs/service-registry/src/schemas/control-channel.ts` | manual: no CLI writes message schemas |
 | `apps/sea-runtime/src/supervisor/*.ts` | manual edit of a CLI-generated file; new files by hand. If a Nest provider is split out, `pnpm dlx nest generate service supervisor/state` may write the class; run `--help` first |
 | `apps/api-gateway/src/main.ts`, `health.controller.ts`, `server-config.ts` | manual edit of CLI-generated files |
 | `docs/results/POC-02d-readiness-logs.md`, `docs/meta.toon` | manual; regeneration command |

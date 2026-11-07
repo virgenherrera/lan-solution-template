@@ -118,7 +118,7 @@ sequenceDiagram
     S->>G: spawn same execPath with --service gateway (REQ-RUNTIME-03)
     G-->>S: IPC READY + health (SRS 9.1 sequence)
     S-->>T: stdout: one JSON status event per change, state starting/ready/degraded/error/stopping (REQ-RUNTIME-05, ADR-006)
-    S-->>T: stderr: log lines prefixed [id] (ADR-006)
+    S-->>T: stderr: Nest log lines, free format (ADR-006)
     T->>V: show Angular served by the gateway (REQ-DESK-02)
     T->>S: Quit: stdin shutdown command (REQ-DESK-03, REQ-RUNTIME-06, ADR-006)
     S->>G: IPC SHUTDOWN, then app.close() (REQ-RUNTIME-06)

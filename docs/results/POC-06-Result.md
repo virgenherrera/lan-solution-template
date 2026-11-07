@@ -128,7 +128,7 @@ The independent verifier returned PASS with advisories. No blocker. Each item be
 
 ### DI by class debt
 
-- [td-nest-di-by-class](../backlog/td-nest-di-by-class.md): resolved and verified (commit `b70184d`). `CLOCK`, `RANDOM` and `SERVICE_ROUTES` are now the abstract classes `Clock`, `Random` and `ServiceRoutes`, with `SystemClock`, `SystemRandom` and `SeaServiceRoutes` injected with `useClass` (strategy pattern). `ServiceLifecycle` is unchanged. `persistence-system.md:88` no longer names `DATABASE_ADAPTER`. An independent verifier ran build, lint, test:static, test:dynamic (8 tests) and smoke-pg with exit 0 on the working tree. `smoke-sea` passed 30 checks in 2 of 3 runs; the first run hit the flake described in Debt.
+- [td-nest-di-by-class](../backlog/td-nest-di-by-class.md): resolved and verified (commit `b70184d`). `CLOCK`, `RANDOM` and `SERVICE_ROUTES` are now the abstract classes `Clock`, `Random` and `ServiceRoutes`, with `SeaServiceRoutes` injected with `useClass` (strategy pattern). `ServiceLifecycle` is unchanged. `persistence-system.md:88` no longer names `DATABASE_ADAPTER`. An independent verifier ran build, lint, test:static, test:dynamic (8 tests) and smoke-pg with exit 0 on the working tree. `smoke-sea` passed 30 checks in 2 of 3 runs; the first run hit the flake described in Debt.
 
 ### Config migration and keep_classnames
 

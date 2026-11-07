@@ -104,7 +104,7 @@ Observable checks (graceful stop 10 s, decision D2):
 |---|---|
 | `apps/sea-runtime/src/supervisor/*.ts` | manual edit of CLI-generated files; no CLI writes a stop sequence |
 | `apps/api-gateway/src/main.ts` | manual edit of a CLI-generated file. Reason: the Nest CLI has no shutdown-hook flag |
-| `libs/service-registry/src/control-channel.ts` | manual edit (message `shutdown` already defined in 2d) |
+| `libs/service-registry/src/schemas/control-channel.ts` | manual edit (message `shutdown` already defined in 2d) |
 | `docs/results/POC-02f-coordinated-shutdown.md`, `docs/meta.toon` | manual; regeneration command |
 
 ---

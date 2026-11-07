@@ -1,50 +1,49 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { NodeAdapter } from '@nestjs/platform-node';
-import type { INestApplication } from '@nestjs/common';
+import type { LoggerService } from '@nestjs/common';
 import { hostname, networkInterfaces } from 'node:os';
 import { NetConfig } from 'shared-core';
 import { loadTlsIdentity, type TlsIdentity } from 'shared-core/tls';
 import { API_PREFIX } from './api-prefix.js';
 import { AppModule } from './app.module.js';
-import { GatewayConfigSource } from './config-source.js';
-import { ServerConfig } from './server-config.js';
-
-export interface AppContext {
-  app: INestApplication;
-  netConfig: NetConfig;
-  serverConfig: ServerConfig;
-  identity: TlsIdentity;
-}
+import { GatewayConfigSource } from './services/config-source.js';
+import type { AppContext } from './interfaces/app-context.js';
+import { ServerConfig } from './schemas/server-config.js';
 
 export class AppBootstrap {
-  static async createAppContext(): Promise<AppContext> {
-    // First, so an invalid --web fails before the config or the TLS files are read.
-    ServerConfig.fromArgv(process.argv.slice(2));
-    // Read-only: the gateway never creates or renews certificates. Missing or invalid files (and a missing or invalid config) stop the start here, with the command that fixes them.
-    // This is the only use of the config outside Nest: NodeAdapter builds the HTTPS server from `httpsOptions` while the app is created, before ConfigService exists. Creating the app twice instead would open the database twice.
-    const { tls } = GatewayConfigSource.file();
-    const identity = loadTlsIdentity({
-      paths: GatewayConfigSource.paths,
-      tls,
-      now: new Date(),
-      log: (message) => console.error(message),
-      hostname: hostname(),
-      interfaces: networkInterfaces(),
-    });
+  static async createAppContext(logger: LoggerService): Promise<AppContext> {
+    ServerConfig.fromArgv(process.argv);
+    const identity = AppBootstrap.loadReadOnlyTlsIdentity(logger);
     const app = await NestFactory.create(AppModule, new NodeAdapter(), {
+      logger,
       httpsOptions: { key: identity.key, cert: identity.cert },
-      // A startup error reaches HttpAppMain, which prints it as one line, instead of Nest logging it and exiting by itself.
       abortOnError: false,
     });
     app.setGlobalPrefix(API_PREFIX);
 
     const configService = app.get(ConfigService);
-    const netConfig = configService.get<NetConfig>(NetConfig.name);
-    const serverConfig = configService.get<ServerConfig>(ServerConfig.name);
-    if (!netConfig) throw new Error(`Unable to find ${NetConfig.name}`);
-    if (!serverConfig) throw new Error(`Unable to find ${ServerConfig.name}`);
+    const netConfig = AppBootstrap.requireConfig<NetConfig>(configService, NetConfig.name);
+    const serverConfig = AppBootstrap.requireConfig<ServerConfig>(configService, ServerConfig.name);
 
     return { app, netConfig, serverConfig, identity };
+  }
+
+  private static loadReadOnlyTlsIdentity(logger: LoggerService): TlsIdentity {
+    const { tls } = GatewayConfigSource.file();
+    return loadTlsIdentity({
+      paths: GatewayConfigSource.paths,
+      tls,
+      now: new Date(),
+      log: (message) => logger.log(message, AppBootstrap.name),
+      hostname: hostname(),
+      interfaces: networkInterfaces(),
+    });
+  }
+
+  private static requireConfig<T>(configService: ConfigService, name: string): T {
+    const config = configService.get<T>(name);
+    if (!config) throw new Error(`Unable to find ${name}`);
+    return config;
   }
 }

@@ -58,7 +58,7 @@ The supervisor opens no HTTP listener. The key `supervisor.statusPort` is remove
 | Channel | Direction | Content |
 |---|---|---|
 | stdout | supervisor to host | Machine events only. One JSON object per line. |
-| stderr | supervisor to host | Every human log line, prefixed `[id] text`. |
+| stderr | supervisor to host | Log lines of the Nest logger. Free format, not a contract. |
 | stdin | host to supervisor | Commands. One JSON object per line. |
 | exit code | supervisor to host | `0`, `1` or `2`. |
 
@@ -71,8 +71,8 @@ sequenceDiagram
     S->>C: spawn, IPC channel
     C-->>S: IPC ready
     S->>H: stdout: status event (ready)
-    C-->>S: stderr line
-    S->>H: stderr: [id] text
+    C-->>H: stderr line, inherited from the supervisor
+    S->>H: stderr: Nest logger line
     H->>S: stdin: shutdown command
     S->>H: stdout: status event (stopping)
     S->>C: IPC shutdown
@@ -81,8 +81,8 @@ sequenceDiagram
 
 Rules:
 
-- **stdout** carries one event kind today: `status`. Its body is the aggregate `state` and `services`, a list of `{id, status}` plus the optional `pid` and `restarts` of the current child (absent until the first spawn; `restarts` counts spawns after the first since process start, not the restart-policy window). The supervisor sends it only when the aggregate state changes (also at start and at `stopping`), not on every change of the services list. The current `pid` and `restarts` travel in that event. Nothing else is written to stdout. Schema: `sidecarEventSchema` in `libs/service-registry/src/sidecar-protocol.ts`.
-- **stderr** carries every human log line. Supervisor lines are `[supervisor] text`. Child output is re-emitted with the service prefix, `[<id>] text`.
+- **stdout** carries one event kind today: `status`. Its body is the aggregate `state` and `services`, a list of `{id, status}` plus the optional `pid` and `restarts` of the current child (absent until the first spawn; `restarts` counts spawns after the first since process start, not the restart-policy window). The supervisor sends it only when the aggregate state changes (also at start and at `stopping`), not on every change of the services list. The current `pid` and `restarts` travel in that event. Nothing else is written to stdout. Schema: `sidecarEventSchema` in `libs/service-registry/src/schemas/sidecar-protocol.ts`.
+- **stderr** carries the log lines of the Nest logger, in the Nest format. The format is free and is not a contract: the host forwards each line to its log and parses none (`apps/desktop/src-tauri/src/sidecar.rs:150-173`). The child writes its own lines to the inherited stderr. See [ADR-013 D4](ADR-013-nest-standalone-architecture.md#d4-one-logger-factory-providelogger-stderr-forced-in-the-sidecar-target).
 - **stdin** carries host commands. One kind today: `shutdown`. Schema: `sidecarCommandSchema`. A stdin line that is not valid JSON, or does not match the schema, is logged to stderr and ignored.
 - **stdin EOF** also triggers shutdown. This is a design assumption: the host going away closes the pipe, so the sidecar must not outlive it. It is not verified against Tauri.
 - **Exit codes**: `0` clean shutdown. `1` aggregate state `error`, or a startup failure. `2` rejected selector.

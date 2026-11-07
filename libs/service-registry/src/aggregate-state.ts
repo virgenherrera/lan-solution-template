@@ -1,5 +1,5 @@
-import { type AggregateState } from './control-channel.js';
-import { AGGREGATE_STATE, SERVICE_STATUS } from './states.js';
+import { type AggregateState } from './schemas/control-channel.js';
+import { AGGREGATE_STATE, SERVICE_STATUS } from './constants/states.js';
 
 export type ServiceStatus = (typeof SERVICE_STATUS)[keyof typeof SERVICE_STATUS];
 
