@@ -177,8 +177,11 @@ flowchart LR
     Contract["Sidecar status and control messages, ADR-006"]
     Factory["initLogger: creates the logger with provideLogger and its config"]
     Create["createApp: passes the logger to the factory"]
-    Logger["AppLogger, a ConsoleLogger subclass, every level to stderr"]
-    Risk["Plain ConsoleLogger, log warn debug verbose to stdout"]
+    Logger["AppLogger, implements LoggerService, builds a LogRecord"]
+    Subj["RxJS Subject of LogRecord"]
+    Sink["Console sink: pure formatter"]
+    Disk["Disk sink with rotation: documented extension, not built"]
+    Risk["Plain Nest ConsoleLogger, log warn debug verbose to stdout"]
     Child["Child process: stderr inherited, stdout ignored"]
     Out["stdout: machine contract, bytes do not change"]
     Err["stderr: Nest logger lines, free format"]
@@ -187,31 +190,37 @@ flowchart LR
     Factory --> Logger
     Logger --> Create
     Contract --> Out
-    Logger --> Err
+    Logger --> Subj
+    Subj --> Sink
+    Subj -.-> Disk
+    Sink -->|"sidecar target"| Err
+    Sink -->|"cli target: log"| Out
+    Sink -->|"cli target: error"| Err
     Child --> Err
     Logger -.-> Risk
     Risk -.->|"RISK: contaminates the contract"| Out
 ```
 
-stdout is the machine contract of ADR-006: one JSON object per line, never a log, with unchanged bytes. All logs go through the Nest `Logger` to stderr.
+stdout is the machine contract of ADR-006: one JSON object per line, never a log, with unchanged bytes. All logs go through the Nest `Logger` to stderr, except the plain text of the `cli` target.
 
 - The default Nest `ConsoleLogger` writes `log`, `warn`, `debug` and `verbose` to stdout. It writes only `error` and `fatal` to stderr.
 - Used as is, it would put log lines into the contract channel (the dotted path).
-- The logger is `AppLogger` (`libs/shared-core/src/logger/app-logger.ts:11`), a `ConsoleLogger` subclass. `provideLogger()` (`provide-logger.ts:6`) builds it from `loggerConfigSchema` (`libs/shared-core/src/schemas/logger-config.ts:4`). In the `sidecar` target it sends every level to stderr (`app-logger.ts:22`).
+- The logger is `AppLogger`. It implements the Nest `LoggerService` interface and does not extend `ConsoleLogger`. `provideLogger()` (`libs/shared-core/src/logger/provide-logger.ts:6`) builds it from `loggerConfigSchema` (`libs/shared-core/src/schemas/logger-config.ts:4`).
+- The flow is: call, then a `LogRecord` (OpenTelemetry data model), then an RxJS `Subject`, then the console sink. In the `sidecar` target the sink writes every level to stderr. See D4 of the ADR.
+- A file sink with rotation is a documented extension. It would be a second pipeline over the same `Subject`. It is not built.
 - An entrypoint runs `initLogger` first, which creates the logger. `createApp` then passes it to `NestFactory` with the `logger` option. `sea-entry` and the certs command have no Nest app and use the instance directly, as do errors before the app exists. See D4 of the ADR.
 - The host forwards stderr to its log and parses none of it (`apps/desktop/src-tauri/src/sidecar.rs:150-173`). The line format is not a contract.
 - A child process inherits the stderr of the supervisor and its stdout is ignored. The child writes its own Nest lines, so nothing is re-prefixed.
-- `--generate-certs` uses the `cli` target: plain text, `log` to stdout, `error` to stderr. The installer `postinstall` reads it with an anchored `sed`.
-- A later epic may replace the logger behind the Nest `LoggerService` interface. This page does not design it.
+- `--generate-certs` uses the `cli` target: the plain formatter, `log` to stdout, `error` to stderr. The installer `postinstall` reads it with an anchored `sed`.
 
 Line format in the `sidecar` target:
 
 | Part | Source | Example |
 | --- | --- | --- |
-| Process | `prefix` option, from `prefix` in the schema | `supervisor`, `api-gateway` |
-| Layer | Context, equal to the class name | `SupervisorService` |
-| Colors | `colors`, default `false` | Off |
-| JSON | `json`, default `false` | With `json`, the prefix does not appear and only the PID is left |
+| Process | `prefix` in the schema, the `service.name` of the record | `supervisor`, `api-gateway` |
+| Layer | Scope of the record, equal to the class name | `SupervisorService` |
+| Timestamp | ISO 8601, UTC | `2026-11-06T12:00:00.000Z` |
+| JSON | `json`, default `false` | One object per line with the OpenTelemetry keys, `service.name` and `process.pid` in the resource |
 
 | Source | Covers |
 | --- | --- |

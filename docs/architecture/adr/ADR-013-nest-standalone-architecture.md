@@ -61,7 +61,7 @@ flowchart LR
   ADR --> PRC["Process"]
   LOG --> D2["D2 one Nest Logger"]
   LOG --> D3["D3 stdout is a contract"]
-  LOG --> D4["D4 provideLogger, stderr forced"]
+  LOG --> D4["D4 LoggerService core, provideLogger"]
   LOG --> D5["D5 stderr format stays, rejected"]
   LOG --> D6["D6 InjectLogger decorator"]
   LOG --> D7["D7 remove SupervisorLogger"]
@@ -85,7 +85,7 @@ flowchart TB
       GW["api-gateway"]
       Other["other services"]
     end
-    Log["AppLogger: ConsoleLogger subclass"]
+    Log["AppLogger: LoggerService, LogRecord to Subject, console sink"]
   end
   Sup --> Pers --> Svc
   Sup -.-> Log
@@ -99,7 +99,7 @@ flowchart LR
   C["provideLogger(input): zod defaults"] --> W
   A["Entrypoint: passes the logger to the factory, or uses the instance directly"] --> W
   B["Class with @InjectLogger()"] --> W
-  W["AppLogger: every level to stderr in the sidecar target"] --> E["stderr: Nest format, prefix and class context"]
+  W["AppLogger: call to LogRecord to Subject to console sink"] --> E["stderr in the sidecar target: Nest-like text with class scope"]
   M["sidecar-output: status events"] --> O["stdout: machine events only"]
   E --> H["Host log"]
   O --> P["Host status reader"]
@@ -129,9 +129,9 @@ Stdout carries only the status events of [ADR-006](ADR-006-sidecar-status-contra
 
 The event writer `sidecar-output.ts` is the only place that may write to stdout. It is not a log writer.
 
-The `--generate-certs` command uses the `cli` target of the logger. It is an install operation, not the sidecar. The target prints plain text: `log` to stdout and `error` to stderr (`app-logger.ts:8`, `app-logger.ts:26`). The installer `postinstall` (`apps/desktop/installer`, line 95) reads the output with an anchored `sed`, `^CA SHA-256 `. A prefix, PID, date or level would break it.
+The `--generate-certs` command uses the `cli` target of the logger. It is an install operation, not the sidecar. The target prints plain text through the console sink: `log` to stdout and `error` to stderr. The installer `postinstall` (`apps/desktop/installer`, line 95) reads the output with an anchored `sed`, `^CA SHA-256 `. A prefix, PID, date or level would break it.
 
-### D4. One logger factory: `provideLogger`, stderr forced in the sidecar target
+### D4. One logger core and one factory: `AppLogger` and `provideLogger`
 
 Status: Accepted
 
@@ -149,18 +149,48 @@ Why this form. Passing `{ logger }` to the factory calls `Logger.overrideLogger`
 | `nestjs-pino` README | Uses `bufferLogs: true` and `app.useLogger(app.get(Logger))`, with config in `LoggerModule.forRoot` | https://github.com/iamolegga/nestjs-pino |
 | Nest pull request 17893 | A logger must be attached before `init()` or `listen()`; `overrideLogger(levels)` there sets log levels | https://github.com/nestjs/nest/pull/17893 |
 
-`AppLogger` (`app-logger.ts:11`) extends `ConsoleLogger` and keeps the Nest format. In the `sidecar` target it forces every level to stderr (`app-logger.ts:22`). The default `ConsoleLogger` writes `log`, `warn`, `debug` and `verbose` to stdout, which would break D3. The host requires only D3. Stderr is this design's consequence of how Nest routes levels.
+`AppLogger` implements the Nest `LoggerService` interface. It does not extend `ConsoleLogger`, which ties the text format and the stream routing to Nest's own class. The core has four steps.
+
+1. A call such as `logger.error(message, stack, context)` reaches the pure function `buildLogRecord`. It repeats the Nest convention for `optionalParams`: the last string is the context, and `error` takes the stack second.
+2. `buildLogRecord` returns a `LogRecord` that follows the OpenTelemetry data model. Its fields are `timestamp`, `severityNumber`, `severityText`, `body`, `attributes`, `resource` and `scope`. The resource holds `service.name` and `process.pid`. The scope holds the class name.
+3. `AppLogger` emits the record to an RxJS `Subject`.
+4. A sink is an RxJS pipeline over that stream. Today there is one, the console sink. It formats the record and writes one line.
+
+Formatters are pure functions from a record to a string. There are three: Nest-like text with an ISO 8601 UTC timestamp, JSON with the OpenTelemetry keys, and plain text. In the `sidecar` target the console sink writes every level to stderr. In the `cli` target it uses the plain formatter: `log` to stdout and `error` to stderr. The default `ConsoleLogger` writes `log`, `warn`, `debug` and `verbose` to stdout, which would break D3. The host requires only D3. Stderr is this design's choice.
+
+The severity map below is this repository's decision. The OpenTelemetry specification gives ranges, not a Nest mapping.
+
+| Nest level | `severityText` | `severityNumber` |
+|---|---|---|
+| `fatal` | `FATAL` | 21 |
+| `error` | `ERROR` | 17 |
+| `warn` | `WARN` | 13 |
+| `log` | `INFO` | 9 |
+| `debug` | `DEBUG` | 5 |
+| `verbose` | `TRACE` | 1 |
+
+| Source | Datum | Reference |
+|---|---|---|
+| OpenTelemetry logs data model | Fields of a `LogRecord`; severity ranges TRACE 1-4, DEBUG 5-8, INFO 9-12, WARN 13-16, ERROR 17-20, FATAL 21-24 | https://opentelemetry.io/docs/specs/otel/logs/data-model/ |
+| OpenTelemetry service semantic conventions | `service.name` is a required resource key | https://opentelemetry.io/docs/specs/semconv/resource/service/ |
+| OpenTelemetry process semantic conventions | `process.pid` is an integer resource key | https://opentelemetry.io/docs/specs/semconv/resource/process/ |
+| `@nestjs/common` 12.3.2, `LoggerService` | Only `log`, `error` and `warn` are required; `debug`, `verbose` and `fatal` are optional | `logger.service.d.ts:6-36` |
+| `@nestjs/common` 12.3.2, `Logger` | The instance `Logger` appends its context last: `error(m)` becomes `error(m, undefined, ctx)` | `logger.service.js:64-74` |
+| `@nestjs/common` 12.3.2, `ConsoleLogger` | A last string argument is read as the context | `console-logger.service.js:547-551` |
 
 All input comes through one zod object, `loggerConfigSchema` (`schemas/logger-config.ts:4`). The logger reads nothing from argv, the environment or the terminal.
 
 | Field | Default | Effect |
 |---|---|---|
-| `prefix` | none, required (`logger-config.ts:6`) | Process name. It goes in the `prefix` option of `ConsoleLogger`. |
-| `target` | `sidecar` (`logger-config.ts:8`) | `sidecar`: Nest format on stderr. `cli`: plain text, see D3. |
-| `json` | `false` (`logger-config.ts:10`) | One JSON object per line, in the Nest JSON format. |
-| `colors` | `false` (`logger-config.ts:12`) | ANSI colors, so a redirected stream stays clean. |
+| `prefix` | none, required (`logger-config.ts:6`) | Process name. It becomes `service.name` in the resource. |
+| `target` | `sidecar` (`logger-config.ts:8`) | `sidecar`: every level to stderr. `cli`: plain text, see D3. |
+| `json` | `false` (`logger-config.ts:10`) | One JSON object per line, with the OpenTelemetry keys. |
 
-The line carries the process in the prefix and the layer in the context. The context equals the class name. With `json` on, the prefix does not appear and only the PID identifies the process.
+The schema has no `colors` field, because nothing consumed it.
+
+The text line carries the process name and the class name as scope. The JSON record carries `service.name`, `process.pid` and the scope name, so a reader can tell processes apart.
+
+A file sink with rotation is a documented extension and is not built. Its shape is a pipeline over the same `Subject`: `bufferTime`, then `concatMap` for serial writes, then `scan` to count bytes. The epic lists it as a [follow-up](../../backlog/nest-standalone-refactor.md#follow-ups).
 
 ### D5. The stderr line format `[id] text` stays
 
@@ -265,7 +295,7 @@ A behavior change found on the way is a separate decision with its own ADR.
 
 Status: Proposed
 
-A later epic may add a logging library. It would use OpenTelemetry records, RxJS pipes, an async file sink and a logging child process ([log service backlog](../../backlog/log-service-otel-grpc.md)).
+D4 already holds the record model and the RxJS pipeline. A later epic may add an async file sink and a logging child process ([log service backlog](../../backlog/log-service-otel-grpc.md)).
 
 This ADR only requires that all code depends on the Nest `LoggerService` interface. The later library can then replace `AppLogger` without touching callers.
 
@@ -274,6 +304,7 @@ This ADR only requires that all code depends on the Nest `LoggerService` interfa
 | Option | Reason |
 |---|---|
 | Keep `console.*` in the code and wrap only the Nest part | Two logging paths survive, and the stdout contract of D3 stays easy to break. |
+| Subclass `ConsoleLogger` (the first design of D4) | It ties the text format and the stream routing to Nest's class. A record with a pipeline separates the format from the destination. |
 | Use the default `ConsoleLogger` | It writes `log`, `warn`, `debug` and `verbose` to stdout. That breaks D3. |
 | Make logging a service started by the supervisor | Logging must work before any service starts and during boot failures. It is not a service. |
 | Generate the TLS certificates in the gateway at start | They are made at install time and the gateway only reads them ([ADR-008](ADR-008-tls-trust-model.md)). This avoids a write path in a network service. |
@@ -291,8 +322,6 @@ This ADR only requires that all code depends on the Nest `LoggerService` interfa
 
 ## Risks
 
-- **Colors only through the schema.** The `colors` field is the only switch (`logger-config.ts:12`). The logger reads no terminal state, so a caller that needs colors must set it.
-- **JSON without prefix.** With `json` on, the Nest JSON format omits the `prefix` option and keeps only the PID. A reader cannot tell the supervisor from a child by name.
 - **Contexts depend on class names.** `@InjectLogger()` and `new Logger(Name)` use `constructor.name`. A minifier that renames classes breaks the contexts. `keep_classnames` in `tools/rspack/nest.config.ts` is a requirement.
 - **Boot failures before the app exists.** A failure before the factory runs prints through the default Nest logger unless the entrypoint uses its own instance. Mitigation: `provideLogger` is the first thing an entrypoint calls, and `handleFatal` and early messages use that instance.
 - **Lost output on exit.** `process.exit` right after a log call can truncate a buffered stderr write. Today's `console.error` has the same hazard.
@@ -308,6 +337,9 @@ This ADR only requires that all code depends on the Nest `LoggerService` interfa
 | Whether the overview lists ADR-012 correctly | The maps say lines 39 and 157 call it a placeholder, which contradicts the file in `adr/` | Docs slice of the epic |
 | Whether D2 reaches the scripts under `tools/scripts` | The question is open for the epic | Human decision in the epic |
 | Whether the Nest writer changes the lost-output hazard on exit | Nobody ran the writer against a fast exit | Code phase |
+| The map from Nest levels to `severityNumber` | It is this repository's decision. The OpenTelemetry specification does not map Nest. | Human review |
+| Flush of `bufferTime` when the stream completes | No source confirms it. The file sink is not built. | The epic that builds the file sink |
+| A size-based rotation pattern in RxJS | No verified source exists | The epic that builds the file sink |
 | Placement of `DeclaredServices` in a library, | It is open in the declared services page | Human decision at the start of the code phase |
 | Whether a child of the same SEA binary reads the embedded assets, and whether rspack can embed the web bundle | No run exists. The maps found no code that reads assets from a child | The later epic on the service-owned web build |
 
