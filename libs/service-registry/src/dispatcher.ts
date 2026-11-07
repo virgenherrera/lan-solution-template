@@ -4,9 +4,14 @@ import { DISPATCHER_CONFIG } from './schemas/dispatcher-config.js';
 
 export const serviceIdSchema = z.string().min(1);
 
+const serviceArgsSchema = z.object({ id: serviceIdSchema, web: z.boolean().default(false) });
+
 // Command line arguments that start one service in a child process.
-export function serviceArgs(id: string): string[] {
-  return [`--${DISPATCHER_CONFIG.serviceFlag}`, serviceIdSchema.parse(id)];
+export function serviceArgs(input: z.input<typeof serviceArgsSchema>): string[] {
+  const { id, web } = serviceArgsSchema.parse(input);
+  const args = [`--${DISPATCHER_CONFIG.serviceFlag}`, id];
+  if (web) args.push('--web', 'ipc');
+  return args;
 }
 
 export type DispatchTarget =

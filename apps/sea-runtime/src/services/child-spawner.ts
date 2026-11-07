@@ -18,10 +18,9 @@ export class ChildSpawner {
 
   spawn(route: ServiceEntry): ChildProcess {
     const bundle = route.web ? this.web.message : undefined;
-    const args = bundle === undefined ? serviceArgs(route.id) : [...serviceArgs(route.id), '--web', 'ipc'];
-    const child = spawn(process.execPath, args, {
+    const child = spawn(process.execPath, serviceArgs({ id: route.id, web: route.web }), {
       shell: false,
-      // stdin stays with the supervisor: it carries the host commands. The child's stdout is not inherited because the supervisor's stdout is the event channel the host parses; its stderr is inherited and each line already carries the child's own prefix.
+      // The supervisor's stdout is the event channel, so the child's stdout is not inherited.
       stdio: ['ignore', 'ignore', 'inherit', 'ipc'],
       serialization: 'advanced',
       ...treeSpawnOptions(),
@@ -30,7 +29,6 @@ export class ChildSpawner {
     // Registered before the lifecycle listens to the same event, so the status it publishes after an exit no longer names this pid.
     child.once('exit', () => this.registry.recordExit(route.id, child.pid));
     this.logger.log(spawnedMessage(route.id, child.pid));
-    // The bundle is sent again on every restart, from memory.
     if (bundle !== undefined) {
       child.send(bundle, (error) => {
         if (error) this.logger.log(`web bundle handoff failed: ${error.message}`);
