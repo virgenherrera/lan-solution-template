@@ -4,7 +4,7 @@ doc: docs/backlog/README.md
 title: "Backlog index"
 type: backlog
 summary: "Backlog index of POC epics mapped to acceptance criteria and cycles."
-related[16]: docs/results/POC-08-Result.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/results/POC-05-Result.md,docs/backlog/log-service-otel-grpc.md,docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md,docs/backlog/td-windows-linux-distribution.md
+related[17]: docs/results/POC-08-Result.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/results/POC-05-Result.md,docs/backlog/log-service-otel-grpc.md,docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md,docs/backlog/td-windows-linux-distribution.md,docs/backlog/td-dev-certs-prebuild.md
 status: current
 updated: 2026-11-04
 -->
@@ -95,6 +95,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | none | [Log service with OpenTelemetry data model and gRPC](log-service-otel-grpc.md) | Idea, TBD, no design. Outside POC-5 | none |
 | none | [Technical debt: Windows and Linux distribution](td-windows-linux-distribution.md) | Technical debt, no design, nothing verified; cut from POC-8 by the human on 2026-11-04, plus the macOS follow-ups that POC-8 left | none (no new id) |
 | none | [Technical debt: Nest DI by class](td-nest-di-by-class.md) | Technical debt, resolved and verified; the supervisor tokens are now the abstract classes `Clock`, `Random` and `ServiceRoutes` | none (no new id) |
+| none | [Technical debt: dev:certs prebuild gap](td-dev-certs-prebuild.md) | Technical debt TD-DEV-01, proposed, not scheduled; `pnpm dev:certs` does not build `service-registry`, so a clean clone fails with TS2307; fix through the Nx `build` target | none (no new id) |
 | none | [Persistence system](persistence-system.md) | Done and merged in PR #17; decision: [ADR-007](../architecture/adr/ADR-007-persistence-system.md) | AC-07, AC-08, AC-10 (as POC-3) |
 | none | [Epic: Nest standalone refactor](nest-standalone-refactor.md) | Built on branches, pull requests pending; acceptance of the Proposed decisions pending: five ordered slices (exit code constants, Nest Logger, unified DeclaredServices, dead code cleanup, folder reorganization); decision: [ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md); evidence: [cleanup inventory](nest-standalone-cleanup-inventory.md) | none (no new id) |
 
