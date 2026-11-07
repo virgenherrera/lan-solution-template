@@ -1,37 +1,50 @@
-import { inspect } from 'node:util';
-import { ConsoleLogger, type LogLevel } from '@nestjs/common';
-import type { LoggerConfig } from '../schemas/logger-config.js';
+import type { LoggerService, LogLevel } from '@nestjs/common';
+import { Subject, type Observable } from 'rxjs';
+import type { LogRecord, LogResource } from '../schemas/log-record.js';
+import { buildLogRecord } from './log-record-builder.js';
 
-type StreamName = 'stdout' | 'stderr';
+// The one Nest logger of an executable. It only turns each call into a record and emits it; sinks decide where and how the record is written.
+export class AppLogger implements LoggerService {
+  private readonly records = new Subject<LogRecord>();
+  private readonly resource: LogResource;
+  readonly records$: Observable<LogRecord> = this.records.asObservable();
 
-// The levels that go to stderr in the cli target, as the console methods of the same names do.
-const CLI_STDERR_LEVELS: ReadonlySet<LogLevel> = new Set<LogLevel>(['error', 'fatal']);
-
-// The one Nest logger of an executable. The Nest format is never changed here, except in the cli target, which prints plain text.
-export class AppLogger extends ConsoleLogger {
-  constructor(private readonly config: LoggerConfig) {
-    super({ prefix: config.prefix, json: config.json, colors: config.colors });
+  constructor(serviceName: string) {
+    // The pid is a resource attribute and does not change for the life of the process, so it is read once here.
+    this.resource = { 'service.name': serviceName, 'process.pid': process.pid };
   }
 
-  protected override printMessages(messages: unknown[], context = '', logLevel: LogLevel = 'log', writeStreamType?: StreamName, errorStack?: unknown, params?: Record<string, unknown>): void {
-    if (this.config.target === 'cli') {
-      this.printPlainMessages(messages, logLevel);
-      return;
-    }
-    // The sidecar keeps stdout free: the supervisor reads its stderr, so every level goes there.
-    super.printMessages(messages, context, logLevel, 'stderr', errorStack, params);
+  log(message: unknown, ...optionalParams: unknown[]): void {
+    this.emit('log', message, optionalParams);
   }
 
-  // One line per message: only the text. An install script reads these lines, so they carry no prefix, pid, date, level or context.
-  private printPlainMessages(messages: unknown[], logLevel: LogLevel): void {
-    const stream = this.streamOf(logLevel);
-    for (const message of messages) {
-      const text = typeof message === 'string' ? message : inspect(message);
-      process[stream].write(`${text}\n`);
-    }
+  error(message: unknown, ...optionalParams: unknown[]): void {
+    this.emit('error', message, optionalParams);
   }
 
-  private streamOf(logLevel: LogLevel): StreamName {
-    return CLI_STDERR_LEVELS.has(logLevel) ? 'stderr' : 'stdout';
+  warn(message: unknown, ...optionalParams: unknown[]): void {
+    this.emit('warn', message, optionalParams);
+  }
+
+  debug(message: unknown, ...optionalParams: unknown[]): void {
+    this.emit('debug', message, optionalParams);
+  }
+
+  verbose(message: unknown, ...optionalParams: unknown[]): void {
+    this.emit('verbose', message, optionalParams);
+  }
+
+  fatal(message: unknown, ...optionalParams: unknown[]): void {
+    this.emit('fatal', message, optionalParams);
+  }
+
+  // Completes the stream; the sinks subscribed to it end.
+  dispose(): void {
+    this.records.complete();
+  }
+
+  private emit(level: LogLevel, message: unknown, optionalParams: unknown[]): void {
+    const record = buildLogRecord({ level, args: [message, ...optionalParams], resource: this.resource, timestamp: Date.now() });
+    this.records.next(record);
   }
 }

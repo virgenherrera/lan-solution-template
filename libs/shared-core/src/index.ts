@@ -11,3 +11,4 @@ export * from './services/app-paths.service.js';
 export { provideLogger } from './logger/provide-logger.js';
 export { InjectLogger, type Logger } from './logger/inject-logger.decorator.js';
 export { loggerConfigSchema, type LoggerConfig, type LoggerConfigInput } from './schemas/logger-config.js';
+export { logRecordSchema, type LogRecord } from './schemas/log-record.js';
