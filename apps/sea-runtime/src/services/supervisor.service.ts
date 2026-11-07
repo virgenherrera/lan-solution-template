@@ -1,4 +1,4 @@
-import { Inject, Injectable, type BeforeApplicationShutdown, type OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, type BeforeApplicationShutdown, type OnApplicationBootstrap } from '@nestjs/common';
 import { InjectLogger, type Logger } from 'shared-core';
 import { isSea } from 'node:sea';
 import { AGGREGATE_STATE, EXIT_CODE, SUPERVISOR_CONFIG, startupOrder, type ServiceEntry } from 'service-registry';
@@ -9,7 +9,7 @@ import { ServiceLifecycleFactory } from './service-lifecycle.factory.js';
 import { type ServiceLifecycle } from './service-lifecycle.js';
 import { stopTree } from '../supervisor/process-tree.js';
 import { StatusPublisher } from './status-publisher.js';
-import { ServiceRoutes } from '../interfaces/service-routes.js';
+import { SeaServiceRoutes } from './sea-service-routes.js';
 
 // Orchestration only: starts the services in order, stops them in reverse order, and turns every reason to stop into the same shutdown.
 @Injectable()
@@ -19,7 +19,7 @@ export class SupervisorService implements OnApplicationBootstrap, BeforeApplicat
   private shutdownRun?: Promise<void>;
 
   constructor(
-    @Inject(ServiceRoutes) private readonly routes: ServiceRoutes,
+    private readonly routes: SeaServiceRoutes,
     private readonly persistence: PersistenceService,
     private readonly spawner: ChildSpawner,
     private readonly lifecycles: ServiceLifecycleFactory,

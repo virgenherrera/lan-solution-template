@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { type ChildEntry, ChildRegistry } from '../interfaces/child-registry.js';
+import type { ChildEntry } from '../interfaces/child-entry.js';
 
 @Injectable()
-export class InMemoryChildRegistry extends ChildRegistry {
+export class InMemoryChildRegistry {
   private readonly byId = new Map<string, ChildEntry>();
 
   recordSpawn(id: string, pid: number | undefined): void {

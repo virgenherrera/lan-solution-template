@@ -15,5 +15,5 @@ export class GatewayConfigSource {
   static readonly file = configFileSource(this.paths);
 
   // The persisted blocks plus the `server` block from argv. The file stays strict: a `server` key in it is an unknown root key.
-  static readonly read = (): unknown => ({ ...this.file(), server: ServerConfig.fromArgv(process.argv.slice(2)) });
+  static readonly read = (): unknown => ({ ...this.file(), server: ServerConfig.fromArgv(process.argv) });
 }

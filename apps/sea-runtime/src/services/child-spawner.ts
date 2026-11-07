@@ -3,7 +3,7 @@ import { InjectLogger, type Logger } from 'shared-core';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { serviceArgs, spawnedMessage, type ServiceEntry } from 'service-registry';
 import { WebBundleService } from './web-bundle.service.js';
-import { ChildRegistry } from '../interfaces/child-registry.js';
+import { InMemoryChildRegistry } from './in-memory-child-registry.js';
 import { treeSpawnOptions } from '../supervisor/process-tree.js';
 
 // Spawns one process of a service with the IPC control channel. Called again on every restart.
@@ -13,7 +13,7 @@ export class ChildSpawner {
 
   constructor(
     private readonly web: WebBundleService,
-    private readonly registry: ChildRegistry,
+    private readonly registry: InMemoryChildRegistry,
   ) {}
 
   spawn(route: ServiceEntry): ChildProcess {

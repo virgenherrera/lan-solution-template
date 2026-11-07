@@ -4,12 +4,11 @@ import { InjectLogger, provideLogger } from 'shared-core';
 import { AGGREGATE_STATE, CONTROL_KIND, EXIT_CODE, readyMessageSchema, shutdownMessageSchema } from 'service-registry';
 import { AppBootstrap } from './app.bootstrap.js';
 import { GATEWAY_NAME } from './constants/gateway-name.js';
+import type { AppContext } from './interfaces/app-context.js';
 import { HealthState } from './services/health-state.js';
 import { createRedirectServer } from './redirect-listener.js';
 import { receiveWebBundle } from './web-bundle.js';
 import { createWebHandler } from './web-handler.js';
-
-type AppContext = Awaited<ReturnType<typeof AppBootstrap.createAppContext>>;
 
 class HttpAppMain {
   @InjectLogger() private declare readonly logger: Logger;

@@ -41,7 +41,7 @@ function planRestart(policy: RestartPolicy, ranMs: number, now: number, config: 
 }
 
 // Owns one service: spawn, exit handling and the restart budget (REQ-RUNTIME-05).
-// Jitter source and clock are injectable so the delays can be driven and measured.
+// The jitter source and the clock default to Math.random and Date.now.
 export class ServiceLifecycle {
   status: ServiceStatus = SERVICE_STATUS.starting;
   child?: ChildProcess;
@@ -79,8 +79,8 @@ export class ServiceLifecycle {
       this.child = child;
       const spawnedAt = this.now();
       // Every listener ends with this child, so its late events cannot touch the next one.
-      const exit$ = fromEvent<ExitArgs>(child, 'exit').pipe(take(1));
-      const ready$ = fromEvent<MessageArgs>(child, 'message').pipe(
+      const exit$ = fromEvent(child, 'exit', (...args): ExitArgs => args as ExitArgs).pipe(take(1));
+      const ready$ = fromEvent(child, 'message', (...args): MessageArgs => args as MessageArgs).pipe(
         filter(([message]) => readyMessageSchema.safeParse(message).success),
         takeUntil(exit$),
       );

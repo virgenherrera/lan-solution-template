@@ -8,7 +8,7 @@ import {
   stateMessageSchema,
   type AggregateState,
 } from 'service-registry';
-import { ChildRegistry } from '../interfaces/child-registry.js';
+import { InMemoryChildRegistry } from './in-memory-child-registry.js';
 import { SidecarOutput } from './sidecar-output.js';
 import { type ServiceLifecycle } from './service-lifecycle.js';
 
@@ -21,7 +21,7 @@ export class StatusPublisher {
 
   constructor(
     private readonly output: SidecarOutput,
-    private readonly registry: ChildRegistry,
+    private readonly registry: InMemoryChildRegistry,
   ) {}
 
   // From now on the aggregate state is stopping, whatever the services report.
