@@ -3,7 +3,7 @@ fmt: TOON
 doc: docs/backlog/td-nest-di-by-class.md
 title: "Technical debt: Nest DI by class"
 type: backlog
-summary: "Resolved technical debt: the supervisor providers CLOCK, RANDOM and SERVICE_ROUTES became the abstract classes Clock, Random and ServiceRoutes. Verified."
+summary: "Resolved technical debt: the supervisor string tokens CLOCK, RANDOM and SERVICE_ROUTES were replaced by injection by class. A single-implementation service is a concrete class in providers. Verified."
 ids[0]:
 related[3]: docs/backlog/README.md,docs/results/POC-06-Result.md,docs/backlog/persistence-system.md
 status: current
@@ -44,7 +44,7 @@ updated: 2026-11-05
 
 Resolved and verified.
 
-- [x] `CLOCK`, `RANDOM` and `SERVICE_ROUTES` are now the abstract classes `Clock`, `Random` and `ServiceRoutes`, with the implementations `SystemClock`, `SystemRandom` and `SeaServiceRoutes` injected with `useClass` (strategy pattern). `ServiceLifecycle` is unchanged. Verified (build, lint, test:static, test:dynamic, smoke-pg; `smoke-sea` 30 checks in 2 of 3 runs, the other hit an unrelated flake).
+- [x] `CLOCK`, `RANDOM` and `SERVICE_ROUTES` were replaced by injection by class. `SeaServiceRoutes` is now a concrete `@Injectable()` class listed directly in `providers`. `Clock` and `Random` were later removed in favor of the `Date.now` and `Math.random` defaults. Rule: a service with one implementation is a concrete class. Only a provider with several real implementations chosen at runtime (today `AssetSource`) uses an abstract class token with `useClass`. Verified (build, lint, test:static, test:dynamic, smoke-pg; `smoke-sea` 30 checks in 2 of 3 runs, the other hit an unrelated flake).
 - [x] [persistence-system](persistence-system.md) (line 88, task T3) no longer names `DATABASE_ADAPTER`.
 
 ---

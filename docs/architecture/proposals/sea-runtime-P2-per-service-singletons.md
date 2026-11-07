@@ -49,38 +49,37 @@ Evidence is at commit `e88d01d` on branch `minor/poc-06-sea-runtime-refactor`.
 
 ### The rule and the honest tension
 
-Human rules: every service is a singleton injectable; the token is an abstract class; `useClass` appears in the module only.
+Human rules: every service is a singleton injectable. A service with one implementation is a concrete `@Injectable()` class listed directly in `providers`. Only a provider with several real implementations chosen at runtime uses an abstract class as the token with `{ provide, useClass }`. Today that is `AssetSource` (`SeaAssetSource` or `FsAssetSource`) in `apps/sea-runtime/src/modules/persistence.module.ts`.
 
-Already true today: `Clock`, `Random` and `ServiceRoutes` follow the rule (`apps/sea-runtime/src/supervisor/supervisor.module.ts:19-21`).
+Already true today: `SeaServiceRoutes` is a concrete class listed in `providers`. `Clock` and `Random` no longer exist as providers: `ServiceLifecycle` defaults to `Date.now` and `Math.random`.
 
-The tension: "one provider per service id" means the number of providers depends on data, while an abstract class token names one provider. Three ways to resolve it, with their cost:
+The tension: "one provider per service id" means the number of providers depends on data, while a concrete class names one provider. Three ways to resolve it, with their cost:
 
 | Option | Token | Keeps the rule? | Cost |
 | --- | --- | --- | --- |
-| A. String or symbol token per id, `useFactory` | `'service:api-gateway'` | No: not an abstract class, not `useClass` | Breaks both human rules. Rejected. |
-| B. One generated concrete class per id, extending an abstract port | the generated class | Yes in form: `useClass: generated`. | The class is created at runtime by a class factory. No static symbol to import unless the class is exported as a module-scope const. Constructor injection of its dependencies must be declared programmatically (`Inject(token)(cls, undefined, index)`), because TypeScript emits no `design:paramtypes` for runtime classes. A QC spike on `@nestjs/core` 12.3.2 showed this works. |
+| A. String or symbol token per id, `useFactory` | `'service:api-gateway'` | No: not a class listed in `providers` | Breaks the rule. Rejected. |
+| B. One generated concrete class per id, extending an abstract port | the generated class | Yes in form: the generated class is listed directly in `providers`. | The class is created at runtime by a class factory. No static symbol to import unless the class is exported as a module-scope const. Constructor injection of its dependencies must be declared programmatically (`Inject(token)(cls, undefined, index)`), because TypeScript emits no `design:paramtypes` for runtime classes. A QC spike on `@nestjs/core` 12.3.2 showed this works. |
 | C. One singleton `ManagedServices` that builds N plain objects | `ManagedServices` | Yes | That is not "each service is a singleton provider". It is the current `SupervisorService` plus a map. Not P2. |
 
 P2 uses option B. Be clear about what it buys and what it breaks:
 
-- Buys: each service is a real Nest singleton with its own constructor injection of `Clock`, `Random`, `ChildSpawner`, `ProcessTree`.
-- Breaks: no consumer injects a single service by a compile-time class symbol, because the class does not exist at compile time. The aggregate gets them through one abstract `ManagedServiceSet` token, whose `useFactory` collects the generated classes. That `useFactory` is a second exception to "useClass only". It must stay inside the dynamic module and be listed here as a known deviation.
+- Buys: each service is a real Nest singleton with its own constructor injection of `ChildSpawner`, `ProcessTree`.
+- Breaks: no consumer injects a single service by a compile-time class symbol, because the class does not exist at compile time. The aggregate gets them through one `ManagedServiceSet` provider, whose `useFactory` collects the generated classes. That `useFactory` is an exception to "concrete classes listed in `providers`". It must stay inside the dynamic module and be listed here as a known deviation.
 - Breaks: provider count is fixed when the module graph is built. Routes must be known then (see [Risks](#risks)).
 
 ### Provider map
 
-| Token (abstract class) | Provided by (module only) | Lifetime | Owns |
+| Provider | Registration | Lifetime | Owns |
 | --- | --- | --- | --- |
-| `Clock` (exists) | `SystemClock` via `useClass` (`supervisor.module.ts:19`) | singleton | time |
-| `Random` (exists) | `SystemRandom` via `useClass` (`:20`) | singleton | jitter source |
-| `ServiceRoutes` (exists) | `SeaServiceRoutes` via `useClass` (`:21`) | singleton | route list |
+| `Clock`, `Random` (removed) | none: `ServiceLifecycle` defaults to `Date.now` and `Math.random` | n/a | time and jitter source |
+| `SeaServiceRoutes` (exists, concrete class) | listed in `providers` | singleton | route list |
 | `ManagedService` (new, abstract, base of all generated classes) | not provided itself | n/a | the per-service contract |
-| `ServiceProcessFor(id)` (new, generated, one per route) | `ServiceModule.forRoutes(routes)`, `useClass: generated` | singleton, one per id | lifecycle, pid, restart total, state, child handle (private) |
-| `ManagedServiceSet` (new, abstract) | `ServiceModule`, `useFactory` over the generated classes (documented deviation) | singleton | ordered list of services; start order from `startupOrder(routes)` |
-| `ServiceRegistry` (new, abstract) | `ServiceModule`, `useClass: AggregateServiceRegistry` | singleton | thin aggregate: `snapshot()`, `changes$`, aggregate state |
-| `ChildSpawner` (exists, `child-spawner.ts:11`) | plain provider | singleton | spawns one process; now returns the handle to the service that asked, nobody else keeps it |
-| `ProcessTree` (new injectable replacing free functions) | plain provider | singleton | `stopTree`, `treeSpawnOptions` as methods |
-| `StatusPublisher` (exists, `status-publisher.ts:16`) | plain provider | singleton | subscribes to `ServiceRegistry.changes$`; writes stderr, stdout event, IPC broadcast |
+| `ServiceProcessFor(id)` (new, generated, one per route) | `ServiceModule.forRoutes(routes)`, generated class listed in `providers` | singleton, one per id | lifecycle, pid, restart total, state, child handle (private) |
+| `ManagedServiceSet` (new, concrete) | `ServiceModule`, `useFactory` over the generated classes (documented deviation) | singleton | ordered list of services; start order from `startupOrder(routes)` |
+| `AggregateServiceRegistry` (new, concrete class) | listed in `providers` of `ServiceModule` | singleton | thin aggregate: `snapshot()`, `changes$`, aggregate state |
+| `ChildSpawner` (exists, `child-spawner.ts:11`) | concrete class listed in `providers` | singleton | spawns one process; now returns the handle to the service that asked, nobody else keeps it |
+| `ProcessTree` (new injectable replacing free functions) | concrete class listed in `providers` | singleton | `stopTree`, `treeSpawnOptions` as methods |
+| `StatusPublisher` (exists, `status-publisher.ts:16`) | concrete class listed in `providers` | singleton | subscribes to `AggregateServiceRegistry.changes$`; writes stderr, stdout event, IPC broadcast |
 | `SnapshotResponder` (new) | `SidecarModule` | singleton | answers a `snapshot` command on stdout |
 | `SupervisorService` (exists, `supervisor.service.ts:16`) | plain provider | singleton | boot order and shutdown only; no private array |
 
@@ -110,15 +109,16 @@ export abstract class ManagedService {
 }
 
 // apps/sea-runtime/src/supervisor/managed-service-set.ts (new)
-export abstract class ManagedServiceSet {
-  abstract readonly services: readonly ManagedService[]; // startup order
+export class ManagedServiceSet {
+  readonly services!: readonly ManagedService[]; // startup order
 }
 
 // apps/sea-runtime/src/supervisor/service-registry.ts (new)
-export abstract class ServiceRegistry {
-  abstract snapshot(): readonly ServiceSnapshot[];
-  abstract readonly changes$: Observable<readonly ServiceSnapshot[]>;
-  abstract state(): AggregateState;
+@Injectable()
+export class AggregateServiceRegistry {
+  snapshot(): readonly ServiceSnapshot[] { /* ... */ }
+  readonly changes$!: Observable<readonly ServiceSnapshot[]>;
+  state(): AggregateState { /* ... */ }
 }
 
 // apps/sea-runtime/src/supervisor/service-module.ts (new)
@@ -129,11 +129,11 @@ export class ServiceModule {
     return {
       module: ServiceModule,
       providers: [
-        ...classes.map((useClass) => ({ provide: useClass, useClass })),
+        ...classes,
         { provide: ManagedServiceSet, useFactory: (...services: ManagedService[]) => ({ services }), inject: classes },
-        { provide: ServiceRegistry, useClass: AggregateServiceRegistry },
+        AggregateServiceRegistry,
       ],
-      exports: [ServiceRegistry, ManagedServiceSet],
+      exports: [AggregateServiceRegistry, ManagedServiceSet],
     };
   }
 }
@@ -154,7 +154,7 @@ Two new kinds in `SIDECAR_KIND`, both strict zod objects, additive to ADR-006:
 
 - The existing `status` event stays unchanged. `snapshot` is pull; `status` stays push.
 - `SupervisorService` today treats every command as shutdown (`supervisor.service.ts:37-40`). That `next` handler must route by `kind`. This is a behavior change in code shared with the existing `shutdown` command, so it needs a test that `shutdown` still works.
-- The response is built from `ServiceRegistry.snapshot()`: a read of in-memory state, no spawn, no I/O.
+- The response is built from `AggregateServiceRegistry.snapshot()`: a read of in-memory state, no spawn, no I/O.
 
 ## Exposure and security
 

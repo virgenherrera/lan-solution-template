@@ -34,7 +34,7 @@ Scope: `apps/sea-runtime/src`. Siblings: P1 and P2 (paths in the metadata block;
 Human rules this proposal is judged against:
 
 1. Every service is a singleton injectable.
-2. An abstract class is the token; `useClass` appears in the module only.
+2. A service with one implementation is a concrete `@Injectable()` class listed directly in `providers`. Only a provider with several real implementations chosen at runtime uses an abstract class as the token with `{ provide, useClass }`.
 3. A blackbox smoke asserts effects, not logs.
 
 Facts, all read from the current tree:
@@ -45,7 +45,7 @@ Facts, all read from the current tree:
 - The child handle is a public field of `ServiceLifecycle` (`service-lifecycle.ts:47`, assigned at `:79`). `StatusPublisher` reads it to send IPC state (`apps/sea-runtime/src/supervisor/status-publisher.ts:37-39`).
 - The status event carries `id` and `status` only: `status-publisher.ts:35` and `libs/service-registry/src/status-snapshot.ts:10`. The event schema is strict (`libs/service-registry/src/sidecar-protocol.ts:14`).
 - Consequence for the smoke: `tools/scripts/smoke-sea.ts:143-146` recovers pids by matching `SPAWNED_PATTERN` on stderr lines. That is a log-derived assertion, against rule 3.
-- Already Nest-native: `Clock`, `Random`, `ServiceRoutes` use an abstract class plus `useClass` in `apps/sea-runtime/src/supervisor/supervisor.module.ts:19-21`.
+- Already Nest-native: `SeaServiceRoutes` is a concrete class listed in `providers`. `Clock` and `Random` no longer exist as providers: `ServiceLifecycle` defaults to `Date.now` and `Math.random`.
 - DI bypasses that P3 does not touch:
   - `spawn`, `process.execPath`, `process.stderr` in `child-spawner.ts:20,27,28`.
   - Free functions with `spawn taskkill`, `process.kill`, `Date.now` in `apps/sea-runtime/src/supervisor/process-tree.ts` (the `stopTree` and `treeSpawnOptions` exports are imported as functions at `supervisor.service.ts:10` and `child-spawner.ts:7`).
@@ -61,15 +61,14 @@ Idea: the spawn hook already runs once per child, on every restart (`child-spawn
 
 ### Provider map
 
-| Token | Kind | Binding | Change |
+| Provider | Kind | Registration | Change |
 | --- | --- | --- | --- |
-| `ChildRegistry` | abstract class, NEW | `{ provide: ChildRegistry, useClass: InMemoryChildRegistry }` in `SupervisorModule` | records one `ChildEntry` per service |
-| `InMemoryChildRegistry` | injectable, NEW | `useClass` target only | `Map<string, ChildEntry>` |
+| `InMemoryChildRegistry` | concrete injectable, NEW | listed in `providers` of `SupervisorModule` | records one `ChildEntry` per service in a `Map<string, ChildEntry>` |
 | `ChildSpawner` | injectable, exists | plain provider (`supervisor.module.ts:23`) | calls `registry.recordSpawn(id, pid)` after `spawn` |
 | `StatusPublisher` | injectable, exists | plain provider (`:24`) | reads `registry.snapshot()` and adds `pid` to the event |
-| `ServiceLifecycleFactory`, `SupervisorService`, `Clock`, `Random`, `ServiceRoutes` | exists | unchanged | none |
+| `ServiceLifecycleFactory`, `SupervisorService`, `SeaServiceRoutes` | exists | unchanged | none |
 
-Rule 1: `InMemoryChildRegistry` is a normal Nest singleton. Rule 2: the module is the only place that names `InMemoryChildRegistry`; consumers inject `ChildRegistry`.
+Rule 1: `InMemoryChildRegistry` is a normal Nest singleton. Rule 2: it has one implementation, so it is a concrete class listed directly in `providers`; consumers inject `InMemoryChildRegistry`.
 
 ### TypeScript contract
 
@@ -81,10 +80,11 @@ export interface ChildEntry {
   readonly restarts: number; // spawns after the first, since process start
 }
 
-export abstract class ChildRegistry {
+@Injectable()
+export class InMemoryChildRegistry {
   // Called by ChildSpawner once per spawn, restarts included. A pid-less spawn (spawn failure) is not recorded.
-  abstract recordSpawn(id: string, pid: number): void;
-  abstract entries(): readonly ChildEntry[];
+  recordSpawn(id: string, pid: number): void { /* ... */ }
+  entries(): readonly ChildEntry[] { /* ... */ }
 }
 ```
 
@@ -123,7 +123,7 @@ One existing behaviour to keep in view: `publish` returns early when the aggrega
 
 Each unit is one commit, with the behaviour it needs. Order matters.
 
-1. `ChildRegistry` abstract class, `InMemoryChildRegistry`, module binding. No consumer yet. About 40 lines.
+1. `InMemoryChildRegistry` concrete class, listed in `providers`. No consumer yet. About 40 lines.
 2. `ChildSpawner` records the spawn. `restarts` derives from the count of prior records for the id. About 15 lines.
 3. Schema: optional `pid` in `statusSnapshotSchema`. `StatusPublisher` fills it and compares the services list before the early return. Docs: ADR-006 contract text. About 30 lines.
 4. `smoke-sea.ts` reads pids from events and asserts them. Removes the `SPAWNED_PATTERN` dependency for pids. About 30 lines.
@@ -189,7 +189,7 @@ Mutation 5 is the one a log-based smoke would never catch; it needs the event-ba
   - The child handle stays public on `ServiceLifecycle`. The registry does not replace it.
   - Startup failures before the Nest graph exists (`main.ts`, `sea-entry.ts`) stay outside any provider; that boundary is irreducible in all three proposals.
 - Why it may be acceptable: the pid and restart gap is the only one that blocks a blackbox effect assertion today. The other bypasses hurt in-process substitution. [REQ-TEST-01](../../requirements/11-nx-quality-testing.md) already rules out in-process suites, so the cost of those bypasses is paid in elegance and rule 2 compliance, not in test power.
-- Why it may not be acceptable: the human rules say every service is an injectable and the token is an abstract class. Leaving `isSea()` and `process.*` in code paths breaks that rule's intent. P3 passes the letter for one new provider and fails the spirit for the module as a whole. If the rule is a goal and not a per-provider check, P1 or P2 is needed anyway, and P3 becomes unit 1 of them.
+- Why it may not be acceptable: the human rules say every service is an injectable and a single-implementation service is a concrete class in `providers`. Leaving `isSea()` and `process.*` in code paths breaks that rule's intent. P3 passes the letter for one new provider and fails the spirit for the module as a whole. If the rule is a goal and not a per-provider check, P1 or P2 is needed anyway, and P3 becomes unit 1 of them.
 - Stale registry if a spawn path bypasses `ChildSpawner`.
 - Event contract: strict schema on the host side may reject the new key.
 - Two meanings of "restarts" (monotonic vs windowed). Mitigated by naming; not removed.

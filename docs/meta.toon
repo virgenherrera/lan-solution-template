@@ -470,7 +470,7 @@ docs[101]:
   - doc: docs/backlog/td-nest-di-by-class.md
     title: "Technical debt: Nest DI by class"
     type: backlog
-    summary: "Resolved technical debt: the supervisor providers CLOCK, RANDOM and SERVICE_ROUTES became the abstract classes Clock, Random and ServiceRoutes. Verified."
+    summary: "Resolved technical debt: the supervisor string tokens CLOCK, RANDOM and SERVICE_ROUTES were replaced by injection by class. A single-implementation service is a concrete class in providers. Verified."
     ids: []
     related[3]: docs/backlog/README.md,docs/results/POC-06-Result.md,docs/backlog/persistence-system.md
     status: current
