@@ -25,7 +25,7 @@ Before writing anything, name where the output goes and read the standard of tha
 
 - Docs: `docs/standards/README.md` (metadata block v1, English prose, regenerate `docs/meta.toon`).
 - Code: [ADR-013](docs/architecture/adr/ADR-013-nest-standalone-architecture.md) and the sibling files of the same app. Generate project files with the CLI. Match their naming and comment density.
-- Tests: the Tests rule above. App-level black box, mocks only at the system edges, spy-style assertions, and one Arrange, Act, Assert flow per test. The AAA flow is a human instruction; the SRS does not state it yet.
+- Tests: the Tests rule above. App-level black box, mocks only at the system edges, spy-style assertions, and one Arrange, Act, Assert flow per test (REQ-TEST-01).
 - Commits and pull requests: the Commits section. No attribution.
 - Answers to the human: answer the question asked, first and short. Do not list the human's own policies as gaps. Do not pass work off as out of scope when the human asked for it or it was started. Do not repeat a reminder the human already declined.
 - Delegated work: a brief that builds binaries, worktrees or containers makes the agent delete the artifacts when done, run `df` before and after, and keep scratch under about 1 GB; compare with `sha256` instead of keeping copies. Say which question the agent answers and check that no earlier result already answers it. If Docker is needed and not running, start it.
