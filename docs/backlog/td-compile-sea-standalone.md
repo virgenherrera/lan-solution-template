@@ -73,7 +73,7 @@ Counts come from `rg -c` over each file and count matching lines, not call sites
 
 | File | Lines | `console.` | `process.exit` | `parseArgs` | `process.argv` |
 |---|---|---|---|---|---|
-| `tools/scripts/branch-name.ts` | 49 | 0 | 3 | 0 | 1 |
+| `tools/scripts/branch-name.ts` (moved to `apps/tools-cli`, file deleted) | 49 | 0 | 3 | 0 | 1 |
 | `tools/scripts/compile-sea.ts` | 498 | 7 | 1 | 2 | 1 |
 | `tools/scripts/db-parity.ts` | 150 | 3 | 2 | 0 | 2 |
 | `tools/scripts/e2e-desktop.ts` | 85 | 3 | 1 | 0 | 0 |
@@ -159,6 +159,10 @@ flowchart LR
         E --> X[catch: log + EXIT_CODE]
     end
 ```
+
+### Progress
+
+- 2026-11-09: `apps/tools-cli` exists (Nest standalone, `nest-commander` 3.21.0, ADR-013 entrypoint). `branch-name` is the first command: `pnpm tools branch-name [<branch>]`, called by `pnpm release:branch`. `tools/scripts/branch-name.ts` is deleted. The output and exit codes are the same as the old script, with one difference: `--help` and `-h` print the command help and exit 0, where the old script rejected them as a branch name (exit 1). Usage errors from commander (an unknown command) exit 2. The other scripts have not moved.
 
 ---
 

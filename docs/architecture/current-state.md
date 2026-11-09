@@ -32,10 +32,10 @@ updated: 2026-11-09
 
 | Question | Answer | Section |
 | --- | --- | --- |
-| What exists? | Four apps, three libs, and loose scripts and configs under `tools/` | [Component map](#component-map) |
+| What exists? | Five apps, three libs, and loose scripts and configs under `tools/` | [Component map](#component-map) |
 | Where does the human want to go? | One APP suite per app under `./tests/<app>/`; no unit or integration tests | [Direction](#direction) |
 | What is missing? | A real runner for the smoke scripts, a `tools/scripts` tsconfig, desktop and web tests | [Gaps](#gaps) |
-| What is not decided? | The sea-runtime APP suite design, nest-commander, Playwright for web-angular, the later app rename | [Open decisions](#open-decisions) |
+| What is not decided? | The sea-runtime APP suite design, Playwright for web-angular, the later app rename | [Open decisions](#open-decisions) |
 | What was decided about test doubles? | Real database, temp base path for files | [Decided](#decided) |
 | How far are the ADRs built? | Counts per ADR | [ADR implementation status](#adr-implementation-status) |
 
@@ -63,6 +63,7 @@ This page says what exists now and where the human decided to move. It is not a 
 | `libs/service-registry` | Closed service registry, dispatcher, startup order and aggregate state. | Library, bundled into the supervisor and the dispatcher. | `tsc --noEmit` only. `test:dynamic` is an `echo`. |
 | `libs/db-migrations` | Drizzle migrations and descriptors for the sqlite and pg engines. | Library; the SQL is built ahead of time and embedded in the SEA. | `tsc --noEmit`; `parity` runs `tools/scripts/db-parity.ts`; `drift:sqlite` and `drift:pg` use `git diff --exit-code`. |
 | `tools/scripts` | Seventeen loose Node scripts: build, smoke, verify, release and installer helpers. | Node scripts started by package scripts and Nx targets; some run by hand. | `test-filter.ts` adapts to Jest; the smoke scripts are their own checks. No other test. |
+| `apps/tools-cli` | Nest standalone CLI (`nest-commander`) that replaces `tools/scripts` command by command. Today it holds `branch-name` (REQ-VERSION-02). | Built with `nx build tools-cli`; run with `pnpm tools <command>` (`pnpm release:branch` calls it). | `tsc --noEmit` only. No test files. |
 | `tools/rspack` | One rspack config for the Nest bundle (`tools/rspack/nest.config.ts`). | Build time, read by the bundler. | Not tested. |
 | `tools/vector` | The pinned sqlite-vector asset table (`tools/vector/sqlite-vector-1.1.2.json`). | Data file read by `compile-sea.ts`. | Not tested. |
 
@@ -111,7 +112,7 @@ The target layout is `./tests/<app>/`, one folder per app. `<app>` is the app's 
 
 - `web-angular`: Playwright setup. `ng add playwright-ng-schematics` is a candidate. Not verified that it fits the current Angular version (the repo pins Angular through `catalog:angular` in `pnpm-workspace.yaml`).
 - `sea-runtime`: to investigate and design. A hypothesis: a Jest black-box suite against the runtime in a child process. A possible two-level split: the compiled runtime, and the real SEA binary ([REQ-TEST-07](../requirements/11-nx-quality-testing.md) requires the compiled binary). A rebuild of the SEA costs about 3 minutes. `pnpm test -- --filter @app` selects nothing for `sea-runtime` today, because the smoke runs in `package` (see [POC-2g](../results/POC-02g-real-binary-smoke.md)).
-- `tools/scripts`: intended to become one CLI app instead of loose scripts. `nest-commander` is a candidate. Not verified. See [TD-TOOLS-01](../backlog/td-compile-sea-standalone.md).
+- `tools/scripts`: becoming one CLI app, `apps/tools-cli`, built on `nest-commander` 3.21.0 (the human decided on 2026-11-09). `branch-name` is the first command; the other scripts follow one by one. See [TD-TOOLS-01](../backlog/td-compile-sea-standalone.md).
 - vitest is not part of the plan. The vitest entry in `apps/sea-runtime/package.json` is unused: no vitest config and no test file exist.
 
 ---
@@ -133,12 +134,11 @@ The target layout is `./tests/<app>/`, one folder per app. `<app>` is the app's 
 
 [Back to navigation](#navigation)
 
-These four belong to the human. This page changes none of them.
+These three belong to the human. This page changes none of them.
 
 1. The design of the `sea-runtime` APP suite: runner, compiled bundle versus the real SEA binary, and the rebuild cost of about 3 minutes.
-2. Whether `tools/scripts` becomes a `nest-commander` app or a plain class.
-3. The Playwright setup for `web-angular`.
-4. The later rename of the apps to self-descriptive names. It renames the `tests/<app>` folders.
+2. The Playwright setup for `web-angular`.
+3. The later rename of the apps to self-descriptive names. It renames the `tests/<app>` folders.
 
 ### Decided
 
