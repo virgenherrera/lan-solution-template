@@ -74,13 +74,13 @@ Counts come from `rg -c` over each file and count matching lines, not call sites
 | File | Lines | `console.` | `process.exit` | `parseArgs` | `process.argv` |
 |---|---|---|---|---|---|
 | `tools/scripts/branch-name.ts` (moved to `apps/tools-cli`, file deleted) | 49 | 0 | 3 | 0 | 1 |
-| `tools/scripts/compile-sea.ts` | 498 | 7 | 1 | 2 | 1 |
-| `tools/scripts/db-parity.ts` | 150 | 3 | 2 | 0 | 2 |
+| `tools/scripts/compile-sea.ts` (moved to `apps/tools-cli`, file deleted) | 498 | 7 | 1 | 2 | 1 |
+| `tools/scripts/db-parity.ts` (moved to `apps/tools-cli`, file deleted) | 150 | 3 | 2 | 0 | 2 |
 | `tools/scripts/e2e-desktop.ts` | 85 | 3 | 1 | 0 | 0 |
 | `tools/scripts/generate-certs.ts` (moved to `apps/tools-cli`, file deleted) | 34 | 5 | 1 | 2 | 0 |
-| `tools/scripts/installer-build.ts` | 12 | 1 | 0 | 0 | 0 |
-| `tools/scripts/installer-macos.ts` | 120 | 1 | 0 | 0 | 0 |
-| `tools/scripts/pack-migrations.ts` | 158 | 2 | 1 | 0 | 2 |
+| `tools/scripts/installer-build.ts` (moved to `apps/tools-cli`, file deleted) | 12 | 1 | 0 | 0 | 0 |
+| `tools/scripts/installer-macos.ts` (moved to `apps/tools-cli`, file deleted) | 120 | 1 | 0 | 0 | 0 |
+| `tools/scripts/pack-migrations.ts` (moved to `apps/tools-cli`, file deleted) | 158 | 2 | 1 | 0 | 2 |
 | `tools/scripts/release-version-actions.ts` | 137 | 0 | 0 | 0 | 0 |
 | `tools/scripts/smoke-dev.ts` | 202 | 4 | 1 | 0 | 0 |
 | `tools/scripts/smoke-pg.ts` | 377 | 4 | 2 | 2 | 0 |
@@ -162,6 +162,7 @@ flowchart LR
 
 ### Progress
 
+- 2026-11-09: `pack-migrations`, `compile-sea`, `installer-macos`, `installer-build` and `db-parity` are now `apps/tools-cli` commands and their scripts are deleted. `compile-sea` is split into `SeaPaths`, `SeaTargetService`, `NodeEngineService`, `SeaDependenciesService`, `SeaAssetsService` and `SeaBundlerService` under `apps/tools-cli/src/sea`; it takes the migration asset names from `MigrationPackService` and the pkg steps of `installer-build` come from `MacosPkgService`, with no spawn between commands. `tools-cli` depends on `db-migrations` (workspace) and `shared-core` exports `shared-core/pg`. Rspack, `tools/rspack/nest.config.ts` and `apps/sea-runtime/src/services.ts` load at run time outside the CLI bundle. `sea-runtime:package`, `desktop:package` and the `db-migrations` `parity` target run the built CLI and depend on `tools-cli:build`. Native SEA build, old against new: `dist/sea-package/` identical, the executable has the same size (the bytes differ), stdout and exit code equal, `smoke-sea.ts` passes 30 checks. Differences: a failure that threw (installer inputs) prints `tools-cli: <message>` instead of a stack trace; the `compile-sea` usage line and the pack-migrations hints name `tools-cli`; `--help` and `-h` print the command help and exit 0; the "build first" checks for `db-migrations` and `shared-core` output are gone, because `tools-cli:build` builds them. Not verified: the PostgreSQL path of `db-parity` against a live server (no Docker daemon; the connection-error paths match the old script), the non-macOS branch of `installer-build`, and cross builds.
 - 2026-11-09: `generate-certs`, `stage-sidecar`, `test-filter`, `trust-ca` and `version-check` are now `apps/tools-cli` commands and their scripts are deleted. `package.json` (`dev:certs`, `dev:trust`, `release:check`, `test`), `apps/desktop` and the spawn strings of the smoke, verify and e2e scripts call the built CLI (`node apps/tools-cli/dist/main.js <command>`). `desktop:build`, `desktop:package` and `sea-runtime:package` depend on `tools-cli:build`. `tools-cli` depends on `shared-core`, which exports `shared-core/tls/generate` for `generate-certs` only. `release-version-actions.ts` stays a script: Nx loads it by path as a version-actions module (`nx.json`), so it must stay a loadable module with a default-exported class. Differences: a failure that threw (missing file) prints `tools-cli: <message>` instead of a stack trace; the usage line names `tools-cli <command>`; `--help` and `-h` print the command help and exit 0; help prints `tools-cli` instead of `main`.
 - 2026-11-09: `apps/tools-cli` exists (Nest standalone, `nest-commander` 3.21.0, ADR-013 entrypoint). `branch-name` is the first command: `pnpm tools branch-name [<branch>]`, called by `pnpm release:branch`. `tools/scripts/branch-name.ts` is deleted. The output and exit codes are the same as the old script, with one difference: `--help` and `-h` print the command help and exit 0, where the old script rejected them as a branch name (exit 1). Usage errors from commander (an unknown command) exit 2. The other scripts have not moved.
 
@@ -185,11 +186,11 @@ Open, for the human. Not decided by this page.
 
 Check these on a native build, before and after the change, on the same machine.
 
-- [ ] `services.json` under `dist/sea-package/` has the same SHA-256 before and after.
-- [ ] `pnpm nx run sea-runtime:package` exits 0. Its command chain includes `compile-sea.ts` and `smoke-sea.ts` (`apps/sea-runtime/package.json:69`).
-- [ ] The smoke suites that read the SEA binary exit 0.
-- [ ] The build prints no `console.log` or `console.error` call. `rg -n 'console\.' tools/scripts/compile-sea.ts` finds nothing in the changed code.
-- [ ] `rg -n 'process\.argv|process\.exit' tools/scripts/compile-sea.ts` finds nothing.
+- [x] `services.json` under `dist/sea-package/` has the same SHA-256 before and after (2026-11-09: the whole `dist/sea-package/` tree is identical).
+- [x] `pnpm nx run sea-runtime:package` exits 0. Its command chain includes `tools-cli compile-sea` and `smoke-sea.ts` (`apps/sea-runtime/package.json`).
+- [x] The smoke suites that read the SEA binary exit 0 (`smoke-sea.ts`: 30 checks passed).
+- [x] The build prints no `console.log` or `console.error` call. `rg -n 'console\.' apps/tools-cli/src/sea apps/tools-cli/src/commands/compile-sea.command.ts` finds nothing.
+- [x] `rg -n 'process\.argv|process\.exit' apps/tools-cli/src/sea apps/tools-cli/src/commands/compile-sea.command.ts` finds nothing. The repository root comes from `RepoRoot`, the one reader of `process.argv`.
 - [ ] `rg -n 'console\.|process\.exit|parseArgs' tools/scripts` finds nothing outside the logger and the single entrypoint, once every script is converted.
 - [ ] A cross build without `--executable` and a native build with `--executable` both fail with the same messages as before.
 - [ ] The artifact name `<supervisor>-<triple>[.exe]` is unchanged, so `stage-sidecar.ts` and the installer read the same file.
