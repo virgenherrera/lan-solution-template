@@ -146,7 +146,7 @@ The working document with routes and evidence is kept outside the repository. Ta
 
 [Back to navigation](#navigation)
 
-The `desktop:package` target now ends with `node tools/scripts/installer-build.ts` (REQ-ECO-06: no new public script). On macOS it runs `pkgbuild` and `productbuild` ([installer-macos.ts](../../tools/scripts/installer-macos.ts)) and writes `apps/desktop/src-tauri/target/release/lan-solution-desktop-<version>-<triple>.pkg`. The version is the lockstep `package.json` version and the identifier is `identifier` from `tauri.conf.json`. On any other OS it prints `installer not implemented on <os>` and exits 0, so the native package stays valid ([debt](td-windows-linux-distribution.md)). Resources live in `apps/desktop/installer/macos/`.
+The `desktop:package` target now ends with `node apps/tools-cli/dist/main.js installer-build` (REQ-ECO-06: no new public script). On macOS it runs `pkgbuild` and `productbuild` ([installer-macos.ts](../../tools/scripts/installer-macos.ts)) and writes `apps/desktop/src-tauri/target/release/lan-solution-desktop-<version>-<triple>.pkg`. The version is the lockstep `package.json` version and the identifier is `identifier` from `tauri.conf.json`. On any other OS it prints `installer not implemented on <os>` and exits 0, so the native package stays valid ([debt](td-windows-linux-distribution.md)). Resources live in `apps/desktop/installer/macos/`.
 
 Decisions of the agent (delegated):
 

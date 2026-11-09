@@ -62,7 +62,7 @@ The debt: a build runs through an ad hoc `pnpm --filter` call instead of the dec
 
 [Back to navigation](#navigation)
 
-- The root `package.json` defines `dev:certs` as `pnpm --filter shared-core build && node tools/scripts/generate-certs.ts`.
+- The root `package.json` defines `dev:certs` as `pnpm --filter shared-core build && pnpm run tools generate-certs`.
 - `libs/shared-core/package.json` lists `"service-registry": "workspace:*"` under `dependencies`.
 - In a clean worktree, `pnpm dev:certs` fails with `TS2307`. `tsc` cannot find the module `service-registry`.
 - Running `pnpm --filter service-registry build` first removes the error.
@@ -99,7 +99,7 @@ The `nx.json` file sets `"dependsOn": ["^build"]` in the `build` target defaults
 Run every build through the declared Nx targets. Do not chain `pnpm --filter` calls.
 
 - Change `dev:certs` so the build step is the Nx `build` target of `shared-core`, for example `nx run shared-core:build`. The `^build` default then builds `service-registry` first.
-- Keep the second step, `node tools/scripts/generate-certs.ts`, unchanged. It is a distinguishable operation, as REQ-ECO-01 allows.
+- Keep the second step, `pnpm run tools generate-certs`, unchanged. It is a distinguishable operation, as REQ-ECO-01 allows.
 - Do not add a new script alias such as `build:certs`.
 - Review `dev:gateway` in the same change. It uses the same `pnpm --filter` form for `api-gateway`.
 
@@ -155,7 +155,7 @@ High-risk item 5, delivery or environment. The change edits a root script that e
 
 [Back to navigation](#navigation)
 
-- Changes to `tools/scripts/generate-certs.ts` or to the certificates it creates.
+- Changes to `tools-cli generate-certs` or to the certificates it creates.
 - Changes to `nx.json` target defaults.
 - A change to the README steps, unless the Nx call needs one.
 - The other ad hoc scripts in the root `package.json`, apart from the `dev:gateway` review above.

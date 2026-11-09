@@ -102,7 +102,7 @@ Observable:
 
 | File | Written by |
 |---|---|
-| `tools/scripts/smoke-sea.ts` | manual: no CLI generates a smoke script |
+| `apps/tools-cli/src/commands/smoke-sea.command.ts` | manual: no CLI generates a smoke script |
 | `apps/sea-runtime/package.json` | `pnpm pkg set` for the `package` target command; Nx targets have no generator |
 | `docs/results/POC-02g-real-binary-smoke.md`, `docs/meta.toon` | manual; regeneration command |
 | Docker images and commands | `docker run` of `debian:bookworm-slim` and `node:26.13.0-bookworm`, as in POC-1c. Nothing is installed on the host |
