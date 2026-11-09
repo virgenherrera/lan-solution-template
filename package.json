@@ -16,7 +16,7 @@
     "dev:trust": "node tools/scripts/trust-ca.ts",
     "release:version": "nx release version",
     "release:changelog": "nx release changelog",
-    "release:check": "node tools/scripts/version-check.ts",
+    "release:check": "pnpm run tools version-check",
     "release:branch": "pnpm run tools branch-name"
   },
   "license": "PostgreSQL",
