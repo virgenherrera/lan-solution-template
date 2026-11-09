@@ -119,12 +119,12 @@ docs[103]:
   - doc: docs/architecture/current-state.md
     title: Current state and direction
     type: architecture
-    summary: "What exists today per app, lib and tool, the human's test direction of 2026-11-09, and the gaps."
+    summary: "What exists today per app, lib and tool, the test model and layout direction, and the gaps."
     ids: []
     related[6]: docs/architecture/overview.md,docs/backlog/td-compile-sea-standalone.md,docs/backlog/README.md,docs/requirements/11-nx-quality-testing.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/platform-matrix.md
     status: current
     updated: 2026-11-09
-    refs[1]: REQ-TEST-01
+    refs[5]: REQ-TEST-01,REQ-TEST-04,REQ-TEST-05,REQ-TEST-07,REQ-TEST-08
   - doc: docs/architecture/declared-services.md
     title: Declared services contract
     type: architecture
@@ -475,7 +475,7 @@ docs[103]:
     related[6]: docs/architecture/current-state.md,docs/backlog/README.md,docs/backlog/nest-standalone-refactor.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/requirements/10-node-sea-distribution.md,docs/backlog/td-dev-certs-prebuild.md
     status: proposed
     updated: 2026-11-09
-    refs[4]: REQ-SEA-01,REQ-SEA-03,REQ-SEA-04,REQ-TEST-01
+    refs[3]: REQ-SEA-01,REQ-SEA-03,REQ-SEA-04
   - doc: docs/backlog/td-dev-certs-prebuild.md
     title: "Technical debt: dev:certs prebuild gap"
     type: backlog
