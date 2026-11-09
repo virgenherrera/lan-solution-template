@@ -3,7 +3,6 @@ import { BranchNameCommand } from './commands/branch-name.command.js';
 import { CompileSeaCommand } from './commands/compile-sea.command.js';
 import { DbParityCommand } from './commands/db-parity.command.js';
 import { E2eDesktopCommand } from './commands/e2e-desktop.command.js';
-import { E2eDesktopCommand } from './commands/e2e-desktop.command.js';
 import { GenerateCertsCommand } from './commands/generate-certs.command.js';
 import { InstallerBuildCommand } from './commands/installer-build.command.js';
 import { InstallerMacosCommand } from './commands/installer-macos.command.js';
