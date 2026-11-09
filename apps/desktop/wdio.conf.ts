@@ -1,4 +1,4 @@
-// WebdriverIO config for the native desktop E2E (REQ-TEST-08, AC-20). The desktop `package` step runs it through tools/scripts/e2e-desktop.ts, which builds the instrumented host and sets the DESKTOP_E2E_* variables.
+// WebdriverIO config for the native desktop E2E (REQ-TEST-08, AC-20). The desktop `package` step runs it through `tools-cli e2e-desktop`, which builds the instrumented host and sets the DESKTOP_E2E_* variables.
 // macOS has no native WKWebView driver, so the service's embedded WebDriver server is the provider. Windows and Linux (tauri-driver) are not verified.
 const app = process.env.DESKTOP_E2E_APP;
 if (!app) throw new Error('DESKTOP_E2E_APP is not set: run "pnpm exec nx run desktop:package"');
