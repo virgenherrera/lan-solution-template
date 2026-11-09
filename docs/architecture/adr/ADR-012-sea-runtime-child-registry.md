@@ -139,7 +139,7 @@ Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept
 |---|---|---|---|---|---|
 | Stage 1 P3: ChildRegistry fed by spawn hook, pid/restarts | Accepted in part | Implemented | confirmed | `apps/sea-runtime/src/services/in-memory-child-registry.ts:5-18`, `apps/sea-runtime/src/services/child-spawner.ts:28-30`, `apps/sea-runtime/src/services/status-publisher.ts:35-39` | none |
 | Stage 2: choose P1 children[] or P2 per-service singletons | Proposed (human decides) | Not implemented | confirmed | `libs/service-registry/src/schemas/sidecar-protocol.ts:8-11`, `apps/sea-runtime/src/services/service-lifecycle.factory.ts:8` | No children[] on the status event and no stdin snapshot command. Services are not per-service singleton providers: the factory creates ServiceLifecycle with new. Stage 2 is undecided. |
-| Smoke reads pids from events, includes kill-and-restart | Accepted in part | Implemented | confirmed | `tools/scripts/smoke-sea.ts:155-173`, `tools/scripts/smoke-pg.ts:110-112` | none |
+| Smoke reads pids from events, includes kill-and-restart | Accepted in part | Implemented | confirmed | `apps/tools-cli/src/commands/smoke-sea.command.ts:165-184`, `apps/tools-cli/src/commands/smoke-pg.command.ts:116-120` | none |
 | StatusPublisher emits only on aggregate state change | Accepted in part | Implemented | single source | `apps/sea-runtime/src/services/status-publisher.ts:34` | none |
 | ADR-006 amended for optional pid/restarts | Accepted in part | Implemented | confirmed | `docs/architecture/adr/ADR-006-sidecar-status-contract.md:85` | none |
 | Regenerate docs/meta.toon after acceptance | Accepted in part | Implemented | confirmed | `docs/meta.toon:101` | none |

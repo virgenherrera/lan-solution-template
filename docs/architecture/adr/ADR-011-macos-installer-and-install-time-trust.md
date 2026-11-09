@@ -141,15 +141,15 @@ Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept
 
 | Decision | Decision status | Implementation | Check | Evidence | Gap |
 |---|---|---|---|---|---|
-| D1 scope macOS only, Win/Linux debt | Not stated | Implemented | single source | `tools/scripts/installer-build.ts:3`, `tools/scripts/installer-build.ts:11` | none |
+| D1 scope macOS only, Win/Linux debt | Not stated | Implemented | single source | `apps/tools-cli/src/commands/installer-build.command.ts:7`, `apps/tools-cli/src/commands/installer-build.command.ts:27` | none |
 | D2 assistant creates config/config.json | Not stated | Implemented | single source | `apps/desktop/installer/macos/scripts/postinstall:40`, `apps/desktop/installer/macos/scripts/postinstall:49` | none |
 | D3 uninstall removes config.json, keeps data/ | Not stated | Implemented | single source | `apps/desktop/installer/macos/uninstall.sh:6`, `apps/desktop/installer/macos/uninstall.sh:212` | none |
-| D4 .pkg no .app, base next to executable | Not stated | Implemented | confirmed | `apps/desktop/installer/macos/distribution.xml:12`, `tools/scripts/installer-macos.ts:57`, `tools/scripts/installer-macos.ts:74` | none |
+| D4 .pkg no .app, base next to executable | Not stated | Implemented | confirmed | `apps/desktop/installer/macos/distribution.xml:12`, `apps/tools-cli/src/services/macos-pkg.service.ts:88`, `apps/tools-cli/src/services/macos-pkg.service.ts:104` | none |
 | D5 console user owns data/ and logs/ | Not stated | Implemented | single source | `apps/desktop/installer/macos/scripts/postinstall:29`, `apps/desktop/installer/macos/scripts/postinstall:59`, `apps/desktop/installer/macos/scripts/postinstall:65` | none |
 | D6 one CA per install via sudo -u console user | Not stated | Implemented | single source | `apps/desktop/installer/macos/scripts/postinstall:7`, `apps/desktop/installer/macos/scripts/postinstall:86` | none |
 | D7 system trust only via unticked box | Not stated | Implemented | single source | `apps/desktop/installer/macos/distribution.xml:15`, `apps/desktop/installer/macos/resources/trust.html:9`, `apps/desktop/installer/macos/trust-scripts/postinstall:107` | none |
 | D8 root-owned fingerprint anchors trusted CA | Not stated | Implemented | single source | `apps/desktop/installer/macos/scripts/postinstall:103`, `apps/desktop/installer/macos/scripts/postinstall:135`, `apps/desktop/installer/macos/trust-scripts/postinstall:41` | none |
 | D9 root scripts follow no link, no chown -R | Not stated | Implemented | confirmed | `apps/desktop/installer/macos/scripts/postinstall:6`, `apps/desktop/installer/macos/scripts/postinstall:49`, `apps/desktop/installer/macos/uninstall.sh:9` | none |
 | D10 uninstall removes trust before certs/ | Not stated | Implemented | single source | `apps/desktop/installer/macos/uninstall.sh:100`, `apps/desktop/installer/macos/uninstall.sh:161`, `apps/desktop/installer/macos/uninstall.sh:164` | none |
-| D11 lockstep version and branch validator | Not stated | Implemented | single source | `nx.json:19`, `nx.json:32`, `tools/scripts/release-version-actions.ts:106` | none |
+| D11 lockstep version and branch validator | Not stated | Implemented | single source | `nx.json:19`, `nx.json:33`, `tools/scripts/release-version-actions.ts:106` | none |
 | D12 --generate-certs operation in executable | Not stated | Implemented | single source | `libs/service-registry/src/dispatcher.ts:33`, `libs/service-registry/src/dispatcher.ts:38`, `libs/service-registry/src/dispatcher.ts:45` | none |
