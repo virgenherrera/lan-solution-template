@@ -25,6 +25,7 @@ const EXE = process.platform === 'win32' ? '.exe' : '';
 // Matched on the executable (ps comm), not the whole command line, so a shell that merely mentions the names is not counted.
 const ORPHAN_EXECUTABLE = /(^|[\\/])(sea-runtime|api-gateway)(\.exe)?$/;
 const SETTLE_MS = 3_000;
+const STRINGS_MAX_BYTES = 1024 * 1024 * 1024;
 
 const sleep = (ms: number): Promise<void> =>
   new Promise((done) => setTimeout(done, ms));
@@ -127,14 +128,14 @@ export class E2eDesktopCommand extends CommandRunner {
 
   // The instrumented binary must carry the wdio plugin; the copies are what the test installs.
   private install(built: string): void {
-    const wdioStrings = execFileSync(
-      'sh',
-      [
-        '-c',
-        `strings -a "${join(built, `app${EXE}`)}" | grep -ci wdio || true`,
-      ],
-      { encoding: 'utf8' },
-    ).trim();
+    // Same count as `strings -a <binary> | grep -ci wdio`; a failing `strings` counts zero lines, as the retired pipeline did.
+    const listed = spawnSync('strings', ['-a', join(built, `app${EXE}`)], {
+      encoding: 'utf8',
+      maxBuffer: STRINGS_MAX_BYTES,
+    });
+    const wdioStrings = (listed.stdout ?? '')
+      .split('\n')
+      .filter((line) => /wdio/i.test(line)).length;
     process.stdout.write(
       `instrumented binary: strings -a | grep -ci wdio = ${wdioStrings}\n`,
     );
@@ -196,8 +197,13 @@ export class E2eDesktopCommand extends CommandRunner {
   private cleanup(): void {
     for (const line of this.processTable()) {
       const pid = Number(line.trim().split(/\s+/)[0]);
-      if (Number.isInteger(pid) && line.includes(this.base))
-        process.kill(pid, 'SIGKILL');
+      if (Number.isInteger(pid) && line.includes(this.base)) {
+        try {
+          process.kill(pid, 'SIGKILL');
+        } catch {
+          // The process ended between ps and kill (ESRCH): nothing left to stop, and the directory must still go.
+        }
+      }
     }
     rmSync(this.base, { recursive: true, force: true });
   }
