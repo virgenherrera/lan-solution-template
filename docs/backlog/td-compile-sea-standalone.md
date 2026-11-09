@@ -77,7 +77,7 @@ Counts come from `rg -c` over each file and count matching lines, not call sites
 | `tools/scripts/compile-sea.ts` | 498 | 7 | 1 | 2 | 1 |
 | `tools/scripts/db-parity.ts` | 150 | 3 | 2 | 0 | 2 |
 | `tools/scripts/e2e-desktop.ts` | 85 | 3 | 1 | 0 | 0 |
-| `tools/scripts/generate-certs.ts` | 34 | 5 | 1 | 2 | 0 |
+| `tools/scripts/generate-certs.ts` (moved to `apps/tools-cli`, file deleted) | 34 | 5 | 1 | 2 | 0 |
 | `tools/scripts/installer-build.ts` | 12 | 1 | 0 | 0 | 0 |
 | `tools/scripts/installer-macos.ts` | 120 | 1 | 0 | 0 | 0 |
 | `tools/scripts/pack-migrations.ts` | 158 | 2 | 1 | 0 | 2 |
@@ -85,11 +85,11 @@ Counts come from `rg -c` over each file and count matching lines, not call sites
 | `tools/scripts/smoke-dev.ts` | 202 | 4 | 1 | 0 | 0 |
 | `tools/scripts/smoke-pg.ts` | 377 | 4 | 2 | 2 | 0 |
 | `tools/scripts/smoke-sea.ts` | 834 | 4 | 1 | 2 | 0 |
-| `tools/scripts/stage-sidecar.ts` | 20 | 1 | 0 | 0 | 0 |
-| `tools/scripts/test-filter.ts` | 73 | 0 | 3 | 0 | 1 |
-| `tools/scripts/trust-ca.ts` | 64 | 6 | 2 | 2 | 0 |
+| `tools/scripts/stage-sidecar.ts` (moved to `apps/tools-cli`, file deleted) | 20 | 1 | 0 | 0 | 0 |
+| `tools/scripts/test-filter.ts` (moved to `apps/tools-cli`, file deleted) | 73 | 0 | 3 | 0 | 1 |
+| `tools/scripts/trust-ca.ts` (moved to `apps/tools-cli`, file deleted) | 64 | 6 | 2 | 2 | 0 |
 | `tools/scripts/verify-platform.ts` | 251 | 5 | 2 | 0 | 0 |
-| `tools/scripts/version-check.ts` | 56 | 0 | 1 | 0 | 0 |
+| `tools/scripts/version-check.ts` (moved to `apps/tools-cli`, file deleted) | 56 | 0 | 1 | 0 | 0 |
 | Total | 3120 | 46 | 21 | 10 | 7 |
 
 Totals: 46 matching lines of `console.` and 21 of `process.exit` across 13 and 13 files. Five files have their own `parseArgs` (`compile-sea.ts`, `generate-certs.ts`, `smoke-pg.ts`, `smoke-sea.ts`, `trust-ca.ts`); each match pair is the import plus one call. `process.argv` appears in 7 files. `tools/scripts/smoke-dev.ts` also fails type check, because no tsconfig includes it (see [current state](../architecture/current-state.md#gaps)).
@@ -162,6 +162,7 @@ flowchart LR
 
 ### Progress
 
+- 2026-11-09: `generate-certs`, `stage-sidecar`, `test-filter`, `trust-ca` and `version-check` are now `apps/tools-cli` commands and their scripts are deleted. `package.json` (`dev:certs`, `dev:trust`, `release:check`, `test`), `apps/desktop` and the spawn strings of the smoke, verify and e2e scripts call the built CLI (`node apps/tools-cli/dist/main.js <command>`). `desktop:build`, `desktop:package` and `sea-runtime:package` depend on `tools-cli:build`. `tools-cli` depends on `shared-core`, which exports `shared-core/tls/generate` for `generate-certs` only. `release-version-actions.ts` stays a script: Nx loads it by path as a version-actions module (`nx.json`), so it must stay a loadable module with a default-exported class. Differences: a failure that threw (missing file) prints `tools-cli: <message>` instead of a stack trace; the usage line names `tools-cli <command>`; `--help` and `-h` print the command help and exit 0; help prints `tools-cli` instead of `main`.
 - 2026-11-09: `apps/tools-cli` exists (Nest standalone, `nest-commander` 3.21.0, ADR-013 entrypoint). `branch-name` is the first command: `pnpm tools branch-name [<branch>]`, called by `pnpm release:branch`. `tools/scripts/branch-name.ts` is deleted. The output and exit codes are the same as the old script, with one difference: `--help` and `-h` print the command help and exit 0, where the old script rejected them as a branch name (exit 1). Usage errors from commander (an unknown command) exit 2. The other scripts have not moved.
 
 ---

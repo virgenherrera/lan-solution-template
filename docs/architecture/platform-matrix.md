@@ -90,7 +90,7 @@ verify-platform: 6 checks passed on darwin-arm64 in 12.6 s
 
 Facts and limits of that run:
 
-- The loose SEA is `artifacts/sea-runtime/sea-runtime-aarch64-apple-darwin`. The check copies it to a temporary install directory with a generated config, free ports and certs from [generate-certs.ts](../../tools/scripts/generate-certs.ts). `/api/health` is read over HTTPS trusting that install's `ca.crt` only.
+- The loose SEA is `artifacts/sea-runtime/sea-runtime-aarch64-apple-darwin`. The check copies it to a temporary install directory with a generated config, free ports and certs from [generate-certs.command.ts](../../apps/tools-cli/src/commands/generate-certs.command.ts). `/api/health` is read over HTTPS trusting that install's `ca.crt` only.
 - The Tauri package is `apps/desktop/src-tauri/target/release/bundle/macos/LAN Solution Desktop.app`. The check copies its host executable and its sidecar to a temporary directory and starts the host there. The bundle is never run in place.
 - The host window opens for a moment during the Tauri check: it needs a desktop session.
 - After the run no `sea-runtime`, `api-gateway` or temporary directory was left (`ps -axo comm`, temporary directory listing).

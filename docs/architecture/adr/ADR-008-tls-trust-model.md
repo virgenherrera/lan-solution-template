@@ -100,7 +100,7 @@ Decision (agent, 2026-11-03, after the instruction in [Status](#status)). The ga
 - Validation: the facts are computed with `node:crypto` `X509Certificate` and checked by one zod schema (`z.literal(true, message)` and `z.date().min(now, message)`, no `superRefine`, no default). `z.prettifyError` lists every problem in one error. A missing file is named individually.
 - Checked: `ca.crt` is a CA and not expired. `leaf.crt` is signed by `ca.crt` and is not expired. `leaf.key` matches `leaf.crt`.
 - Exit 1 and a message that names the file and `pnpm dev:certs`. A packaged install gets its files from the installer; no installer exists yet.
-- Command: `pnpm dev:certs [--base <dir>]` (`tools/scripts/generate-certs.ts`). The base defaults to the cwd and holds `config/config.json` and `certs/`.
+- Command: `pnpm dev:certs [--base <dir>]` (`apps/tools-cli/src/commands/generate-certs.command.ts`). The base defaults to the cwd and holds `config/config.json` and `certs/`.
   - It creates the CA only when `ca.crt` and `ca.key` are both absent. One present is an error that names the missing one.
   - It never replaces an existing CA, not even an expired one. Deleting `certs/` is the explicit way to get a new CA.
   - It issues only the leaf, when it is missing, expired, within 30 days of expiry, not issued by the CA, not matched by its key, or when its SAN set differs from the wanted set.
@@ -173,7 +173,7 @@ Decision:
 - Observed on an Android 15 emulator and an iOS 18.5 simulator: without the CA the browser shows a certificate warning and the service worker does not register. With the CA installed the page loads and the service worker registers. Chrome on Android honors a CA installed as a user CA.
 - The leaf stays at 397 days. The 398-day cap applies to certificates from default-trusted roots, not to a root the user installed. No Android cap is known.
 - Name constraints on the CA stay deferred: client support is not verified.
-- `pnpm dev:trust` (`tools/scripts/trust-ca.ts`) trusts the CA on the machine that runs the gateway, like `dotnet dev-certs https --trust`. macOS: `security add-trusted-cert -p basic -p ssl` on the login keychain. Windows: `certutil -user -addstore Root`. Linux: it prints the steps, because the store depends on the distribution. It takes one parameter, the base directory that holds `certs/ca.crt`, and refuses a file that is not a current CA certificate.
+- `pnpm dev:trust` (`apps/tools-cli/src/commands/trust-ca.command.ts`) trusts the CA on the machine that runs the gateway, like `dotnet dev-certs https --trust`. macOS: `security add-trusted-cert -p basic -p ssl` on the login keychain. Windows: `certutil -user -addstore Root`. Linux: it prints the steps, because the store depends on the distribution. It takes one parameter, the base directory that holds `certs/ca.crt`, and refuses a file that is not a current CA certificate.
 - The PWA of the gateway ships a manifest and a service worker, so the install criteria are met by the app itself. Add to Home Screen, the Chrome install prompt and offline reload on a phone are checked at the first real deployment, not by the template.
 
 ### Phone trust options rejected
@@ -252,7 +252,7 @@ Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept
 | Gateway logs SAN mismatch or near expiry and keeps starting | Accepted | Implemented | single source | `libs/shared-core/src/tls/identity.ts:158-165` | none |
 | certs/ layout, modes 0700/0600, atomic rename | Accepted | Implemented | confirmed | `libs/shared-core/src/tls/generate.ts:15-16,36-40,108-109` | none |
 | Gateway never creates certificates; zod facts, exit message | Accepted | Implemented | single source | `libs/shared-core/src/tls/identity.ts:79-95,111-153`, `apps/api-gateway/src/app.bootstrap.ts:15,34-42` | none |
-| dev:certs creates CA only if both absent, never replaces | Accepted | Implemented | confirmed | `libs/shared-core/src/tls/generate.ts:100-120`, `tools/scripts/generate-certs.ts:21-30` | none |
+| dev:certs creates CA only if both absent, never replaces | Accepted | Implemented | confirmed | `libs/shared-core/src/tls/generate.ts:100-120`, `apps/tools-cli/src/commands/generate-certs.command.ts` | none |
 | Identity loaded before NestFactory.create | Accepted | Implemented | single source | `apps/api-gateway/src/app.bootstrap.ts:15-20` | none |
 | Strict net and tls config blocks; hostname removed | Accepted | Implemented | single source | `libs/shared-core/src/config.ts:42-60`, `libs/shared-core/config.example.json:11-18` | none |
 | HTTPS listens on net.httpsPort | Accepted | Implemented | confirmed | `apps/api-gateway/src/main.ts:53` | none |
@@ -262,7 +262,7 @@ Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept
 | Environments: dev CA via NODE_EXTRA_CA_CERTS, no secure:false | Accepted | Implemented | single source | `package.json:12`, `apps/web-angular/proxy.conf.json:3-4` | none |
 | Sidecar simulation via packaged smoke | Accepted | Implemented | confirmed | `tools/scripts/smoke-sea.ts:105-132` | none |
 | Built-in CA default; phones install ca.crt by hand | Accepted | Implemented | single source | `docs/architecture/device-trust-guide.md:33`, `docs/architecture/device-trust-guide.md:35` | none |
-| pnpm dev:trust trusts CA on the host, refuses non-CA | Accepted | Implemented | single source | `tools/scripts/trust-ca.ts:26-40`, `package.json:15` | none |
+| pnpm dev:trust trusts CA on the host, refuses non-CA | Accepted | Implemented | single source | `apps/tools-cli/src/commands/trust-ca.command.ts`, `package.json:15` | none |
 | PWA ships manifest and service worker | Accepted | Implemented | adjudicated | `apps/web-angular/src/index.html:43`, `apps/web-angular/angular.json:71`, `apps/web-angular/src/app/app.config.ts:14` | Service worker enabled only outside dev mode (app.config.ts:15) |
 | Known gap: crash between leaf.key and leaf.crt writes | Accepted | Implemented | confirmed | `libs/shared-core/src/tls/generate.ts:123-124`, `libs/shared-core/src/tls/identity.ts:90` | none |
 | net and tls required in config.json | Accepted | Implemented | confirmed | `libs/shared-core/src/config.ts:60` | none |

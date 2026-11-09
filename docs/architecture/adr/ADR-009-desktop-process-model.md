@@ -49,7 +49,7 @@ The human decided on 2026-11-04 (OQ17): "que tal si lo dejamos (pendiente de inv
 
 ### D3. Sidecar by `externalBin`, one per target triple (Agent)
 
-`bundle.externalBin` is `binaries/sea-runtime`. The SEA artifact is named with the target triple and copied to `binaries/` (ignored by git) by `tools/scripts/stage-sidecar.ts`. Tauri `build` and `package` run after the SEA package (REQ-ECO-06). Evidence: macOS aarch64 only. Other triples were not built.
+`bundle.externalBin` is `binaries/sea-runtime`. The SEA artifact is named with the target triple and copied to `binaries/` (ignored by git) by `apps/tools-cli/src/commands/stage-sidecar.command.ts`. Tauri `build` and `package` run after the SEA package (REQ-ECO-06). Evidence: macOS aarch64 only. Other triples were not built.
 
 ### D4. Base directory is the executable directory (Agent, from ADR-007)
 
@@ -152,7 +152,7 @@ Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept
 |---|---|---|---|---|---|
 | D1 macOS focus, cfg code for every OS | Proposed | Implemented | single source | `apps/desktop/src-tauri/src/platform.rs:4,43,115,136,153` | none |
 | D2 server mode first, client mode pending | Proposed | Implemented | single source | `apps/desktop/src-tauri/src/gateway.rs:12-15,51-55` | none |
-| D3 sidecar by externalBin per target triple | Proposed | Implemented | single source | `apps/desktop/src-tauri/tauri.conf.json:36`, `tools/scripts/stage-sidecar.ts:1-16`, `apps/desktop/package.json:9` | none |
+| D3 sidecar by externalBin per target triple | Proposed | Implemented | single source | `apps/desktop/src-tauri/tauri.conf.json:36`, `apps/tools-cli/src/commands/stage-sidecar.command.ts`, `apps/desktop/package.json:9` | none |
 | D4 base dir is executable dir; spawn without args | Proposed | Implemented | single source | `apps/desktop/src-tauri/src/sidecar.rs:79-88,130` | none |
 | D5 host only starts, watches, stops; no auto restart | Proposed | Implemented | confirmed | `apps/desktop/src-tauri/src/sidecar.rs:175-185` | none |
 | D6 ADR-006 host side: status, stderr, shutdown, exit codes | Proposed | Implemented | single source | `apps/desktop/src-tauri/src/sidecar.rs:12,151-185` | none |
