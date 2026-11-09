@@ -70,14 +70,13 @@
           "{workspaceRoot}/artifacts/sea-runtime"
         ],
         "options": {
-          "command": "node apps/tools-cli/dist/main.js pack-migrations && node apps/tools-cli/dist/main.js compile-sea sea-runtime && node tools/scripts/smoke-sea.ts",
+          "command": "node apps/tools-cli/dist/main.js pack-migrations && node apps/tools-cli/dist/main.js compile-sea sea-runtime && node apps/tools-cli/dist/main.js smoke-sea",
           "cwd": "{workspaceRoot}"
         },
         "inputs": [
           "default",
           "^default",
           "{workspaceRoot}/libs/db-migrations/sqlite/migrations/**/*",
-          "{workspaceRoot}/tools/scripts/smoke-sea.ts",
           "{workspaceRoot}/apps/tools-cli/src/**/*",
           "{workspaceRoot}/tools/rspack/**/*"
         ]
