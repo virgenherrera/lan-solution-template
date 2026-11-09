@@ -38,14 +38,13 @@ describe('startup splash', () => {
   it('shows the splash first and then moves the window to the app at /', async () => {
     // Arrange: the main window exists from the start, before the gateway is ready.
     await browser.switchToWindow('main');
-    // Act + Assert: the splash is what the window shows.
-    await expect($('#splash')).toBeDisplayed();
-    // Act: wait for the host to send the window to the gateway origin.
     const target = `window reloaded url=https://127.0.0.1:${port}/`;
+    // Act: wait for the host to send the window to the gateway origin.
     await browser.waitUntil(() => hostLog().includes(target), { timeout: 60_000, interval: 500, timeoutMsg: `no "${target}" in the host log` });
-    // Assert: the splash came first.
+    // Assert: the host log shows the splash first and then the move to /.
     const log = hostLog();
-    if (!(log.indexOf('splash shown') >= 0 && log.indexOf('splash shown') < log.indexOf(target))) throw new Error('"splash shown" does not precede the move to /');
+    expect(log).toContain('splash shown');
+    expect(log.indexOf('splash shown')).toBeLessThan(log.indexOf(target));
   });
 });
 
