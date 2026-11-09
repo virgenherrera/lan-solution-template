@@ -6,7 +6,7 @@ type: backlog
 summary: "Backlog item for the platform matrix, lockstep versioning and the macOS installer. Windows and Linux are technical debt."
 related[10]: docs/results/POC-08-Result.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md,docs/backlog/persistence-system.md,docs/backlog/td-windows-linux-distribution.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/results/POC-05-Result.md
 status: current
-updated: 2026-11-04
+updated: 2026-11-09
 -->
 
 # POC-8: MSI credential dialog, platform matrix and lockstep versioning
@@ -40,7 +40,7 @@ updated: 2026-11-04
 
 | Item | Value |
 |---|---|
-| Status | Built on `chore/poc-08-matrix-versioning`, macOS only. The `.pkg` is built and inspected, NOT installed; the trust and uninstall scripts were NOT run as root. Windows and Linux are technical debt. Pull request pending. Result: [POC-08-Result](../results/POC-08-Result.md). Decisions: [ADR-011](../architecture/adr/ADR-011-macos-installer-and-install-time-trust.md) (proposed). |
+| Status | Built on `chore/poc-08-matrix-versioning`, macOS only. The `.pkg` is built and inspected, NOT installed; the trust and uninstall scripts were NOT run as root. Windows and Linux are technical debt. Merged in PR #22 (squash `e2c63e6`). Result: [POC-08-Result](../results/POC-08-Result.md). Decisions: [ADR-011](../architecture/adr/ADR-011-macos-installer-and-install-time-trust.md) (proposed). |
 | Appetite | 2 weeks, big batch. This delivery is a part of it. |
 | Depends on | POC-5 (merged in PR #21). POC-7 only for the first admin ([ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md), proposed). |
 | Branch | `chore/poc-08-matrix-versioning` |

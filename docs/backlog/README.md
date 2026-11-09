@@ -6,7 +6,7 @@ type: backlog
 summary: "Backlog index of POC epics mapped to acceptance criteria and cycles."
 related[18]: docs/results/POC-08-Result.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/results/POC-05-Result.md,docs/backlog/log-service-otel-grpc.md,docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md,docs/backlog/td-windows-linux-distribution.md,docs/backlog/td-dev-certs-prebuild.md,docs/backlog/td-compile-sea-standalone.md
 status: current
-updated: 2026-11-04
+updated: 2026-11-09
 -->
 
 # Backlog
@@ -25,7 +25,7 @@ updated: 2026-11-04
 
 [Back to navigation](#navigation)
 
-Local epics from the roadmap pitches. Start at [POC-1a](poc-1a-monorepo-init.md). POC-1 is the umbrella id of slices 1a to 1e. POC-2 is the umbrella id of slices 2a to 2h. Merged: PRs #4 to #6 (POC-1), #11 (POC-2), #12 and #13 (persistence stack), #14, #15, #16, #17 (persistence system), #18 (POC-4), #21 (POC-5, squash `35525d9`).
+Local epics from the roadmap pitches. Start at [POC-1a](poc-1a-monorepo-init.md). POC-1 is the umbrella id of slices 1a to 1e. POC-2 is the umbrella id of slices 2a to 2h. Merged: PRs #4 to #6 (POC-1), #11 (POC-2), #12 and #13 (persistence stack), #14, #15, #16, #17 (persistence system), #18 (POC-4), #21 (POC-5, squash `35525d9`), #22 (POC-8, squash `e2c63e6`), #23 (POC-6, squash `c510d54`), #24 (sea-runtime review findings, `3126021`), #25 (Nest standalone refactor, squash `cfec959`).
 
 ```mermaid
 flowchart LR
@@ -51,7 +51,7 @@ flowchart LR
   P5 --> P7
   P5 --> P8
   P8 --> P9["POC-9 CI/CD: on hold (decision 9)"]
-  P6["POC-6 PostgreSQL parity: built, PR pending"]
+  P6["POC-6 PostgreSQL parity: merged in PR #23"]
 ```
 
 Edges follow "Depends on" in [PROPOSAL.md](../roadmap/PROPOSAL.md#cycles-and-bets).
@@ -85,9 +85,9 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | DBM schema gate | [Live schema validation at startup](dbm-schema-gate.md) | Done and merged in PR #12, slices DBM-i to DBM-n (DBM-n is the api-gateway database module); see [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md); extends DBM | AC-07, AC-08, AC-10 (as POC-3) |
 | POC-4 | [HTTPS gateway serving the Angular PWA](poc-4-https-gateway-angular-pwa.md) | Done and merged in PR #18 (T0 to T8, independent verification included); decision: [ADR-008](../architecture/adr/ADR-008-tls-trust-model.md); result: [POC-04-Result](../results/POC-04-Result.md) | AC-04, AC-05, AC-12, AC-14, AC-15, AC-16, AC-17 |
 | POC-5 | [Tauri desktop shell with SEA sidecar](poc-5-tauri-sidecar-desktop-shell.md) | Done and merged in PR #21 (squash `35525d9`), server mode, verified on macOS only; client mode pending; see [POC-05-Result](../results/POC-05-Result.md), [ADR-009](../architecture/adr/ADR-009-desktop-process-model.md) and the proposed [ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md) | AC-03, AC-18, AC-20, AC-30 |
-| POC-6 | [PostgreSQL adapter parity (built on branch)](poc-6-postgresql-adapter-parity.md) | Built on `minor/poc-06-postgresql-parity` (adapter, migrations, parity check and the Docker APP smoke test `sea-runtime:smoke-pg`). Pull request pending. Verified on macOS arm64 with `pgvector/pgvector:pg17` only; see [POC-06-Result](../results/POC-06-Result.md) | AC-09 |
+| POC-6 | [PostgreSQL adapter parity (built on branch)](poc-6-postgresql-adapter-parity.md) | Built on `minor/poc-06-postgresql-parity` (adapter, migrations, parity check and the Docker APP smoke test `sea-runtime:smoke-pg`). Merged in PR #23 (squash `c510d54`). Verified on macOS arm64 with `pgvector/pgvector:pg17` only; see [POC-06-Result](../results/POC-06-Result.md) | AC-09 |
 | POC-7 | [Auth and roles](poc-7-auth-roles.md) | Cycle 3 (planned) | AC-06 |
-| POC-8 | [MSI credential dialog, platform matrix and lockstep versioning](poc-8-msi-matrix-versioning.md) | Built on `chore/poc-08-matrix-versioning` in macOS only (human decision, 2026-11-04): lockstep versioning, platform matrix, macOS `.pkg` installer with per-install CA and uninstall. The `.pkg` is built and inspected, NOT installed. Pull request pending. Result: [POC-08-Result](../results/POC-08-Result.md); decisions: the proposed [ADR-011](../architecture/adr/ADR-011-macos-installer-and-install-time-trust.md). Windows and Linux are [technical debt](td-windows-linux-distribution.md) | AC-21, AC-25, AC-33 |
+| POC-8 | [MSI credential dialog, platform matrix and lockstep versioning](poc-8-msi-matrix-versioning.md) | Built on `chore/poc-08-matrix-versioning` in macOS only (human decision, 2026-11-04): lockstep versioning, platform matrix, macOS `.pkg` installer with per-install CA and uninstall. The `.pkg` is built and inspected, NOT installed. Merged in PR #22 (squash `e2c63e6`). Result: [POC-08-Result](../results/POC-08-Result.md); decisions: the proposed [ADR-011](../architecture/adr/ADR-011-macos-installer-and-install-time-trust.md). Windows and Linux are [technical debt](td-windows-linux-distribution.md) | AC-21, AC-25, AC-33 |
 | POC-9 | [GitHub Actions CI/CD and releases (HOLD)](poc-9-ci-cd-releases.md) | HOLD (decision 9) | AC-26, AC-27, AC-35, AC-36, AC-02, AC-32 |
 | none | [Service status indicator](service-status-indicator.md) | Supervisor side done: `status` events on stdout ([ADR-006](../architecture/adr/ADR-006-sidecar-status-contract.md)); tray and web UI consumers open | none |
 | none | [Third-party license notices](third-party-licenses.md) | Done: guide merged in PR #16, documentation only (decided 2026-11-03, OQ18 to OQ22); spike: [SPIKE-third-party-licenses](../results/SPIKE-third-party-licenses.md) | none (no REQ or AC id exists for licenses) |
@@ -98,7 +98,7 @@ Slices 1a to 1e together cover the POC-1 pitch (AC-01, AC-02, AC-13, AC-19, AC-2
 | none | [Technical debt: dev:certs prebuild gap](td-dev-certs-prebuild.md) | Technical debt TD-DEV-01, proposed, not scheduled; `pnpm dev:certs` does not build `service-registry`, so a clean clone fails with TS2307; fix through the Nx `build` target | none (no new id) |
 | none | [Technical debt: compile-sea.ts standalone pattern](td-compile-sea-standalone.md) | Technical debt TD-TOOLS-01, proposed, not scheduled; `tools/scripts/compile-sea.ts` (498 lines) moves to the ADR-013 entrypoint pattern; open decision: Nest standalone or a simple class | none (no new id) |
 | none | [Persistence system](persistence-system.md) | Done and merged in PR #17; decision: [ADR-007](../architecture/adr/ADR-007-persistence-system.md) | AC-07, AC-08, AC-10 (as POC-3) |
-| none | [Epic: Nest standalone refactor](nest-standalone-refactor.md) | Built on branches, pull requests pending; acceptance of the Proposed decisions pending: five ordered slices (exit code constants, Nest Logger, unified DeclaredServices, dead code cleanup, folder reorganization); decision: [ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md); evidence: [cleanup inventory](nest-standalone-cleanup-inventory.md) | none (no new id) |
+| none | [Epic: Nest standalone refactor](nest-standalone-refactor.md) | Done and merged in PR #25 (squash `cfec959`); human acceptance of the Proposed decisions still pending: five ordered slices (exit code constants, Nest Logger, unified DeclaredServices, dead code cleanup, folder reorganization); decision: [ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md); evidence: [cleanup inventory](nest-standalone-cleanup-inventory.md) | none (no new id) |
 
 ---
 

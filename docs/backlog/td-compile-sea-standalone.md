@@ -1,16 +1,16 @@
 <!-- toon-meta
 fmt: TOON
 doc: docs/backlog/td-compile-sea-standalone.md
-title: "Technical debt: compile-sea.ts outside the standalone pattern"
+title: "Technical debt: tools/scripts outside the standalone pattern"
 type: backlog
-summary: "Technical debt record TD-TOOLS-01: compile-sea.ts is a 498-line procedural script that ADR-013 patterns do not yet cover."
+summary: "Technical debt record TD-TOOLS-01: all of tools/scripts becomes one CLI app that follows the ADR-013 entrypoint pattern."
 ids[0]:
-related[5]: docs/backlog/README.md,docs/backlog/nest-standalone-refactor.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/requirements/10-node-sea-distribution.md,docs/backlog/td-dev-certs-prebuild.md
+related[6]: docs/architecture/current-state.md,docs/backlog/README.md,docs/backlog/nest-standalone-refactor.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/requirements/10-node-sea-distribution.md,docs/backlog/td-dev-certs-prebuild.md
 status: proposed
-updated: 2026-11-07
+updated: 2026-11-09
 -->
 
-# Technical debt: compile-sea.ts outside the standalone pattern
+# Technical debt: tools/scripts outside the standalone pattern
 
 [Home](../../README.md) | [Requirements](../requirements/README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](../roadmap/PROPOSAL.md) | [Traceability](../requirements/traceability.md) | [Backlog](README.md)
 
@@ -38,11 +38,12 @@ updated: 2026-11-07
 | Field | Value |
 |---|---|
 | Id | TD-TOOLS-01 |
-| Title | `tools/scripts/compile-sea.ts` does not follow the ADR-013 entrypoint pattern |
+| Title | `tools/scripts` does not follow the ADR-013 entrypoint pattern |
 | Type | Technical debt, tooling |
 | Status | Proposed. Not scheduled. |
 | Detected | 2026-11-07, while closing the Nest standalone refactor branch |
-| Scope | `tools/scripts/compile-sea.ts` (498 lines) only |
+| Scope | All 17 scripts in `tools/scripts/`. The first script to convert is `compile-sea.ts` (498 lines). |
+| Rescoped | 2026-11-09, by the human: one CLI app instead of loose scripts. See [current state](../architecture/current-state.md#direction). |
 
 The id `TD-TOOLS-01` labels this record only. It is not a requirement. The `AGENTS.md` rules forbid inventing requirements. The metadata standard lets only requirement files define ids, and its check accepts only `REQ-` and `AC-` ids. So the `ids` field of this page stays empty. The scheme is `TD-<area>-<number>`.
 
@@ -52,13 +53,15 @@ The id `TD-TOOLS-01` labels this record only. It is not a requirement. The `AGEN
 
 [Back to navigation](#navigation)
 
-The refactor moved the runtime entrypoints to one shape: a class with a single `static main`, and a fixed order of logger, config, execution, exception handling ([ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md), see `apps/sea-runtime/src/main.ts`). The build script `compile-sea.ts` was out of the refactor scope. It stays a procedural file: 24 top-level functions, module-level state, direct `console` output and a `process.exit` in a trailing `.catch`.
+The refactor moved the runtime entrypoints to one shape: a class with a single `static main`, and a fixed order of logger, config, execution, exception handling ([ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md), see `apps/sea-runtime/src/main.ts`). The scripts under `tools/scripts/` were out of the refactor scope. They stay loose procedural files. `compile-sea.ts` is the largest example: 24 top-level functions, module-level state, direct `console` output and a `process.exit` in a trailing `.catch`.
 
-The debt has three parts:
+The sibling scripts repeat the same smells. The debt has three parts:
 
-- Shape. No class, no single `static main`, no stated order of phases.
-- Inputs. Arguments go through `parseArgs` and hand-written checks, not through one zod-validated object with defaults.
-- Mixed domains. Version checks, Nx lookups, rspack, web assets, vector assets, migration assets and the SEA config share one file and one set of module constants.
+- Shape. No class, no single `static main`, no stated order of phases, and no shared entrypoint. Each script is its own program.
+- Inputs. Arguments go through `parseArgs`, `process.argv` and hand-written checks, not through one zod-validated object with defaults.
+- Output and exit. Direct `console` calls and `process.exit` with literal codes. In `compile-sea.ts`, version checks, Nx lookups, rspack, web assets, vector assets, migration assets and the SEA config also share one file and one set of module constants.
+
+The human decided the direction on 2026-11-09: all of `tools/scripts` becomes one CLI app that follows the ADR-013 entrypoint pattern. It is a direction, not a requirement.
 
 ---
 
@@ -66,7 +69,34 @@ The debt has three parts:
 
 [Back to navigation](#navigation)
 
-Line numbers are from `tools/scripts/compile-sea.ts` at the commit that adds this page. Re-check them before the slice starts.
+Counts come from `rg -c` over each file and count matching lines, not call sites. A match inside a comment or a string also counts: not verified per match.
+
+| File | Lines | `console.` | `process.exit` | `parseArgs` | `process.argv` |
+|---|---|---|---|---|---|
+| `tools/scripts/branch-name.ts` | 49 | 0 | 3 | 0 | 1 |
+| `tools/scripts/compile-sea.ts` | 498 | 7 | 1 | 2 | 1 |
+| `tools/scripts/db-parity.ts` | 150 | 3 | 2 | 0 | 2 |
+| `tools/scripts/e2e-desktop.ts` | 85 | 3 | 1 | 0 | 0 |
+| `tools/scripts/generate-certs.ts` | 34 | 5 | 1 | 2 | 0 |
+| `tools/scripts/installer-build.ts` | 12 | 1 | 0 | 0 | 0 |
+| `tools/scripts/installer-macos.ts` | 120 | 1 | 0 | 0 | 0 |
+| `tools/scripts/pack-migrations.ts` | 158 | 2 | 1 | 0 | 2 |
+| `tools/scripts/release-version-actions.ts` | 137 | 0 | 0 | 0 | 0 |
+| `tools/scripts/smoke-dev.ts` | 202 | 4 | 1 | 0 | 0 |
+| `tools/scripts/smoke-pg.ts` | 377 | 4 | 2 | 2 | 0 |
+| `tools/scripts/smoke-sea.ts` | 834 | 4 | 1 | 2 | 0 |
+| `tools/scripts/stage-sidecar.ts` | 20 | 1 | 0 | 0 | 0 |
+| `tools/scripts/test-filter.ts` | 73 | 0 | 3 | 0 | 1 |
+| `tools/scripts/trust-ca.ts` | 64 | 6 | 2 | 2 | 0 |
+| `tools/scripts/verify-platform.ts` | 251 | 5 | 2 | 0 | 0 |
+| `tools/scripts/version-check.ts` | 56 | 0 | 1 | 0 | 0 |
+| Total | 3120 | 46 | 21 | 10 | 7 |
+
+Totals: 46 matching lines of `console.` and 21 of `process.exit` across 13 and 13 files. Five files have their own `parseArgs` (`compile-sea.ts`, `generate-certs.ts`, `smoke-pg.ts`, `smoke-sea.ts`, `trust-ca.ts`); each match pair is the import plus one call. `process.argv` appears in 7 files. `tools/scripts/smoke-dev.ts` also fails type check, because no tsconfig includes it (see [current state](../architecture/current-state.md#gaps)).
+
+### Evidence: compile-sea.ts
+
+Line numbers are from `tools/scripts/compile-sea.ts`, re-checked with `rg` on 2026-11-09 for the console, exit, argument, import, state and filesystem rows. The domain line ranges are not re-checked. Re-check all of them before the slice starts.
 
 | Smell | Line | Detail |
 |---|---|---|
@@ -87,10 +117,11 @@ Line numbers are from `tools/scripts/compile-sea.ts` at the commit that adds thi
 
 [Back to navigation](#navigation)
 
-- A reader finds a second structure in the repo. `main.ts` files follow ADR-013; the build script does not.
-- The script cannot be tested piece by piece. Every function reads module constants.
-- A failure prints through `console.error`, with no prefix and no shared exit code constant.
-- The cross-build rules are not visible as a contract. They live in `if` checks.
+- A reader finds a second structure in the repo. `main.ts` files follow ADR-013; the scripts do not.
+- The scripts cannot be tested piece by piece. In `compile-sea.ts`, every function reads module constants.
+- A failure prints through `console.error` or a literal `process.exit`, with no shared prefix and no shared exit code constant.
+- The cross-build rules of `compile-sea.ts` are not visible as a contract. They live in `if` checks.
+- Five scripts parse their own arguments, so no two share the same usage or error style.
 
 ---
 
@@ -98,15 +129,16 @@ Line numbers are from `tools/scripts/compile-sea.ts` at the commit that adds thi
 
 [Back to navigation](#navigation)
 
-Move `compile-sea.ts` to the ADR-013 entrypoint pattern without changing its output.
+Move all of `tools/scripts` to one CLI app that follows the ADR-013 entrypoint pattern, without changing the output of any script. Each script becomes a command of that app.
 
 - One class with one `static main`. It runs four phases in order: logger, config, execution, exception handling.
 - Logger: `provideLogger({ target: 'cli' })` replaces every `console` call.
-- Config: one zod object holds the supervisor name, `target` and `executable`. It sets defaults (native build) and moves the cross-build checks of lines 176 to 187 into the schema. Nothing else reads `process.argv`.
-- Domains: split the file by domain, one unit each: engine check, target resolution, service discovery, rspack bundle, web assets, vector assets, migration assets, SEA config and build. Paths become config values, not module constants.
-- Exit: a named `EXIT_CODE` constant replaces the literal `1` at line 497.
+- Config: one zod object per command holds its inputs and defaults. Nothing else reads `process.argv`.
+- Exit: a named `EXIT_CODE` constant set replaces the literal codes.
+- First command: `compile-sea`. Split it by domain, one unit each: engine check, target resolution, service discovery, rspack bundle, web assets, vector assets, migration assets, SEA config and build. Paths become config values, not module constants. The cross-build checks at lines 176 to 187 move into the schema.
+- Tests follow the direction in [current state](../architecture/current-state.md#direction): under `./tests/[TestStageName]/`, one setup per stage. The stage names are placeholders.
 
-Requirements that apply, in [10-node-sea-distribution.md](../requirements/10-node-sea-distribution.md):
+Requirements that apply to `compile-sea.ts`, in [10-node-sea-distribution.md](../requirements/10-node-sea-distribution.md):
 
 | Id | Why it applies |
 |---|---|
@@ -117,13 +149,13 @@ Requirements that apply, in [10-node-sea-distribution.md](../requirements/10-nod
 ```mermaid
 flowchart LR
     subgraph Current
-        A1[main] --> B1[24 module functions]
-        B1 --> C1[module constants + console + process.exit]
+        A1[17 loose scripts] --> B1[own parseArgs, console, process.exit]
+        B1 --> C1[module constants]
     end
     subgraph Target
-        A2[static main] --> L[logger cli]
-        L --> C2[zod config]
-        C2 --> E[run domain units in order]
+        A2[one CLI app: static main] --> L[logger cli]
+        L --> C2[zod config per command]
+        C2 --> E[run command units in order]
         E --> X[catch: log + EXIT_CODE]
     end
 ```
@@ -136,12 +168,11 @@ flowchart LR
 
 Open, for the human. Not decided by this page.
 
-| Option | Condition | Result |
+| Decision | Options | Note |
 |---|---|---|
-| Full Nest standalone | Only if the domains become injectable services | A module, providers per domain and `createApplicationContext`, as in `apps/sea-runtime/src/main.ts`. |
-| Simple class | If the flow stays linear, one phase after another | A plain class with `static main` and the same four phases. No Nest container. |
-
-Nest standalone is justified only when the split gives services that need injection. A linear flow does not need a container.
+| Container | `nest-commander`, or a plain class with `static main` | `nest-commander` is a candidate. Not verified: version, fit with the ADR-013 pattern and the SEA bundle. A linear flow does not need a container. |
+| Test layout and REQ-TEST-01 | Tests under `./tests/[TestStageName]/`, or none for tools | [REQ-TEST-01](../requirements/11-nx-quality-testing.md) forbids unit and integration suites. Changing it is the human's decision. |
+| Stage names | Keep the placeholders, or rename to self-descriptive names | The rename is a later iteration. |
 
 ---
 
@@ -156,6 +187,7 @@ Check these on a native build, before and after the change, on the same machine.
 - [ ] The smoke suites that read the SEA binary exit 0.
 - [ ] The build prints no `console.log` or `console.error` call. `rg -n 'console\.' tools/scripts/compile-sea.ts` finds nothing in the changed code.
 - [ ] `rg -n 'process\.argv|process\.exit' tools/scripts/compile-sea.ts` finds nothing.
+- [ ] `rg -n 'console\.|process\.exit|parseArgs' tools/scripts` finds nothing outside the logger and the single entrypoint, once every script is converted.
 - [ ] A cross build without `--executable` and a native build with `--executable` both fail with the same messages as before.
 - [ ] The artifact name `<supervisor>-<triple>[.exe]` is unchanged, so `stage-sidecar.ts` and the installer read the same file.
 
@@ -173,10 +205,10 @@ High-risk item 5, delivery or environment. `package`, `smoke-sea` and the instal
 
 [Back to navigation](#navigation)
 
-- Changes to `pack-migrations.ts`, `smoke-sea.ts`, `stage-sidecar.ts` or `installer-macos.ts`.
 - Changes to the SEA bundle content, the asset names or the code cache rule.
-- The other scripts under `tools/scripts/`.
-- Cross builds. They stay unverified, as the script header states.
+- Any change of what a script reads or writes (inputs, outputs, artifact names).
+- Cross builds. They stay unverified, as the `compile-sea.ts` header states.
+- The choice of the test runner for the sea-runtime. See [current state](../architecture/current-state.md#open-decisions).
 
 ---
 
@@ -184,6 +216,7 @@ High-risk item 5, delivery or environment. `package`, `smoke-sea` and the instal
 
 [Back to navigation](#navigation)
 
+- [Current state and direction](../architecture/current-state.md): the component map, the test direction and the gaps.
 - [ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md): the entrypoint pattern, D2 (logger), D4 (`provideLogger`), D8 (exit codes).
 - [10-node-sea-distribution.md](../requirements/10-node-sea-distribution.md): REQ-SEA-01, REQ-SEA-03, REQ-SEA-04.
 - [Backlog](README.md) and the [Nest standalone refactor follow-ups](nest-standalone-refactor.md#follow-ups).

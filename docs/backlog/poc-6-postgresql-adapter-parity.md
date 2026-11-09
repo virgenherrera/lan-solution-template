@@ -3,10 +3,10 @@ fmt: TOON
 doc: docs/backlog/poc-6-postgresql-adapter-parity.md
 title: "POC-6 PostgreSQL adapter parity (built on branch)"
 type: backlog
-summary: "PostgreSQL adapter parity with pgvector: built on a branch, pull request pending."
+summary: "PostgreSQL adapter parity with pgvector. Merged in PR #23 (squash c510d54)."
 related[5]: docs/results/POC-06-Result.md,docs/backlog/README.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/persistence-system.md
 status: current
-updated: 2026-11-04
+updated: 2026-11-09
 -->
 
 # POC-6: PostgreSQL adapter parity (built on branch)
@@ -29,7 +29,7 @@ updated: 2026-11-04
 
 | Item | Value |
 |---|---|
-| Status | Built on branch, pull request pending ([POC-06-Result](../results/POC-06-Result.md)) |
+| Status | Merged in PR #23 (squash `c510d54`) ([POC-06-Result](../results/POC-06-Result.md)) |
 | Appetite | none assigned (original estimate: 1 week, small batch) |
 | Depends on | n/a |
 | Branch | `minor/poc-06-postgresql-parity` |

@@ -3,11 +3,11 @@ fmt: TOON
 doc: docs/backlog/nest-standalone-refactor.md
 title: "Epic: Nest standalone refactor"
 type: backlog
-summary: "Pure-refactor epic, built on branches (pull requests pending): exit code constants, Nest Logger, unified DeclaredServices, dead code cleanup and folder reorganization, in five ordered slices."
+summary: "Pure-refactor epic in five slices. Merged in PRs #24 and #25. Human acceptance of the Proposed decisions is pending."
 ids[0]:
 related[7]: docs/backlog/README.md,docs/backlog/nest-standalone-cleanup-inventory.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/declared-services.md,docs/architecture/nest-standalone-boot.md,docs/backlog/td-dev-certs-prebuild.md,docs/backlog/td-compile-sea-standalone.md
 status: proposed
-updated: 2026-11-06
+updated: 2026-11-09
 -->
 
 # Epic: Nest standalone refactor
@@ -41,7 +41,7 @@ This epic is a pure refactor in five ordered slices. Behavior, output bytes and 
 
 | Item | Value |
 |---|---|
-| Status | Built on branches, pull requests pending. Human acceptance of the Proposed decisions is pending. See [Result](#result). |
+| Status | Done and merged in PR #25 (squash `cfec959`). Human acceptance of the Proposed decisions is pending. See [Result](#result). |
 | Requirements | None. No REQ or AC id exists for this epic. |
 | Design | [ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md), [DeclaredServices](../architecture/declared-services.md), [Nest standalone boot](../architecture/nest-standalone-boot.md) |
 | Related | [Cleanup inventory](nest-standalone-cleanup-inventory.md), [Technical debt: Nest DI by class](td-nest-di-by-class.md) |
