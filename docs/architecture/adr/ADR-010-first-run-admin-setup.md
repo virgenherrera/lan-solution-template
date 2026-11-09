@@ -151,7 +151,7 @@ Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept
 
 | Decision | Decision status | Implementation | Check | Evidence | Gap |
 |---|---|---|---|---|---|
-| P1 keep MSI dialog until wizard passes | Not stated | Not implemented | adjudicated | `apps/tools-cli/src/commands/installer-build.command.ts:27` | No MSI or WiX in the repo, only the macOS pkg. There is no Windows installer code to check against. |
+| P1 keep MSI dialog until wizard passes | Not stated | Not implemented | adjudicated | `apps/tools-cli/src/commands/installer-build.command.ts:28` | No MSI or WiX in the repo, only the macOS pkg. There is no Windows installer code to check against. |
 | P2 sidecar emits setup stdout event with token | Not stated | Not implemented | confirmed | `libs/service-registry/src/schemas/sidecar-protocol.ts:28` | sidecarEventSchema holds only the status event; no setup event, no token, no ADR-006 amendment |
 | P3 token expiry 15 min, 5 attempts | Not stated | Not implemented | confirmed | `apps/api-gateway/src/app.bootstrap.ts:18` | No setup token, expiry or attempt-limit constants exist anywhere in apps, libs or tools |
 | P4 replaceable password policy, default 4 chars | Not stated | Not implemented | confirmed | `libs/shared-core/src/config.ts:1` | No password policy module; no user-creation path (POC-7 unbuilt) |

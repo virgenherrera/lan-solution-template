@@ -260,7 +260,7 @@ Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept
 | /api never gets index.html; missing .js is 404 | Accepted | Implemented | confirmed | `apps/api-gateway/src/web-handler.ts:22-44` | none |
 | Hashed files immutable; index.html and SW no-cache | Accepted | Implemented | confirmed | `apps/api-gateway/src/web-handler.ts:10-16` | none |
 | Environments: dev CA via NODE_EXTRA_CA_CERTS, no secure:false | Accepted | Implemented | single source | `package.json:12`, `apps/web-angular/proxy.conf.json:3-4` | none |
-| Sidecar simulation via packaged smoke | Accepted | Implemented | confirmed | `apps/tools-cli/src/commands/smoke-sea.command.ts:115-141` | none |
+| Sidecar simulation via packaged smoke | Accepted | Implemented | confirmed | `apps/tools-cli/src/commands/smoke-sea.command.ts:173-179` | none |
 | Built-in CA default; phones install ca.crt by hand | Accepted | Implemented | single source | `docs/architecture/device-trust-guide.md:33`, `docs/architecture/device-trust-guide.md:35` | none |
 | pnpm dev:trust trusts CA on the host, refuses non-CA | Accepted | Implemented | single source | `apps/tools-cli/src/commands/trust-ca.command.ts`, `package.json:15` | none |
 | PWA ships manifest and service worker | Accepted | Implemented | adjudicated | `apps/web-angular/src/index.html:43`, `apps/web-angular/angular.json:71`, `apps/web-angular/src/app/app.config.ts:14` | Service worker enabled only outside dev mode (app.config.ts:15) |

@@ -141,10 +141,10 @@ Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept
 
 | Decision | Decision status | Implementation | Check | Evidence | Gap |
 |---|---|---|---|---|---|
-| D1 scope macOS only, Win/Linux debt | Not stated | Implemented | single source | `apps/tools-cli/src/commands/installer-build.command.ts:7`, `apps/tools-cli/src/commands/installer-build.command.ts:27` | none |
+| D1 scope macOS only, Win/Linux debt | Not stated | Implemented | single source | `apps/tools-cli/src/commands/installer-build.command.ts:7`, `apps/tools-cli/src/commands/installer-build.command.ts:28` | none |
 | D2 assistant creates config/config.json | Not stated | Implemented | single source | `apps/desktop/installer/macos/scripts/postinstall:40`, `apps/desktop/installer/macos/scripts/postinstall:49` | none |
 | D3 uninstall removes config.json, keeps data/ | Not stated | Implemented | single source | `apps/desktop/installer/macos/uninstall.sh:6`, `apps/desktop/installer/macos/uninstall.sh:212` | none |
-| D4 .pkg no .app, base next to executable | Not stated | Implemented | confirmed | `apps/desktop/installer/macos/distribution.xml:12`, `apps/tools-cli/src/services/macos-pkg.service.ts:88`, `apps/tools-cli/src/services/macos-pkg.service.ts:104` | none |
+| D4 .pkg no .app, base next to executable | Not stated | Implemented | confirmed | `apps/desktop/installer/macos/distribution.xml:12`, `apps/tools-cli/src/services/macos-pkg.service.ts:164`, `apps/tools-cli/src/services/macos-pkg.service.ts:196-208` | none |
 | D5 console user owns data/ and logs/ | Not stated | Implemented | single source | `apps/desktop/installer/macos/scripts/postinstall:29`, `apps/desktop/installer/macos/scripts/postinstall:59`, `apps/desktop/installer/macos/scripts/postinstall:65` | none |
 | D6 one CA per install via sudo -u console user | Not stated | Implemented | single source | `apps/desktop/installer/macos/scripts/postinstall:7`, `apps/desktop/installer/macos/scripts/postinstall:86` | none |
 | D7 system trust only via unticked box | Not stated | Implemented | single source | `apps/desktop/installer/macos/distribution.xml:15`, `apps/desktop/installer/macos/resources/trust.html:9`, `apps/desktop/installer/macos/trust-scripts/postinstall:107` | none |
