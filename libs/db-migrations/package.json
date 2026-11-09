@@ -13,7 +13,7 @@
     "drift": "pnpm run drift:sqlite && pnpm run drift:pg",
     "drift:sqlite": "pnpm run generate:sqlite && git diff --exit-code -- sqlite/migrations && test -z \"$(git ls-files --others --exclude-standard -- sqlite/migrations)\"",
     "drift:pg": "pnpm run generate:pg && git diff --exit-code -- pg/migrations && test -z \"$(git ls-files --others --exclude-standard -- pg/migrations)\"",
-    "parity": "node ../../apps/tools-cli/dist/main.js db-parity",
+    "parity": "nx run tools-cli:build --output-style=static >&2 && node ../../apps/tools-cli/dist/main.js db-parity",
     "test:static": "tsc --noEmit -p tsconfig.json",
     "test:dynamic": "echo \"test:dynamic: not defined for this package\"",
     "package": "echo \"package: not defined for this package\""
