@@ -7,7 +7,7 @@ summary: Mermaid architecture diagrams citing SRS sections for runtime and deskt
 ids[0]:
 related[17]: README.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/results/POC-08-Result.md,docs/architecture/platform-matrix.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/device-trust-guide.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
 status: current
-updated: 2026-11-04
+updated: 2026-11-09
 -->
 
 # Architecture overview
@@ -23,6 +23,7 @@ updated: 2026-11-04
 - [Tauri sidecar](#tauri-sidecar)
 - [Architecture decisions](#architecture-decisions)
   - [Topics without an ADR number](#topics-without-an-adr-number)
+- [Current state and direction](current-state.md)
 
 ---
 
@@ -139,7 +140,7 @@ Sources:
 
 [Back to navigation](#navigation)
 
-The [ADR index](../roadmap/PROPOSAL.md#adr-index) in the roadmap proposal lists the decisions. The ADR numbers are proposals, not SRS requirements. ADR-009 to ADR-012 are numbered in the order the POCs write them. ADR-010 was written by the POC-5 spike, ahead of POC-7.
+The [ADR index](../roadmap/PROPOSAL.md#adr-index) in the roadmap proposal lists the decisions. The ADR numbers are proposals, not SRS requirements. The [current state](current-state.md#adr-implementation-status) page counts how far each ADR is built. ADR-009 to ADR-012 are numbered in the order the POCs write them. ADR-010 was written by the POC-5 spike, ahead of POC-7.
 
 | ADR | Topic | Status | Written by |
 | --- | --- | --- | --- |
