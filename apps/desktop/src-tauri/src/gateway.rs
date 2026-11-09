@@ -26,9 +26,10 @@ fn loggable(url: &Url) -> String {
   format!("{}://{host}{port}{}", url.scheme(), url.path())
 }
 
-// The splash is the bundled page of the host itself (tauri://localhost, or http://tauri.localhost on Windows).
+// The splash is exactly the bundled page of the host itself: tauri://localhost/index.html, or http://tauri.localhost/index.html on Windows. Any other path, port or credentials on those origins is not the splash.
 fn is_splash(url: &Url) -> bool {
-  url.scheme() == "tauri" || url.host_str() == Some("tauri.localhost")
+  let origin_ok = matches!((url.scheme(), url.host_str()), ("tauri", Some("localhost")) | ("http", Some("tauri.localhost")));
+  origin_ok && url.port().is_none() && url.username().is_empty() && url.password().is_none() && url.path() == "/index.html"
 }
 
 // Builds the main window on `url`. The filter allows the splash page and, once the port is known, the gateway origin (A2); the gateway origin is read at navigation time because the window outlives the splash.
