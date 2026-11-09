@@ -12,7 +12,7 @@
 #  - the CA is untrusted only when the root-owned anchor <base>/.installer/ca.sha256 (written by the installer) matches the CA file, and certs/ is removed only when the System keychain no longer holds that CA;
 #  - the base is the directory of this script and must pass a sanity check.
 # Writes outside the install directory: only the System keychain trust (security remove-trusted-cert, security delete-certificate), the file ~/Library/LaunchAgents/@PRODUCT@.plist of the console user, and the package receipts (pkgutil --forget).
-# @IDENTIFIER@ and @PRODUCT@ are replaced by the installer builder (tools/scripts/installer-macos.ts) with `identifier` and `productName` of tauri.conf.json.
+# @IDENTIFIER@ and @PRODUCT@ are replaced by the installer builder (apps/tools-cli/src/services/macos-pkg.service.ts) with `identifier` and `productName` of tauri.conf.json.
 set -eu
 
 # Fixed PATH: root must not run a tool found in the caller's PATH. (The simulation tests remove this line from a copy to put stubs first.)

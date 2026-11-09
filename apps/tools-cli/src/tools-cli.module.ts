@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BranchNameCommand } from './commands/branch-name.command.js';
 import { GenerateCertsCommand } from './commands/generate-certs.command.js';
+import { InstallerBuildCommand } from './commands/installer-build.command.js';
 import { InstallerMacosCommand } from './commands/installer-macos.command.js';
 import { PackMigrationsCommand } from './commands/pack-migrations.command.js';
 import { StageSidecarCommand } from './commands/stage-sidecar.command.js';
@@ -15,6 +16,7 @@ import { RepoRoot } from './services/repo-root.service.js';
   providers: [
     BranchNameCommand,
     GenerateCertsCommand,
+    InstallerBuildCommand,
     InstallerMacosCommand,
     PackMigrationsCommand,
     StageSidecarCommand,
