@@ -7,7 +7,7 @@ summary: "Strict engine-keyed config, one base directory (cwd in dev, executable
 ids[0]:
 related[7]: docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/backlog/persistence-system.md,docs/requirements/04-configuration.md,docs/requirements/05-persistence.md,docs/requirements/amendments-2026-10-30.md
 status: current
-updated: 2026-11-03
+updated: 2026-11-09
 -->
 
 # ADR-007: Persistence system
@@ -22,6 +22,7 @@ updated: 2026-11-03
 - [Options rejected](#options-rejected)
 - [Consequences](#consequences)
 - [Not verified](#not-verified)
+- [Implementation status](#implementation-status)
 
 ## Status
 
@@ -156,3 +157,31 @@ REQ-CFG-05 used to forbid the current working directory as an anchor. This decis
 - That `process.cwd()` is the same for every app in a dev run: it depends on how pnpm starts each app.
 - How the installer assistant defines the install path and creates `config/config.json` there, and with which tool: TBD.
 - Any PostgreSQL behavior: no pg engine, driver or config block exists in this work.
+
+## Implementation status
+
+[Back to navigation](#navigation)
+
+Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept as the record. This table says what the code does today.
+
+| Decision | Decision status | Implementation | Check | Evidence | Gap |
+|---|---|---|---|---|---|
+| Strict engine-keyed discriminated union config | Accepted for the design | Implemented | single source | `libs/shared-core/src/config.ts:17-39,60` | none |
+| Only sqlite variant; pg variant not declared yet | Accepted for the design | Outdated | adjudicated | `libs/shared-core/src/config.ts:17`, `libs/shared-core/src/config.ts:28`, `libs/shared-core/src/config.ts:29` | config.ts declares an engine 'pg' variant with a pg block; ADR says it is not declared. Superseded by POC-6 (ADR text stale) |
+| No default, prefault or superRefine in db union | Accepted for the design | Implemented | single source | `libs/shared-core/src/config.ts:17-39` | none |
+| sqlite.file plain file name regex | Accepted for the design | Implemented | single source | `libs/shared-core/src/config.ts:11-13,22` | none |
+| Missing or invalid config always throws | Accepted for the design | Implemented | single source | `libs/shared-core/src/config.ts:77-85` | none |
+| ensureConfigFile auto-create removed | Accepted for the design | Implemented | single source | `libs/shared-core/src/config.ts:76-81` | none |
+| One jsonText helper; JSON.parse nowhere else | Accepted for the design | Partial | confirmed | `libs/service-registry/src/json-text.ts:4-14`, `libs/shared-core/src/config.ts:83` | Library code uses jsonText only, but tools scripts still call JSON.parse: tools/scripts/version-check.ts:17, installer-macos.ts:27, release-version-actions.ts:86, verify-platform.ts:110 (also Rust serde_json in sidecar.rs). ADR says nowhere else in repo code. |
+| Lazy engine selection via literal import() | Accepted for the design | Implemented | single source | `libs/shared-core/src/db/factory.ts:21-35`, `apps/sea-runtime/src/services/persistence.service.ts:25,41-49`, `apps/api-gateway/src/database/database.module.ts:37-43` | none |
+| Engines stay bundled, useVfs off, code cache kept | Accepted for the design | Implemented | single source | `libs/service-registry/src/schemas/assembler-config.ts:9`, `tools/scripts/compile-sea.ts:431` | none |
+| Barrel split: root excludes engine code, subpath export | Accepted for the design | Implemented | single source | `libs/shared-core/src/index.ts:1-14`, `libs/shared-core/package.json:11-14` | none |
+| Engine-keyed migration assets db-migrations/<engine> | Accepted for the design | Implemented | single source | `tools/scripts/pack-migrations.ts:2-3`, `libs/db-migrations/sqlite/migrations/0000_create_app_meta.sql:1`, `libs/db-migrations/pg/migrations/0000_create_app_meta.sql:1` | none |
+| One base directory: cwd in dev, exe dir in prod | Accepted for the design | Implemented | confirmed | `libs/shared-core/src/paths.ts:21-35` | none |
+| Layout config/ data/ logs/ certs/ identical in dev and prod | Accepted for the design | Implemented | single source | `libs/shared-core/src/paths.ts:26-34` | none |
+| No --root, APP_HOME, marker file, .local or dev:config | Accepted for the design | Implemented | single source | `libs/shared-core/src/paths.ts:21-23` | none |
+| config.example.json documents the required file | Accepted for the design | Implemented | single source | `libs/shared-core/config.example.json:1`, `libs/shared-core/src/config.ts:80` | none |
+| Packaged smoke writes valid config into scratch base | Accepted for the design | Implemented | confirmed | `tools/scripts/smoke-sea.ts:74-76`, `tools/scripts/smoke-pg.ts:257` | none |
+| Installer assistant creates config/config.json | Accepted for the design | Partial | adjudicated | `apps/desktop/installer/macos/scripts/postinstall:40`, `apps/desktop/installer/macos/scripts/postinstall:49` | macOS only; no Windows or Linux installer |
+| Shipped config.default.json copy path removed | Accepted for the design | Implemented | single source | `libs/shared-core/src/config.ts:76-81` | none |
+| Services open DB in onModuleInit; app.init before listen | Accepted for the design | Implemented | single source | `apps/api-gateway/src/main.ts:46`, `apps/api-gateway/src/database/database.module.ts:37-43` | none |

@@ -7,7 +7,7 @@ summary: "Technical and normative references, standards mapping, and the metadat
 ids[0]:
 related[2]: README.md,docs/standards/identifier-glossary.md
 status: current
-updated: 2026-11-04
+updated: 2026-11-09
 -->
 
 # Standards and references
@@ -27,6 +27,7 @@ updated: 2026-11-04
 - [Standard to where applied](#standard-to-where-applied)
 - [Identifier glossary](#identifier-glossary)
 - [Metadata block v1](#metadata-block-v1)
+- [ADR implementation status](#adr-implementation-status)
 - [Checks](#checks)
 
 ---
@@ -42,6 +43,7 @@ updated: 2026-11-04
 | Standard mapping | Which requirement file applies which standard | [Standard to where applied](#standard-to-where-applied) |
 | Id families | Ids outside the SRS | [Identifier glossary](#identifier-glossary) |
 | Page metadata | The toon-meta block and the `docs/meta.toon` loop | [Metadata block v1](#metadata-block-v1) |
+| ADR implementation status | The table that says what the code does for each ADR decision | [ADR implementation status](#adr-implementation-status) |
 | Checks | The open question count command and the metadata check command | [Checks](#checks) |
 
 ---
@@ -244,6 +246,47 @@ JSON on demand: `toon -d docs/meta.toon > meta.json` writes `meta.json` in the w
 `toon` is the `@toon-format/cli` command-line tool. This page does not pin a version.
 
 Ingestors. LangChain and LlamaIndex loaders read the Markdown text. They do not read an HTML comment (not verified for the versions in use). Feed them the JSON produced on demand from [docs/meta.toon](../meta.toon). Or use a preprocessing step that extracts the block first.
+
+---
+
+## ADR implementation status
+
+[Back to navigation](#navigation)
+
+Why. The front-matter `status` of a page says how current the page is. It does not say whether the code does what the ADR says. Each ADR therefore ends with an `## Implementation status` section.
+
+Format. The section holds one table with six columns, one row per decision:
+
+| Column | Content |
+| --- | --- |
+| Decision | The decision label, unchanged. |
+| Decision status | The status the ADR gives the decision. `Not stated` when the ADR gives none. |
+| Implementation | One of the five values below. |
+| Check | One of the three values below. |
+| Evidence | Up to three `path:line` items in inline code. `none` when there is no evidence. |
+| Gap | What differs between the decision and the code, in 35 words or fewer. `none` when nothing differs. |
+
+Implementation values:
+
+- `Implemented`: the code does what the decision says.
+- `Partial`: the code does less than the decision says, or differs from it.
+- `Not implemented`: nothing in the code does it.
+- `Outdated`: the code moved on on purpose. The ADR sentence is stale. This is not a defect.
+- `Not verified`: there is no evidence either way.
+
+Check values:
+
+- `confirmed`: two independent reads agree.
+- `adjudicated`: two reads differed and a person or the orchestrator resolved it.
+- `single source`: one read, not independently checked.
+
+Rules:
+
+- Every `Implemented` or `Partial` row cites `path:line`.
+- Re-audit the section whenever the code under it changes. Update its date and commit in the same edit.
+- The decision text is a record. Do not rewrite it to match the code. The table carries the difference.
+
+The audit of 2026-11-09 covered all 13 ADRs. It re-read 80 of 194 rows independently.
 
 ---
 

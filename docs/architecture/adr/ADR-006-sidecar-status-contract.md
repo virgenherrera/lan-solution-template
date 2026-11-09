@@ -7,7 +7,7 @@ summary: "Defines the stdio contract with the host, no HTTP listener, and one ty
 ids[0]:
 related[5]: docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/overview.md,docs/backlog/service-status-indicator.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/requirements/traceability.md
 status: current
-updated: 2026-11-05
+updated: 2026-11-09
 -->
 
 # ADR-006: Sidecar status contract and typed service array
@@ -22,6 +22,7 @@ updated: 2026-11-05
 - [Options rejected](#options-rejected)
 - [Consequences](#consequences)
 - [Not verified](#not-verified)
+- [Implementation status](#implementation-status)
 
 ## Status
 
@@ -138,3 +139,26 @@ The supervisor becomes Nest modules: persistence, supervisor, sidecar stdio and 
 - Line splitting with a very long JSON line: the limits of `CommandEvent::Stdout` are not verified.
 - Windows behavior of all four channels.
 - Any Tauri behavior beyond the list in [Context](#context).
+
+## Implementation status
+
+[Back to navigation](#navigation)
+
+Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept as the record. This table says what the code does today.
+
+| Decision | Decision status | Implementation | Check | Evidence | Gap |
+|---|---|---|---|---|---|
+| No HTTP listener; statusPort key removed | Accepted | Implemented | confirmed | `apps/sea-runtime/src/main.ts:28`, `libs/service-registry/src/schemas/supervisor-config.ts:5-26` | none |
+| stdout carries only validated JSON events | Accepted | Implemented | single source | `apps/sea-runtime/src/services/sidecar-output.ts:8`, `libs/service-registry/src/schemas/sidecar-protocol.ts:45` | none |
+| status event body, pid/restarts, emit on aggregate change | Accepted | Implemented | single source | `libs/service-registry/src/schemas/sidecar-protocol.ts:14-26`, `apps/sea-runtime/src/services/status-publisher.ts:34-43` | none |
+| stderr carries Nest logger lines, host parses none | Accepted | Implemented | single source | `libs/shared-core/src/logger/provide-logger.ts:15`, `apps/sea-runtime/src/services/child-spawner.ts:24`, `apps/desktop/src-tauri/src/sidecar.rs:173` | none |
+| stdin shutdown command, invalid line logged and ignored | Accepted | Implemented | single source | `libs/service-registry/src/schemas/sidecar-protocol.ts:33-35`, `apps/sea-runtime/src/services/sidecar-input.ts:19-21`, `apps/sea-runtime/src/services/supervisor.service.ts:37-38` | none |
+| stdin EOF triggers shutdown | Accepted | Implemented | confirmed | `apps/sea-runtime/src/services/sidecar-input.ts:23`, `apps/sea-runtime/src/services/supervisor.service.ts:39` | none |
+| Exit codes 0, 1, 2 | Accepted | Implemented | single source | `libs/service-registry/src/constants/exit-code.ts:2-9`, `apps/sea-runtime/src/main.ts:43`, `apps/sea-runtime/src/sea-entry.ts:14` | none |
+| Every line zod-validated both directions | Accepted | Implemented | single source | `libs/service-registry/src/schemas/sidecar-protocol.ts:42,45` | none |
+| Contract independent of /api/health | Accepted | Implemented | single source | `apps/sea-runtime/src/services/status-publisher.ts:43`, `apps/sea-runtime/src/services/sidecar-output.ts:8` | none |
+| Typed SERVICES array via defineServices | Accepted | Partial | confirmed | `apps/sea-runtime/src/services.ts:4`, `libs/service-registry/src/schemas/declared-services.ts:7-14,42-61` | ADR names defineServices, fields id/project and a compile-time error for unknown dependsOn. Code has plain DeclaredServices typed array, field path (id derived from last segment), no defineServices, dependsOn checked at run time only; web marked deprecated. |
+| Assembler reads SERVICES, writes servicesAssetSchema without project | Accepted | Implemented | confirmed | `tools/scripts/compile-sea.ts:465-466`, `libs/service-registry/src/schemas/declared-services.ts:26-39` | none |
+| Supervisor starts services in startupOrder | Accepted | Implemented | single source | `apps/sea-runtime/src/services/supervisor.service.ts:41,58-62` | none |
+| Supervisor as Nest modules, stdio adapters sole readers/writers | Accepted | Implemented | single source | `apps/sea-runtime/src/modules/runtime.module.ts:7-9`, `apps/sea-runtime/src/services/sidecar-input.ts:16`, `apps/sea-runtime/src/services/sidecar-output.ts:8` | none |
+| Restart backoff and window in rxjs, numbers in SUPERVISOR_CONFIG | Accepted | Implemented | single source | `apps/sea-runtime/src/services/service-lifecycle.ts:2,92,119`, `libs/service-registry/src/schemas/supervisor-config.ts:13-19` | none |

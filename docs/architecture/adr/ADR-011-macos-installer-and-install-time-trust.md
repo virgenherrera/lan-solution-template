@@ -7,7 +7,7 @@ summary: "How the macOS .pkg installs, creates a CA per installation, trusts it 
 ids[0]:
 related[10]: docs/results/POC-08-Result.md,docs/backlog/poc-8-msi-matrix-versioning.md,docs/backlog/td-windows-linux-distribution.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/overview.md,docs/standards/README.md,docs/roadmap/PROPOSAL.md
 status: proposed
-updated: 2026-11-04
+updated: 2026-11-09
 -->
 
 # ADR-011: macOS installer and install-time trust
@@ -23,6 +23,7 @@ updated: 2026-11-04
 - [Consequences](#consequences)
 - [Proposed amendments to ADR-002 and ADR-008](#proposed-amendments-to-adr-002-and-adr-008)
 - [Not verified](#not-verified)
+- [Implementation status](#implementation-status)
 
 ## Status
 
@@ -131,3 +132,24 @@ Proposed by the agent, under delegation. Marked for review by the human in the p
 - That the user can choose another installation folder.
 - AC-18 with the CA trusted: the real gateway page in the window.
 - Windows, Linux and macOS x64.
+
+## Implementation status
+
+[Back to navigation](#navigation)
+
+Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept as the record. This table says what the code does today.
+
+| Decision | Decision status | Implementation | Check | Evidence | Gap |
+|---|---|---|---|---|---|
+| D1 scope macOS only, Win/Linux debt | Not stated | Implemented | single source | `tools/scripts/installer-build.ts:3`, `tools/scripts/installer-build.ts:11` | none |
+| D2 assistant creates config/config.json | Not stated | Implemented | single source | `apps/desktop/installer/macos/scripts/postinstall:40`, `apps/desktop/installer/macos/scripts/postinstall:49` | none |
+| D3 uninstall removes config.json, keeps data/ | Not stated | Implemented | single source | `apps/desktop/installer/macos/uninstall.sh:6`, `apps/desktop/installer/macos/uninstall.sh:212` | none |
+| D4 .pkg no .app, base next to executable | Not stated | Implemented | confirmed | `apps/desktop/installer/macos/distribution.xml:12`, `tools/scripts/installer-macos.ts:57`, `tools/scripts/installer-macos.ts:74` | none |
+| D5 console user owns data/ and logs/ | Not stated | Implemented | single source | `apps/desktop/installer/macos/scripts/postinstall:29`, `apps/desktop/installer/macos/scripts/postinstall:59`, `apps/desktop/installer/macos/scripts/postinstall:65` | none |
+| D6 one CA per install via sudo -u console user | Not stated | Implemented | single source | `apps/desktop/installer/macos/scripts/postinstall:7`, `apps/desktop/installer/macos/scripts/postinstall:86` | none |
+| D7 system trust only via unticked box | Not stated | Implemented | single source | `apps/desktop/installer/macos/distribution.xml:15`, `apps/desktop/installer/macos/resources/trust.html:9`, `apps/desktop/installer/macos/trust-scripts/postinstall:107` | none |
+| D8 root-owned fingerprint anchors trusted CA | Not stated | Implemented | single source | `apps/desktop/installer/macos/scripts/postinstall:103`, `apps/desktop/installer/macos/scripts/postinstall:135`, `apps/desktop/installer/macos/trust-scripts/postinstall:41` | none |
+| D9 root scripts follow no link, no chown -R | Not stated | Implemented | confirmed | `apps/desktop/installer/macos/scripts/postinstall:6`, `apps/desktop/installer/macos/scripts/postinstall:49`, `apps/desktop/installer/macos/uninstall.sh:9` | none |
+| D10 uninstall removes trust before certs/ | Not stated | Implemented | single source | `apps/desktop/installer/macos/uninstall.sh:100`, `apps/desktop/installer/macos/uninstall.sh:161`, `apps/desktop/installer/macos/uninstall.sh:164` | none |
+| D11 lockstep version and branch validator | Not stated | Implemented | single source | `nx.json:19`, `nx.json:32`, `tools/scripts/release-version-actions.ts:106` | none |
+| D12 --generate-certs operation in executable | Not stated | Implemented | single source | `libs/service-registry/src/dispatcher.ts:33`, `libs/service-registry/src/dispatcher.ts:38`, `libs/service-registry/src/dispatcher.ts:45` | none |

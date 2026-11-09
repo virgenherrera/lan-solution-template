@@ -6,7 +6,7 @@ type: architecture
 summary: "Adds a startup gate that compares the live database structure with the descriptor in the binary."
 related[5]: docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/backlog/dbm-schema-gate.md,docs/requirements/05-persistence.md,docs/requirements/amendments-2026-11-02.md,docs/requirements/traceability.md
 status: current
-updated: 2026-11-03
+updated: 2026-11-09
 -->
 
 # ADR-005: Live schema validation
@@ -22,6 +22,7 @@ updated: 2026-11-03
 - [Blind spots](#blind-spots)
 - [Consequences](#consequences)
 - [Not verified](#not-verified)
+- [Implementation status](#implementation-status)
 
 ## Status
 
@@ -142,3 +143,26 @@ A change only in one of these passes as valid. The gate gives no safety there. T
 - Verified on Node 26 SQLite: `ALTER TABLE ... ADD COLUMN ... NOT NULL` without a default works on an empty table and fails on a populated one ("Cannot add a NOT NULL column with default value NULL"). The extra `NOT NULL` case therefore also appears after a table rebuild or on an empty table.
 - That `is_identity` and `is_generated` count as a default in PostgreSQL.
 - The behavior of the gate on engines other than SQLite.
+
+## Implementation status
+
+[Back to navigation](#navigation)
+
+Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept as the record. This table says what the code does today.
+
+| Decision | Decision status | Implementation | Check | Evidence | Gap |
+|---|---|---|---|---|---|
+| Binary carries expected structure as Zod descriptor | Accepted | Implemented | single source | `libs/db-migrations/contract/descriptor.ts:57`, `apps/sea-runtime/src/persistence/schema-check.ts:43` | none |
+| DbAdapter.introspectSchema per engine | Accepted | Implemented | single source | `libs/shared-core/src/db/port.ts:52`, `libs/shared-core/src/db/sqlite/adapter.ts:117`, `libs/shared-core/src/db/pg/adapter.ts:175` | none |
+| Gate once between migrations and app_meta; failure exit 1 no service spawns | Accepted | Implemented | single source | `apps/sea-runtime/src/services/persistence.service.ts:23`, `apps/sea-runtime/src/services/persistence.service.ts:75`, `apps/sea-runtime/src/persistence/schema-check.ts:44` | none |
+| Policy table missing items fail; harmless extras tolerated and logged | Accepted | Implemented | single source | `libs/db-migrations/contract/compare.ts:33`, `libs/db-migrations/contract/compare.ts:62`, `libs/db-migrations/contract/compare.ts:71` | none |
+| Extra NOT NULL column without default and not pk fails | Accepted | Implemented | confirmed | `libs/db-migrations/contract/compare.ts:55`, `libs/db-migrations/contract/compare.ts:58`, `libs/shared-core/src/db/sqlite/adapter.ts:128` | Message text differs from ADR example (unexpected column NOT NULL without default) |
+| schema_migrations and sqlite_* tables ignored | Accepted | Implemented | single source | `libs/db-migrations/contract/compare.ts:27`, `libs/db-migrations/contract/compare.ts:28` | none |
+| Shared compareSchema with exact and required modes | Accepted | Implemented | single source | `libs/db-migrations/contract/compare.ts:7`, `libs/db-migrations/contract/compare.ts:91`, `tools/scripts/db-parity.ts:119` | none |
+| Error output text and info line schema ok N extras tolerated | Accepted | Partial | confirmed | `apps/sea-runtime/src/persistence/schema-check.ts:12`, `apps/sea-runtime/src/persistence/schema-check.ts:14`, `apps/sea-runtime/src/persistence/schema-check.ts:23` | Wording differs slightly (extra column text; no [supervisor] prefix verified here) |
+| Detection via PRAGMA table_info and information_schema | Accepted | Implemented | single source | `libs/shared-core/src/db/sqlite/adapter.ts:123`, `libs/shared-core/src/db/pg/adapter.ts:179` | none |
+| Services independent of migrations; Nest DB module SELECT 1 handshake | Accepted | Implemented | confirmed | `apps/api-gateway/src/database/database.module.ts:7`, `apps/api-gateway/src/database/database.module.ts:37` | none |
+| No periodic schema probe | Accepted | Implemented | single source | `apps/sea-runtime/src/services/persistence.service.ts:23` | Only one call site of the gate at persistence boot |
+| Options B C user_version and version guards rejected | Accepted | Implemented | single source | `apps/sea-runtime/src/persistence/schema-check.ts:43` | None of the rejected mechanisms present |
+| PG type-name mapping to logical names | Accepted | Implemented | single source | `libs/shared-core/src/db/pg/adapter.ts:20`, `libs/shared-core/src/db/pg/adapter.ts:175` | none |
+| Example config sets WAL | Accepted | Implemented | single source | `libs/shared-core/config.example.json:7` | none |

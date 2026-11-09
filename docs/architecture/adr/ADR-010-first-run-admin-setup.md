@@ -7,7 +7,7 @@ summary: "Proposed path for the first real admin: CLI setup plus loopback wizard
 ids[0]:
 related[7]: docs/results/POC-05-Result.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/backlog/poc-7-auth-roles.md,docs/roadmap/PROPOSAL.md
 status: proposed
-updated: 2026-11-04
+updated: 2026-11-09
 -->
 
 # ADR-010: First admin authentication
@@ -23,6 +23,7 @@ updated: 2026-11-04
 - [Sources](#sources)
 - [Not verified](#not-verified)
 - [Decisions of 2026-11-04](#decisions-of-2026-11-04)
+- [Implementation status](#implementation-status)
 
 ## Status
 
@@ -141,3 +142,19 @@ Security notice: an admin with a short PIN on a LAN is weak. The attempt limit s
 ### P5. CLI `setup` platforms (Human)
 
 The CLI `setup` is offered on Windows, Linux and macOS.
+
+## Implementation status
+
+[Back to navigation](#navigation)
+
+Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept as the record. This table says what the code does today.
+
+| Decision | Decision status | Implementation | Check | Evidence | Gap |
+|---|---|---|---|---|---|
+| P1 keep MSI dialog until wizard passes | Not stated | Not implemented | adjudicated | `tools/scripts/installer-build.ts:11` | No MSI or WiX in the repo, only the macOS pkg. There is no Windows installer code to check against. |
+| P2 sidecar emits setup stdout event with token | Not stated | Not implemented | confirmed | `libs/service-registry/src/schemas/sidecar-protocol.ts:28` | sidecarEventSchema holds only the status event; no setup event, no token, no ADR-006 amendment |
+| P3 token expiry 15 min, 5 attempts | Not stated | Not implemented | confirmed | `apps/api-gateway/src/app.bootstrap.ts:18` | No setup token, expiry or attempt-limit constants exist anywhere in apps, libs or tools |
+| P4 replaceable password policy, default 4 chars | Not stated | Not implemented | confirmed | `libs/shared-core/src/config.ts:1` | No password policy module; no user-creation path (POC-7 unbuilt) |
+| P5 CLI setup on Windows, Linux, macOS | Not stated | Not implemented | confirmed | `apps/sea-runtime/src/sea-entry.ts:7` | Dispatcher knows only supervisor, --service and --generate-certs; no setup command |
+| Proposal: loopback /setup wizard in gateway | Proposed | Not implemented | confirmed | `apps/api-gateway/src/app.bootstrap.ts:18` | No /setup route, no loopback/Host/Origin checks, no first-admin insert; ADR says wizard unbuilt |
+| Proposal: tray item Set up admin | Proposed | Not implemented | confirmed | `apps/desktop/src-tauri/src/tray.rs:42` | Tray has only the Trust CA... item; no setup item or /setup navigation |

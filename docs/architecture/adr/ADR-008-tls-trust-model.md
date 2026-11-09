@@ -7,7 +7,7 @@ summary: "Local CA and leaf built with Node built-ins, created only by pnpm dev:
 ids[0]:
 related[10]: docs/architecture/device-trust-guide.md,docs/results/POC-04-Result.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/requirements/06-web-gateway-https-pwa.md,docs/roadmap/PROPOSAL.md,docs/architecture/overview.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md
 status: current
-updated: 2026-11-03
+updated: 2026-11-09
 -->
 
 # ADR-008: TLS trust model
@@ -25,6 +25,7 @@ updated: 2026-11-03
 - [Consequences](#consequences)
 - [Measured](#measured)
 - [Not verified](#not-verified)
+- [Implementation status](#implementation-status)
 
 ## Status
 
@@ -233,3 +234,35 @@ Same list as the [POC-4 result](../../results/POC-04-Result.md#not-verified).
 - The installer step that creates the TLS files of a packaged install: no installer exists. The packaged smoke runs `generate-certs` by hand.
 - A base directory inside a read-only app bundle, so `certs/` could not be written. POC-5 and [OQ16](../../roadmap/PROPOSAL.md#open-questions) own it.
 - macOS code signing of the sidecar.
+
+## Implementation status
+
+[Back to navigation](#navigation)
+
+Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept as the record. This table says what the code does today.
+
+| Decision | Decision status | Implementation | Check | Evidence | Gap |
+|---|---|---|---|---|---|
+| CA and leaf built with Node built-ins only | Accepted | Implemented | confirmed | `libs/shared-core/src/tls/x509.ts:193-196`, `libs/shared-core/src/tls/der.ts:1` | none |
+| CA profile P-256, 10 years, CA:TRUE, keyCertSign | Accepted | Implemented | confirmed | `libs/shared-core/src/tls/generate.ts:10-12`, `libs/shared-core/src/tls/x509.ts:50,260-261` | none |
+| Leaf profile 397 days, serverAuth, SAN, CN lan-gateway | Accepted | Implemented | confirmed | `libs/shared-core/src/tls/generate.ts:11,13`, `libs/shared-core/src/tls/x509.ts:299-301` | none |
+| Serial 0x01 plus 15 random bytes | Accepted | Implemented | single source | `libs/shared-core/src/tls/x509.ts:54,172` | none |
+| SAN set: localhost, loopback, hostname, interface IPs, extraNames | Accepted | Partial | confirmed | `libs/shared-core/src/tls/san.ts:24-46` | ADR includes non-link-local IPv6 interface addresses. Code adds only IPv4 non-internal addresses and omits interface IPv6 on purpose (privacy address rotation, san.ts:25). |
+| dev:certs reissues leaf on missing, expiring or SAN change | Accepted | Implemented | confirmed | `libs/shared-core/src/tls/generate.ts:118-125`, `libs/shared-core/src/tls/x509.ts:334`, `package.json:14` | none |
+| Gateway logs SAN mismatch or near expiry and keeps starting | Accepted | Implemented | single source | `libs/shared-core/src/tls/identity.ts:158-165` | none |
+| certs/ layout, modes 0700/0600, atomic rename | Accepted | Implemented | confirmed | `libs/shared-core/src/tls/generate.ts:15-16,36-40,108-109` | none |
+| Gateway never creates certificates; zod facts, exit message | Accepted | Implemented | single source | `libs/shared-core/src/tls/identity.ts:79-95,111-153`, `apps/api-gateway/src/app.bootstrap.ts:15,34-42` | none |
+| dev:certs creates CA only if both absent, never replaces | Accepted | Implemented | confirmed | `libs/shared-core/src/tls/generate.ts:100-120`, `tools/scripts/generate-certs.ts:21-30` | none |
+| Identity loaded before NestFactory.create | Accepted | Implemented | single source | `apps/api-gateway/src/app.bootstrap.ts:15-20` | none |
+| Strict net and tls config blocks; hostname removed | Accepted | Implemented | single source | `libs/shared-core/src/config.ts:42-60`, `libs/shared-core/config.example.json:11-18` | none |
+| HTTPS listens on net.httpsPort | Accepted | Implemented | confirmed | `apps/api-gateway/src/main.ts:53` | none |
+| HTTP listener 308 redirect, Host never reflected | Accepted | Outdated | adjudicated | `apps/api-gateway/src/redirect-listener.ts:27`, `apps/api-gateway/src/redirect-listener.ts:37`, `apps/api-gateway/src/redirect-listener.ts:48` | Unknown Host gets 400 (redirect-listener.ts:43-45), not a redirect to the configured host as the Decision text says; the Measured section of the ADR agrees with the code |
+| /api never gets index.html; missing .js is 404 | Accepted | Implemented | confirmed | `apps/api-gateway/src/web-handler.ts:22-44` | none |
+| Hashed files immutable; index.html and SW no-cache | Accepted | Implemented | confirmed | `apps/api-gateway/src/web-handler.ts:10-16` | none |
+| Environments: dev CA via NODE_EXTRA_CA_CERTS, no secure:false | Accepted | Implemented | single source | `package.json:12`, `apps/web-angular/proxy.conf.json:3-4` | none |
+| Sidecar simulation via packaged smoke | Accepted | Implemented | confirmed | `tools/scripts/smoke-sea.ts:105-132` | none |
+| Built-in CA default; phones install ca.crt by hand | Accepted | Implemented | single source | `docs/architecture/device-trust-guide.md:33`, `docs/architecture/device-trust-guide.md:35` | none |
+| pnpm dev:trust trusts CA on the host, refuses non-CA | Accepted | Implemented | single source | `tools/scripts/trust-ca.ts:26-40`, `package.json:15` | none |
+| PWA ships manifest and service worker | Accepted | Implemented | adjudicated | `apps/web-angular/src/index.html:43`, `apps/web-angular/angular.json:71`, `apps/web-angular/src/app/app.config.ts:14` | Service worker enabled only outside dev mode (app.config.ts:15) |
+| Known gap: crash between leaf.key and leaf.crt writes | Accepted | Implemented | confirmed | `libs/shared-core/src/tls/generate.ts:123-124`, `libs/shared-core/src/tls/identity.ts:90` | none |
+| net and tls required in config.json | Accepted | Implemented | confirmed | `libs/shared-core/src/config.ts:60` | none |

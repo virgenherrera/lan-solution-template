@@ -6,7 +6,7 @@ type: architecture
 summary: "Records POC-3: config singleton, DbAdapter strategy port, sqlite-vector SEA asset, custom migrator. Root and defaults rules superseded by ADR-007."
 related[5]: docs/results/POC-03-Result.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-007-persistence-system.md
 status: current
-updated: 2026-11-04
+updated: 2026-11-09
 -->
 
 # ADR-003: Config singleton and database strategy
@@ -47,3 +47,25 @@ POC-3 did not install Drizzle. The adapter and the migrator use `node:sqlite` an
 - The adapter keeps one connection. The port uses `?` placeholders, and the adapter rewrites them to `$1`, `$2`, and so on outside quoted literals.
 - The SEA executable is the trust root for the vector binary (see the result page, verification section).
 - The port runs one statement per call. The migrator splits SQL on `;`.
+
+## Implementation status
+
+Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept as the record. This table says what the code does today.
+
+| Decision | Decision status | Implementation | Check | Evidence | Gap |
+|---|---|---|---|---|---|
+| One root resolved once; precedence --root APP_HOME marker dev anchor OS default | Accepted as the record of what POC-3 built | Not implemented | confirmed | `libs/shared-core/src/paths.ts:21` | Superseded by ADR-007 per ADR-003 update; code is resolveBase sea ? dirname(execPath) : resolve(cwd) |
+| Derived dirs installDir configDir dataDir logDir certDir | Accepted as the record of what POC-3 built | Implemented | single source | `libs/shared-core/src/paths.ts:13`, `libs/shared-core/src/paths.ts:17`, `libs/shared-core/src/paths.ts:27` | none |
+| Config Zod 4 schema deep-frozen initialized once | Accepted as the record of what POC-3 built | Outdated | adjudicated | `libs/shared-core/src/config.ts:55`, `libs/shared-core/src/config.ts:68`, `libs/shared-core/src/config.ts:85` | Per-key schema defaults no longer exist (ADR-007 supersedes); file must exist |
+| DbAdapter is only DB surface; db.engine selects from registry | Accepted as the record of what POC-3 built | Implemented | single source | `libs/shared-core/src/db/port.ts:44`, `libs/shared-core/src/db/factory.ts:19`, `libs/shared-core/src/db/factory.ts:33` | none |
+| Vector API in port; VectorUnavailableError no silent non-vector mode | Accepted as the record of what POC-3 built | Implemented | single source | `libs/shared-core/src/db/port.ts:44`, `libs/shared-core/src/db/port.ts:49`, `libs/shared-core/src/db/port.ts:50` | none |
+| sqlite-vector 1.1.2 pinned per platform and embedded | Accepted as the record of what POC-3 built | Implemented | single source | `tools/vector/sqlite-vector-1.1.2.json:3`, `tools/scripts/compile-sea.ts:370`, `tools/scripts/compile-sea.ts:402` | none |
+| Vector binary extracted to private dir hashed then loaded | Accepted as the record of what POC-3 built | Implemented | single source | `libs/shared-core/src/db/sqlite/vector.ts:53`, `libs/shared-core/src/db/sqlite/vector.ts:59`, `libs/shared-core/src/db/sqlite/vector.ts:64` | ADR says sha512 tarball and sha256 binary; runtime checks sha256 of binary |
+| Migrator uses only port; schema_migrations history one transaction each | Accepted as the record of what POC-3 built | Implemented | confirmed | `libs/shared-core/src/db/migrator.ts:38`, `libs/shared-core/src/db/migrator.ts:145`, `libs/shared-core/src/db/migrator.ts:155` | none |
+| Startup order root config adapter connect vector migrations services | Accepted as the record of what POC-3 built | Implemented | single source | `apps/sea-runtime/src/services/persistence.service.ts:23`, `apps/sea-runtime/src/services/persistence.service.ts:59`, `apps/sea-runtime/src/services/persistence.service.ts:70` | Order now also includes schema check and app_meta |
+| Drizzle not installed in POC-3 (superseded by ADR-004) | Accepted as the record of what POC-3 built | Not implemented | confirmed | `pnpm-workspace.yaml:38` | Drizzle is now a catalog dependency; ADR-004 supersedes |
+| PostgreSQL adapter implements DbAdapter | Accepted as the record of what POC-3 built | Implemented | single source | `libs/shared-core/src/db/pg/adapter.ts:175`, `libs/shared-core/src/db/factory.ts:27` | none |
+| pg block host port database user passwordFile in data dir | Accepted as the record of what POC-3 built | Implemented | single source | `libs/shared-core/src/config.ts:30`, `libs/shared-core/src/config.ts:36`, `libs/shared-core/src/db/pg/adapter.ts:78` | none |
+| PG verifyVector checks extensions creates extension reports role | Accepted as the record of what POC-3 built | Implemented | confirmed | `libs/shared-core/src/db/pg/adapter.ts:89`, `libs/shared-core/src/db/pg/adapter.ts:103`, `libs/shared-core/src/db/pg/adapter.ts:113` | none |
+| One connection; ? placeholders rewritten to $n outside literals | Accepted as the record of what POC-3 built | Implemented | single source | `libs/shared-core/src/db/pg/adapter.ts:43` | none |
+| Port runs one statement per call; migrator splits SQL on ; | Accepted as the record of what POC-3 built | Implemented | single source | `libs/shared-core/src/db/migrator.ts:72`, `libs/shared-core/src/db/migrator.ts:75` | none |
