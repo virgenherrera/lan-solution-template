@@ -17,6 +17,7 @@ Traceability: `docs/requirements/traceability.md`.
 - Do not invent requirements the SRS does not state. Mark unverified claims "not verified".
 - Commit freely on a feature branch (human decision). Push, pull request, `gh` and any other GitHub write need explicit user approval.
 - Never commit to `main`. Work on a feature branch and commit there.
+- Tests: unit and integration tests are forbidden (REQ-TEST-01), with no mocks of persistence or network. Write only app-level black-box suites that go through the assembled app, the kind Nest and Angular call e2e: one APP suite per app, target layout `tests/<app>/` (not migrated yet). The SRS fixes the runners: Jest and Supertest for Nest (REQ-TEST-04), Playwright for Angular (REQ-TEST-05), WebdriverIO for Tauri (REQ-TEST-08). Read REQ-TEST-01 to REQ-TEST-10 before proposing test work.
 
 ## Commits
 

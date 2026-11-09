@@ -136,7 +136,7 @@ Move all of `tools/scripts` to one CLI app that follows the ADR-013 entrypoint p
 - Config: one zod object per command holds its inputs and defaults. Nothing else reads `process.argv`.
 - Exit: a named `EXIT_CODE` constant set replaces the literal codes.
 - First command: `compile-sea`. Split it by domain, one unit each: engine check, target resolution, service discovery, rspack bundle, web assets, vector assets, migration assets, SEA config and build. Paths become config values, not module constants. The cross-build checks at lines 176 to 187 move into the schema.
-- Tests follow the direction in [current state](../architecture/current-state.md#direction): under `./tests/[TestStageName]/`, one setup per stage. The stage names are placeholders.
+- Tests follow the test model in [current state](../architecture/current-state.md#direction): no unit or integration tests, one APP suite per app under `./tests/<app>/`. The CLI app gets its own APP suite.
 
 Requirements that apply to `compile-sea.ts`, in [10-node-sea-distribution.md](../requirements/10-node-sea-distribution.md):
 
@@ -171,8 +171,6 @@ Open, for the human. Not decided by this page.
 | Decision | Options | Note |
 |---|---|---|
 | Container | `nest-commander`, or a plain class with `static main` | `nest-commander` is a candidate. Not verified: version, fit with the ADR-013 pattern and the SEA bundle. A linear flow does not need a container. |
-| Test layout and REQ-TEST-01 | Tests under `./tests/[TestStageName]/`, or none for tools | [REQ-TEST-01](../requirements/11-nx-quality-testing.md) forbids unit and integration suites. Changing it is the human's decision. |
-| Stage names | Keep the placeholders, or rename to self-descriptive names | The rename is a later iteration. |
 
 ---
 

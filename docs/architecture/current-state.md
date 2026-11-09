@@ -3,7 +3,7 @@ fmt: TOON
 doc: docs/architecture/current-state.md
 title: Current state and direction
 type: architecture
-summary: What exists today per app, lib and tool, the human's test direction of 2026-11-09, and the gaps.
+summary: What exists today per app, lib and tool, the test model and layout direction, and the gaps.
 ids[0]:
 related[6]: docs/architecture/overview.md,docs/backlog/td-compile-sea-standalone.md,docs/backlog/README.md,docs/requirements/11-nx-quality-testing.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/platform-matrix.md
 status: current
@@ -31,9 +31,9 @@ updated: 2026-11-09
 | Question | Answer | Section |
 | --- | --- | --- |
 | What exists? | Four apps, three libs, and loose scripts and configs under `tools/` | [Component map](#component-map) |
-| Where does the human want to go? | Tests under `./tests/[TestStageName]/`, one setup per stage | [Direction](#direction) |
+| Where does the human want to go? | One APP suite per app under `./tests/<app>/`; no unit or integration tests | [Direction](#direction) |
 | What is missing? | A real runner for the smoke scripts, a `tools/scripts` tsconfig, desktop and web tests | [Gaps](#gaps) |
-| What is not decided? | REQ-TEST-01, stage names, nest-commander, sea-runtime test design | [Open decisions](#open-decisions) |
+| What is not decided? | The sea-runtime APP suite design, nest-commander, Playwright for web-angular, the later app rename | [Open decisions](#open-decisions) |
 | How far are the ADRs built? | Counts per ADR | [ADR implementation status](#adr-implementation-status) |
 
 ---
@@ -88,10 +88,26 @@ flowchart TB
 
 The human decided this on 2026-11-09. It is a direction, not a requirement. No requirement changed.
 
-- Tests live under `./tests/[TestStageName]/`, with one setup per stage. The stage names are placeholders. A rename to self-descriptive names is a later iteration.
-- `api-gateway`: Jest and Supertest, the Nest e2e kind.
-- `web-angular`: app-level e2e with Playwright, set up with `ng add playwright-ng-schematics`. Not verified that it fits the current Angular version (the repo pins Angular through `catalog:angular` in `pnpm-workspace.yaml`).
-- `sea-runtime`: to investigate and design. A hypothesis: Jest black-box tests against the isolated runtime in a child process. A possible two-level split: the compiled runtime, and the real SEA binary.
+### Test model
+
+Unit tests and integration tests are forbidden. There are no exceptions, and no mocks of persistence or network ([REQ-TEST-01](../requirements/11-nx-quality-testing.md)). The SRS already states this. REQ-TEST-01 allows two kinds of tests: real application (APP) tests and E2E tests of the installed product. APP suites are black-box, app-level tests that go through the assembled app. Nest and Angular call this kind e2e. Each app gets one APP suite, with its own runner setup.
+
+The target layout is `./tests/<app>/`, one folder per app. `<app>` is the app's folder name under `apps/`, so the later app rename renames these folders. This layout is the human's direction. It is not an SRS requirement and adds no id.
+
+| App | Runner | SRS id | Exists today? |
+| --- | --- | --- | --- |
+| `api-gateway` | Jest and Supertest on a real `INestApplication` | [REQ-TEST-04](../requirements/11-nx-quality-testing.md) | Yes: `apps/api-gateway/test/health/get-health.spec.ts`. The spec lives in `apps/api-gateway/test/` and moves to `tests/<app>/` with the layout. |
+| `web-angular` | Playwright | [REQ-TEST-05](../requirements/11-nx-quality-testing.md) | No test files. `test:dynamic` is an `echo`. |
+| `sea-runtime` and its compiled SEA binary | Not chosen | [REQ-TEST-07](../requirements/11-nx-quality-testing.md) | Partly: hand-written smoke scripts `tools/scripts/smoke-sea.ts` and `tools/scripts/smoke-pg.ts`, no runner. |
+| `apps/desktop` | WebdriverIO | [REQ-TEST-08](../requirements/11-nx-quality-testing.md) | Yes: `apps/desktop/e2e/host.e2e.ts`, run by `tools/scripts/e2e-desktop.ts`. |
+| `tools/scripts`, as a future CLI app | Not chosen | None | No. It gets its own APP suite when it becomes an app. |
+
+`apps/api-gateway/test/health/get-health.spec.ts` is an APP test, not a unit test. `apps/api-gateway/test/get-test-context.ts` builds the real `AppModule` with `Test.createTestingModule`, runs `app.init()` and sends requests through `supertest(app.getHttpServer())`. It uses a real SQLite file and the real config file in a temporary base. It mocks no persistence and no network.
+
+### Other direction
+
+- `web-angular`: Playwright setup. `ng add playwright-ng-schematics` is a candidate. Not verified that it fits the current Angular version (the repo pins Angular through `catalog:angular` in `pnpm-workspace.yaml`).
+- `sea-runtime`: to investigate and design. A hypothesis: a Jest black-box suite against the runtime in a child process. A possible two-level split: the compiled runtime, and the real SEA binary ([REQ-TEST-07](../requirements/11-nx-quality-testing.md) requires the compiled binary). A rebuild of the SEA costs about 3 minutes. `pnpm test -- --filter @app` selects nothing for `sea-runtime` today, because the smoke runs in `package` (see [POC-2g](../results/POC-02g-real-binary-smoke.md)).
 - `tools/scripts`: intended to become one CLI app instead of loose scripts. `nest-commander` is a candidate. Not verified. See [TD-TOOLS-01](../backlog/td-compile-sea-standalone.md).
 - vitest is not part of the plan. The vitest entry in `apps/sea-runtime/package.json` is unused: no vitest config and no test file exist.
 
@@ -103,11 +119,10 @@ The human decided this on 2026-11-09. It is a direction, not a requirement. No r
 
 | Today | Target | What closes the gap |
 | --- | --- | --- |
-| Hand-written `check()` smoke scripts: `tools/scripts/smoke-sea.ts`, `tools/scripts/smoke-pg.ts`, `tools/scripts/verify-platform.ts`. | A real test runner and the stage layout under `./tests/`. | No page yet. The sea-runtime test design is open. |
+| Hand-written `check()` smoke scripts (APP tests with no real runner): `tools/scripts/smoke-sea.ts`, `tools/scripts/smoke-pg.ts`, `tools/scripts/verify-platform.ts`. | A real runner and the `./tests/sea-runtime/` APP suite (REQ-TEST-07). | No page yet. The sea-runtime APP suite design is open. |
 | `tools/scripts/smoke-dev.ts` gets `Cannot find name 'process'` in the editor (VS Code). Likely cause, not verified by running tsc: no tsconfig includes it. The only tsconfig that covers `tools/scripts` files is `apps/desktop/tsconfig.json`, for `installer-*.ts`. | Every script under type check, with Node types. | [TD-TOOLS-01](../backlog/td-compile-sea-standalone.md) (one CLI app). No page yet for a stopgap tsconfig. |
 | The Rust desktop shell has no unit tests. It has `cargo check` and a WebdriverIO e2e. | Not decided. | No page yet. |
 | `web-angular` and the three libs have only `tsc --noEmit`. Their `test:dynamic` scripts are `echo` no-ops. | Playwright e2e for the web app (direction). Libs: not decided. | No page yet. |
-| `api-gateway` has one Jest spec. [REQ-TEST-01](../requirements/11-nx-quality-testing.md) forbids unit and integration suites. | Jest and Supertest e2e under `./tests/`. | The requirement decision, see [Open decisions](#open-decisions). |
 
 ---
 
@@ -117,10 +132,10 @@ The human decided this on 2026-11-09. It is a direction, not a requirement. No r
 
 All four belong to the human. This page changes none of them.
 
-1. REQ-TEST-01 in [11-nx-quality-testing.md](../requirements/11-nx-quality-testing.md) forbids unit and integration suites. `api-gateway` already has a Jest spec (`apps/api-gateway/test/health/get-health.spec.ts`). Changing the requirement is the human's decision.
-2. The rename of the placeholder stage names to self-descriptive names.
-3. `nest-commander` or a plain class for the `tools/scripts` CLI app.
-4. The design of the `sea-runtime` tests.
+1. The design of the `sea-runtime` APP suite: runner, compiled bundle versus the real SEA binary, and the rebuild cost of about 3 minutes.
+2. Whether `tools/scripts` becomes a `nest-commander` app or a plain class.
+3. The Playwright setup for `web-angular`.
+4. The later rename of the apps to self-descriptive names. It renames the `tests/<app>` folders.
 
 ---
 
