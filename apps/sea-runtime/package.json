@@ -59,6 +59,10 @@
           {
             "projects": "db-migrations",
             "target": "build"
+          },
+          {
+            "projects": "tools-cli",
+            "target": "build"
           }
         ],
         "executor": "nx:run-commands",
@@ -76,6 +80,7 @@
           "{workspaceRoot}/tools/scripts/pack-migrations.ts",
           "{workspaceRoot}/libs/db-migrations/sqlite/migrations/**/*",
           "{workspaceRoot}/tools/scripts/smoke-sea.ts",
+          "{workspaceRoot}/apps/tools-cli/src/**/*",
           "{workspaceRoot}/tools/rspack/**/*"
         ]
       },

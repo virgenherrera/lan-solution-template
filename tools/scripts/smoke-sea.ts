@@ -76,9 +76,9 @@ function writeConfig(installDir: string, text: string = JSON.stringify(smokeConf
   writeFileSync(join(installDir, 'config', CONFIG_FILE), text);
 }
 // Like the installer, the command creates and renews the TLS files: the gateway only validates them.
-const GENERATE_CERTS = join(root, 'tools', 'scripts', 'generate-certs.ts');
+const TOOLS_CLI = join(root, 'apps', 'tools-cli', 'dist', 'main.js');
 function generateCerts(installDir: string): string {
-  return execFileSync(process.execPath, [GENERATE_CERTS, '--base', installDir], { encoding: 'utf8' });
+  return execFileSync(process.execPath, [TOOLS_CLI, 'generate-certs', '--base', installDir], { encoding: 'utf8' });
 }
 // The executable resolves its base from its own folder, so each run gets a fresh install dir holding a copy of it.
 // A valid config (the default) is followed by the TLS files; pass withCerts false for an install the installer has not finished.

@@ -1,5 +1,5 @@
 // @app smoke test of the dev loop (REQ-DEV-02, REQ-DEV-04): `ng serve` proxies /api to the HTTPS gateway and trusts the generated CA only through NODE_EXTRA_CA_CERTS.
-// Usage: `node tools/scripts/smoke-dev.ts`. Needs the built shared-core library (generate-certs), the built gateway (`pnpm --filter api-gateway build`) and the built service-registry library.
+// Usage: `node tools/scripts/smoke-dev.ts`. Needs the built tools-cli (generate-certs), the built gateway (`pnpm --filter api-gateway build`) and the built service-registry library.
 // It runs in a throwaway base and never touches the tracked proxy file. Windows shells are not verified: the process-group kill is POSIX only.
 import { type ChildProcess, spawn, spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -141,8 +141,8 @@ writeFileSync(
 
 // The gateway never creates certificates: the command does, like `pnpm dev:certs` before `pnpm dev:gateway`.
 const GATEWAY = join(root, 'apps', 'api-gateway', 'dist', 'main.js');
-const GENERATE_CERTS = join(root, 'tools', 'scripts', 'generate-certs.ts');
-const generate = spawnSync(process.execPath, [GENERATE_CERTS, '--base', base], { encoding: 'utf8' });
+const TOOLS_CLI = join(root, 'apps', 'tools-cli', 'dist', 'main.js');
+const generate = spawnSync(process.execPath, [TOOLS_CLI, 'generate-certs', '--base', base], { encoding: 'utf8' });
 if (generate.status !== 0) await fail(`generate-certs exited ${generate.status}: ${generate.stderr}`);
 pass('generate-certs created the CA and the leaf in the throwaway base');
 
@@ -163,7 +163,7 @@ try {
   if (existsSync(join(bareBase, 'certs'))) await fail('gateway without certs created the certs/ folder');
   pass('gateway without certs exits 1, names the missing file and pnpm dev:certs, creates nothing');
 
-  if (spawnSync(process.execPath, [GENERATE_CERTS, '--base', brokenBase]).status !== 0) await fail('generate-certs failed for the mismatch case');
+  if (spawnSync(process.execPath, [TOOLS_CLI, 'generate-certs', '--base', brokenBase]).status !== 0) await fail('generate-certs failed for the mismatch case');
   // The key of the other base is a valid key that belongs to another certificate.
   copyFileSync(join(base, 'certs', 'leaf.key'), join(brokenBase, 'certs', 'leaf.key'));
   const mismatch = stoppedGateway(brokenBase);

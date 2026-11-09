@@ -1,7 +1,7 @@
 // Per-host verification of the packaged artifacts (REQ-SEA-06, REQ-TEST-09): the standalone SEA binary and the Tauri package that contains it. A passing build does not prove a runtime.
 // Usage: `node tools/scripts/verify-platform.ts`. Run `pnpm exec nx run sea-runtime:package` and `pnpm exec nx run desktop:package` first; it never builds anything.
 // One line per check, `ok` or `FAIL`; the first failed check exits 1. A host outside HOSTS prints "not verified on <host>" and exits 3: it never fakes a pass.
-// Isolation: temporary install directories, free ports written into each config, certs from generate-certs.ts. The keychain and the OS trust store are never touched: requests trust ca.crt through their own `ca` option.
+// Isolation: temporary install directories, free ports written into each config, certs from `tools-cli generate-certs`. The keychain and the OS trust store are never touched: requests trust ca.crt through their own `ca` option.
 // Only macOS arm64 has been run (docs/architecture/platform-matrix.md). The Tauri step needs a desktop session: the host opens its window for a moment.
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
@@ -69,7 +69,7 @@ async function install(label: string, withConfig: boolean = true): Promise<{ dir
     const config = { db: { engine: 'sqlite', sqlite: { file: 'lan.db', foreignKeys: true, journalMode: 'WAL', synchronous: 'FULL' } }, net: { bind: BIND, httpsPort, httpPort }, tls: { extraNames: [] } };
     mkdirSync(join(dir, 'config'));
     writeFileSync(join(dir, 'config', 'config.json'), `${JSON.stringify(config, null, 2)}\n`);
-    execFileSync(process.execPath, [join(root, 'tools', 'scripts', 'generate-certs.ts'), '--base', dir], { stdio: 'pipe' });
+    execFileSync(process.execPath, [join(root, 'apps', 'tools-cli', 'dist', 'main.js'), 'generate-certs', '--base', dir], { stdio: 'pipe' });
   }
   return { dir, httpsPort };
 }

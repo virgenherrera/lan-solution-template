@@ -23,6 +23,7 @@
     "reflect-metadata": "catalog:",
     "rxjs": "catalog:",
     "service-registry": "workspace:*",
+    "shared-core": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

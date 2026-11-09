@@ -256,7 +256,7 @@ function install(artifact: string, server: Server): string {
   mkdirSync(join(dir, 'data'), { recursive: true });
   writeFileSync(join(dir, 'config', 'config.json'), pgConfig(server));
   writeFileSync(join(dir, 'data', PG_PASSWORD_FILE), server.password, { mode: 0o600 });
-  execFileSync(process.execPath, [join(root, 'tools', 'scripts', 'generate-certs.ts'), '--base', dir], { stdio: 'ignore' });
+  execFileSync(process.execPath, [join(root, 'apps', 'tools-cli', 'dist', 'main.js'), 'generate-certs', '--base', dir], { stdio: 'ignore' });
   return binary;
 }
 

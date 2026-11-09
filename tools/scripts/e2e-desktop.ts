@@ -1,6 +1,6 @@
 // Native E2E of the Tauri host (REQ-TEST-08, AC-20): builds the instrumented host, installs it with the sidecar in a temporary base directory, runs WebdriverIO, then checks that no process is left.
 // Not a public target: the `package` step of apps/desktop runs it before the Tauri bundle (REQ-ECO-06). Run it with `pnpm exec nx run desktop:package`; the nx graph orders `sea-runtime:package` first.
-// Isolation: temporary base directory, free ports written into its config, certs from tools/scripts/generate-certs.ts. The OS trust store and keychain are never touched: the test process trusts ca.crt through its own `ca` option.
+// Isolation: temporary base directory, free ports written into its config, certs from `tools-cli generate-certs`. The OS trust store and keychain are never touched: the test process trusts ca.crt through its own `ca` option.
 // The instrumented binary is built into src-tauri/target/e2e, apart from the product build. Only macOS is verified; Windows and Linux (tauri-driver) are not.
 import { execFileSync, spawnSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
@@ -56,7 +56,7 @@ try {
   const config = { db: { engine: 'sqlite', sqlite: { file: 'lan.db', foreignKeys: true, journalMode: 'WAL', synchronous: 'FULL' } }, net: { bind: '127.0.0.1', httpsPort, httpPort }, tls: { extraNames: [] } };
   writeFileSync(join(base, 'config', 'config.json'), `${JSON.stringify(config, null, 2)}\n`);
   run('pnpm', ['--filter', 'shared-core', 'run', 'build'], root);
-  run('node', [join(root, 'tools', 'scripts', 'generate-certs.ts'), '--base', base], root);
+  run('node', [join(root, 'apps', 'tools-cli', 'dist', 'main.js'), 'generate-certs', '--base', base], root);
 
   run('pnpm', ['exec', 'wdio', 'run', 'wdio.conf.ts'], desktop, {
     DESKTOP_E2E_APP: join(base, `app${exe}`),
