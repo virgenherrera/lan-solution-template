@@ -1,4 +1,4 @@
-docs[102]:
+docs[103]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -6,7 +6,7 @@ docs[102]:
     ids: []
     related[3]: docs/architecture/overview.md,docs/roadmap/PROPOSAL.md,docs/results/POC-01-Result.md
     status: current
-    updated: 2026-11-03
+    updated: 2026-11-09
     refs[4]: REQ-STACK-03,REQ-STACK-05,REQ-STACK-08,REQ-SUPPLY-01
   - doc: docs/architecture/adr/ADR-002-single-sea-portability.md
     title: ADR-002 Single SEA portability and supervisor
@@ -15,7 +15,7 @@ docs[102]:
     ids: []
     related[5]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/overview.md,docs/roadmap/PROPOSAL.md,docs/results/POC-02-Result.md,docs/architecture/adr/ADR-001-version-substitutions.md
     status: current
-    updated: 2026-11-03
+    updated: 2026-11-09
     refs[17]: AC-31,REQ-BUILD-04,REQ-NET-01,REQ-RUNTIME-01,REQ-RUNTIME-03,REQ-RUNTIME-04,REQ-RUNTIME-05,REQ-RUNTIME-06,REQ-RUNTIME-07,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-TEST-01,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09
   - doc: docs/architecture/adr/ADR-003-config-and-db-strategy.md
     title: ADR-003 Config singleton and database strategy
@@ -24,7 +24,7 @@ docs[102]:
     ids: []
     related[5]: docs/results/POC-03-Result.md,docs/backlog/poc-3-config-sqlite-vector.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-007-persistence-system.md
     status: current
-    updated: 2026-11-04
+    updated: 2026-11-09
     refs[7]: REQ-CFG-01,REQ-DB-01,REQ-DB-02,REQ-DB-06,REQ-DB-08,REQ-DB-09,REQ-STACK-07
   - doc: docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md
     title: ADR-004 Drizzle build-time migrations
@@ -33,7 +33,7 @@ docs[102]:
     ids: []
     related[6]: docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/backlog/dbm-drizzle-migrations.md,docs/requirements/amendments-2026-11-02.md,docs/requirements/05-persistence.md,docs/requirements/02-technology-baseline.md,docs/architecture/adr/ADR-005-live-schema-validation.md
     status: current
-    updated: 2026-11-03
+    updated: 2026-11-09
     refs[4]: REQ-DB-03,REQ-DB-04,REQ-DB-05,REQ-STACK-07
   - doc: docs/architecture/adr/ADR-005-live-schema-validation.md
     title: ADR-005 Live schema validation
@@ -42,7 +42,7 @@ docs[102]:
     ids: []
     related[5]: docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/backlog/dbm-schema-gate.md,docs/requirements/05-persistence.md,docs/requirements/amendments-2026-11-02.md,docs/requirements/traceability.md
     status: current
-    updated: 2026-11-03
+    updated: 2026-11-09
     refs[3]: REQ-DB-05,REQ-DB-06,REQ-DB-10
   - doc: docs/architecture/adr/ADR-006-sidecar-status-contract.md
     title: ADR-006 Sidecar status contract and typed service array
@@ -51,7 +51,7 @@ docs[102]:
     ids: []
     related[5]: docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/overview.md,docs/backlog/service-status-indicator.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/requirements/traceability.md
     status: current
-    updated: 2026-11-05
+    updated: 2026-11-09
     refs[1]: REQ-RUNTIME-05
   - doc: docs/architecture/adr/ADR-007-persistence-system.md
     title: ADR-007 Persistence system
@@ -60,7 +60,7 @@ docs[102]:
     ids: []
     related[7]: docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/backlog/persistence-system.md,docs/requirements/04-configuration.md,docs/requirements/05-persistence.md,docs/requirements/amendments-2026-10-30.md
     status: current
-    updated: 2026-11-03
+    updated: 2026-11-09
     refs[4]: REQ-CFG-04,REQ-CFG-05,REQ-DB-02,REQ-DB-03
   - doc: docs/architecture/adr/ADR-008-tls-trust-model.md
     title: ADR-008 TLS trust model
@@ -69,7 +69,7 @@ docs[102]:
     ids: []
     related[10]: docs/architecture/device-trust-guide.md,docs/results/POC-04-Result.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/requirements/06-web-gateway-https-pwa.md,docs/roadmap/PROPOSAL.md,docs/architecture/overview.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md
     status: current
-    updated: 2026-11-03
+    updated: 2026-11-09
     refs[16]: AC-12,AC-14,AC-17,REQ-DEV-02,REQ-DEV-03,REQ-DEV-04,REQ-NET-05,REQ-NET-06,REQ-NET-07,REQ-NET-08,REQ-PWA-02,REQ-TEST-01,REQ-TLS-01,REQ-TLS-02,REQ-TLS-03,REQ-TLS-04
   - doc: docs/architecture/adr/ADR-009-desktop-process-model.md
     title: ADR-009 Desktop process model
@@ -78,7 +78,7 @@ docs[102]:
     ids: []
     related[10]: docs/architecture/adr/ADR-002-single-sea-portability.md,docs/results/POC-05-Result.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/overview.md,docs/roadmap/PROPOSAL.md,docs/requirements/09-desktop-tauri.md
     status: proposed
-    updated: 2026-11-04
+    updated: 2026-11-09
     refs[5]: REQ-DESK-06,REQ-ECO-01,REQ-ECO-06,REQ-SEC-05,REQ-TEST-08
   - doc: docs/architecture/adr/ADR-010-first-run-admin-setup.md
     title: ADR-010 First admin authentication
@@ -87,7 +87,7 @@ docs[102]:
     ids: []
     related[7]: docs/results/POC-05-Result.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/backlog/poc-7-auth-roles.md,docs/roadmap/PROPOSAL.md
     status: proposed
-    updated: 2026-11-04
+    updated: 2026-11-09
     refs[4]: AC-21,REQ-SEC-02,REQ-SEC-05,REQ-SEC-06
   - doc: docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md
     title: ADR-011 macOS installer and install-time trust
@@ -96,7 +96,7 @@ docs[102]:
     ids: []
     related[10]: docs/results/POC-08-Result.md,docs/backlog/poc-8-msi-matrix-versioning.md,docs/backlog/td-windows-linux-distribution.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/overview.md,docs/standards/README.md,docs/roadmap/PROPOSAL.md
     status: proposed
-    updated: 2026-11-04
+    updated: 2026-11-09
     refs[4]: AC-18,REQ-CFG-05,REQ-SEA-06,REQ-VERSION-01
   - doc: docs/architecture/adr/ADR-012-sea-runtime-child-registry.md
     title: ADR-012 sea-runtime child registry
@@ -105,7 +105,7 @@ docs[102]:
     ids: []
     related[4]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/proposals/sea-runtime-P1-registry-status-event.md,docs/architecture/proposals/sea-runtime-P2-per-service-singletons.md,docs/architecture/proposals/sea-runtime-P3-minimal-pid-hook.md
     status: current
-    updated: 2026-11-05
+    updated: 2026-11-09
     refs[3]: REQ-RUNTIME-05,REQ-TEST-01,REQ-TEST-04
   - doc: docs/architecture/adr/ADR-013-nest-standalone-architecture.md
     title: ADR-013 Nest standalone architecture
@@ -114,8 +114,17 @@ docs[102]:
     ids: []
     related[9]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-012-sea-runtime-child-registry.md,docs/architecture/declared-services.md,docs/architecture/nest-standalone-boot.md,docs/backlog/nest-standalone-refactor.md,docs/backlog/nest-standalone-cleanup-inventory.md,docs/backlog/log-service-otel-grpc.md
     status: proposed
-    updated: 2026-11-06
+    updated: 2026-11-09
     refs: []
+  - doc: docs/architecture/current-state.md
+    title: Current state and direction
+    type: architecture
+    summary: "What exists today per app, lib and tool, the human's test direction of 2026-11-09, and the gaps."
+    ids: []
+    related[6]: docs/architecture/overview.md,docs/backlog/td-compile-sea-standalone.md,docs/backlog/README.md,docs/requirements/11-nx-quality-testing.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/platform-matrix.md
+    status: current
+    updated: 2026-11-09
+    refs[1]: REQ-TEST-01
   - doc: docs/architecture/declared-services.md
     title: Declared services contract
     type: architecture
@@ -150,7 +159,7 @@ docs[102]:
     ids: []
     related[17]: README.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/results/POC-08-Result.md,docs/architecture/platform-matrix.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/device-trust-guide.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
     status: current
-    updated: 2026-11-04
+    updated: 2026-11-09
     refs[10]: REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-05,REQ-DESK-06,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-05,REQ-RUNTIME-06
   - doc: docs/architecture/platform-matrix.md
     title: Platform matrix
@@ -195,7 +204,7 @@ docs[102]:
     ids: []
     related[18]: docs/results/POC-08-Result.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/results/POC-05-Result.md,docs/backlog/log-service-otel-grpc.md,docs/roadmap/PROPOSAL.md,docs/backlog/dbm-drizzle-migrations.md,docs/backlog/dbm-schema-gate.md,docs/backlog/persistence-system.md,docs/backlog/service-status-indicator.md,docs/backlog/third-party-licenses.md,docs/results/SPIKE-third-party-licenses.md,docs/results/POC-04-Result.md,docs/backlog/spike-pwa-https-trust.md,docs/results/RESEARCH-pwa-https-trust.md,docs/results/SPIKE-pwa-https-trust-Result.md,docs/backlog/td-windows-linux-distribution.md,docs/backlog/td-dev-certs-prebuild.md,docs/backlog/td-compile-sea-standalone.md
     status: current
-    updated: 2026-11-04
+    updated: 2026-11-09
     refs[37]: AC-01,AC-02,AC-03,AC-04,AC-05,AC-06,AC-07,AC-08,AC-09,AC-10,AC-11,AC-12,AC-13,AC-14,AC-15,AC-16,AC-17,AC-18,AC-19,AC-20,AC-21,AC-22,AC-23,AC-24,AC-25,AC-26,AC-27,AC-28,AC-29,AC-30,AC-31,AC-32,AC-33,AC-34,AC-35,AC-36,REQ-CFG-05
   - doc: docs/backlog/dbm-drizzle-migrations.md
     title: DBM Drizzle build-time migrations
@@ -236,11 +245,11 @@ docs[102]:
   - doc: docs/backlog/nest-standalone-refactor.md
     title: "Epic: Nest standalone refactor"
     type: backlog
-    summary: "Pure-refactor epic, built on branches (pull requests pending): exit code constants, Nest Logger, unified DeclaredServices, dead code cleanup and folder reorganization, in five ordered slices."
+    summary: Pure-refactor epic in five slices. Merged in PRs #24 and #25. Human acceptance of the Proposed decisions is pending.
     ids: []
     related[7]: docs/backlog/README.md,docs/backlog/nest-standalone-cleanup-inventory.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/declared-services.md,docs/architecture/nest-standalone-boot.md,docs/backlog/td-dev-certs-prebuild.md,docs/backlog/td-compile-sea-standalone.md
     status: proposed
-    updated: 2026-11-06
+    updated: 2026-11-09
     refs[1]: REQ-NET-02
   - doc: docs/backlog/persistence-system.md
     title: Persistence system
@@ -407,11 +416,11 @@ docs[102]:
   - doc: docs/backlog/poc-6-postgresql-adapter-parity.md
     title: POC-6 PostgreSQL adapter parity (built on branch)
     type: backlog
-    summary: "PostgreSQL adapter parity with pgvector: built on a branch, pull request pending."
+    summary: PostgreSQL adapter parity with pgvector. Merged in PR #23 (squash c510d54).
     ids: []
     related[5]: docs/results/POC-06-Result.md,docs/backlog/README.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/persistence-system.md
     status: current
-    updated: 2026-11-04
+    updated: 2026-11-09
     refs[7]: AC-09,REQ-DB-01,REQ-DB-02,REQ-DB-03,REQ-DB-05,REQ-DB-08,REQ-TEST-06
   - doc: docs/backlog/poc-7-auth-roles.md
     title: POC-7 Auth and roles
@@ -429,7 +438,7 @@ docs[102]:
     ids: []
     related[10]: docs/results/POC-08-Result.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md,docs/backlog/persistence-system.md,docs/backlog/td-windows-linux-distribution.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/results/POC-05-Result.md
     status: current
-    updated: 2026-11-04
+    updated: 2026-11-09
     refs[13]: AC-18,AC-21,AC-25,AC-33,REQ-CFG-05,REQ-ECO-06,REQ-SEA-05,REQ-SEA-06,REQ-TEST-09,REQ-TEST-10,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03
   - doc: docs/backlog/poc-9-ci-cd-releases.md
     title: POC-9 GitHub Actions CI/CD and releases (HOLD)
@@ -459,14 +468,14 @@ docs[102]:
     updated: 2026-11-03
     refs: []
   - doc: docs/backlog/td-compile-sea-standalone.md
-    title: "Technical debt: compile-sea.ts outside the standalone pattern"
+    title: "Technical debt: tools/scripts outside the standalone pattern"
     type: backlog
-    summary: "Technical debt record TD-TOOLS-01: compile-sea.ts is a 498-line procedural script that ADR-013 patterns do not yet cover."
+    summary: "Technical debt record TD-TOOLS-01: all of tools/scripts becomes one CLI app that follows the ADR-013 entrypoint pattern."
     ids: []
-    related[5]: docs/backlog/README.md,docs/backlog/nest-standalone-refactor.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/requirements/10-node-sea-distribution.md,docs/backlog/td-dev-certs-prebuild.md
+    related[6]: docs/architecture/current-state.md,docs/backlog/README.md,docs/backlog/nest-standalone-refactor.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/requirements/10-node-sea-distribution.md,docs/backlog/td-dev-certs-prebuild.md
     status: proposed
-    updated: 2026-11-07
-    refs[3]: REQ-SEA-01,REQ-SEA-03,REQ-SEA-04
+    updated: 2026-11-09
+    refs[4]: REQ-SEA-01,REQ-SEA-03,REQ-SEA-04,REQ-TEST-01
   - doc: docs/backlog/td-dev-certs-prebuild.md
     title: "Technical debt: dev:certs prebuild gap"
     type: backlog
@@ -897,7 +906,7 @@ docs[102]:
     ids: []
     related[2]: README.md,docs/standards/identifier-glossary.md
     status: current
-    updated: 2026-11-04
+    updated: 2026-11-09
     refs[4]: REQ-SEC-02,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03
   - doc: docs/standards/identifier-glossary.md
     title: Identifier glossary
