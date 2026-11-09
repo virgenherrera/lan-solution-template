@@ -5,7 +5,7 @@ import { Injectable } from '@nestjs/common';
 import { compareSchema, tablesByEngine, tablesSchema } from 'db-migrations';
 import { Command, CommandRunner } from 'nest-commander';
 import { EXIT_CODE, jsonText } from 'service-registry';
-import { runMigrations } from 'shared-core';
+import { runMigrations, type DbAdapter } from 'shared-core';
 import { z } from 'zod';
 import { ExitError } from '../constants/exit-error.js';
 import { PgParityEngine, SqliteParityEngine, type ParityEngine } from '../services/parity-engine.js';
@@ -59,8 +59,9 @@ export class DbParityCommand extends CommandRunner {
     const migrations = this.readMigrations(resolve(this.option(args, 'migrations-dir', this.defaultMigrationsDir(engine))));
 
     const workDir = mkdtempSync(join(tmpdir(), 'db-parity-'));
-    const db = await strategy.open(workDir);
+    let db: DbAdapter | undefined;
     try {
+      db = await strategy.open(workDir);
       await db.connect();
       await runMigrations(db, migrations);
       const key = engine as keyof typeof tablesByEngine;
@@ -74,9 +75,15 @@ export class DbParityCommand extends CommandRunner {
       process.stderr.write(`parity FAILED (engine ${engine}):\n${diff.map((line) => `  ${line}`).join('\n')}\n`);
       return 1;
     } finally {
-      await db.close();
-      await strategy.cleanup?.(workDir);
-      rmSync(workDir, { recursive: true, force: true });
+      try {
+        // open() may fail before the server created anything, so close and cleanup only run once it returned.
+        if (db) {
+          await db.close();
+          await strategy.cleanup?.(workDir);
+        }
+      } finally {
+        rmSync(workDir, { recursive: true, force: true });
+      }
     }
   }
 
