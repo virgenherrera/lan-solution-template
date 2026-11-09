@@ -8,7 +8,7 @@ import { VectorUnavailableError, type VectorMatch } from '../port.js';
 import type { SqliteVectorBackend } from './adapter.js';
 
 // REQ-DB-08 and REQ-DB-09. The sqlite-vector library (sqliteai, https://github.com/sqliteai/sqlite-vector, NOT sqlite-vec) travels as SEA assets.
-// compile-sea embeds exactly one variant: the binary "sqlite-vector/<file>" and its pin "sqlite-vector/pin.json". These names mirror tools/scripts/compile-sea.ts.
+// compile-sea embeds exactly one variant: the binary "sqlite-vector/<file>" and its pin "sqlite-vector/pin.json". These names mirror apps/tools-cli/src/sea/sea-assets.service.ts.
 export const VECTOR_PIN_ASSET = 'sqlite-vector/pin.json';
 export const VECTOR_BINARY_ASSET_PREFIX = 'sqlite-vector/';
 

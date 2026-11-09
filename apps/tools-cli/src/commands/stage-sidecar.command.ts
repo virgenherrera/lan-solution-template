@@ -5,7 +5,7 @@ import { Command, CommandRunner } from 'nest-commander';
 
 // Stages the packaged SEA runtime as the Tauri `externalBin` sidecar.
 // Run from anywhere: `tools-cli stage-sidecar` (the repository root comes from the location of the built CLI, apps/tools-cli/dist/main.js).
-// compile-sea.ts already names each artifact `sea-runtime-<target-triple>[.exe]`, which is the name Tauri expects under src-tauri/binaries/ (REQ-DESK-01).
+// compile-sea already names each artifact `sea-runtime-<target-triple>[.exe]`, which is the name Tauri expects under src-tauri/binaries/ (REQ-DESK-01).
 // The staged copies are ignored by git. Run `nx run sea-runtime:package` first (REQ-ECO-06).
 // A missing input throws: ToolsCliMain prints `tools-cli: <message>` and exits 1. The retired script ignored every argument and so does this command.
 @Command({
