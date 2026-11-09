@@ -3,6 +3,9 @@
   "productName": "LAN Solution Desktop",
   "version": "0.1.0",
   "identifier": "com.virgenherrera.lansolution",
+  "build": {
+    "frontendDist": "../splash"
+  },
   "app": {
     "windows": []
   },
