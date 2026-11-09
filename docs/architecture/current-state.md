@@ -5,14 +5,14 @@ title: Current state and direction
 type: architecture
 summary: What exists today per app, lib and tool, the test model and layout direction, and the gaps.
 ids[0]:
-related[6]: docs/architecture/overview.md,docs/backlog/td-compile-sea-standalone.md,docs/backlog/README.md,docs/requirements/11-nx-quality-testing.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/platform-matrix.md
+related[7]: docs/architecture/overview.md,docs/backlog/td-compile-sea-standalone.md,docs/backlog/README.md,docs/requirements/11-nx-quality-testing.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/platform-matrix.md,docs/results/RESEARCH-app-suite-test-doubles.md
 status: current
 updated: 2026-11-09
 -->
 
 # Current state and direction
 
-[Home](../../README.md) | [Requirements](../requirements/README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](../roadmap/PROPOSAL.md) | [Traceability](../requirements/traceability.md) | [Backlog](../backlog/README.md)
+[Home](../../README.md) | [Requirements](../requirements/README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](../roadmap/PROPOSAL.md) | [Traceability](../requirements/traceability.md) | [Backlog](../backlog/README.md) | [Test doubles research](../results/RESEARCH-app-suite-test-doubles.md)
 
 ## Navigation
 
@@ -22,6 +22,8 @@ updated: 2026-11-09
 - [Direction](#direction)
 - [Gaps](#gaps)
 - [Open decisions](#open-decisions)
+- [Decided](#decided)
+- [Open items from the test-double research](#open-items-from-the-test-double-research)
 - [ADR implementation status](#adr-implementation-status)
 
 ---
@@ -34,6 +36,7 @@ updated: 2026-11-09
 | Where does the human want to go? | One APP suite per app under `./tests/<app>/`; no unit or integration tests | [Direction](#direction) |
 | What is missing? | A real runner for the smoke scripts, a `tools/scripts` tsconfig, desktop and web tests | [Gaps](#gaps) |
 | What is not decided? | The sea-runtime APP suite design, nest-commander, Playwright for web-angular, the later app rename | [Open decisions](#open-decisions) |
+| What was decided about test doubles? | Real database, temp base path for files | [Decided](#decided) |
 | How far are the ADRs built? | Counts per ADR | [ADR implementation status](#adr-implementation-status) |
 
 ---
@@ -130,14 +133,30 @@ The target layout is `./tests/<app>/`, one folder per app. `<app>` is the app's 
 
 [Back to navigation](#navigation)
 
-All six belong to the human. This page changes none of them.
+These four belong to the human. This page changes none of them.
 
 1. The design of the `sea-runtime` APP suite: runner, compiled bundle versus the real SEA binary, and the rebuild cost of about 3 minutes.
 2. Whether `tools/scripts` becomes a `nest-commander` app or a plain class.
 3. The Playwright setup for `web-angular`.
 4. The later rename of the apps to self-descriptive names. It renames the `tests/<app>` folders.
-5. Whether the database is an edge to mock, or stays real as [REQ-TEST-04](../requirements/11-nx-quality-testing.md) and [REQ-TEST-06](../requirements/11-nx-quality-testing.md) say.
-6. Which filesystem accesses count as edges, given that the SQLite database is a real file and must not be mocked.
+
+### Decided
+
+The orchestrator decided the database and filesystem questions on 2026-11-09. The evidence and the reversibility of each decision are in [RESEARCH-app-suite-test-doubles](../results/RESEARCH-app-suite-test-doubles.md#decisions-taken-by-the-orchestrator-on-2026-11-09).
+
+- The database stays real: a SQLite file under a temporary base and a real PostgreSQL container, because mocks cannot cover REQ-TEST-06.
+- Files on disk (config, certs, secrets) use a temporary base path first. A spy over `node:fs` only asserts the edge. Logs and the web bundle have no filesystem edge.
+
+### Open items from the test-double research
+
+- Open: a `DbAdapter` injection seam is not built. It would be needed to double the database in the gateway.
+- Open: the REQ-TEST-06 scenarios need a sea-runtime app context that does not exist yet. Migrations and the vector backend run in the `apps/sea-runtime` `PersistenceService`.
+- Spike: the `node:fs` pass-through wrapper under ts-jest ESM in `libs/shared-core`.
+- Spike: import `@wdio/tauri-plugin` in a wdio-only frontend build to explain the `addTauriApi` failure.
+- Not verified: the claim that Playwright cannot drive Tauri.
+- `webdriverio` is about one minor behind.
+
+[Back to navigation](#navigation)
 
 ---
 
