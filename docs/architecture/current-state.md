@@ -155,6 +155,7 @@ Spikes are not prerequisites. Each one runs as step 0 of the implementation it u
 - Spike, step 0 of the first APP suite that needs the `node:fs` spy: the pass-through wrapper under ts-jest ESM in `libs/shared-core`. Go: the spy asserts the call. No-go: assert the effect on the temporary base path only.
 - Spike, step 0 of the Tauri APP suite: import `@wdio/tauri-plugin` in a wdio-only frontend build to explain the `addTauriApi` failure. Go: the service drives the app. No-go: keep the REQ-TEST-08 host checks and record the cause.
 - Not verified: the claim that Playwright cannot drive Tauri.
+- Linux installer: only the stub of `installer-build` was run, in a `node:26.13` `linux/arm64` container (2026-11-09): it prints `installer not implemented on linux` and exits 0. No Linux installer exists. A real Linux host (WebKitGTK) and a real Windows host are still needed; see [Windows and Linux distribution](../backlog/td-windows-linux-distribution.md).
 - `webdriverio` is about one minor behind.
 
 [Back to navigation](#navigation)

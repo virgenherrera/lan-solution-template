@@ -97,5 +97,5 @@ Every item is not verified.
 
 [Back to navigation](#navigation)
 
-- Every item above. No Windows or Linux run exists.
+- Every item above. No Windows run exists. The only Linux run is the stub check of `installer-build`: On 2026-11-09 the non-macOS branch ran in a throwaway Linux container (Docker Desktop, `node:26.13`, `linux/arm64`, Linux aarch64, Node v26.13.0): `docker run --rm --platform linux/arm64 -v "$PWD/apps/tools-cli/dist:/app:ro" -w /app node:26.13 node main.js installer-build` (after `nx build tools-cli`). Result: stdout `installer not implemented on linux`, exit 0, no container left. This only proves the stub message and exit code; no `.deb`, `.rpm` or AppImage exists. A Tauri build, WebKitGTK and the platform matrix still need a real Linux host, and everything on Windows needs a real Windows host.
 - That the listed tools (WiX, `certutil`, `tauri-action`) fit this repository.
