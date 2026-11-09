@@ -30,16 +30,12 @@
   "devDependencies": {
     "@nestjs/cli": "catalog:nest",
     "@nestjs/schematics": "catalog:nest",
-    "@types/inquirer": "catalog:",
     "@types/node": "catalog:",
-    "@vitest/coverage-v8": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "prettier": "catalog:",
     "rimraf": "catalog:",
-    "typescript": "catalog:",
-    "vite": "catalog:",
-    "vitest": "catalog:"
+    "typescript": "catalog:"
   },
   "nx": {
     "targets": {

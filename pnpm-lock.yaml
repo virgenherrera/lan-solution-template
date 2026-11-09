@@ -207,9 +207,6 @@ catalogs:
     '@tauri-apps/cli':
       specifier: 2.12.4
       version: 2.12.4
-    '@types/inquirer':
-      specifier: 8.2.13
-      version: 8.2.13
     '@types/jest':
       specifier: 30.0.0
       version: 30.0.0
@@ -573,15 +570,9 @@ importers:
       '@nestjs/schematics':
         specifier: catalog:nest
         version: 12.0.12(chokidar@5.0.0)(prettier@3.9.10)(typescript@6.0.3)
-      '@types/inquirer':
-        specifier: 'catalog:'
-        version: 8.2.13
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.2
-      '@vitest/coverage-v8':
-        specifier: 'catalog:'
-        version: 4.1.12(vitest@4.1.12)
       oxlint:
         specifier: 'catalog:'
         version: 1.90.0(oxlint-tsgolint@7.0.2005)
@@ -597,12 +588,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
-      vite:
-        specifier: 'catalog:'
-        version: 8.3.5(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(sass-embedded@1.104.1)(sass@1.104.1)(tsx@4.23.15)(yaml@2.9.0)
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.12(@types/node@24.19.2)(@vitest/coverage-v8@4.1.12)(vite@8.3.5(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(sass-embedded@1.104.1)(sass@1.104.1)(tsx@4.23.15)(yaml@2.9.0))
 
   apps/web-angular:
     dependencies:
