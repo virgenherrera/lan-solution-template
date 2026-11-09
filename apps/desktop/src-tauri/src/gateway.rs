@@ -32,8 +32,8 @@ fn is_splash(url: &Url) -> bool {
   origin_ok && url.port().is_none() && url.username().is_empty() && url.password().is_none() && url.path() == "/index.html"
 }
 
-// Builds the main window on `url`. The filter allows the splash page and, once the port is known, the gateway origin (A2); the gateway origin is read at navigation time because the window outlives the splash.
-fn build(app: &AppHandle, url: WebviewUrl) {
+// Builds the main window on `url` and returns whether it was created. The filter allows the splash page and, once the port is known, the gateway origin (A2); the gateway origin is read at navigation time because the window outlives the splash.
+fn build(app: &AppHandle, url: WebviewUrl) -> bool {
   let built = WebviewWindowBuilder::new(app, WINDOW, url)
     .title("LAN Solution")
     .inner_size(800.0, 600.0)
@@ -50,18 +50,28 @@ fn build(app: &AppHandle, url: WebviewUrl) {
     })
     .build();
   match built {
-    Ok(_) => log::info!("window created"),
-    Err(e) => log::error!("window creation failed: {e}"),
+    Ok(_) => {
+      log::info!("window created");
+      true
+    }
+    Err(e) => {
+      log::error!("window creation failed: {e}");
+      false
+    }
   }
 }
 
 // Creates the main window on the splash at start. `open` later navigates this same window to the gateway origin.
 pub fn show_splash(app: &AppHandle) {
   let handle = app.clone();
-  let _ = app.run_on_main_thread(move || {
-    build(&handle, WebviewUrl::App("index.html".into()));
-    log::info!("splash shown");
+  let scheduled = app.run_on_main_thread(move || {
+    if build(&handle, WebviewUrl::App("index.html".into())) {
+      log::info!("splash shown");
+    }
   });
+  if let Err(e) = scheduled {
+    log::error!("splash not shown: {e}");
+  }
 }
 
 // Shows the window, creating it first when the gateway is ready. Before that the splash window is shown.
@@ -100,7 +110,8 @@ fn open(app: &AppHandle) {
       }
       return;
     }
-    build(&handle, WebviewUrl::External(url.clone()));
-    log::info!("window created url={url}");
+    if build(&handle, WebviewUrl::External(url.clone())) {
+      log::info!("window created url={url}");
+    }
   });
 }
