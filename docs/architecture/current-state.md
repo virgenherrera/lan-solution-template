@@ -90,7 +90,7 @@ The human decided this on 2026-11-09. It is a direction, not a requirement. No r
 
 ### Test model
 
-Unit tests and integration tests are forbidden. There are no exceptions, and no mocks of persistence or network ([REQ-TEST-01](../requirements/11-nx-quality-testing.md)). The SRS already states this. REQ-TEST-01 allows two kinds of tests: real application (APP) tests and E2E tests of the installed product. APP suites are black-box, app-level tests that go through the assembled app. Nest and Angular call this kind e2e. Each app gets one APP suite, with its own runner setup.
+Unit tests and integration tests are forbidden. There are no exceptions ([REQ-TEST-01](../requirements/11-nx-quality-testing.md)). Only the edges of the system, such as the filesystem and outbound API calls, are mocked, and those mocks are asserted with spies (`toHaveBeenCalledTimes`, `toHaveBeenCalledWith`, `not.toHaveBeenCalled`). The database stays real. The app's own providers and business contracts are never mocked. Suites that run a real executable cannot spy across the process boundary. They assert effects on the real artifact (real files, ports and processes), as REQ-TEST-01 says. The SRS already states this. REQ-TEST-01 allows two kinds of tests: real application (APP) tests and E2E tests of the installed product. APP suites are black-box, app-level tests that go through the assembled app. Nest and Angular call this kind e2e. Each app gets one APP suite, with its own runner setup.
 
 The target layout is `./tests/<app>/`, one folder per app. `<app>` is the app's folder name under `apps/`, so the later app rename renames these folders. This layout is the human's direction. It is not an SRS requirement and adds no id.
 
@@ -102,7 +102,7 @@ The target layout is `./tests/<app>/`, one folder per app. `<app>` is the app's 
 | `apps/desktop` | WebdriverIO | [REQ-TEST-08](../requirements/11-nx-quality-testing.md) | Yes: `apps/desktop/e2e/host.e2e.ts`, run by `tools/scripts/e2e-desktop.ts`. |
 | `tools/scripts`, as a future CLI app | Not chosen | None | No. It gets its own APP suite when it becomes an app. |
 
-`apps/api-gateway/test/health/get-health.spec.ts` is an APP test, not a unit test. `apps/api-gateway/test/get-test-context.ts` builds the real `AppModule` with `Test.createTestingModule`, runs `app.init()` and sends requests through `supertest(app.getHttpServer())`. It uses a real SQLite file and the real config file in a temporary base. It mocks no persistence and no network.
+`apps/api-gateway/test/health/get-health.spec.ts` is an APP test, not a unit test. `apps/api-gateway/test/get-test-context.ts` builds the real `AppModule` with `Test.createTestingModule`, runs `app.init()` and sends requests through `supertest(app.getHttpServer())`. It uses a real SQLite file and the real config file in a temporary base. Today it mocks nothing and uses a real SQLite file. Under the edge-mock rule above, edges such as the filesystem and outbound API calls may be spied.
 
 ### Other direction
 
@@ -130,12 +130,14 @@ The target layout is `./tests/<app>/`, one folder per app. `<app>` is the app's 
 
 [Back to navigation](#navigation)
 
-All four belong to the human. This page changes none of them.
+All six belong to the human. This page changes none of them.
 
 1. The design of the `sea-runtime` APP suite: runner, compiled bundle versus the real SEA binary, and the rebuild cost of about 3 minutes.
 2. Whether `tools/scripts` becomes a `nest-commander` app or a plain class.
 3. The Playwright setup for `web-angular`.
 4. The later rename of the apps to self-descriptive names. It renames the `tests/<app>` folders.
+5. Whether the database is an edge to mock, or stays real as [REQ-TEST-04](../requirements/11-nx-quality-testing.md) and [REQ-TEST-06](../requirements/11-nx-quality-testing.md) say.
+6. Which filesystem accesses count as edges, given that the SQLite database is a real file and must not be mocked.
 
 ---
 
