@@ -16,7 +16,7 @@ import { Command, CommandRunner } from 'nest-commander';
 import { EXIT_CODE, jsonText } from 'service-registry';
 import { z } from 'zod';
 import { ExitError } from '../constants/exit-error.js';
-import { repositoryRoot } from '../helpers/repository-root.js';
+import { RepoRoot } from '../services/repo-root.service.js';
 
 // @app smoke test of the dev loop (REQ-DEV-02, REQ-DEV-04): `ng serve` proxies /api to the HTTPS gateway and trusts the generated CA only through NODE_EXTRA_CA_CERTS.
 // Usage: `tools-cli smoke-dev`. Needs the built gateway (`pnpm --filter api-gateway build`) and the built service-registry library.
@@ -106,8 +106,12 @@ export class SmokeDevCommand extends CommandRunner {
   private base = '';
   private passed = 0;
 
+  constructor(private readonly repo: RepoRoot) {
+    super();
+  }
+
   override async run(): Promise<void> {
-    const root = repositoryRoot();
+    const root = this.repo.path;
     this.base = mkdtempSync(join(tmpdir(), 'lan-smoke-dev-'));
     try {
       this.writeConfig(root);

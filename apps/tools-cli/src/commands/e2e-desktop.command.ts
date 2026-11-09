@@ -14,7 +14,7 @@ import { Injectable } from '@nestjs/common';
 import { Command, CommandRunner } from 'nest-commander';
 import { EXIT_CODE } from 'service-registry';
 import { ExitError } from '../constants/exit-error.js';
-import { repositoryRoot } from '../helpers/repository-root.js';
+import { RepoRoot } from '../services/repo-root.service.js';
 
 // Native E2E of the Tauri host (REQ-TEST-08, AC-20): builds the instrumented host, installs it with the sidecar in a temporary base directory, runs WebdriverIO, then checks that no process is left.
 // Not a public target: the `package` step of apps/desktop runs it before the Tauri bundle (REQ-ECO-06). Run it with `pnpm exec nx run desktop:package`; the nx graph orders `sea-runtime:package` first.
@@ -41,8 +41,12 @@ const sleep = (ms: number): Promise<void> =>
 export class E2eDesktopCommand extends CommandRunner {
   private base = '';
 
+  constructor(private readonly repo: RepoRoot) {
+    super();
+  }
+
   override async run(): Promise<void> {
-    const root = repositoryRoot();
+    const root = this.repo.path;
     // Real path: Tauri refuses a sidecar spawn when current_exe() crosses a symlink (macOS /var -> /private/var).
     this.base = realpathSync(mkdtempSync(join(tmpdir(), 'lan-desktop-e2e-')));
     let failure: unknown;

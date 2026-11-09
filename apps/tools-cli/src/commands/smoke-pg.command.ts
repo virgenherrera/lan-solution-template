@@ -27,7 +27,7 @@ import {
 } from 'service-registry';
 import { z } from 'zod';
 import { ExitError } from '../constants/exit-error.js';
-import { repositoryRoot } from '../helpers/repository-root.js';
+import { RepoRoot } from '../services/repo-root.service.js';
 
 // @app smoke test of the packaged binary against a real PostgreSQL with pgvector (REQ-TEST-06, AC-09). It is a target of its own (`nx run sea-runtime:smoke-pg`), not a unit or integration suite (REQ-TEST-01).
 // Usage: `tools-cli smoke-pg [--artifacts <dir>]`; the default dir is artifacts/sea-runtime. Needs a running Docker daemon: without one it fails with an explicit message, it never skips.
@@ -159,8 +159,12 @@ export class SmokePgCommand extends CommandRunner {
   private binary = '';
   private server: Server | undefined;
 
+  constructor(private readonly repo: RepoRoot) {
+    super();
+  }
+
   override async run(passedParams: string[]): Promise<void> {
-    this.root = repositoryRoot();
+    this.root = this.repo.path;
     const { values } = parseArgs({
       args: passedParams,
       options: { artifacts: { type: 'string' } },

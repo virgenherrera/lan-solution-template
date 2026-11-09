@@ -12,6 +12,7 @@ import { checkServerIdentity, connect as tlsConnect } from 'node:tls';
 import { parseArgs } from 'node:util';
 import { Injectable } from '@nestjs/common';
 import { Command, CommandRunner } from 'nest-commander';
+import { RepoRoot } from '../services/repo-root.service.js';
 import { AGGREGATE_STATE, DISPATCHER_CONFIG, EXIT_CODE, SIDECAR_KIND, SUPERVISOR_CONFIG, type SidecarEvent, jsonText, sidecarEventSchema } from 'service-registry';
 import { z } from 'zod';
 import { ExitError } from '../constants/exit-error.js';
@@ -199,6 +200,10 @@ class Run {
 })
 @Injectable()
 export class SmokeSeaCommand extends CommandRunner {
+  constructor(private readonly repo: RepoRoot) {
+    super();
+  }
+
   // State of the one run: the command class is a singleton and the process serves a single invocation.
   private root = '';
   private toolsCli = '';
@@ -242,7 +247,7 @@ export class SmokeSeaCommand extends CommandRunner {
   // The root comes from the entry script: <root>/apps/tools-cli/dist/main.js (the bundle rewrites import.meta.url).
   private prepare(argv: readonly string[]): void {
     this.startedAt = Date.now();
-    this.root = resolve(dirname(process.argv[1] ?? ''), '..', '..', '..');
+    this.root = this.repo.path;
     this.toolsCli = join(this.root, 'apps', 'tools-cli', 'dist', 'main.js');
     this.webIndex = join(this.root, 'apps', 'web-angular', 'dist', 'web-angular', 'browser', 'index.html');
     const { values } = parseArgs({ args: [...argv], options: { artifacts: { type: 'string' } } });

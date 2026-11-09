@@ -3,9 +3,10 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdir
 import { request } from 'node:https';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { Injectable } from '@nestjs/common';
 import { Command, CommandRunner } from 'nest-commander';
+import { RepoRoot } from '../services/repo-root.service.js';
 import { AGGREGATE_STATE, DISPATCHER_CONFIG, EXIT_CODE } from 'service-registry';
 import { z } from 'zod';
 import { ExitError } from '../constants/exit-error.js';
@@ -101,6 +102,10 @@ function health(port: number, ca: string): Promise<string | undefined> {
 })
 @Injectable()
 export class VerifyPlatformCommand extends CommandRunner {
+  constructor(private readonly repo: RepoRoot) {
+    super();
+  }
+
   // State of the one run: the command class is a singleton and the process serves a single invocation.
   private root = '';
   private work = '';
@@ -119,8 +124,7 @@ export class VerifyPlatformCommand extends CommandRunner {
       throw new ExitError(NOT_VERIFIED_EXIT);
     }
     this.triple = known.triple;
-    // The root comes from the entry script: <root>/apps/tools-cli/dist/main.js (the bundle rewrites import.meta.url).
-    this.root = resolve(dirname(process.argv[1] ?? ''), '..', '..', '..');
+    this.root = this.repo.path;
     // Real path: Tauri refuses a sidecar spawn when current_exe() crosses a symlink (macOS /var -> /private/var).
     this.work = realpathSync(mkdtempSync(join(tmpdir(), 'lan-verify-platform-')));
     const started = Date.now();

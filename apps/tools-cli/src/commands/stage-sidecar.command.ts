@@ -1,7 +1,8 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { Injectable } from '@nestjs/common';
 import { Command, CommandRunner } from 'nest-commander';
+import { RepoRoot } from '../services/repo-root.service.js';
 
 // Stages the packaged SEA runtime as the Tauri `externalBin` sidecar.
 // Run from anywhere: `tools-cli stage-sidecar` (the repository root comes from the location of the built CLI, apps/tools-cli/dist/main.js).
@@ -17,9 +18,12 @@ import { Command, CommandRunner } from 'nest-commander';
 })
 @Injectable()
 export class StageSidecarCommand extends CommandRunner {
+  constructor(private readonly repo: RepoRoot) {
+    super();
+  }
+
   override run(): Promise<void> {
-    // The bundle rewrites import.meta.url to the source path, so the root comes from the entry script: <root>/apps/tools-cli/dist/main.js.
-    const root = resolve(dirname(process.argv[1] ?? ''), '..', '..', '..');
+    const root = this.repo.path;
     const artifacts = join(root, 'artifacts', 'sea-runtime');
     const binaries = join(root, 'apps', 'desktop', 'src-tauri', 'binaries');
 
