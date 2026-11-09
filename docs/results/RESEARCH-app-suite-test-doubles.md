@@ -180,6 +180,7 @@ The orchestrator took these decisions for the human, on the evidence above. They
 - Spike: the `node:fs` pass-through wrapper under ts-jest ESM in `libs/shared-core`.
 - Spike: import `@wdio/tauri-plugin` in a wdio-only frontend build to explain `addTauriApi`.
 - Not verified: the claim that Playwright cannot drive Tauri.
+- Verified on macOS on 2026-11-09: the `@wdio/tauri-service` embedded provider drives the instrumented host and the startup splash (`apps/desktop/e2e/host.e2e.ts`, `tools-cli e2e-desktop` exit 0). Open: asserting the gateway page at `/` needs a WebView that trusts the run's CA, and the run never touches the OS trust store.
 - `webdriverio` is one minor behind (10.1.0 in `pnpm-workspace.yaml:58` against 10.2.0).
 
 [Back to navigation](#navigation)

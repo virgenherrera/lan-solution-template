@@ -411,7 +411,7 @@ docs[104]:
     ids: []
     related[10]: docs/results/POC-05-Result.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/backlog/log-service-otel-grpc.md,docs/backlog/README.md,docs/backlog/poc-4-https-gateway-angular-pwa.md,docs/backlog/poc-6-postgresql-adapter-parity.md,docs/backlog/service-status-indicator.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-008-tls-trust-model.md
     status: current
-    updated: 2026-11-04
+    updated: 2026-11-09
     refs[16]: AC-03,AC-18,AC-20,AC-30,REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-04,REQ-DESK-05,REQ-DESK-06,REQ-ECO-01,REQ-ECO-06,REQ-SEC-05,REQ-TEST-08,REQ-TEST-09,REQ-TLS-02
   - doc: docs/backlog/poc-6-postgresql-adapter-parity.md
     title: POC-6 PostgreSQL adapter parity (built on branch)

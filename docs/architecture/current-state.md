@@ -103,7 +103,7 @@ The target layout is `./tests/<app>/`, one folder per app. `<app>` is the app's 
 | `api-gateway` | Jest and Supertest on a real `INestApplication` | [REQ-TEST-04](../requirements/11-nx-quality-testing.md) | Yes: `apps/api-gateway/test/health/get-health.spec.ts`. The spec lives in `apps/api-gateway/test/` and moves to `tests/<app>/` with the layout. |
 | `web-angular` | Playwright | [REQ-TEST-05](../requirements/11-nx-quality-testing.md) | No test files. `test:dynamic` is an `echo`. |
 | `sea-runtime` and its compiled SEA binary | Not chosen | [REQ-TEST-07](../requirements/11-nx-quality-testing.md) | Partly: hand-written smoke checks, the `smoke-sea` and `smoke-pg` commands of `apps/tools-cli`, no runner. |
-| `apps/desktop` | WebdriverIO | [REQ-TEST-08](../requirements/11-nx-quality-testing.md) | Yes: `apps/desktop/e2e/host.e2e.ts`, run by `tools-cli e2e-desktop`. |
+| `apps/desktop` | WebdriverIO | [REQ-TEST-08](../requirements/11-nx-quality-testing.md) | Yes: `apps/desktop/e2e/host.e2e.ts`, run by `tools-cli e2e-desktop`. It covers the sidecar start, the startup splash, the move to the gateway origin (host log) and the navigation filter. |
 | `tools/scripts`, as a future CLI app | Not chosen | None | No. It gets its own APP suite when it becomes an app. |
 
 `apps/api-gateway/test/health/get-health.spec.ts` is an APP test, not a unit test. `apps/api-gateway/test/get-test-context.ts` builds the real `AppModule` with `Test.createTestingModule`, runs `app.init()` and sends requests through `supertest(app.getHttpServer())`. It uses a real SQLite file and the real config file in a temporary base. Today it mocks nothing and uses a real SQLite file. Under the edge-mock rule above, edges such as the filesystem and outbound API calls may be spied.
