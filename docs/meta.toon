@@ -600,7 +600,7 @@ docs[104]:
     ids[6]: REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-SEA-04,REQ-SEA-05,REQ-SEA-06
     related[3]: docs/requirements/README.md,docs/requirements/09-desktop-tauri.md,docs/requirements/11-nx-quality-testing.md
     status: current
-    updated: 2026-11-03
+    updated: 2026-11-09
     refs[1]: REQ-CFG-05
   - doc: docs/requirements/11-nx-quality-testing.md
     title: "Nx, quality and testing"
