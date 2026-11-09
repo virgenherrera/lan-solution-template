@@ -10,6 +10,7 @@ import { SmokeSeaCommand } from './commands/smoke-sea.command.js';
 import { StageSidecarCommand } from './commands/stage-sidecar.command.js';
 import { TestFilterCommand } from './commands/test-filter.command.js';
 import { TrustCaCommand } from './commands/trust-ca.command.js';
+import { VerifyPlatformCommand } from './commands/verify-platform.command.js';
 import { VersionCheckCommand } from './commands/version-check.command.js';
 import { NodeEngineService } from './sea/node-engine.service.js';
 import { SeaAssetsService } from './sea/sea-assets.service.js';
@@ -34,6 +35,7 @@ import { RepoRoot } from './services/repo-root.service.js';
     StageSidecarCommand,
     TestFilterCommand,
     TrustCaCommand,
+    VerifyPlatformCommand,
     VersionCheckCommand,
     RepoRoot,
     MacosPkgService,

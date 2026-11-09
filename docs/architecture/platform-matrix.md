@@ -38,7 +38,7 @@ This page meets [REQ-TEST-09 and REQ-TEST-10](../requirements/11-nx-quality-test
 | Verified | macOS arm64 only (Darwin 27.2.0, Node v26.13.0), on branch `chore/poc-08-matrix-versioning` |
 | Everything else | Not verified. No cell below claims compatibility that no command proved. |
 | Status values | `verified`, `pending`, `blocked` ([REQ-TEST-10](../requirements/11-nx-quality-testing.md)) |
-| Check | `node tools/scripts/verify-platform.ts` ([source](../../tools/scripts/verify-platform.ts)) |
+| Check | `pnpm run tools verify-platform` ([source](../../apps/tools-cli/src/commands/verify-platform.command.ts)) |
 
 ---
 
@@ -60,7 +60,7 @@ The rows are the six targets of `TARGET_TRIPLES` in [compile-sea.ts](../../tools
 What "built" and "verified" mean here:
 
 - Built: the artifact exists. A cross build is not verified ([compile-sea.ts](../../tools/scripts/compile-sea.ts) header, line 3). Only the macOS arm64 SEA was built, natively.
-- Verified: the checks of `verify-platform.ts` ran natively on that host and all passed. Nothing else counts.
+- Verified: the checks of `verify-platform` ran natively on that host and all passed. Nothing else counts.
 - The script has rows for macOS arm64 and x64. The x64 row is code, not proof.
 
 ---
@@ -74,6 +74,8 @@ Run on 2026-11-04, branch `chore/poc-08-matrix-versioning`, script commit `41346
 ```sh
 node tools/scripts/verify-platform.ts
 ```
+
+The script became the `verify-platform` command of `tools-cli` afterwards; the checks did not change, and this evidence was not re-run with the command.
 
 Output (exit 0):
 
@@ -106,7 +108,7 @@ Facts and limits of that run:
 [Back to navigation](#navigation)
 
 1. Build the artifacts on that host: `pnpm exec nx run sea-runtime:package`, then `pnpm exec nx run desktop:package`.
-2. Run `node tools/scripts/verify-platform.ts` on the same host.
+2. Run `pnpm run tools verify-platform` on the same host.
 3. Record the command, the full output and the commit in [Evidence](#evidence-for-macos-arm64) form, then change the row.
 
 Exit codes:
