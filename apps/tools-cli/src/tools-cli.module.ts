@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BranchNameCommand } from './commands/branch-name.command.js';
+import { DbParityCommand } from './commands/db-parity.command.js';
 import { GenerateCertsCommand } from './commands/generate-certs.command.js';
 import { InstallerBuildCommand } from './commands/installer-build.command.js';
 import { InstallerMacosCommand } from './commands/installer-macos.command.js';
@@ -15,6 +16,7 @@ import { RepoRoot } from './services/repo-root.service.js';
 @Module({
   providers: [
     BranchNameCommand,
+    DbParityCommand,
     GenerateCertsCommand,
     InstallerBuildCommand,
     InstallerMacosCommand,
