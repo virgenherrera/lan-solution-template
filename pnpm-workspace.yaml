@@ -24,6 +24,7 @@ catalog:
   '@rspack/core': 2.3.0
   '@tailwindcss/postcss': 4.3.3
   '@tauri-apps/cli': 2.12.4
+  '@types/inquirer': 8.2.13
   '@types/jest': 30.0.0
   '@types/node': 24.19.2
   '@types/pg': 8.23.1
@@ -38,6 +39,7 @@ catalog:
   drizzle-kit: 0.31.11
   drizzle-orm: 0.45.4
   jest: 30.5.2
+  nest-commander: 3.21.0
   nestjs-zod: 5.5.0
   nx: 24.0.2
   oxlint: 1.90.0

@@ -1,0 +1,51 @@
+{
+  "name": "tools-cli",
+  "version": "0.1.0",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "PostgreSQL",
+  "type": "module",
+  "scripts": {
+    "build": "nest build",
+    "clean": "rimraf dist",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "start": "node dist/main",
+    "lint": "oxlint --type-aware src/",
+    "test": "pnpm run test:static && pnpm run test:dynamic",
+    "test:static": "tsc --noEmit -p tsconfig.json",
+    "test:dynamic": "echo \"test:dynamic: not defined for this package\""
+  },
+  "dependencies": {
+    "@nestjs/common": "catalog:nest",
+    "@nestjs/core": "catalog:nest",
+    "nest-commander": "catalog:",
+    "reflect-metadata": "catalog:",
+    "rxjs": "catalog:",
+    "service-registry": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "catalog:nest",
+    "@nestjs/schematics": "catalog:nest",
+    "@types/inquirer": "catalog:",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "prettier": "catalog:",
+    "rimraf": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "dependsOn": [
+          "^build"
+        ]
+      }
+    }
+  }
+}
