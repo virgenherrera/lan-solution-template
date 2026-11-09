@@ -149,10 +149,12 @@ The orchestrator decided the database and filesystem questions on 2026-11-09. Th
 
 ### Open items from the test-double research
 
+Spikes are not prerequisites. Each one runs as step 0 of the implementation it unblocks and ends in a go or no-go with a fallback, so no work waits for it.
+
 - Open: a `DbAdapter` injection seam is not built. It would be needed to double the database in the gateway.
 - Open: the REQ-TEST-06 scenarios need a sea-runtime app context that does not exist yet. Migrations and the vector backend run in the `apps/sea-runtime` `PersistenceService`.
-- Spike: the `node:fs` pass-through wrapper under ts-jest ESM in `libs/shared-core`.
-- Spike: import `@wdio/tauri-plugin` in a wdio-only frontend build to explain the `addTauriApi` failure.
+- Spike, step 0 of the first APP suite that needs the `node:fs` spy: the pass-through wrapper under ts-jest ESM in `libs/shared-core`. Go: the spy asserts the call. No-go: assert the effect on the temporary base path only.
+- Spike, step 0 of the Tauri APP suite: import `@wdio/tauri-plugin` in a wdio-only frontend build to explain the `addTauriApi` failure. Go: the service drives the app. No-go: keep the REQ-TEST-08 host checks and record the cause.
 - Not verified: the claim that Playwright cannot drive Tauri.
 - `webdriverio` is about one minor behind.
 
