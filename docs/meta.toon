@@ -482,8 +482,8 @@ docs[104]:
     summary: "Technical debt record TD-DEV-01: pnpm dev:certs builds shared-core but not service-registry, so a clean clone fails with TS2307."
     ids: []
     related[4]: docs/backlog/README.md,docs/backlog/nest-standalone-refactor.md,docs/requirements/11-nx-quality-testing.md,docs/architecture/adr/ADR-008-tls-trust-model.md
-    status: proposed
-    updated: 2026-11-06
+    status: done
+    updated: 2026-11-09
     refs[3]: REQ-BUILD-02,REQ-ECO-01,REQ-ECO-06
   - doc: docs/backlog/td-nest-di-by-class.md
     title: "Technical debt: Nest DI by class"
