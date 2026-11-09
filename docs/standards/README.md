@@ -118,7 +118,7 @@ Source: SRS v1.6 section 13. Per the SRS conventions note, these references are 
 
 [Back to navigation](#navigation)
 
-REQ-VERSION-01, REQ-VERSION-02 and REQ-VERSION-03. One product version for the whole monorepo. The root `package.json` is the source of truth. The Nx Release group `lockstep` in [nx.json](../../nx.json) holds the root project, `api-gateway`, `desktop`, `sea-runtime`, `web-angular`, `db-migrations`, `service-registry` and `shared-core` with `projectsRelationship: "fixed"`. External dependencies keep their own versions.
+REQ-VERSION-01, REQ-VERSION-02 and REQ-VERSION-03. One product version for the whole monorepo. The root `package.json` is the source of truth. The Nx Release group `lockstep` in [nx.json](../../nx.json) holds the root project, `api-gateway`, `desktop`, `sea-runtime`, `web-angular`, `db-migrations`, `service-registry`, `shared-core` and `tools-cli` with `projectsRelationship: "fixed"`. External dependencies keep their own versions.
 
 Nx Release writes only `package.json` by itself. The version actions in [tools/scripts/release-version-actions.ts](../../tools/scripts/release-version-actions.ts) also write the same version to `apps/desktop/src-tauri/Cargo.toml`, to the `app` entry of `Cargo.lock` and to `apps/desktop/src-tauri/tauri.conf.json`. The `nx release` top-level command is not used: it cannot be combined with the granular git settings, which keep commit, tag and push off. Use the subcommands. Before Nx flushes any file, the version actions check that every target file that exists is writable. A read-only file stops the run with a clear error and no file is changed. A failure during the flush itself (for example a full disk) is not covered; `pnpm release:check` detects it and `git restore` reverts it.
 

@@ -252,7 +252,7 @@ The mapping above says which POC covers an id. It does not say how far the POC w
 
 | Id | Status | Verified on macOS arm64 | Missing |
 |---|---|---|---|
-| [REQ-VERSION-01](11-nx-quality-testing.md) | partial | The Nx Release group `lockstep` holds eight projects, `projectsRelationship: "fixed"`. One version in 11 places (`pnpm release:check` exit 0). | A release run in CI. [POC-9](../backlog/poc-9-ci-cd-releases.md) is on hold. |
+| [REQ-VERSION-01](11-nx-quality-testing.md) | partial | The Nx Release group `lockstep` holds nine projects (`tools-cli` included, so `release:check` agrees with the bump), `projectsRelationship: "fixed"`. One version in 12 places (`pnpm release:check` exit 0). | A release run in CI. [POC-9](../backlog/poc-9-ci-cd-releases.md) is on hold. |
 | [REQ-VERSION-02](11-nx-quality-testing.md) | partial | The `branch-name` command of `apps/tools-cli` maps the table and the exemption for `docs/` and `chore/`, and rejects every other name (independent verifier, 2 blockers fixed). | The CI check of branch names, the highest-impact choice for several merged PRs, the duplicate-tag guard. Confirm that `main` should fail. |
 | [REQ-VERSION-03](11-nx-quality-testing.md) | partial | `release:version` writes `package.json`, `Cargo.toml`, `Cargo.lock` (the `app` entry) and `tauri.conf.json`; `release:check` validates them; `release:changelog --dry-run` exit 0. | The check wired into a pipeline. A failure inside the Nx flush (a full disk) is not covered. |
 | [REQ-SEA-06](10-node-sea-distribution.md) | partial (the rule only) | The rule "validate per platform" applied on macOS arm64 with `tools-cli verify-platform` (6 checks, exit 0). | Every other platform and architecture. |
