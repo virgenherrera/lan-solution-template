@@ -2,7 +2,7 @@
   "name": "lan-solution-template",
   "version": "0.1.0",
   "scripts": {
-    "test": "node tools/scripts/test-filter.ts",
+    "test": "pnpm run tools test-filter",
     "build": "nx run-many -t build --exclude=lan-solution-template",
     "package": "nx run-many -t package --exclude=lan-solution-template",
     "clean": "nx run-many -t clean --exclude=lan-solution-template && rimraf artifacts dist",
