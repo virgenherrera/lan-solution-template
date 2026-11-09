@@ -83,17 +83,21 @@
       },
       "smoke-pg": {
         "dependsOn": [
-          "package"
+          "package",
+          {
+            "projects": "tools-cli",
+            "target": "build"
+          }
         ],
         "executor": "nx:run-commands",
         "cache": false,
         "options": {
-          "command": "node tools/scripts/smoke-pg.ts",
+          "command": "node apps/tools-cli/dist/main.js smoke-pg",
           "cwd": "{workspaceRoot}"
         },
         "inputs": [
           "default",
-          "{workspaceRoot}/tools/scripts/smoke-pg.ts",
+          "{workspaceRoot}/apps/tools-cli/src/**/*",
           "{workspaceRoot}/libs/db-migrations/pg/migrations/**/*"
         ]
       }
