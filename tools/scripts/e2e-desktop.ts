@@ -42,7 +42,7 @@ const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms
 const base = realpathSync(mkdtempSync(join(tmpdir(), 'lan-desktop-e2e-')));
 let failure: unknown;
 try {
-  run('node', [join(root, 'tools', 'scripts', 'stage-sidecar.ts')], root);
+  run('node', [join(root, 'apps', 'tools-cli', 'dist', 'main.js'), 'stage-sidecar'], root);
   run('pnpm', ['exec', 'tauri', 'build', '--no-bundle', '--debug', '--features', 'wdio', '--config', 'src-tauri/tauri.wdio.conf.json'], desktop, { CARGO_TARGET_DIR: targetDir });
   const built = join(targetDir, 'debug');
   const wdioStrings = execFileSync('sh', ['-c', `strings -a "${join(built, `app${exe}`)}" | grep -ci wdio || true`], { encoding: 'utf8' }).trim();
