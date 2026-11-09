@@ -7,6 +7,7 @@ import { InstallerBuildCommand } from './commands/installer-build.command.js';
 import { InstallerMacosCommand } from './commands/installer-macos.command.js';
 import { PackMigrationsCommand } from './commands/pack-migrations.command.js';
 import { SmokeSeaCommand } from './commands/smoke-sea.command.js';
+import { SmokeDevCommand } from './commands/smoke-dev.command.js';
 import { StageSidecarCommand } from './commands/stage-sidecar.command.js';
 import { TestFilterCommand } from './commands/test-filter.command.js';
 import { TrustCaCommand } from './commands/trust-ca.command.js';
@@ -32,6 +33,7 @@ import { RepoRoot } from './services/repo-root.service.js';
     InstallerMacosCommand,
     PackMigrationsCommand,
     SmokeSeaCommand,
+    SmokeDevCommand,
     StageSidecarCommand,
     TestFilterCommand,
     TrustCaCommand,
