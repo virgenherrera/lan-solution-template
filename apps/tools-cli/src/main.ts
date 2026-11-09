@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { dirname, join } from 'node:path';
 import { CommandFactory } from 'nest-commander';
 import { EXIT_CODE } from 'service-registry';
 import { ExitError } from './constants/exit-error.js';
@@ -13,6 +14,7 @@ class ToolsCliMain {
 
   private async run(): Promise<void> {
     const logger = this.initLogger();
+    this.nameProgram();
     try {
       await this.execute(logger);
     } catch (error) {
@@ -23,6 +25,12 @@ class ToolsCliMain {
   // Nest logging is off: a command owns its stdout and stderr contract byte for byte.
   private initLogger(): false {
     return false;
+  }
+
+  // commander names the program after the basename of argv[1] (`main` for dist/main.js); help must print the tool name.
+  private nameProgram(): void {
+    const script = process.argv[1];
+    if (script !== undefined) process.argv[1] = join(dirname(script), 'tools-cli');
   }
 
   // Each command parses its own input (zod) inside its handler; nothing else reads process.argv.
