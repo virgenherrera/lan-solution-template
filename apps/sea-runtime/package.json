@@ -70,7 +70,7 @@
           "{workspaceRoot}/artifacts/sea-runtime"
         ],
         "options": {
-          "command": "node tools/scripts/pack-migrations.ts && node tools/scripts/compile-sea.ts sea-runtime && node tools/scripts/smoke-sea.ts",
+          "command": "node apps/tools-cli/dist/main.js pack-migrations && node tools/scripts/compile-sea.ts sea-runtime && node tools/scripts/smoke-sea.ts",
           "cwd": "{workspaceRoot}"
         },
         "inputs": [

@@ -19,6 +19,7 @@
   "dependencies": {
     "@nestjs/common": "catalog:nest",
     "@nestjs/core": "catalog:nest",
+    "db-migrations": "workspace:*",
     "nest-commander": "catalog:",
     "reflect-metadata": "catalog:",
     "rxjs": "catalog:",
