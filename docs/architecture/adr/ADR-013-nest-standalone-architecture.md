@@ -251,7 +251,7 @@ Slice 5 applied D9 only in part. It moved the 41 files whose role is a single D9
 | Not moved | Files | Reason |
 |---|---|---|
 | Entrypoints and barrels | 6 | The build and the package manifests name them by path: `sea-entry.ts` (`apps/tools-cli/src/sea/sea-paths.service.ts:54`), `services.ts` (`apps/tools-cli/src/sea/sea-paths.service.ts:58`), the two `main.ts` (`start:prod` runs `node dist/main`, `package.json:17` in each app) and the two barrels `index.ts` (`"main": "dist/index.js"`). `sea-modules.d.ts` stays with them. |
-| `tls/` and `db/` | 16 | The `shared-core` package exports point at their built path (`libs/shared-core/package.json:11-18`). `apps/tools-cli/src/services/parity-engine.ts:5-6` and `apps/tools-cli/src/commands/compile-sea.command.ts:83-88` load the built files through those exports. |
+| `tls/` and `db/` | 16 | The `shared-core` package exports point at their built path (`libs/shared-core/package.json:11-18`). `apps/tools-cli/src/services/parity-engine.ts:5-6` and `apps/tools-cli/src/commands/generate-certs.command.ts:8` load the built files through those exports. |
 | Mixed role or loose functions | 28 | A file holds a module with providers, a controller, or plain functions. No D9 folder fits it. |
 
 ### D10. Boot order
