@@ -7,7 +7,8 @@ import { MacosPkgService } from '../services/macos-pkg.service.js';
 // A missing input or a failing packaging tool throws: ToolsCliMain prints `tools-cli: <message>` and exits 1.
 @Command({
   name: 'installer-macos',
-  description: 'Build the macOS installer .pkg of the desktop app with pkgbuild and productbuild (ADR-007).',
+  description:
+    'Build the macOS installer .pkg of the desktop app with pkgbuild and productbuild (ADR-007).',
   arguments: '[ignored...]',
   allowUnknownOptions: true,
   allowExcessArgs: true,

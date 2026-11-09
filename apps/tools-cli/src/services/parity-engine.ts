@@ -14,7 +14,17 @@ export interface ParityEngine {
 
 export class SqliteParityEngine implements ParityEngine {
   open(workDir: string): Promise<DbAdapter> {
-    return Promise.resolve(new SqliteAdapter({ file: 'parity.db', foreignKeys: true, journalMode: 'DELETE', synchronous: 'NORMAL' }, workDir));
+    return Promise.resolve(
+      new SqliteAdapter(
+        {
+          file: 'parity.db',
+          foreignKeys: true,
+          journalMode: 'DELETE',
+          synchronous: 'NORMAL',
+        },
+        workDir,
+      ),
+    );
   }
 }
 
@@ -26,7 +36,9 @@ export class PgParityEngine implements ParityEngine {
   private readonly database = `parity_${randomBytes(6).toString('hex')}`;
 
   // `option` reads a --pg-* value when the connection is made, so a missing value fails at the same step as before.
-  constructor(private readonly option: (name: string, fallback: string) => string) {}
+  constructor(
+    private readonly option: (name: string, fallback: string) => string,
+  ) {}
 
   async open(workDir: string): Promise<DbAdapter> {
     await this.adminDo(workDir, `CREATE DATABASE ${this.database}`);
@@ -34,11 +46,17 @@ export class PgParityEngine implements ParityEngine {
   }
 
   cleanup(workDir: string): Promise<void> {
-    return this.adminDo(workDir, `DROP DATABASE IF EXISTS ${this.database} WITH (FORCE)`);
+    return this.adminDo(
+      workDir,
+      `DROP DATABASE IF EXISTS ${this.database} WITH (FORCE)`,
+    );
   }
 
   private async connect(workDir: string, name: string): Promise<DbAdapter> {
-    writeFileSync(join(workDir, PG_PASSWORD_FILE), process.env.PGPASSWORD ?? '');
+    writeFileSync(
+      join(workDir, PG_PASSWORD_FILE),
+      process.env.PGPASSWORD ?? '',
+    );
     const settings = {
       host: this.option('pg-host', 'localhost'),
       port: Number(this.option('pg-port', '5432')),
@@ -52,7 +70,10 @@ export class PgParityEngine implements ParityEngine {
   }
 
   private async adminDo(workDir: string, statement: string): Promise<void> {
-    const admin = await this.connect(workDir, this.option('pg-database', 'postgres'));
+    const admin = await this.connect(
+      workDir,
+      this.option('pg-database', 'postgres'),
+    );
     try {
       await admin.run(statement);
     } finally {

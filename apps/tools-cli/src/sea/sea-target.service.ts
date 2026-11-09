@@ -31,7 +31,9 @@ export class SeaTargetService {
   hostTriple(): string {
     const triple = TARGET_TRIPLES[`${process.platform} ${process.arch}`];
     if (triple === undefined) {
-      throw new Error(`unsupported platform ${process.platform} ${process.arch}: no Rust target triple`);
+      throw new Error(
+        `unsupported platform ${process.platform} ${process.arch}: no Rust target triple`,
+      );
     }
     return triple;
   }
@@ -41,7 +43,10 @@ export class SeaTargetService {
   }
 
   // Native by default; a target that differs from the host needs the target's own Node binary.
-  resolve(argv: readonly string[]): { supervisor: string; target: BuildTarget } {
+  resolve(argv: readonly string[]): {
+    supervisor: string;
+    target: BuildTarget;
+  } {
     const { values, positionals } = parseArgs({
       args: [...argv],
       allowPositionals: true,
@@ -49,16 +54,23 @@ export class SeaTargetService {
     });
     const [supervisor, ...extra] = positionals;
     if (!supervisor || extra.length > 0) {
-      throw new Error('usage: tools-cli compile-sea <supervisor-project> [--target <triple> --executable <node-binary>]');
+      throw new Error(
+        'usage: tools-cli compile-sea <supervisor-project> [--target <triple> --executable <node-binary>]',
+      );
     }
     const host = this.hostTriple();
     const triple = values.target ?? host;
-    if (!Object.values(TARGET_TRIPLES).includes(triple)) throw new Error(`unknown --target "${triple}"`);
+    if (!Object.values(TARGET_TRIPLES).includes(triple))
+      throw new Error(`unknown --target "${triple}"`);
     if (triple !== host && values.executable === undefined) {
-      throw new Error(`cross build for ${triple} on ${host} needs --executable <node binary of the target>`);
+      throw new Error(
+        `cross build for ${triple} on ${host} needs --executable <node binary of the target>`,
+      );
     }
     if (triple === host && values.executable !== undefined) {
-      throw new Error('--executable is only for a cross build; omit it for a native build');
+      throw new Error(
+        '--executable is only for a cross build; omit it for a native build',
+      );
     }
     return { supervisor, target: { triple, executable: values.executable } };
   }

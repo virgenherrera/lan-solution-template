@@ -13,7 +13,7 @@
     "start": "node dist/main",
     "lint": "oxlint --type-aware src/",
     "test": "pnpm run test:static && pnpm run test:dynamic",
-    "test:static": "tsc --noEmit -p tsconfig.json",
+    "test:static": "prettier --check \"src/**/*.ts\" && tsc --noEmit -p tsconfig.json",
     "test:dynamic": "echo \"test:dynamic: not defined for this package\""
   },
   "dependencies": {

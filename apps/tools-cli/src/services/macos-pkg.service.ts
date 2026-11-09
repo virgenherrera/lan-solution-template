@@ -1,5 +1,15 @@
 import { execFileSync } from 'node:child_process';
-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Injectable } from '@nestjs/common';
@@ -10,7 +20,9 @@ const HOST_NAME = 'app';
 const SIDECAR_NAME = 'sea-runtime';
 
 // Architecture -> Rust target triple (as the SEA assembler and verify-platform) and the Distribution `hostArchitectures` value.
-const ARCHES: Readonly<Record<string, { triple: string; hostArchitectures: string }>> = {
+const ARCHES: Readonly<
+  Record<string, { triple: string; hostArchitectures: string }>
+> = {
   arm64: { triple: 'aarch64-apple-darwin', hostArchitectures: 'arm64' },
   x64: { triple: 'x86_64-apple-darwin', hostArchitectures: 'x86_64' },
 };
@@ -28,17 +40,30 @@ export class MacosPkgService {
 
   build(): string {
     const arch = ARCHES[process.arch];
-    if (arch === undefined) throw new Error(`installer: no macOS architecture mapping for ${process.arch}`);
+    if (arch === undefined)
+      throw new Error(
+        `installer: no macOS architecture mapping for ${process.arch}`,
+      );
 
     const desktop = join(this.repo.path, 'apps', 'desktop');
     const release = join(desktop, 'src-tauri', 'target', 'release');
     const resources = join(desktop, 'installer', 'macos');
-    const { version } = this.readJson<{ version: string }>(join(desktop, 'package.json'));
-    const { identifier, productName } = this.readJson<{ identifier: string; productName: string }>(join(desktop, 'src-tauri', 'tauri.conf.json'));
+    const { version } = this.readJson<{ version: string }>(
+      join(desktop, 'package.json'),
+    );
+    const { identifier, productName } = this.readJson<{
+      identifier: string;
+      productName: string;
+    }>(join(desktop, 'src-tauri', 'tauri.conf.json'));
     const inputs = {
       host: join(release, HOST_NAME),
       sidecar: join(release, SIDECAR_NAME),
-      template: join(this.repo.path, 'libs', 'shared-core', 'config.example.json'),
+      template: join(
+        this.repo.path,
+        'libs',
+        'shared-core',
+        'config.example.json',
+      ),
       postinstall: join(resources, 'scripts', 'postinstall'),
       uninstall: join(resources, 'uninstall.sh'),
       trustPostinstall: join(resources, 'trust-scripts', 'postinstall'),
@@ -47,27 +72,68 @@ export class MacosPkgService {
       trustNotice: join(resources, 'resources', 'trust.html'),
     };
     for (const [label, path] of Object.entries(inputs)) {
-      if (!existsSync(path)) throw new Error(`installer: ${label} is missing: ${path} (run "pnpm exec nx run desktop:package" for the host and sidecar)`);
+      if (!existsSync(path))
+        throw new Error(
+          `installer: ${label} is missing: ${path} (run "pnpm exec nx run desktop:package" for the host and sidecar)`,
+        );
     }
 
     const work = mkdtempSync(join(tmpdir(), 'lan-installer-'));
     try {
       const payload = this.stagePayload(work, inputs, identifier, productName);
       const component = `${identifier}.pkg`;
-      this.pkgbuildMain(work, payload, identifier, version, component, inputs.postinstall);
+      this.pkgbuildMain(
+        work,
+        payload,
+        identifier,
+        version,
+        component,
+        inputs.postinstall,
+      );
 
       const trustIdentifier = `${identifier}.trust`;
       const trustComponent = `${trustIdentifier}.pkg`;
-      this.pkgbuildTrust(work, inputs.trustPostinstall, identifier, trustIdentifier, version, trustComponent);
+      this.pkgbuildTrust(
+        work,
+        inputs.trustPostinstall,
+        identifier,
+        trustIdentifier,
+        version,
+        trustComponent,
+      );
 
-      const output = join(release, `lan-solution-desktop-${version}-${arch.triple}.pkg`);
-      const distributionPath = this.writeDistribution(work, inputs.distribution, { identifier, version, trustIdentifier, trustComponent, component, hostArch: arch.hostArchitectures });
+      const output = join(
+        release,
+        `lan-solution-desktop-${version}-${arch.triple}.pkg`,
+      );
+      const distributionPath = this.writeDistribution(
+        work,
+        inputs.distribution,
+        {
+          identifier,
+          version,
+          trustIdentifier,
+          trustComponent,
+          component,
+          hostArch: arch.hostArchitectures,
+        },
+      );
       const resourcesDir = join(work, 'resources');
       mkdirSync(resourcesDir);
       copyFileSync(inputs.welcome, join(resourcesDir, 'welcome.html'));
       copyFileSync(inputs.trustNotice, join(resourcesDir, 'trust.html'));
-      this.tool('productbuild', ['--distribution', distributionPath, '--resources', resourcesDir, '--package-path', work, output]);
-      process.stdout.write(`installer: ${output} (${statSync(output).size} bytes)\n`);
+      this.tool('productbuild', [
+        '--distribution',
+        distributionPath,
+        '--resources',
+        resourcesDir,
+        '--package-path',
+        work,
+        output,
+      ]);
+      process.stdout.write(
+        `installer: ${output} (${statSync(output).size} bytes)\n`,
+      );
       return output;
     } finally {
       rmSync(work, { recursive: true, force: true });
@@ -82,46 +148,94 @@ export class MacosPkgService {
     execFileSync(name, args, { stdio: 'inherit' });
   }
 
-  private stagePayload(work: string, inputs: { host: string; sidecar: string; template: string; uninstall: string }, identifier: string, productName: string): string {
+  private stagePayload(
+    work: string,
+    inputs: {
+      host: string;
+      sidecar: string;
+      template: string;
+      uninstall: string;
+    },
+    identifier: string,
+    productName: string,
+  ): string {
     const payload = join(work, 'payload');
     mkdirSync(join(payload, 'config'), { recursive: true });
     copyFileSync(inputs.host, join(payload, HOST_NAME));
     copyFileSync(inputs.sidecar, join(payload, SIDECAR_NAME));
-    copyFileSync(inputs.template, join(payload, 'config', 'config.example.json'));
+    copyFileSync(
+      inputs.template,
+      join(payload, 'config', 'config.example.json'),
+    );
 
     // The script needs the package identifier (receipts) and the product name (autostart LaunchAgent file name).
-    writeFileSync(join(payload, 'uninstall.sh'), readFileSync(inputs.uninstall, 'utf8').replaceAll('@IDENTIFIER@', identifier).replaceAll('@PRODUCT@', productName), {
-      mode: 0o755,
-    });
+    writeFileSync(
+      join(payload, 'uninstall.sh'),
+      readFileSync(inputs.uninstall, 'utf8')
+        .replaceAll('@IDENTIFIER@', identifier)
+        .replaceAll('@PRODUCT@', productName),
+      {
+        mode: 0o755,
+      },
+    );
     chmodSync(join(payload, 'uninstall.sh'), 0o755); // the mode above is subject to the umask
     return payload;
   }
 
-  private pkgbuildMain(work: string, payload: string, identifier: string, version: string, component: string, postinstall: string): void {
+  private pkgbuildMain(
+    work: string,
+    payload: string,
+    identifier: string,
+    version: string,
+    component: string,
+    postinstall: string,
+  ): void {
     const scripts = join(work, 'scripts');
     mkdirSync(scripts);
     copyFileSync(postinstall, join(scripts, 'postinstall'));
     this.tool('pkgbuild', [
-      '--root', payload,
-      '--identifier', identifier,
-      '--version', version,
-      '--install-location', DEFAULT_LOCATION,
-      '--scripts', scripts,
+      '--root',
+      payload,
+      '--identifier',
+      identifier,
+      '--version',
+      version,
+      '--install-location',
+      DEFAULT_LOCATION,
+      '--scripts',
+      scripts,
       join(work, component),
     ]);
   }
 
-  private pkgbuildTrust(work: string, trustPostinstall: string, identifier: string, trustIdentifier: string, version: string, trustComponent: string): void {
+  private pkgbuildTrust(
+    work: string,
+    trustPostinstall: string,
+    identifier: string,
+    trustIdentifier: string,
+    version: string,
+    trustComponent: string,
+  ): void {
     const trustScripts = join(work, 'trust-scripts');
     mkdirSync(trustScripts);
     // The trust script finds the install location in the receipt of the main package, so it needs that identifier.
     const trustScript = join(trustScripts, 'postinstall');
-    writeFileSync(trustScript, readFileSync(trustPostinstall, 'utf8').replaceAll('@IDENTIFIER@', identifier), { mode: 0o755 });
+    writeFileSync(
+      trustScript,
+      readFileSync(trustPostinstall, 'utf8').replaceAll(
+        '@IDENTIFIER@',
+        identifier,
+      ),
+      { mode: 0o755 },
+    );
     this.tool('pkgbuild', [
       '--nopayload',
-      '--identifier', trustIdentifier,
-      '--version', version,
-      '--scripts', trustScripts,
+      '--identifier',
+      trustIdentifier,
+      '--version',
+      version,
+      '--scripts',
+      trustScripts,
       join(work, trustComponent),
     ]);
   }
@@ -129,7 +243,14 @@ export class MacosPkgService {
   private writeDistribution(
     work: string,
     template: string,
-    names: { identifier: string; version: string; trustIdentifier: string; trustComponent: string; component: string; hostArch: string },
+    names: {
+      identifier: string;
+      version: string;
+      trustIdentifier: string;
+      trustComponent: string;
+      component: string;
+      hostArch: string;
+    },
   ): string {
     const distribution = readFileSync(template, 'utf8')
       .replaceAll('@IDENTIFIER@', names.identifier)

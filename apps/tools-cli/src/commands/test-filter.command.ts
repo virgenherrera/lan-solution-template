@@ -24,7 +24,8 @@ const USAGE = 'usage: tools-cli test-filter [-- --filter @ut|@int|@app]';
 
 @Command({
   name: 'test-filter',
-  description: 'Validate the test selection tag, print the runner arguments and run the security and test steps (REQ-TEST-02).',
+  description:
+    'Validate the test selection tag, print the runner arguments and run the security and test steps (REQ-TEST-02).',
   arguments: '[args...]',
   // `--filter` is not a commander option of this command: the adapter parses its own argv, as the retired script did.
   allowUnknownOptions: true,
@@ -46,7 +47,14 @@ export class TestFilterCommand extends CommandRunner {
     // Static and security checks always run, whatever the filter selected.
     this.step('pnpm', ['run', 'securityCheck']);
     // The translated runner arguments are not consumed yet: no APP tests exist for them to select.
-    this.step('pnpm', ['exec', 'nx', 'run-many', '-t', 'test', '--exclude=lan-solution-template']);
+    this.step('pnpm', [
+      'exec',
+      'nx',
+      'run-many',
+      '-t',
+      'test',
+      '--exclude=lan-solution-template',
+    ]);
     return Promise.resolve();
   }
 
@@ -69,15 +77,22 @@ export class TestFilterCommand extends CommandRunner {
       return this.fail('--filter requires a non-empty tag');
     }
     if (!TAGS.includes(tag)) {
-      return this.fail(`unknown filter "${tag}"; expected one of ${TAGS.join(', ')}`);
+      return this.fail(
+        `unknown filter "${tag}"; expected one of ${TAGS.join(', ')}`,
+      );
     }
     return tag;
   }
 
   private step(command: string, args: readonly string[]): void {
-    const result = spawnSync(command, [...args], { stdio: 'inherit', shell: false });
+    const result = spawnSync(command, [...args], {
+      stdio: 'inherit',
+      shell: false,
+    });
     if (result.error !== undefined) {
-      process.stderr.write(`test-filter: ${command} failed to start: ${result.error.message}\n`);
+      process.stderr.write(
+        `test-filter: ${command} failed to start: ${result.error.message}\n`,
+      );
       throw new ExitError(EXIT_CODE.startupFailed);
     }
     if (result.status !== 0) {

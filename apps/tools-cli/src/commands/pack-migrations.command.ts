@@ -10,7 +10,8 @@ import { MigrationPackService } from '../services/migration-pack.service.js';
 // Exit codes: 0 done, 1 error (the message goes to stderr as the retired script printed it). Any other argument is ignored, as before.
 @Command({
   name: 'pack-migrations',
-  description: 'Pack the generated SQL migrations into dist/db-migrations/<engine> for the SEA (S7, S8).',
+  description:
+    'Pack the generated SQL migrations into dist/db-migrations/<engine> for the SEA (S7, S8).',
   arguments: '[args...]',
   // The command reads --engine from its own arguments, as the retired script did.
   allowUnknownOptions: true,
@@ -26,7 +27,9 @@ export class PackMigrationsCommand extends CommandRunner {
     try {
       this.packer.pack(this.requestedEngine(passedParams));
     } catch (error) {
-      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+      process.stderr.write(
+        `${error instanceof Error ? error.message : String(error)}\n`,
+      );
       throw new ExitError(EXIT_CODE.startupFailed);
     }
     return Promise.resolve();

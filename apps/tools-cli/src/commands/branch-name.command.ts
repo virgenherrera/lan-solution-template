@@ -25,7 +25,8 @@ const inputSchema = z.tuple([]).or(z.tuple([z.string()]));
 
 @Command({
   name: 'branch-name',
-  description: 'Validate a PR source branch name and print its release bump (REQ-VERSION-02).',
+  description:
+    'Validate a PR source branch name and print its release bump (REQ-VERSION-02).',
   arguments: '[branch...]',
   // The retired script took no options: `--x` was a branch name and exit 1 rejected it. Keep that.
   allowUnknownOptions: true,
@@ -41,9 +42,17 @@ export class BranchNameCommand extends CommandRunner {
     }
     const branch = input.data[0] ?? this.currentBranch();
     const [prefix, slug, ...extra] = branch.split('/');
-    const bump = prefix !== undefined && Object.hasOwn(BUMPS, prefix) ? BUMPS[prefix] : undefined;
+    const bump =
+      prefix !== undefined && Object.hasOwn(BUMPS, prefix)
+        ? BUMPS[prefix]
+        : undefined;
 
-    if (bump === undefined || slug === undefined || extra.length > 0 || !SLUG.test(slug)) {
+    if (
+      bump === undefined ||
+      slug === undefined ||
+      extra.length > 0 ||
+      !SLUG.test(slug)
+    ) {
       process.stderr.write(
         `branch-name: "${branch}" is invalid; expected <${Object.keys(BUMPS).join('|')}>/<slug> (lowercase, digits, hyphens)\n`,
       );
@@ -54,7 +63,9 @@ export class BranchNameCommand extends CommandRunner {
   }
 
   private currentBranch(): string {
-    const result = spawnSync('git', ['branch', '--show-current'], { encoding: 'utf8' });
+    const result = spawnSync('git', ['branch', '--show-current'], {
+      encoding: 'utf8',
+    });
     if (result.status !== 0) {
       process.stderr.write('branch-name: cannot read the current git branch\n');
       throw new ExitError(EXIT_CODE.argumentRejected);

@@ -13,7 +13,8 @@ const TAURI = 'apps/desktop/src-tauri';
 
 @Command({
   name: 'version-check',
-  description: 'Check that every workspace manifest, Cargo.toml, Cargo.lock and tauri.conf.json share one version (REQ-VERSION-01).',
+  description:
+    'Check that every workspace manifest, Cargo.toml, Cargo.lock and tauri.conf.json share one version (REQ-VERSION-01).',
   arguments: '[ignored...]',
   allowUnknownOptions: true,
   allowExcessArgs: true,
@@ -27,13 +28,19 @@ export class VersionCheckCommand extends CommandRunner {
     for (const [path, version] of found) {
       const ok = version === expected;
       drift += ok ? 0 : 1;
-      process.stdout.write(`${ok ? 'ok  ' : 'DIFF'} ${version.padEnd(8)} ${path}\n`);
+      process.stdout.write(
+        `${ok ? 'ok  ' : 'DIFF'} ${version.padEnd(8)} ${path}\n`,
+      );
     }
     if (drift > 0) {
-      process.stderr.write(`version-check: ${drift} place(s) differ from package.json (${expected})\n`);
+      process.stderr.write(
+        `version-check: ${drift} place(s) differ from package.json (${expected})\n`,
+      );
       throw new ExitError(EXIT_CODE.startupFailed);
     }
-    process.stdout.write(`version-check: all ${found.size} places at ${expected}\n`);
+    process.stdout.write(
+      `version-check: all ${found.size} places at ${expected}\n`,
+    );
     return Promise.resolve();
   }
 
@@ -49,23 +56,35 @@ export class VersionCheckCommand extends CommandRunner {
       }
     }
     const cargo = readFileSync(join(TAURI, 'Cargo.toml'), 'utf8');
-    const crate = /^\[package\][\s\S]*?^name = "([^"]+)"/m.exec(cargo)?.[1] ?? '';
-    found.set(join(TAURI, 'Cargo.toml'), this.tomlVersion(cargo, /^\[package\]\s*$/m));
+    const crate =
+      /^\[package\][\s\S]*?^name = "([^"]+)"/m.exec(cargo)?.[1] ?? '';
+    found.set(
+      join(TAURI, 'Cargo.toml'),
+      this.tomlVersion(cargo, /^\[package\]\s*$/m),
+    );
     found.set(
       join(TAURI, 'Cargo.lock'),
-      this.tomlVersion(readFileSync(join(TAURI, 'Cargo.lock'), 'utf8'), new RegExp(`^name = "${crate}"\\s*$`, 'm')),
+      this.tomlVersion(
+        readFileSync(join(TAURI, 'Cargo.lock'), 'utf8'),
+        new RegExp(`^name = "${crate}"\\s*$`, 'm'),
+      ),
     );
-    found.set(join(TAURI, 'tauri.conf.json'), this.readJsonVersion(join(TAURI, 'tauri.conf.json')));
+    found.set(
+      join(TAURI, 'tauri.conf.json'),
+      this.readJsonVersion(join(TAURI, 'tauri.conf.json')),
+    );
     return found;
   }
 
   private readJsonVersion(path: string): string {
-    return (JSON.parse(readFileSync(path, 'utf8')) as { version: string }).version;
+    return (JSON.parse(readFileSync(path, 'utf8')) as { version: string })
+      .version;
   }
 
   private tomlVersion(text: string, anchor: RegExp): string {
     const match = anchor.exec(text);
-    const rest = match === null ? '' : text.slice(match.index + match[0].length);
+    const rest =
+      match === null ? '' : text.slice(match.index + match[0].length);
     return /^version = "([^"]*)"/m.exec(rest)?.[1] ?? 'missing';
   }
 }

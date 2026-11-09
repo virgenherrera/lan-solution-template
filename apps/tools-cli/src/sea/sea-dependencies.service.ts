@@ -15,7 +15,17 @@ const dependencyPackageSchema = z.looseObject({
 });
 const nxProjectSchema = z.looseObject({ root: z.string() });
 const angularJsonSchema = z.looseObject({
-  architect: z.looseObject({ build: z.looseObject({ options: z.looseObject({ outputPath: z.string().optional() }).optional() }).optional() }).optional(),
+  architect: z
+    .looseObject({
+      build: z
+        .looseObject({
+          options: z
+            .looseObject({ outputPath: z.string().optional() })
+            .optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 // The library that holds the dispatcher contract: a supervisor must depend on it.
@@ -37,7 +47,10 @@ interface LibEntry {
   entryPath: string;
 }
 
-type Classified = { kind: 'service'; entry: BuiltService } | { kind: 'web'; bundle: WebBundle } | { kind: 'lib'; lib: LibEntry };
+type Classified =
+  | { kind: 'service'; entry: BuiltService }
+  | { kind: 'web'; bundle: WebBundle }
+  | { kind: 'lib'; lib: LibEntry };
 
 // Dependencies of the supervisor (`workspace:` ranges) are classified by build output: <root>/dist/main.js is a service; <root>/dist/<name>/browser/index.html
 // (or angular.json outputPath + /browser) is a web bundle; anything else fails. At most one web bundle; zero means no web assets and no --web flag.
@@ -49,39 +62,71 @@ export class SeaDependenciesService {
   projectRoot(name: string): string {
     const project = parseJson(
       `nx project ${name}`,
-      execFileSync('pnpm', ['exec', 'nx', 'show', 'project', name, '--json'], { cwd: this.repo.path, encoding: 'utf8' }),
+      execFileSync('pnpm', ['exec', 'nx', 'show', 'project', name, '--json'], {
+        cwd: this.repo.path,
+        encoding: 'utf8',
+      }),
       nxProjectSchema,
     );
     return join(this.repo.path, project.root);
   }
 
   // Dependencies are the supervisor's workspace dependencies, read from its own package.json.
-  discover(supervisor: string, supervisorDir: string, serviceEntry: string): { services: BuiltService[]; web: WebBundle | undefined } {
-    const manifest = readJson(join(supervisorDir, 'package.json'), dependencyPackageSchema);
-    const dependencies = { ...manifest.dependencies, ...manifest.devDependencies };
+  discover(
+    supervisor: string,
+    supervisorDir: string,
+    serviceEntry: string,
+  ): { services: BuiltService[]; web: WebBundle | undefined } {
+    const manifest = readJson(
+      join(supervisorDir, 'package.json'),
+      dependencyPackageSchema,
+    );
+    const dependencies = {
+      ...manifest.dependencies,
+      ...manifest.devDependencies,
+    };
     const names = Object.keys(dependencies)
       .filter((name) => dependencies[name]?.startsWith('workspace:'))
       .sort();
     if (names.length === 0) {
-      throw new Error(`${supervisor} has no workspace dependency to package as a service`);
+      throw new Error(
+        `${supervisor} has no workspace dependency to package as a service`,
+      );
     }
     const classified = names.map((name) => this.classify(name, serviceEntry));
-    const services = classified.flatMap((c) => (c.kind === 'service' ? [c.entry] : []));
-    const webs = classified.flatMap((c) => (c.kind === 'web' ? [c.bundle] : []));
-    if (!classified.some((c) => c.kind === 'lib' && c.lib.name === REGISTRY_LIB)) {
-      throw new Error(`${supervisor} must depend on the ${REGISTRY_LIB} library (workspace:*)`);
+    const services = classified.flatMap((c) =>
+      c.kind === 'service' ? [c.entry] : [],
+    );
+    const webs = classified.flatMap((c) =>
+      c.kind === 'web' ? [c.bundle] : [],
+    );
+    if (
+      !classified.some((c) => c.kind === 'lib' && c.lib.name === REGISTRY_LIB)
+    ) {
+      throw new Error(
+        `${supervisor} must depend on the ${REGISTRY_LIB} library (workspace:*)`,
+      );
     }
     if (webs.length > 1) {
-      throw new Error(`exactly one web bundle is allowed; found ${webs.map((w) => w.name).join(', ')}`);
+      throw new Error(
+        `exactly one web bundle is allowed; found ${webs.map((w) => w.name).join(', ')}`,
+      );
     }
     if (services.length === 0) {
-      throw new Error(`${supervisor} has no service dependency (${serviceEntry})`);
+      throw new Error(
+        `${supervisor} has no service dependency (${serviceEntry})`,
+      );
     }
     return { services, web: webs[0] };
   }
 
   // Matches each declared route to the built service of its workspace project, so the entry table is keyed by route id. Runs before bundling and before `node --build-sea`.
-  resolveRoutes(routes: readonly DeclaredEntry[], built: BuiltService[], supervisor: string, serviceEntry: string): BuiltService[] {
+  resolveRoutes(
+    routes: readonly DeclaredEntry[],
+    built: BuiltService[],
+    supervisor: string,
+    serviceEntry: string,
+  ): BuiltService[] {
     return routes.map((route) => {
       const found = built.find((s) => s.service === route.id);
       if (found === undefined) {
@@ -97,11 +142,14 @@ export class SeaDependenciesService {
   private classify(name: string, serviceEntry: string): Classified {
     const dir = this.projectRoot(name);
     const entry = join(dir, serviceEntry);
-    if (existsSync(entry)) return { kind: 'service', entry: { service: name, entryPath: entry } };
+    if (existsSync(entry))
+      return { kind: 'service', entry: { service: name, entryPath: entry } };
     const browser = this.webBrowserDir(name, dir);
-    if (existsSync(join(browser, 'index.html'))) return { kind: 'web', bundle: { name, dir: browser } };
+    if (existsSync(join(browser, 'index.html')))
+      return { kind: 'web', bundle: { name, dir: browser } };
     const main = readJson(join(dir, 'package.json'), mainPackageSchema).main;
-    if (main !== undefined && existsSync(join(dir, main))) return { kind: 'lib', lib: { name, entryPath: join(dir, main) } };
+    if (main !== undefined && existsSync(join(dir, main)))
+      return { kind: 'lib', lib: { name, entryPath: join(dir, main) } };
     throw new Error(
       `${name}: neither a service (missing ${entry}), a web bundle (missing ${join(browser, 'index.html')}) nor a library (missing package.json "main" output); run the ${name} build target first`,
     );
@@ -110,8 +158,11 @@ export class SeaDependenciesService {
   // Angular browser output: angular.json outputPath (default dist/<name>) plus the application builder's browser/ folder.
   private webBrowserDir(name: string, projectDir: string): string {
     const angularJson = join(projectDir, 'angular.json');
-    const config = existsSync(angularJson) ? readJson(angularJson, angularJsonSchema) : undefined;
-    const outputPath = config?.architect?.build?.options?.outputPath ?? join('dist', name);
+    const config = existsSync(angularJson)
+      ? readJson(angularJson, angularJsonSchema)
+      : undefined;
+    const outputPath =
+      config?.architect?.build?.options?.outputPath ?? join('dist', name);
     return join(projectDir, outputPath, 'browser');
   }
 }

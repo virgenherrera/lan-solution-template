@@ -8,7 +8,8 @@ import { MacosPkgService } from '../services/macos-pkg.service.js';
 // The Windows and Linux installers are technical debt: docs/backlog/td-windows-linux-distribution.md.
 @Command({
   name: 'installer-build',
-  description: 'Build the installer of the desktop app for this OS: a .pkg on macOS, a notice elsewhere (REQ-ECO-06).',
+  description:
+    'Build the installer of the desktop app for this OS: a .pkg on macOS, a notice elsewhere (REQ-ECO-06).',
   arguments: '[ignored...]',
   allowUnknownOptions: true,
   allowExcessArgs: true,

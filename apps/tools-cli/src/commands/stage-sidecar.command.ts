@@ -11,7 +11,8 @@ import { RepoRoot } from '../services/repo-root.service.js';
 // A missing input throws: ToolsCliMain prints `tools-cli: <message>` and exits 1. The retired script ignored every argument and so does this command.
 @Command({
   name: 'stage-sidecar',
-  description: 'Copy the packaged SEA runtime artifacts to apps/desktop/src-tauri/binaries as the Tauri sidecar (REQ-DESK-01).',
+  description:
+    'Copy the packaged SEA runtime artifacts to apps/desktop/src-tauri/binaries as the Tauri sidecar (REQ-DESK-01).',
   arguments: '[ignored...]',
   allowUnknownOptions: true,
   allowExcessArgs: true,
@@ -27,9 +28,17 @@ export class StageSidecarCommand extends CommandRunner {
     const artifacts = join(root, 'artifacts', 'sea-runtime');
     const binaries = join(root, 'apps', 'desktop', 'src-tauri', 'binaries');
 
-    if (!existsSync(artifacts)) throw new Error(`${artifacts} is missing: run "pnpm exec nx run sea-runtime:package" first`);
-    const staged = readdirSync(artifacts).filter((name) => name.startsWith('sea-runtime-'));
-    if (staged.length === 0) throw new Error(`${artifacts} holds no sea-runtime-<target-triple> artifact`);
+    if (!existsSync(artifacts))
+      throw new Error(
+        `${artifacts} is missing: run "pnpm exec nx run sea-runtime:package" first`,
+      );
+    const staged = readdirSync(artifacts).filter((name) =>
+      name.startsWith('sea-runtime-'),
+    );
+    if (staged.length === 0)
+      throw new Error(
+        `${artifacts} holds no sea-runtime-<target-triple> artifact`,
+      );
 
     mkdirSync(binaries, { recursive: true });
     for (const name of staged) {
