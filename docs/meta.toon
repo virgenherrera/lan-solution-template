@@ -200,7 +200,7 @@ docs[105]:
   - doc: docs/architecture/stages.md
     title: Stages and promotion tools
     type: architecture
-    summary: "The human's stage idea of 2026-11-09, the promotion tools mapped to stages, proven overlaps, and open questions."
+    summary: "The human's stage idea of 2026-11-09, promotion tools, duplicates by stage boundary, config layers, and open questions."
     ids: []
     related[5]: docs/architecture/overview.md,docs/architecture/current-state.md,docs/requirements/11-nx-quality-testing.md,docs/backlog/td-compile-sea-standalone.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md
     status: proposed
