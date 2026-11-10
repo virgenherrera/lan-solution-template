@@ -205,7 +205,7 @@ docs[105]:
     related[5]: docs/architecture/overview.md,docs/architecture/current-state.md,docs/requirements/11-nx-quality-testing.md,docs/backlog/td-compile-sea-standalone.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md
     status: proposed
     updated: 2026-11-09
-    refs[19]: REQ-DESK-01,REQ-DEV-02,REQ-DEV-04,REQ-ECO-06,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-06,REQ-TEST-02,REQ-TEST-04,REQ-TEST-05,REQ-TEST-06,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09,REQ-TLS-01,REQ-TLS-02,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03
+    refs[20]: REQ-DESK-01,REQ-DEV-02,REQ-DEV-04,REQ-ECO-06,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-06,REQ-TEST-01,REQ-TEST-02,REQ-TEST-04,REQ-TEST-05,REQ-TEST-06,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09,REQ-TLS-01,REQ-TLS-02,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03
   - doc: docs/backlog/README.md
     title: Backlog index
     type: backlog
