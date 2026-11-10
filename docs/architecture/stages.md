@@ -80,33 +80,47 @@ A second service would need an entry in `services.ts`, a built bootstrap at `dis
 
 The packaged run, checked against the code on 2026-11-09. IPC means inter-process communication: the Node channel between a parent and a child it spawned.
 
+Structure: who talks to whom, and over which channel.
+
 ```mermaid
-sequenceDiagram
-    participant H as Tauri host (Rust)
-    participant S as sea-runtime supervisor
-    participant G as api-gateway child
-    H->>S: spawn sidecar sea-runtime (stdout and stdin pipes)
-    S->>S: open and check the database (PersistenceService)
-    S->>G: spawn the same binary: --service api-gateway --web ipc, with IPC
-    S->>G: IPC web-bundle message (route declared web: true)
-    G->>G: receive bundle, app.init opens its own database
-    G->>G: listen on https, then the http redirect
-    G->>S: IPC ready
-    S->>G: IPC state message (aggregate state)
-    S->>H: stdout status event
-    H->>S: stdin shutdown line
-    S->>G: IPC shutdown message
-    G->>G: close app, exit 0
-    S->>S: close database, exit 0
+flowchart LR
+    subgraph desktop["desktop (Tauri host, Rust)"]
+        host["sidecar.rs"]
+    end
+    subgraph runtime["runtime (sea-runtime, one SEA executable with supervisor, web bundle, migrations)"]
+        sup["supervisor"]
+        db[("database")]
+        subgraph be["BE (api-gateway, child of the same binary)"]
+            gw["gateway"]
+            gwdb[("own database")]
+        end
+    end
+    fe["FE bundle"] -. "build time: compile-sea" .-> runtime
+    host <== "stdio pipes: shutdown line in, status events out" ==> sup
+    sup -. "open and check first" .-> db
+    sup <-- "IPC: web bundle, state, shutdown in, ready out" --> gw
+    gw -. "opens its own" .-> gwdb
 ```
 
-Sources: `sidecar.rs` (spawn, `CommandEvent::Stdout`, `SHUTDOWN_LINE`), `persistence.service.ts` (`onModuleInit`), `child-spawner.ts` (`spawn`, `child.send`), `dispatcher.ts` (`serviceArgs`), gateway `main.ts` (`configureApp`, `startApp`, `superviseApp`), gateway `web-bundle.ts` (`receiveWebBundle`), `status-publisher.ts` (`publish`), `supervisor.service.ts` (`stopAll`), `process-tree.ts` (shutdown message). Not verified: the bundle is sent only for a service declared `web: true` (`services.ts` declares only the gateway), and `child.send` runs right after `spawn`, so it normally arrives before `app.init`, but no code orders the two besides the receive timeout of 10 s. Not verified: whether the host reads anything else from the stdout pipe than status events.
+Legend: thick arrows are stdio pipes (text lines). Thin solid arrows are Node IPC (messages). Dotted arrows are not channels: build time or database access.
 
-| Context | Inside a SEA | IPC channel to a supervisor | Where the web bundle comes from | Who serves the frontend |
-| --- | --- | --- | --- | --- |
-| (a) Gateway run alone in development | No (`resolveBase` takes the cwd). | None: `process.send` is undefined, so the gateway marks itself ready at once. | None: `--web` defaults to `none`. | `ng serve`, with the `/api` proxy. |
-| (b) Supervisor in development (`nest start`) | No: `isSea()` is false. | Not applicable: it spawns no service. | Not used by a child; the dev asset source (`FsAssetSource`) reads files under `dist/` for migrations and native assets. Not verified: the web bundle in this context. | Not verified. |
-| (c) Packaged SEA run | Yes. | Yes, set up by `ChildSpawner`. | The SEA assets, loaded once by `WebBundleService` and sent over IPC. | The gateway, with `createWebHandler`. |
+```mermaid
+flowchart TB
+    subgraph dev["development"]
+        d1["gateway run alone<br/>no SEA, no IPC channel<br/>--web none"] --> d2["ng serve serves the frontend<br/>with an /api proxy"]
+    end
+    subgraph pkg["packaged"]
+        p1["inside the SEA, with IPC<br/>--web ipc"] --> p2["supervisor sends the bundle<br/>read from the SEA assets<br/>(before init: not verified)"]:::nv --> p3["gateway serves it<br/>with createWebHandler"]
+    end
+    subgraph jest["APP-level Jest test"]
+        j1["no SEA, no IPC<br/>the bundle should be served"] --> j2["source not defined<br/>(open question 8)"]
+    end
+    nv1["nest start supervisor context<br/>not verified"]:::nv
+    classDef nv stroke-dasharray: 5 5
+```
+
+Order in the packaged run: bundle, then init, then listen, then ready. Not verified that the code enforces it: only the 10 s receive timeout bounds it. Facts: [sidecar.rs](../../apps/desktop/src-tauri/src/sidecar.rs), [child-spawner.ts](../../apps/sea-runtime/src/services/child-spawner.ts), the gateway [main.ts](../../apps/api-gateway/src/main.ts), [dispatcher.ts](../../libs/service-registry/src/dispatcher.ts) and [web-handler.ts](../../apps/api-gateway/src/web-handler.ts) (`createWebHandler`).
+
 
 ## Promotion tools
 
