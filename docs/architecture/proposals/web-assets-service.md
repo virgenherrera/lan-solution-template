@@ -18,6 +18,7 @@ updated: 2026-11-09
 
 - [Problem](#problem)
 - [Proposal](#proposal)
+- [Precache format and rules](#precache-format-and-rules)
 - [What goes away](#what-goes-away)
 - [What it needs](#what-it-needs)
 - [What it changes in the SRS](#what-it-changes-in-the-srs)
@@ -51,6 +52,19 @@ flowchart LR
 - Gateway: its GET controller asks `web-assets` and answers 404 on `null`; extensionless paths get the SPA fallback. No `--web`, no `isSea()`.
 - Address: an optional block of `config.json`. Absent means no client, so `GET /` is 404 (the `ng serve` case). Present but unreachable is a startup error, never a mode.
 - Health and transport: a Terminus assets indicator reports up or down only. Nest TCP on loopback; `dependsOn` orders the start. The APP test hosts the same Nest module in-process with a precache file from the same build step.
+
+## Precache format and rules
+
+[Back to navigation](#navigation)
+
+- Human decision, 2026-11-09: Brotli is banned until the human lifts it (decoder vulnerability reported in October 2026, not verified against a primary source). No `Content-Encoding: br` and no brotli dependency. Use gzip only if compression is wanted ([AGENTS.md](../../../AGENTS.md)).
+- Proposal, not decided:
+  1. Bytes, not strings: a Buffer is cheaper than a string and keeps the build hash valid.
+  2. One SEA asset with the layout: size of the index, JSON index, blob. The index holds, per file, the path, content type, sha256 as ETag, cache header and offsets of each variant (identity and gzip). The service serves subarray views of the blob without copying.
+  3. Keep the exact Angular file names (hash cache busting). Hashed names get `immutable`; `index.html` and the service worker files (`ngsw.json`, `ngsw-worker.js`, `manifest.webmanifest`) get `no-cache`. Never transform bytes: `ngsw.json` lists the hash of every file and the Angular service worker rejects a version whose bytes differ. Gzip with `Content-Encoding` is safe because the worker sees decoded bytes (from memory of the Angular docs, not verified here).
+  4. Eager load at start, with an async provider, so a bad artifact fails the start. Lazy per-asset decompression with `shareReplay` pays only if the real build is large, which is unmeasured: measure the size of the real build with `ng build` and `du` first.
+  5. Media (videos, large images) stays out of the precache. The build fails loudly if a file passes a size cap. Heavy or user content is served from a real data folder with `serve-static`, which already handles Range.
+  6. Over Nest TCP a Buffer is JSON serialized by default (from memory, not verified). The spike must measure the transport cost for multi-MB payloads; this favors the in-process baseline if confirmed.
 
 ## What goes away
 
