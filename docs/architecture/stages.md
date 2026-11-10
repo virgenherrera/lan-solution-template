@@ -40,6 +40,7 @@ Source: the human, 2026-11-09, in conversation. This is a paraphrase, not a quot
 - The Tauri desktop is the same app again, as a sidecar.
 - Each layer is a stage that bounds the APP test suites ([current-state](current-state.md#test-model)).
 - The transversal promotion tools are to be redesigned surgically, after asking what each one is for.
+- The APP suites are per stage, so Nx can pick by the folders a PR touches the suites that must run (`nx affected`). That needs the stage dependency edges in the project graph.
 
 The full line-by-line duplicate inventory is in git history at commit 79c2cf4. It will be regenerated when the refactor starts.
 
@@ -55,6 +56,8 @@ The stage names are working labels ([open](#open-questions)). Checked against th
 | BE | The Nest gateway: HTTP, database, config file. | `config.json`, `--web` argv, web bundle and `state`/`shutdown` over IPC. | HTTP responses and `ready` over IPC. | Jest and Supertest, [REQ-TEST-04](../requirements/11-nx-quality-testing.md) | Yes (`apps/api-gateway/test`). |
 | Runtime | BE, FE assets, migrations and sqlite-vector in one SEA binary with a supervisor. | argv roles, `config.json`, sidecar commands on stdin. | Status events on stdout, certs for `--generate-certs`. | Not chosen; [REQ-TEST-07](../requirements/11-nx-quality-testing.md), [REQ-TEST-06](../requirements/11-nx-quality-testing.md) | Partly: `smoke-sea`, `smoke-pg`. |
 | Desktop | The runtime as a Tauri sidecar, plus WebView and installer. | Staged sidecar, its stdout events, `net` of `config.json`. | `shutdown` on stdin, native package. | WebdriverIO, [REQ-TEST-08](../requirements/11-nx-quality-testing.md) | Yes (`apps/desktop/e2e`). |
+
+Nx project graph today (`nx graph`, run read-only on 2026-11-09): edges go from api-gateway to service-registry and shared-core; from sea-runtime to api-gateway, web-angular, db-migrations, service-registry and shared-core; from shared-core to service-registry; and from tools-cli to db-migrations, service-registry and shared-core. No project edge reaches desktop, and tools-cli has no edge to sea-runtime, api-gateway or web-angular. No `implicitDependencies` is set. desktop has a target-level `dependsOn` on sea-runtime `package`, a task edge, not a project edge. `nx affected` is not used in the root `package.json`, `nx.json`, `.github` or `tools`. Not verified: other CI or scripts outside those paths.
 
 ## Runtime as a host for more services
 
