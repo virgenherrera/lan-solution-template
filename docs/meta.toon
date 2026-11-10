@@ -1,4 +1,4 @@
-docs[105]:
+docs[106]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -197,6 +197,15 @@ docs[105]:
     status: proposed
     updated: 2026-11-05
     refs[3]: REQ-RUNTIME-05,REQ-TEST-01,REQ-TEST-04
+  - doc: docs/architecture/proposals/web-assets-service.md
+    title: "Proposal: web-assets service"
+    type: architecture
+    summary: "Serve the Angular build from a Nest microservice that holds one precache artifact, so the gateway has no stage branches. Proposal and spike plan only."
+    ids: []
+    related[3]: docs/architecture/stages.md,docs/architecture/current-state.md,docs/requirements/06-web-gateway-https-pwa.md
+    status: proposed
+    updated: 2026-11-09
+    refs[9]: REQ-CFG-01,REQ-CFG-06,REQ-NET-02,REQ-NET-03,REQ-NET-04,REQ-NET-06,REQ-SEA-03,REQ-SEC,REQ-SEC-04
   - doc: docs/architecture/stages.md
     title: Stages and promotion tools
     type: architecture
