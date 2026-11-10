@@ -21,6 +21,7 @@ updated: 2026-11-09
 - [Human direction](#human-direction)
 - [Stage model](#stage-model)
 - [Runtime as a host for more services](#runtime-as-a-host-for-more-services)
+- [Process model](#process-model)
 - [Promotion tools](#promotion-tools)
 - [Cross-stage contracts](#cross-stage-contracts)
 - [Config layers](#config-layers)
@@ -72,6 +73,40 @@ The supervisor shape exists so more services can run next to the gateway (human 
 - IPC control messages `ready`, `state`, `shutdown` (`control-channel.ts`).
 
 A second service would need an entry in `services.ts`, a built bootstrap at `dist/main.js` of its project, and a bootstrap that sends `ready` and obeys `shutdown`. Not verified: how `compile-sea` resolves a second project, and whether a second service can share the gateway's ports, database or logger.
+
+## Process model
+
+[Back to navigation](#navigation)
+
+The packaged run, checked against the code on 2026-11-09. IPC means inter-process communication: the Node channel between a parent and a child it spawned.
+
+```mermaid
+sequenceDiagram
+    participant H as Tauri host (Rust)
+    participant S as sea-runtime supervisor
+    participant G as api-gateway child
+    H->>S: spawn sidecar sea-runtime (stdout and stdin pipes)
+    S->>S: open and check the database (PersistenceService)
+    S->>G: spawn the same binary: --service api-gateway --web ipc, with IPC
+    S->>G: IPC web-bundle message (route declared web: true)
+    G->>G: receive bundle, app.init opens its own database
+    G->>G: listen on https, then the http redirect
+    G->>S: IPC ready
+    S->>G: IPC state message (aggregate state)
+    S->>H: stdout status event
+    H->>S: stdin shutdown line
+    S->>G: IPC shutdown message
+    G->>G: close app, exit 0
+    S->>S: close database, exit 0
+```
+
+Sources: `sidecar.rs` (spawn, `CommandEvent::Stdout`, `SHUTDOWN_LINE`), `persistence.service.ts` (`onModuleInit`), `child-spawner.ts` (`spawn`, `child.send`), `dispatcher.ts` (`serviceArgs`), gateway `main.ts` (`configureApp`, `startApp`, `superviseApp`), gateway `web-bundle.ts` (`receiveWebBundle`), `status-publisher.ts` (`publish`), `supervisor.service.ts` (`stopAll`), `process-tree.ts` (shutdown message). Not verified: the bundle is sent only for a service declared `web: true` (`services.ts` declares only the gateway), and `child.send` runs right after `spawn`, so it normally arrives before `app.init`, but no code orders the two besides the receive timeout of 10 s. Not verified: whether the host reads anything else from the stdout pipe than status events.
+
+| Context | Inside a SEA | IPC channel to a supervisor | Where the web bundle comes from | Who serves the frontend |
+| --- | --- | --- | --- | --- |
+| (a) Gateway run alone in development | No (`resolveBase` takes the cwd). | None: `process.send` is undefined, so the gateway marks itself ready at once. | None: `--web` defaults to `none`. | `ng serve`, with the `/api` proxy. |
+| (b) Supervisor in development (`nest start`) | No: `isSea()` is false. | Not applicable: it spawns no service. | Not used by a child; the dev asset source (`FsAssetSource`) reads files under `dist/` for migrations and native assets. Not verified: the web bundle in this context. | Not verified. |
+| (c) Packaged SEA run | Yes. | Yes, set up by `ChildSpawner`. | The SEA assets, loaded once by `WebBundleService` and sent over IPC. | The gateway, with `createWebHandler`. |
 
 ## Promotion tools
 
@@ -138,8 +173,4 @@ All open. The human decides. This page decides none.
 5. Where does the runtime APP suite sit: compiled bundle, SEA binary, or both ([current-state](current-state.md#open-decisions))?
 6. Where should the cross-stage contracts live: in the lib of the stage that reads them, or elsewhere?
 7. For each promotion tool, what crosses the stage boundary through it and what would the stage lack without it? Only then: does a simpler way (like installing Jest and Playwright instead of hand-made test tooling) fit, and are the requirements that mention it still right? For `test-filter` (human, 2026-11-09): the tags `@ut` and `@int` also read against REQ-TEST-01, although REQ-TEST-02 defines them, so whether they stay is open; today the translated runner arguments are not consumed, so the filter only validates.
-8. Does the gateway need `--web none|ipc` at all? Human idea, 2026-11-09, paraphrased: a development run mounts no static serving, any other run does (APP test included), so the flag would go.
-   - (a) Today the supervisor reads the bundle from the SEA and sends it over IPC ([REQ-NET-03](../requirements/06-web-gateway-https-pwa.md)). No ADR states why the gateway does not read it itself. Decision 17(a) in [PROPOSAL](../roadmap/PROPOSAL.md) gives layering: no `isSea()`, no `process.env`.
-   - (b) The backend reads no environment ([REQ-NET-02](../requirements/06-web-gateway-https-pwa.md)), so `NODE_ENV` cannot signal development. Candidates: a key in `config.json`, or a SEA check, which does not cover an APP Jest test (not a SEA; [REQ-TEST-04](../requirements/11-nx-quality-testing.md)).
-   - (c) Outside development the gateway needs its own source: the embedded SEA asset, or the built `web-angular` output folder. Not verified: how the gateway would find that folder in a non-SEA run.
-   - Question: keep the flag and the IPC handoff, or let the gateway serve the bundle itself and by which signal?
+8. Does the gateway need `--web none|ipc` at all? Human ideas, 2026-11-09, paraphrased. The flag is an explicit declaration by the supervisor and fails loudly: a bad or missing bundle stops the start before any port opens. Deducing the mode from missing signals fails silently, and it cannot tell an APP-level Jest test (no SEA, no IPC, wants the bundle served) from development. Counter-proposal: a Nest singleton service (name under discussion, for example `RuntimeContext`) that says for certain which context the process runs in (dev Nest app, sea-runtime, and so on). `main` reads it with `app.get`, as with `HealthState` today, and the static part injects it to register the static serving or not. rxjs optional. Today the facts are scattered: `resolveBase` in `shared-core` `paths.ts` (sea flag), `process.send` in the gateway `main`, the asset source in sea-runtime, and `--web` in `ServerConfig`. [REQ-NET-02](../requirements/06-web-gateway-https-pwa.md) bars reading the environment and [REQ-TEST-01](../requirements/11-nx-quality-testing.md) bars mocking the app's own providers, so the test seam must be a real input; the flag could stay as one declared input of that service. Question: flag, deduction, or the service?
