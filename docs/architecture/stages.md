@@ -16,7 +16,21 @@ updated: 2026-11-09
 
 [Up](overview.md)
 
+## Navigation
+
+- [Human direction](#human-direction)
+- [Stage model](#stage-model)
+- [Runtime as a host for more services](#runtime-as-a-host-for-more-services)
+- [Promotion tools](#promotion-tools)
+- [Cross-stage contracts](#cross-stage-contracts)
+- [Config layers](#config-layers)
+- [Open questions](#open-questions)
+
+---
+
 ## Human direction
+
+[Back to navigation](#navigation)
 
 Source: the human, 2026-11-09, in conversation. This is a paraphrase, not a quote. It is a direction, not a requirement. It adds no id and changes no SRS text. Nothing on this page is decided.
 
@@ -31,6 +45,8 @@ The full line-by-line duplicate inventory is in git history at commit 79c2cf4. I
 
 ## Stage model
 
+[Back to navigation](#navigation)
+
 The stage names are working labels ([open](#open-questions)). Checked against the code on 2026-11-09.
 
 | Stage | What it is | Boundary in | Boundary out | Suite and runner | Exists today? |
@@ -41,6 +57,8 @@ The stage names are working labels ([open](#open-questions)). Checked against th
 | Desktop | The runtime as a Tauri sidecar, plus WebView and installer. | Staged sidecar, its stdout events, `net` of `config.json`. | `shutdown` on stdin, native package. | WebdriverIO, [REQ-TEST-08](../requirements/11-nx-quality-testing.md) | Yes (`apps/desktop/e2e`). |
 
 ## Runtime as a host for more services
+
+[Back to navigation](#navigation)
 
 The supervisor shape exists so more services can run next to the gateway (human direction). One service exists today and no second one was ever built. Pieces that already support it:
 
@@ -53,6 +71,8 @@ The supervisor shape exists so more services can run next to the gateway (human 
 A second service would need an entry in `services.ts`, a built bootstrap at `dist/main.js` of its project, and a bootstrap that sends `ready` and obeys `shutdown`. Not verified: how `compile-sea` resolves a second project, and whether a second service can share the gateway's ports, database or logger.
 
 ## Promotion tools
+
+[Back to navigation](#navigation)
 
 Each command is a provider in `apps/tools-cli/src/tools-cli.module.ts`. The column "From to" reads P(a to b) = promotes a to b, V = verifies, S = support. The classification is mine and is [open](#open-questions). Not verified: that each command is used only by the stage named.
 
@@ -76,6 +96,8 @@ Each command is a provider in `apps/tools-cli/src/tools-cli.module.ts`. The colu
 
 ## Cross-stage contracts
 
+[Back to navigation](#navigation)
+
 Kept in sync by hand across a stage boundary. These are the duplicates that matter architecturally.
 
 - Web bundle message schema: defined on both sides of the IPC (`sea-runtime` `web-bundle.ts` and `api-gateway` `web-bundle.ts`).
@@ -87,6 +109,8 @@ Kept in sync by hand across a stage boundary. These are the duplicates that matt
 
 ## Config layers
 
+[Back to navigation](#navigation)
+
 | # | Layer | Declared in | Who sets the values |
 | --- | --- | --- | --- |
 | 1 | Persisted `config.json` (`db`, `net`, `tls`) | `libs/shared-core/src/config.ts` | The installer or the operator. |
@@ -97,6 +121,8 @@ Kept in sync by hand across a stage boundary. These are the duplicates that matt
 | 6 | Logger | `libs/shared-core/src/schemas/logger-config.ts` | Each process at its call site. |
 
 ## Open questions
+
+[Back to navigation](#navigation)
 
 All open. The human decides. This page decides none.
 
