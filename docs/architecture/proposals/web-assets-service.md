@@ -87,6 +87,7 @@ flowchart LR
 3. Run `web-assets` as a supervised child on loopback. NO-GO if `dependsOn` cannot order it before the gateway.
 4. Add the gateway controller, the optional block and the health indicator. NO-GO if a stage branch is needed.
 5. Host the module in-process in the APP test and measure start time and memory against today's IPC path. NO-GO if the contract differs from the SEA host.
+6. Build the in-process alternative as the baseline: the gateway exports `main(options)` and the SEA entry passes the precache. Compare lines of code left, start time and memory with the service. NO-GO for the service if this baseline beats it on any of the three.
 
 Acceptance: zero stage branches in the gateway; same contract in every stage; one precache artifact; health reports it; start and memory measured against today.
 
@@ -95,6 +96,6 @@ Acceptance: zero stage branches in the gateway; same contract in every stage; on
 [Back to navigation](#navigation)
 
 - `useVfs` with `serve-static`: costs the code cache, about +114 ms measured on a synthetic entry.
-- Precache loaded inside the gateway, bytes passed by the SEA entry: the entry then picks the gateway's input, a stage branch.
+- Precache loaded inside the gateway, bytes passed by the SEA entry: the SEA entry, not the gateway, picks the input, so it meets the acceptance criterion too. Cost: the gateway must export `main(options)` instead of starting at import time. Benefit: no process, no port and no new dependency. The spike plan compares it with the service.
 - Gateway reads the SEA asset itself: needs `isSea()`, barred by [REQ-NET-02](../../requirements/06-web-gateway-https-pwa.md).
 - A separate public port: breaks the one-origin rule of [REQ-NET-06](../../requirements/06-web-gateway-https-pwa.md). gRPC: heavier than TCP for one call. Bun: outside the Node SEA baseline (not verified further).
