@@ -76,21 +76,23 @@ A second service would need an entry in `services.ts`, a built bootstrap at `dis
 
 Each command is a provider in `apps/tools-cli/src/tools-cli.module.ts`. The column "From to" reads P(a to b) = promotes a to b, V = verifies, S = support. The classification is mine and is [open](#open-questions). Not verified: that each command is used only by the stage named.
 
-| Command | From to | Why it exists |
-| --- | --- | --- |
-| `pack-migrations` | P(BE to runtime) | Migrations travel in the executable (ADR-004). |
-| `compile-sea` | P(BE, FE to runtime) | REQ-SEA-01. |
-| `stage-sidecar` | P(runtime to desktop) | REQ-DESK-01. |
-| `installer-build`, `installer-macos` | P(desktop to installer) | REQ-ECO-06, ADR-007. |
-| `smoke-sea`, `smoke-pg` | V(runtime) | REQ-RUNTIME-08, REQ-TEST-07, REQ-TEST-06. |
-| `smoke-dev` | V(FE to BE, dev loop) | REQ-DEV-02, REQ-DEV-04. |
-| `verify-platform` | V(runtime, desktop) | REQ-SEA-06, REQ-TEST-09. |
-| `e2e-desktop` | V(desktop) | REQ-TEST-08. |
-| `db-parity` | V(BE persistence) | Parity check of migrations per engine. |
-| `generate-certs`, `trust-ca` | S(BE, runtime; dev machine) | ADR-008, REQ-TLS-01, REQ-TLS-02. |
-| `test-filter` | S(all test stages) | REQ-TEST-02. |
-| `version-check`, `branch-name` | V/S(repo, release) | REQ-VERSION-01, REQ-VERSION-02. |
-| `tools/scripts/release-version-actions.ts` | P(release version to BE, runtime, desktop) | REQ-VERSION-01, REQ-VERSION-03. |
+| Command | From to | Purpose | Spec |
+| --- | --- | --- | --- |
+| `pack-migrations` | P(BE to runtime) | Packs the generated SQL migrations into `dist/db-migrations/<engine>` so they travel inside the executable. | [ADR-004](adr/ADR-004-drizzle-build-time-migrations.md) |
+| `compile-sea` | P(BE, FE to runtime) | Packages a supervisor app and its workspace services into one Node SEA executable under `artifacts/<supervisor>`. | [REQ-SEA-01](../requirements/10-node-sea-distribution.md) |
+| `stage-sidecar` | P(runtime to desktop) | Copies the packaged SEA runtime to `apps/desktop/src-tauri/binaries` as the Tauri sidecar. | [REQ-DESK-01](../requirements/09-desktop-tauri.md) |
+| `installer-build`, `installer-macos` | P(desktop to installer) | `installer-build` builds the desktop installer for this OS (a `.pkg` on macOS, a notice elsewhere); `installer-macos` builds that `.pkg` with `pkgbuild` and `productbuild`. | [REQ-ECO-06](../requirements/11-nx-quality-testing.md), [ADR-007](adr/ADR-007-persistence-system.md) |
+| `smoke-sea`, `smoke-pg` | V(runtime) | `smoke-sea` runs the `@app` smoke checks against the packaged SEA runtime; `smoke-pg` runs the same kind of test against a real PostgreSQL with pgvector in Docker. | [REQ-RUNTIME-08](../requirements/09-desktop-tauri.md), [REQ-TEST-07](../requirements/11-nx-quality-testing.md), [REQ-TEST-06](../requirements/11-nx-quality-testing.md) |
+| `smoke-dev` | V(FE to BE, dev loop) | Runs the `@app` smoke test of the dev loop: `ng serve` proxies `/api` to the HTTPS gateway. | [REQ-DEV-02](../requirements/06-web-gateway-https-pwa.md), [REQ-DEV-04](../requirements/06-web-gateway-https-pwa.md) |
+| `verify-platform` | V(runtime, desktop) | Verifies the packaged SEA binary and the Tauri package on this host. | [REQ-SEA-06](../requirements/10-node-sea-distribution.md), [REQ-TEST-09](../requirements/11-nx-quality-testing.md) |
+| `e2e-desktop` | V(desktop) | Builds the instrumented Tauri host, runs the WebdriverIO desktop E2E in a temporary base and checks that no process is left. | [REQ-TEST-08](../requirements/11-nx-quality-testing.md) |
+| `db-parity` | V(BE persistence) | Migrates a throwaway database with the real migrations and compares its structure with the descriptor. | [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md) |
+| `generate-certs`, `trust-ca` | S(BE, runtime; dev machine) | `generate-certs` creates or renews the CA and the gateway leaf certificate under `<base>/certs`; `trust-ca` trusts that CA in the OS store of this machine. | [ADR-008](adr/ADR-008-tls-trust-model.md), [REQ-TLS-01](../requirements/06-web-gateway-https-pwa.md), [REQ-TLS-02](../requirements/06-web-gateway-https-pwa.md) |
+| `test-filter` | S(all test stages) | Validates the test selection tag, prints the runner arguments and runs the security and test steps. | [REQ-TEST-02](../requirements/11-nx-quality-testing.md) |
+| `version-check`, `branch-name` | V/S(repo, release) | `version-check` checks that every workspace manifest, `Cargo.toml`, `Cargo.lock` and `tauri.conf.json` share one version; `branch-name` validates a PR source branch name and prints its release bump. | [REQ-VERSION-01](../requirements/11-nx-quality-testing.md), [REQ-VERSION-02](../requirements/11-nx-quality-testing.md) |
+| `tools/scripts/release-version-actions.ts` | P(release version to BE, runtime, desktop) | Writes the new release version to each project `package.json` and, for a Tauri project, to `Cargo.toml`, `Cargo.lock` and `tauri.conf.json`. | [REQ-VERSION-01](../requirements/11-nx-quality-testing.md), [REQ-VERSION-03](../requirements/11-nx-quality-testing.md) |
+
+The Spec links show where a tool is mentioned. They are not a justification: whether each requirement is still right is [open](#open-questions).
 
 [TD-TOOLS-01](../backlog/td-compile-sea-standalone.md) records the move of loose scripts into this CLI.
 
@@ -132,3 +134,4 @@ All open. The human decides. This page decides none.
 4. Is the installer a fifth stage or part of desktop?
 5. Where does the runtime APP suite sit: compiled bundle, SEA binary, or both ([current-state](current-state.md#open-decisions))?
 6. Where should the cross-stage contracts live: in the lib of the stage that reads them, or elsewhere?
+7. Does each promotion tool still earn its place, judged by what it does for a stage, and are the requirements that mention them still right or drift?
