@@ -5,7 +5,7 @@ title: Current state and direction
 type: architecture
 summary: What exists today per app, lib and tool, the test model and layout direction, and the gaps.
 ids[0]:
-related[7]: docs/architecture/overview.md,docs/backlog/td-compile-sea-standalone.md,docs/backlog/README.md,docs/requirements/11-nx-quality-testing.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/platform-matrix.md,docs/results/RESEARCH-app-suite-test-doubles.md
+related[8]: docs/architecture/overview.md,docs/backlog/td-compile-sea-standalone.md,docs/backlog/README.md,docs/requirements/11-nx-quality-testing.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/platform-matrix.md,docs/results/RESEARCH-app-suite-test-doubles.md,docs/architecture/stages.md
 status: current
 updated: 2026-11-09
 -->
@@ -25,6 +25,7 @@ updated: 2026-11-09
 - [Decided](#decided)
 - [Open items from the test-double research](#open-items-from-the-test-double-research)
 - [ADR implementation status](#adr-implementation-status)
+- [Stages and promotion tools](stages.md)
 
 ---
 

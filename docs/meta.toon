@@ -1,4 +1,4 @@
-docs[104]:
+docs[105]:
   - doc: docs/architecture/adr/ADR-001-version-substitutions.md
     title: ADR-001 Version substitutions in POC-1
     type: architecture
@@ -121,7 +121,7 @@ docs[104]:
     type: architecture
     summary: "What exists today per app, lib and tool, the test model and layout direction, and the gaps."
     ids: []
-    related[7]: docs/architecture/overview.md,docs/backlog/td-compile-sea-standalone.md,docs/backlog/README.md,docs/requirements/11-nx-quality-testing.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/platform-matrix.md,docs/results/RESEARCH-app-suite-test-doubles.md
+    related[8]: docs/architecture/overview.md,docs/backlog/td-compile-sea-standalone.md,docs/backlog/README.md,docs/requirements/11-nx-quality-testing.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/platform-matrix.md,docs/results/RESEARCH-app-suite-test-doubles.md,docs/architecture/stages.md
     status: current
     updated: 2026-11-09
     refs[7]: REQ-TEST-01,REQ-TEST-04,REQ-TEST-05,REQ-TEST-06,REQ-TEST-07,REQ-TEST-08,REQ-VERSION-02
@@ -157,7 +157,7 @@ docs[104]:
     type: architecture
     summary: Mermaid architecture diagrams citing SRS sections for runtime and desktop topology.
     ids: []
-    related[17]: README.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/results/POC-08-Result.md,docs/architecture/platform-matrix.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/device-trust-guide.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md
+    related[18]: README.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/results/POC-08-Result.md,docs/architecture/platform-matrix.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/device-trust-guide.md,docs/architecture/adr/ADR-001-version-substitutions.md,docs/architecture/adr/ADR-002-single-sea-portability.md,docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/architecture/adr/ADR-004-drizzle-build-time-migrations.md,docs/architecture/adr/ADR-005-live-schema-validation.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/roadmap/PROPOSAL.md,docs/requirements/02-technology-baseline.md,docs/architecture/stages.md
     status: current
     updated: 2026-11-09
     refs[10]: REQ-DESK-01,REQ-DESK-02,REQ-DESK-03,REQ-DESK-05,REQ-DESK-06,REQ-RUNTIME-01,REQ-RUNTIME-02,REQ-RUNTIME-03,REQ-RUNTIME-05,REQ-RUNTIME-06
@@ -197,6 +197,15 @@ docs[104]:
     status: proposed
     updated: 2026-11-05
     refs[3]: REQ-RUNTIME-05,REQ-TEST-01,REQ-TEST-04
+  - doc: docs/architecture/stages.md
+    title: Stages and promotion tools
+    type: architecture
+    summary: "The human's stage idea of 2026-11-09, the promotion tools mapped to stages, proven overlaps, and open questions."
+    ids: []
+    related[5]: docs/architecture/overview.md,docs/architecture/current-state.md,docs/requirements/11-nx-quality-testing.md,docs/backlog/td-compile-sea-standalone.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md
+    status: proposed
+    updated: 2026-11-09
+    refs[21]: AC-09,AC-20,REQ-DESK-01,REQ-DEV-02,REQ-DEV-04,REQ-ECO-06,REQ-RUNTIME-08,REQ-SEA-01,REQ-SEA-06,REQ-TEST-02,REQ-TEST-04,REQ-TEST-05,REQ-TEST-06,REQ-TEST-07,REQ-TEST-08,REQ-TEST-09,REQ-TLS-01,REQ-TLS-02,REQ-VERSION-01,REQ-VERSION-02,REQ-VERSION-03
   - doc: docs/backlog/README.md
     title: Backlog index
     type: backlog
