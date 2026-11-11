@@ -7,7 +7,7 @@ summary: Node SEA build rules and per-platform distribution validation requireme
 ids[6]: REQ-SEA-01,REQ-SEA-02,REQ-SEA-03,REQ-SEA-04,REQ-SEA-05,REQ-SEA-06
 related[3]: docs/requirements/README.md,docs/requirements/09-desktop-tauri.md,docs/requirements/11-nx-quality-testing.md
 status: current
-updated: 2026-11-03
+updated: 2026-11-09
 -->
 
 # 10. Node SEA and distribution
@@ -39,7 +39,7 @@ updated: 2026-11-03
 
 [Back to navigation](#navigation)
 
-**REQ-SEA-01.** `tools/scripts/compile-sea.ts` **MUST** bundle a **single JavaScript dispatcher**. The bundle holds the entrypoints of the `sea-runtime` supervisor and the `api-gateway` gateway. It also holds those of all enabled services registered later. The bundle also holds the JavaScript dependencies of all entrypoints. It runs without external `node_modules`. **Role registration is resolved at build time and in the dispatcher. Extracting `.js` files to launch them is not required.**
+**REQ-SEA-01.** The `compile-sea` command of `apps/tools-cli` **MUST** bundle a **single JavaScript dispatcher**. The bundle holds the entrypoints of the `sea-runtime` supervisor and the `api-gateway` gateway. It also holds those of all enabled services registered later. The bundle also holds the JavaScript dependencies of all entrypoints. It runs without external `node_modules`. **Role registration is resolved at build time and in the dispatcher. Extracting `.js` files to launch them is not required.**
 
 **REQ-SEA-02.** Generate the SEA configuration and invoke the native mechanism **`node --build-sea`**. It **MUST NOT** introduce `postject` unless a specific, documented limitation requires it.
 

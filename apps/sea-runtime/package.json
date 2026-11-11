@@ -59,6 +59,10 @@
           {
             "projects": "db-migrations",
             "target": "build"
+          },
+          {
+            "projects": "tools-cli",
+            "target": "build"
           }
         ],
         "executor": "nx:run-commands",
@@ -66,32 +70,34 @@
           "{workspaceRoot}/artifacts/sea-runtime"
         ],
         "options": {
-          "command": "node tools/scripts/pack-migrations.ts && node tools/scripts/compile-sea.ts sea-runtime && node tools/scripts/smoke-sea.ts",
+          "command": "node apps/tools-cli/dist/main.js pack-migrations && node apps/tools-cli/dist/main.js compile-sea sea-runtime && node apps/tools-cli/dist/main.js smoke-sea",
           "cwd": "{workspaceRoot}"
         },
         "inputs": [
           "default",
           "^default",
-          "{workspaceRoot}/tools/scripts/compile-sea.ts",
-          "{workspaceRoot}/tools/scripts/pack-migrations.ts",
           "{workspaceRoot}/libs/db-migrations/sqlite/migrations/**/*",
-          "{workspaceRoot}/tools/scripts/smoke-sea.ts",
+          "{workspaceRoot}/apps/tools-cli/src/**/*",
           "{workspaceRoot}/tools/rspack/**/*"
         ]
       },
       "smoke-pg": {
         "dependsOn": [
-          "package"
+          "package",
+          {
+            "projects": "tools-cli",
+            "target": "build"
+          }
         ],
         "executor": "nx:run-commands",
         "cache": false,
         "options": {
-          "command": "node tools/scripts/smoke-pg.ts",
+          "command": "node apps/tools-cli/dist/main.js smoke-pg",
           "cwd": "{workspaceRoot}"
         },
         "inputs": [
           "default",
-          "{workspaceRoot}/tools/scripts/smoke-pg.ts",
+          "{workspaceRoot}/apps/tools-cli/src/**/*",
           "{workspaceRoot}/libs/db-migrations/pg/migrations/**/*"
         ]
       }

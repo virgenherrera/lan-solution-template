@@ -27,7 +27,8 @@
           "web-angular",
           "db-migrations",
           "service-registry",
-          "shared-core"
+          "shared-core",
+          "tools-cli"
         ],
         "projectsRelationship": "fixed",
         "version": {

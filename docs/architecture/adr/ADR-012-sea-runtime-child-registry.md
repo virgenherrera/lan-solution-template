@@ -7,7 +7,7 @@ summary: "Compares POCs P1, P2 and P3 for a singleton child registry in sea-runt
 ids[0]:
 related[4]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/proposals/sea-runtime-P1-registry-status-event.md,docs/architecture/proposals/sea-runtime-P2-per-service-singletons.md,docs/architecture/proposals/sea-runtime-P3-minimal-pid-hook.md
 status: current
-updated: 2026-11-05
+updated: 2026-11-09
 -->
 
 # ADR-012: sea-runtime child registry
@@ -24,6 +24,7 @@ updated: 2026-11-05
 - [Decision](#decision)
 - [Consequences](#consequences)
 - [Not verified](#not-verified)
+- [Implementation status](#implementation-status)
 
 ## Status
 
@@ -127,3 +128,18 @@ This staging is a recommendation. It is not verified that P3's registry survives
 - P3: the early-return mutation as a separate run (the QC ran a different mutation, first pid kept on respawn), and registry staleness if a spawn path bypasses `ChildSpawner`: not probed.
 - Whether the staged path P3 then P1 or P2 reuses P3's code. Next step that would verify it: rebase a P2 spike on `poc/sea-P3` and count how much of the P3 diff survives, then run the three probes and the stale-pid mutation again.
 - Effects of the proposals' own claims about maintainability and scale are argued in the proposals, not measured.
+
+## Implementation status
+
+[Back to navigation](#navigation)
+
+Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept as the record. This table says what the code does today.
+
+| Decision | Decision status | Implementation | Check | Evidence | Gap |
+|---|---|---|---|---|---|
+| Stage 1 P3: ChildRegistry fed by spawn hook, pid/restarts | Accepted in part | Implemented | confirmed | `apps/sea-runtime/src/services/in-memory-child-registry.ts:5-18`, `apps/sea-runtime/src/services/child-spawner.ts:28-30`, `apps/sea-runtime/src/services/status-publisher.ts:35-39` | none |
+| Stage 2: choose P1 children[] or P2 per-service singletons | Proposed (human decides) | Not implemented | confirmed | `libs/service-registry/src/schemas/sidecar-protocol.ts:8-11`, `apps/sea-runtime/src/services/service-lifecycle.factory.ts:8` | No children[] on the status event and no stdin snapshot command. Services are not per-service singleton providers: the factory creates ServiceLifecycle with new. Stage 2 is undecided. |
+| Smoke reads pids from events, includes kill-and-restart | Accepted in part | Implemented | confirmed | `apps/tools-cli/src/commands/smoke-sea.command.ts:237-263`, `apps/tools-cli/src/commands/smoke-sea.command.ts:1576-1592`, `apps/tools-cli/src/commands/smoke-pg.command.ts:116-120` | none |
+| StatusPublisher emits only on aggregate state change | Accepted in part | Implemented | single source | `apps/sea-runtime/src/services/status-publisher.ts:34` | none |
+| ADR-006 amended for optional pid/restarts | Accepted in part | Implemented | confirmed | `docs/architecture/adr/ADR-006-sidecar-status-contract.md:85` | none |
+| Regenerate docs/meta.toon after acceptance | Accepted in part | Implemented | confirmed | `docs/meta.toon:101` | none |

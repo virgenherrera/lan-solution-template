@@ -7,7 +7,7 @@ summary: "How the Tauri host starts, watches and stops the SEA supervisor, and h
 ids[0]:
 related[10]: docs/architecture/adr/ADR-002-single-sea-portability.md,docs/results/POC-05-Result.md,docs/backlog/poc-5-tauri-sidecar-desktop-shell.md,docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-010-first-run-admin-setup.md,docs/architecture/overview.md,docs/roadmap/PROPOSAL.md,docs/requirements/09-desktop-tauri.md
 status: proposed
-updated: 2026-11-04
+updated: 2026-11-09
 -->
 
 # ADR-009: Desktop process model
@@ -22,6 +22,7 @@ updated: 2026-11-04
 - [Options rejected](#options-rejected)
 - [Consequences](#consequences)
 - [Not verified](#not-verified)
+- [Implementation status](#implementation-status)
 
 ## Status
 
@@ -48,7 +49,7 @@ The human decided on 2026-11-04 (OQ17): "que tal si lo dejamos (pendiente de inv
 
 ### D3. Sidecar by `externalBin`, one per target triple (Agent)
 
-`bundle.externalBin` is `binaries/sea-runtime`. The SEA artifact is named with the target triple and copied to `binaries/` (ignored by git) by `tools/scripts/stage-sidecar.ts`. Tauri `build` and `package` run after the SEA package (REQ-ECO-06). Evidence: macOS aarch64 only. Other triples were not built.
+`bundle.externalBin` is `binaries/sea-runtime`. The SEA artifact is named with the target triple and copied to `binaries/` (ignored by git) by `apps/tools-cli/src/commands/stage-sidecar.command.ts`. Tauri `build` and `package` run after the SEA package (REQ-ECO-06). Evidence: macOS aarch64 only. Other triples were not built.
 
 ### D4. Base directory is the executable directory (Agent, from ADR-007)
 
@@ -140,3 +141,26 @@ The tray item `Trust CA...` reads `<base>/certs/ca.crt` once and accepts exactly
 - The exact Cmd+Q shortcut on the packaged `.app`.
 - A pid reuse race in the snapshot.
 - Other target triples, and a separate target directory when the installer is produced.
+
+## Implementation status
+
+[Back to navigation](#navigation)
+
+Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept as the record. This table says what the code does today.
+
+| Decision | Decision status | Implementation | Check | Evidence | Gap |
+|---|---|---|---|---|---|
+| D1 macOS focus, cfg code for every OS | Proposed | Implemented | single source | `apps/desktop/src-tauri/src/platform.rs:4,43,115,136,153` | none |
+| D2 server mode first, client mode pending | Proposed | Implemented | single source | `apps/desktop/src-tauri/src/gateway.rs:12-15,51-55` | none |
+| D3 sidecar by externalBin per target triple | Proposed | Implemented | single source | `apps/desktop/src-tauri/tauri.conf.json:36`, `apps/tools-cli/src/commands/stage-sidecar.command.ts`, `apps/desktop/package.json:9` | none |
+| D4 base dir is executable dir; spawn without args | Proposed | Implemented | single source | `apps/desktop/src-tauri/src/sidecar.rs:79-88,130` | none |
+| D5 host only starts, watches, stops; no auto restart | Proposed | Implemented | confirmed | `apps/desktop/src-tauri/src/sidecar.rs:175-185` | none |
+| D6 ADR-006 host side: status, stderr, shutdown, exit codes | Proposed | Implemented | single source | `apps/desktop/src-tauri/src/sidecar.rs:12,151-185` | none |
+| D7 stop snapshots tree first, hooks RunEvent::Exit | Proposed | Implemented | single source | `apps/desktop/src-tauri/src/sidecar.rs:193-214`, `apps/desktop/src-tauri/src/lib.rs:48-58` | none |
+| D8 OS code confined to platform.rs | Proposed | Implemented | single source | `apps/desktop/src-tauri/src/platform.rs:4-171` | none |
+| D9 window by code, no IPC, close hides | Proposed | Implemented | single source | `apps/desktop/src-tauri/tauri.conf.json:5-7`, `apps/desktop/src-tauri/src/gateway.rs:51-85`, `apps/desktop/src-tauri/src/lib.rs:22-28` | none |
+| D10 autostart opt-in, persisted in OS entry | Proposed | Implemented | confirmed | `apps/desktop/src-tauri/src/tray.rs:24-34,41`, `apps/desktop/src-tauri/src/lib.rs:20` | none |
+| D11 single instance, busy port check, crash gives error | Proposed | Implemented | single source | `apps/desktop/src-tauri/src/lib.rs:13`, `apps/desktop/src-tauri/src/sidecar.rs:92-104,124-129,175-185` | none |
+| D12 native E2E via wdio cargo feature and overlay | Proposed | Implemented | single source | `apps/desktop/src-tauri/Cargo.toml:31-40`, `apps/desktop/src-tauri/tauri.wdio.conf.json:1-14`, `apps/desktop/package.json:9` | none |
+| D13 ca.crt trusted only with consent on seen bytes | Proposed | Implemented | single source | `apps/desktop/src-tauri/src/trust.rs:19,40-95,129-151,168` | none |
+| WebView limited to gateway origin (on_navigation/new_window) | Proposed | Implemented | single source | `apps/desktop/src-tauri/src/gateway.rs:17-20,69-79` | none |

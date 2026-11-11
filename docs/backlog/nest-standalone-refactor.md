@@ -3,11 +3,11 @@ fmt: TOON
 doc: docs/backlog/nest-standalone-refactor.md
 title: "Epic: Nest standalone refactor"
 type: backlog
-summary: "Pure-refactor epic, built on branches (pull requests pending): exit code constants, Nest Logger, unified DeclaredServices, dead code cleanup and folder reorganization, in five ordered slices."
+summary: "Pure-refactor epic in five slices. Merged in PRs #24 and #25. Human acceptance of the Proposed decisions is pending."
 ids[0]:
 related[7]: docs/backlog/README.md,docs/backlog/nest-standalone-cleanup-inventory.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md,docs/architecture/declared-services.md,docs/architecture/nest-standalone-boot.md,docs/backlog/td-dev-certs-prebuild.md,docs/backlog/td-compile-sea-standalone.md
 status: proposed
-updated: 2026-11-06
+updated: 2026-11-09
 -->
 
 # Epic: Nest standalone refactor
@@ -41,7 +41,7 @@ This epic is a pure refactor in five ordered slices. Behavior, output bytes and 
 
 | Item | Value |
 |---|---|
-| Status | Built on branches, pull requests pending. Human acceptance of the Proposed decisions is pending. See [Result](#result). |
+| Status | Done and merged in PR #25 (squash `cfec959`). Human acceptance of the Proposed decisions is pending. See [Result](#result). |
 | Requirements | None. No REQ or AC id exists for this epic. |
 | Design | [ADR-013](../architecture/adr/ADR-013-nest-standalone-architecture.md), [DeclaredServices](../architecture/declared-services.md), [Nest standalone boot](../architecture/nest-standalone-boot.md) |
 | Related | [Cleanup inventory](nest-standalone-cleanup-inventory.md), [Technical debt: Nest DI by class](td-nest-di-by-class.md) |
@@ -212,7 +212,7 @@ Ideas outside the five slices. They have no slice and no date.
 | Tests that assert on log text | Idea (not scheduled) | The smokes read log text at `tools/scripts/smoke-sea.ts:689`, `tools/scripts/smoke-dev.ts:180`, `tools/scripts/smoke-dev.ts:162` and `tools/scripts/smoke-dev.ts:170`. `tools/scripts/smoke-sea.ts:395` and `tools/scripts/smoke-pg.ts:284` expect an empty stdout after a failed start. Move readiness to events or health, and failures to an exit code plus a message. Blocker: it edits smokes, so it is not a pure refactor (D13). |
 | Machine-readable generate-certs output | Idea (not scheduled) | The installer `postinstall` (`apps/desktop/installer/macos/scripts/postinstall:95`) reads the fingerprint with the anchored `sed -n 's/^CA SHA-256 //p'`. Replace it with a structured output. Blocker: it changes the install script and the `cli` target text, which the installer consumes (high-risk item 3). |
 | `dev:web` reads the CA from the environment | Idea (not scheduled) | The script is `NODE_EXTRA_CA_CERTS="$PWD/certs/ca.crt" pnpm --filter web-angular exec ng serve` (root `package.json`, POC-4). It breaks the rule that inputs reach the code only through a zod-validated object. Node has no command line flag for an extra CA. Leave it as is in this refactor. |
-| `dev:certs` prebuild gap | Idea (not scheduled) | `pnpm dev:certs` builds `shared-core` with `pnpm --filter`, not `service-registry`, so a clean clone fails with TS2307. Present on `main` and on this branch, so the refactor did not cause it. Fix through the Nx `build` target. See [TD-DEV-01](td-dev-certs-prebuild.md). |
+| `dev:certs` prebuild gap | Done | `pnpm dev:certs` builds `shared-core` with `pnpm --filter`, not `service-registry`, so a clean clone fails with TS2307. Present on `main` and on this branch, so the refactor did not cause it. Fix through the Nx `build` target. See [TD-DEV-01](td-dev-certs-prebuild.md). |
 | `compile-sea.ts` outside the standalone pattern | Idea (not scheduled) | The 498-line build script has no class, no single `static main`, six `console.log` calls (`tools/scripts/compile-sea.ts:151`) and `process.exit(1)` (`:497`). Open decision: Nest standalone or a simple class. See [TD-TOOLS-01](td-compile-sea-standalone.md). |
 
 ---

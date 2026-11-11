@@ -79,7 +79,7 @@ Confirmed by Android developers ([Network security configuration](https://develo
 
 ## Windows
 
-For the machine that runs the gateway, `pnpm dev:trust` runs `certutil -user -addstore Root` on the CA file ([`tools/scripts/trust-ca.ts`](../../tools/scripts/trust-ca.ts), not verified on Windows). The manual route below applies to other Windows machines.
+For the machine that runs the gateway, `pnpm dev:trust` runs `certutil -user -addstore Root` on the CA file ([`apps/tools-cli/src/commands/trust-ca.command.ts`](../../apps/tools-cli/src/commands/trust-ca.command.ts), not verified on Windows). The manual route below applies to other Windows machines.
 
 Not verified on a device.
 
@@ -96,7 +96,7 @@ Command line ([certutil](https://learn.microsoft.com/en-us/windows-server/admini
 
 ## macOS
 
-For the machine that runs the gateway, `pnpm dev:trust` adds the CA to the login keychain with `security add-trusted-cert -p basic -p ssl`, the same call `dotnet dev-certs https --trust` makes ([`tools/scripts/trust-ca.ts`](../../tools/scripts/trust-ca.ts)). The dry run and the refusal paths were run; the system trust change itself was not run by the author of the script. The manual route below applies to other Macs.
+For the machine that runs the gateway, `pnpm dev:trust` adds the CA to the login keychain with `security add-trusted-cert -p basic -p ssl`, the same call `dotnet dev-certs https --trust` makes ([`apps/tools-cli/src/commands/trust-ca.command.ts`](../../apps/tools-cli/src/commands/trust-ca.command.ts)). The dry run and the refusal paths were run; the system trust change itself was not run by the author of the script. The manual route below applies to other Macs.
 
 Not verified on a device.
 

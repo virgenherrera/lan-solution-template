@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "test": "pnpm run test:static && pnpm run test:dynamic",
-    "build": "node ../../tools/scripts/stage-sidecar.ts && cargo check --manifest-path src-tauri/Cargo.toml",
-    "package": "node ../../tools/scripts/e2e-desktop.ts && node ../../tools/scripts/stage-sidecar.ts && tauri build --no-bundle && node ../../tools/scripts/installer-build.ts",
+    "build": "node ../tools-cli/dist/main.js stage-sidecar && cargo check --manifest-path src-tauri/Cargo.toml",
+    "package": "node ../tools-cli/dist/main.js e2e-desktop && node ../tools-cli/dist/main.js stage-sidecar && tauri build --no-bundle && node ../tools-cli/dist/main.js installer-build",
     "test:static": "tsc --noEmit -p tsconfig.json",
     "test:dynamic": "echo \"test:dynamic: not defined for this package\""
   },
@@ -32,6 +32,12 @@
               "sea-runtime"
             ],
             "target": "package"
+          },
+          {
+            "projects": [
+              "tools-cli"
+            ],
+            "target": "build"
           }
         ]
       },
@@ -43,6 +49,12 @@
             ],
             "target": "package"
           },
+          {
+            "projects": [
+              "tools-cli"
+            ],
+            "target": "build"
+          },
           "build",
           "test"
         ],
@@ -52,11 +64,8 @@
         "inputs": [
           "default",
           "^default",
-          "{workspaceRoot}/tools/scripts/e2e-desktop.ts",
-          "{workspaceRoot}/tools/scripts/stage-sidecar.ts",
-          "{workspaceRoot}/tools/scripts/generate-certs.ts",
+          "{workspaceRoot}/apps/tools-cli/src/**/*",
           "{workspaceRoot}/artifacts/sea-runtime/**/*",
-          "{workspaceRoot}/tools/scripts/installer-*.ts",
           "{projectRoot}/installer/**/*",
           "{workspaceRoot}/libs/shared-core/config.example.json"
         ]

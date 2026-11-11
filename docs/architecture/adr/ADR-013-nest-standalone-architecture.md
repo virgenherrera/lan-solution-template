@@ -7,7 +7,7 @@ summary: "Target architecture of the Nest standalone refactor: one Nest Logger, 
 ids[0]:
 related[9]: docs/architecture/adr/ADR-006-sidecar-status-contract.md,docs/architecture/adr/ADR-007-persistence-system.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-012-sea-runtime-child-registry.md,docs/architecture/declared-services.md,docs/architecture/nest-standalone-boot.md,docs/backlog/nest-standalone-refactor.md,docs/backlog/nest-standalone-cleanup-inventory.md,docs/backlog/log-service-otel-grpc.md
 status: proposed
-updated: 2026-11-06
+updated: 2026-11-09
 -->
 
 # ADR-013: Nest standalone architecture
@@ -23,6 +23,7 @@ updated: 2026-11-06
 - [Consequences](#consequences)
 - [Risks](#risks)
 - [Not verified](#not-verified)
+- [Implementation status](#implementation-status)
 
 ## Status
 
@@ -249,8 +250,8 @@ Slice 5 applied D9 only in part. It moved the 41 files whose role is a single D9
 
 | Not moved | Files | Reason |
 |---|---|---|
-| Entrypoints and barrels | 6 | The build and the package manifests name them by path: `sea-entry.ts` (`tools/scripts/compile-sea.ts:309`), `services.ts` (`compile-sea.ts:465`), the two `main.ts` (`start:prod` runs `node dist/main`, `package.json:17` in each app) and the two barrels `index.ts` (`"main": "dist/index.js"`). `sea-modules.d.ts` stays with them. |
-| `tls/` and `db/` | 16 | The `shared-core` package exports point at their built path (`libs/shared-core/package.json:11-18`). `tools/scripts/db-parity.ts:28-29` and `compile-sea.ts:459` load the built files by path. |
+| Entrypoints and barrels | 6 | The build and the package manifests name them by path: `sea-entry.ts` (`apps/tools-cli/src/sea/sea-paths.service.ts:54`), `services.ts` (`apps/tools-cli/src/sea/sea-paths.service.ts:58`), the two `main.ts` (`start:prod` runs `node dist/main`, `package.json:17` in each app) and the two barrels `index.ts` (`"main": "dist/index.js"`). `sea-modules.d.ts` stays with them. |
+| `tls/` and `db/` | 16 | The `shared-core` package exports point at their built path (`libs/shared-core/package.json:11-18`). `apps/tools-cli/src/services/parity-engine.ts:5-6` and `apps/tools-cli/src/commands/generate-certs.command.ts:8` load the built files through those exports. |
 | Mixed role or loose functions | 28 | A file holds a module with providers, a controller, or plain functions. No D9 folder fits it. |
 
 ### D10. Boot order
@@ -344,3 +345,26 @@ This ADR only requires that all code depends on the Nest `LoggerService` interfa
 | Whether a child of the same SEA binary reads the embedded assets, and whether rspack can embed the web bundle | No run exists. The maps found no code that reads assets from a child | The later epic on the service-owned web build |
 
 [Back to navigation](#navigation)
+
+## Implementation status
+
+[Back to navigation](#navigation)
+
+Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept as the record. This table says what the code does today.
+
+| Decision | Decision status | Implementation | Check | Evidence | Gap |
+|---|---|---|---|---|---|
+| D1 true Nest standalone application | Accepted | Partial | confirmed | `apps/sea-runtime/src/main.ts:28`, `apps/api-gateway/src/app.bootstrap.ts:18` | Gateway uses NestFactory.create (HTTP app), not createApplicationContext. sea-entry.ts runs the dispatcher outside any container (the ADR names this as the no-app case). |
+| D2 one logger: Nest Logger | Accepted | Outdated | adjudicated | `apps/sea-runtime/src/services/supervisor.service.ts:2`, `apps/sea-runtime/src/main.ts:15`, `apps/sea-runtime/src/services/sidecar-output.ts:8`, `apps/tools-cli/src/main.ts:29-31`, `apps/tools-cli/src/commands/version-check.command.ts:31-33` | apps and libs have no console log calls. The `tools/scripts` part is stale on purpose: `tools-cli` replaced the scripts, runs with the Nest logger off and its commands write with process.stdout and process.stderr. web-angular main.ts:6 uses console.error. |
+| D3 stdout machine contract, no logs | Accepted | Implemented | single source | `apps/sea-runtime/src/services/sidecar-output.ts:4`, `apps/sea-runtime/src/services/sidecar-output.ts:8`, `libs/shared-core/src/tls/certs-command.ts:41` | none |
+| D4 AppLogger core and provideLogger factory | Accepted | Implemented | confirmed | `libs/shared-core/src/logger/provide-logger.ts:19`, `libs/shared-core/src/logger/app-logger.ts:7`, `libs/shared-core/src/schemas/logger-config.ts:4` | none |
+| D5 stderr [id] text format stays | Rejected | Implemented | single source | `libs/shared-core/src/logger/provide-logger.ts:11`, `libs/shared-core/src/logger/console-sink.ts:25` | Rejection reflected: sidecar target now writes Nest-like text, not [id] text |
+| D6 @InjectLogger() decorator | Accepted | Implemented | single source | `libs/shared-core/src/logger/inject-logger.decorator.ts:5`, `libs/shared-core/src/logger/inject-logger.decorator.ts:21`, `libs/shared-core/src/logger/inject-logger.decorator.ts:22` | none |
+| D7 remove SupervisorLogger | Accepted | Implemented | confirmed | `apps/sea-runtime/src/services/persistence.service.ts:4` | Zero references to SupervisorLogger in apps, libs, tools; callers use InjectLogger |
+| D8 EXIT_CODE named constants | Proposed | Partial | confirmed | `libs/service-registry/src/constants/exit-code.ts:2`, `apps/sea-runtime/src/main.ts:43`, `apps/api-gateway/src/main.ts:93` | EXIT_CODE has only 0, 1 and 2. ADR says it covers every value including 130; smoke-pg.ts:74 uses literal 130 and supervisor.service.ts:38-39 passes literal 0. |
+| D9 folders by role, self-describing names | Accepted | Partial | confirmed | `libs/service-registry/src/constants/exit-code.ts:2`, `libs/service-registry/src/schemas/declared-services.ts:7`, `apps/sea-runtime/src/modules/runtime.module.ts:1` | ADR says slice 5 applied D9 only in part (41 of 91 files moved). Some folders stay by documented exceptions. Counts not re-verified. |
+| D10 boot order: persistence then services | Accepted | Implemented | single source | `apps/sea-runtime/src/services/persistence.service.ts:25`, `apps/sea-runtime/src/services/persistence.service.ts:71`, `apps/sea-runtime/src/services/supervisor.service.ts:30` | none |
+| D11 one declared-services model SERVICES | Proposed | Implemented | single source | `apps/sea-runtime/src/services.ts:4`, `libs/service-registry/src/schemas/declared-services.ts:18`, `libs/service-registry/src/schemas/declared-services.ts:64` | ServiceRoute and ServiceDefinition have zero references. Supervisor reads entries via SeaServiceRoutes/loadServiceRoutes, not SERVICES directly (not traced). |
+| D12 delete only zero-reference symbols | Proposed | Not verified | confirmed | none | Policy. ControlMessage and StatusSnapshot have zero grep hits, but QC status per inventory row was not checked. |
+| D13 pure refactor, no test/smoke edits | Accepted | Not verified | confirmed | none | Needs git history comparison of tests and smokes. Not run (read-only audit). |
+| D14 later logging library is only a seam | Proposed | Implemented | single source | `libs/shared-core/src/logger/provide-logger.ts:19`, `libs/shared-core/src/logger/app-logger.ts:7`, `libs/shared-core/src/logger/console-sink.ts:46` | none |

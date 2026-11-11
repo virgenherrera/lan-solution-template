@@ -1,0 +1,190 @@
+<!-- toon-meta
+fmt: TOON
+doc: docs/architecture/stages.md
+title: Stages and promotion tools
+type: architecture
+summary: The human's stage idea of 2026-11-09, stage table, promotion tools, cross-stage contracts, config layers and open questions.
+ids[0]:
+related[5]: docs/architecture/overview.md,docs/architecture/current-state.md,docs/requirements/11-nx-quality-testing.md,docs/backlog/td-compile-sea-standalone.md,docs/architecture/adr/ADR-013-nest-standalone-architecture.md
+status: proposed
+updated: 2026-11-09
+-->
+
+# Stages and promotion tools
+
+[Home](../../README.md) | [Requirements](../requirements/README.md) | [Architecture](../architecture/overview.md) | [Standards](../standards/README.md) | [Roadmap](../roadmap/PROPOSAL.md) | [Traceability](../requirements/traceability.md) | [Backlog](../backlog/README.md)
+
+[Up](overview.md)
+
+## Navigation
+
+- [Human direction](#human-direction)
+- [Stage model](#stage-model)
+- [Runtime as a host for more services](#runtime-as-a-host-for-more-services)
+- [Process model](#process-model)
+- [Promotion tools](#promotion-tools)
+- [Cross-stage contracts](#cross-stage-contracts)
+- [Config layers](#config-layers)
+- [Open questions](#open-questions)
+
+---
+
+## Human direction
+
+[Back to navigation](#navigation)
+
+Source: the human, 2026-11-09, in conversation. This is a paraphrase, not a quote. It is a direction, not a requirement. It adds no id and changes no SRS text. Nothing on this page is decided.
+
+- The product is one fullstack Node app (Nest backend, Angular frontend).
+- The sea-runtime is that app in one executable, so only one Node binary is embedded.
+- It is built as a supervisor, so more microservices can be added later if a feature needs them.
+- The Tauri desktop is the same app again, as a sidecar.
+- Each layer is a stage that bounds the APP test suites ([current-state](current-state.md#test-model)).
+- The transversal promotion tools are to be redesigned surgically, after asking what each one is for.
+- The APP suites are per stage, so Nx can pick by the folders a PR touches the suites that must run (`nx affected`). That needs the stage dependency edges in the project graph.
+
+The full line-by-line duplicate inventory is in git history at commit 79c2cf4. It will be regenerated when the refactor starts.
+
+## Stage model
+
+[Back to navigation](#navigation)
+
+The stage names are working labels ([open](#open-questions)). Checked against the code on 2026-11-09.
+
+| Stage | What it is | Boundary in | Boundary out | Suite and runner | Exists today? |
+| --- | --- | --- | --- | --- | --- |
+| FE | The Angular PWA. | Gateway responses under `/api`. | Built bundle files that `compile-sea` embeds. | Playwright, [REQ-TEST-05](../requirements/11-nx-quality-testing.md) | No. |
+| BE | The Nest gateway: HTTP, database, config file. | `config.json`, `--web` argv, web bundle and `state`/`shutdown` over IPC. | HTTP responses and `ready` over IPC. | Jest and Supertest, [REQ-TEST-04](../requirements/11-nx-quality-testing.md) | Yes (`apps/api-gateway/test`). |
+| Runtime | BE, FE assets, migrations and sqlite-vector in one SEA binary with a supervisor. | argv roles, `config.json`, sidecar commands on stdin. | Status events on stdout, certs for `--generate-certs`. | Not chosen; [REQ-TEST-07](../requirements/11-nx-quality-testing.md), [REQ-TEST-06](../requirements/11-nx-quality-testing.md) | Partly: [smoke-sea](../../apps/tools-cli/src/commands/smoke-sea.command.ts), [smoke-pg](../../apps/tools-cli/src/commands/smoke-pg.command.ts). |
+| Desktop | The runtime as a Tauri sidecar, plus WebView and installer. | Staged sidecar, its stdout events, `net` of `config.json`. | `shutdown` on stdin, native package. | WebdriverIO, [REQ-TEST-08](../requirements/11-nx-quality-testing.md) | Yes (`apps/desktop/e2e`). |
+
+Nx project graph today (`nx graph`, run read-only on 2026-11-09): edges go from api-gateway to service-registry and shared-core; from sea-runtime to api-gateway, web-angular, db-migrations, service-registry and shared-core; from shared-core to service-registry; and from tools-cli to db-migrations, service-registry and shared-core. No project edge reaches desktop, and tools-cli has no edge to sea-runtime, api-gateway or web-angular. No `implicitDependencies` is set. desktop has a target-level `dependsOn` on sea-runtime `package`, a task edge, not a project edge. `nx affected` is not used in the root `package.json`, `nx.json`, `.github` or `tools`. Not verified: other CI or scripts outside those paths.
+
+## Runtime as a host for more services
+
+[Back to navigation](#navigation)
+
+The supervisor shape exists so more services can run next to the gateway (human direction). One service exists today and no second one was ever built. Pieces that already support it:
+
+- Dispatcher: `--service <id>` starts one registered id (`libs/service-registry`, [dispatcher.ts](../../libs/service-registry/src/dispatcher.ts)).
+- Service table in [services.ts](../../apps/sea-runtime/src/services.ts), written by `compile-sea` into `services.json`.
+- Supervisor: spawns each service as a child of the same binary ([child-spawner.ts](../../apps/sea-runtime/src/services/child-spawner.ts)), ordered by `dependsOn`.
+- Readiness timeout, bounded restart and graceful stop ([supervisor-config.ts](../../libs/service-registry/src/schemas/supervisor-config.ts), [service-lifecycle.ts](../../apps/sea-runtime/src/services/service-lifecycle.ts)).
+- IPC control messages `ready`, `state`, `shutdown` ([control-channel.ts](../../libs/service-registry/src/schemas/control-channel.ts)).
+
+A second service would need an entry in [services.ts](../../apps/sea-runtime/src/services.ts), a built bootstrap at `dist/main.js` of its project, and a bootstrap that sends `ready` and obeys `shutdown`. Not verified: how `compile-sea` resolves a second project, and whether a second service can share the gateway's ports, database or logger.
+
+## Process model
+
+[Back to navigation](#navigation)
+
+The packaged run, checked against the code on 2026-11-09. IPC means inter-process communication: the Node channel between a parent and a child it spawned.
+
+Structure: who talks to whom, and over which channel.
+
+```mermaid
+flowchart LR
+    subgraph desktop["desktop (Tauri host, Rust)"]
+        host["sidecar.rs"]
+    end
+    subgraph runtime["runtime (sea-runtime, one SEA executable with supervisor, web bundle, migrations)"]
+        sup["supervisor"]
+        db[("database")]
+        subgraph be["BE (api-gateway, child of the same binary)"]
+            gw["gateway"]
+            gwdb[("own database")]
+        end
+    end
+    fe["FE bundle"] -. "build time: compile-sea" .-> runtime
+    host <== "stdio pipes: shutdown line in, status events out" ==> sup
+    sup -. "open and check first" .-> db
+    sup <-- "IPC: web bundle, state, shutdown in, ready out" --> gw
+    gw -. "opens its own" .-> gwdb
+```
+
+Legend: thick arrows are stdio pipes (text lines). Thin solid arrows are Node IPC (messages). Dotted arrows are not channels: build time or database access.
+
+```mermaid
+flowchart TB
+    subgraph dev["development"]
+        d1["gateway run alone<br/>no SEA, no IPC channel<br/>--web none"] --> d2["ng serve serves the frontend<br/>with an /api proxy"]
+    end
+    subgraph pkg["packaged"]
+        p1["inside the SEA, with IPC<br/>--web ipc"] --> p2["supervisor sends the bundle<br/>read from the SEA assets<br/>(before init: not verified)"]:::nv --> p3["gateway serves it<br/>with createWebHandler"]
+    end
+    subgraph jest["APP-level Jest test"]
+        j1["no SEA, no IPC<br/>the bundle should be served"] --> j2["source not defined<br/>(open question 8)"]
+    end
+    nv1["nest start supervisor context<br/>not verified"]:::nv
+    classDef nv stroke-dasharray: 5 5
+```
+
+Order in the packaged run: bundle, then init, then listen, then ready. Not verified that the code enforces it: only the 10 s receive timeout bounds it. Facts: [sidecar.rs](../../apps/desktop/src-tauri/src/sidecar.rs), [child-spawner.ts](../../apps/sea-runtime/src/services/child-spawner.ts), the gateway [main.ts](../../apps/api-gateway/src/main.ts), [dispatcher.ts](../../libs/service-registry/src/dispatcher.ts) and [web-handler.ts](../../apps/api-gateway/src/web-handler.ts) (`createWebHandler`).
+
+
+## Promotion tools
+
+[Back to navigation](#navigation)
+
+Each command is a provider in [tools-cli.module.ts](../../apps/tools-cli/src/tools-cli.module.ts). The column "From to" reads P(a to b) = promotes a to b, V = verifies, S = support. The classification is mine and is [open](#open-questions). Not verified: that each command is used only by the stage named.
+
+| Command | From to | What crosses the boundary, and what is missing without it | Simplification hypothesis | Spec |
+| --- | --- | --- | --- | --- |
+| [pack-migrations](../../apps/tools-cli/src/commands/pack-migrations.command.ts) | P(BE to runtime) | The runtime has no SQL migrations to run until this command copies them, with `manifest.json` and `build-info.json`, into `dist/db-migrations/<engine>`. | Unknown. | [ADR-004](adr/ADR-004-drizzle-build-time-migrations.md) |
+| [compile-sea](../../apps/tools-cli/src/commands/compile-sea.command.ts) | P(BE, FE to runtime) | The bundle, the services, the web bundle and the packed migrations are separate outputs until this command embeds them in one SEA executable under `artifacts/<supervisor>`. | Needed as the stage bridge. | [REQ-SEA-01](../requirements/10-node-sea-distribution.md) |
+| [stage-sidecar](../../apps/tools-cli/src/commands/stage-sidecar.command.ts) | P(runtime to desktop) | Tauri finds no sidecar until this command copies the SEA executable, already named `sea-runtime-<target-triple>`, to `src-tauri/binaries`. | Needed as the stage bridge. | [REQ-DESK-01](../requirements/09-desktop-tauri.md) |
+| [installer-build](../../apps/tools-cli/src/commands/installer-build.command.ts), [installer-macos](../../apps/tools-cli/src/commands/installer-macos.command.ts) | P(desktop to installer) | The Tauri host and the sidecar sit side by side after `tauri build --no-bundle`, and without these commands no `.pkg` exists; other OSes get a notice and exit 0. | Needed as the stage bridge, if the installer stays in the desktop stage. | [REQ-ECO-06](../requirements/11-nx-quality-testing.md) |
+| [smoke-sea](../../apps/tools-cli/src/commands/smoke-sea.command.ts), [smoke-pg](../../apps/tools-cli/src/commands/smoke-pg.command.ts) | V(runtime) | Nothing runs the packaged binary on high loopback ports, in a throwaway base, until `smoke-sea` does, and `smoke-pg` does the same against PostgreSQL with pgvector in Docker. | Hand-written APP checks; a standard runner under `tests/<app>` could own them (REQ-TEST-07 leaves the runner open, current-state records the direction). | [REQ-RUNTIME-08](../requirements/09-desktop-tauri.md), [REQ-TEST-07](../requirements/11-nx-quality-testing.md), [REQ-TEST-06](../requirements/11-nx-quality-testing.md) |
+| [smoke-dev](../../apps/tools-cli/src/commands/smoke-dev.command.ts) | V(FE to BE, dev loop) | Nothing proves that `ng serve` reaches the HTTPS gateway through the `/api` proxy, trusting the CA only by `NODE_EXTRA_CA_CERTS`, until this command starts both in a throwaway base. | Hand-written APP check; Playwright (REQ-TEST-05) could own it. | [REQ-DEV-02](../requirements/06-web-gateway-https-pwa.md), [REQ-DEV-04](../requirements/06-web-gateway-https-pwa.md) |
+| [verify-platform](../../apps/tools-cli/src/commands/verify-platform.command.ts) | V(runtime, desktop) | A passing build proves no runtime; this command starts the packaged SEA binary and the Tauri package on this host, in temporary install directories. | Hand-written APP check of the artifacts; unknown. | [REQ-SEA-06](../requirements/10-node-sea-distribution.md), [REQ-TEST-09](../requirements/11-nx-quality-testing.md) |
+| `e2e-desktop` | V(desktop) | The WebdriverIO suite needs an instrumented Tauri host, a base directory with the sidecar and a check that no process is left, and this command provides all three. | The suite already uses a standard runner (WebdriverIO, REQ-TEST-08); the wrapper is stage setup, so unknown. | [REQ-TEST-08](../requirements/11-nx-quality-testing.md) |
+| [db-parity](../../apps/tools-cli/src/commands/db-parity.command.ts) | V(BE persistence) | The migrations and the descriptor in [tables.ts](../../libs/db-migrations/contract/tables.ts) can drift apart until this command migrates a throwaway database and compares the two. | Unknown. | [DBM-Schema-Gate-Result](../results/DBM-Schema-Gate-Result.md) |
+| [generate-certs](../../apps/tools-cli/src/commands/generate-certs.command.ts), [trust-ca](../../apps/tools-cli/src/commands/trust-ca.command.ts) | S(BE, runtime; dev machine) | The gateway only validates `<base>/certs` and never writes there, so `generate-certs` creates the CA and leaf, and `trust-ca` makes this machine accept that CA. | `generate-certs` has a second entry point in the runtime ([certs-command.ts](../../libs/shared-core/src/tls/certs-command.ts)); `trust-ca` unknown. | [ADR-008](adr/ADR-008-tls-trust-model.md), [REQ-TLS-01](../requirements/06-web-gateway-https-pwa.md), [REQ-TLS-02](../requirements/06-web-gateway-https-pwa.md) |
+| [test-filter](../../apps/tools-cli/src/commands/test-filter.command.ts) | S(all test stages) | The root `test` script has no way to check a `@ut`, `@int` or `@app` tag before the security check and the Nx fan-out run, and this adapter adds that check. | Hypothesis: a tag filter is needed only while suites share one fan-out; with one APP suite per stage, a `test:<stage>` script in each stage project could replace it and the root fan-out. | [REQ-TEST-02](../requirements/11-nx-quality-testing.md) |
+| [version-check](../../apps/tools-cli/src/commands/version-check.command.ts), [branch-name](../../apps/tools-cli/src/commands/branch-name.command.ts) | V/S(repo, release) | Nothing stops the workspace manifests, `Cargo.toml`, `Cargo.lock` and `tauri.conf.json` from drifting apart, or a PR branch from carrying no release bump, until these commands check them. | Unknown. | [REQ-VERSION-01](../requirements/11-nx-quality-testing.md), [REQ-VERSION-02](../requirements/11-nx-quality-testing.md) |
+| [release-version-actions.ts](../../tools/scripts/release-version-actions.ts) | P(release version to BE, runtime, desktop) | The new release version stays in one place until this script writes it to each project `package.json` and, for Tauri, to `Cargo.toml`, `Cargo.lock` and `tauri.conf.json`. | Unknown. | [REQ-VERSION-01](../requirements/11-nx-quality-testing.md), [REQ-VERSION-03](../requirements/11-nx-quality-testing.md) |
+
+The Spec links show where a tool is mentioned. They are not a justification, and the hypotheses are not decisions: each is a guess to check with the human, who wants to simplify by understanding why a tool exists, not by removing it.
+
+[TD-TOOLS-01](../backlog/td-compile-sea-standalone.md) records the move of loose scripts into this CLI.
+
+## Cross-stage contracts
+
+[Back to navigation](#navigation)
+
+Kept in sync by hand across a stage boundary. These are the duplicates that matter architecturally.
+
+- Web bundle message schema: defined on both sides of the IPC (`sea-runtime` [web-bundle.ts](../../apps/sea-runtime/src/web/web-bundle.ts) and `api-gateway` [web-bundle.ts](../../apps/api-gateway/src/web-bundle.ts)).
+- Asset names and `build-info.json` format: written by `compile-sea` and `pack-migrations`, read by the runtime persistence code.
+- The `net` block of `config.json`: Zod in `shared-core` [config.ts](../../libs/shared-core/src/config.ts), untyped read in Rust [sidecar.rs](../../apps/desktop/src-tauri/src/sidecar.rs).
+- Install base (executable folder): `shared-core` [paths.ts](../../libs/shared-core/src/paths.ts) and [sidecar.rs](../../apps/desktop/src-tauri/src/sidecar.rs).
+- Sidecar stdio protocol: [sidecar-protocol.ts](../../libs/service-registry/src/schemas/sidecar-protocol.ts) and [sidecar.rs](../../apps/desktop/src-tauri/src/sidecar.rs).
+- Certificate generation: two entry points, [certs-command.ts](../../libs/shared-core/src/tls/certs-command.ts) (packaged) and [generate-certs](../../apps/tools-cli/src/commands/generate-certs.command.ts) (dev).
+
+## Config layers
+
+[Back to navigation](#navigation)
+
+| # | Layer | Declared in | Who sets the values |
+| --- | --- | --- | --- |
+| 1 | Persisted `config.json` (`db`, `net`, `tls`) | [config.ts](../../libs/shared-core/src/config.ts) | The installer or the operator. |
+| 2 | Gateway argv (`--web`) | [server-config.ts](../../apps/api-gateway/src/schemas/server-config.ts) | The supervisor. |
+| 3 | Dispatcher and SEA argv | [dispatcher-config.ts](../../libs/service-registry/src/schemas/dispatcher-config.ts) | Code defaults. |
+| 4 | Supervisor policy | [supervisor-config.ts](../../libs/service-registry/src/schemas/supervisor-config.ts) | Code defaults. |
+| 5 | Assembler | [assembler-config.ts](../../libs/service-registry/src/schemas/assembler-config.ts) | Code defaults. |
+| 6 | Logger | [logger-config.ts](../../libs/shared-core/src/schemas/logger-config.ts) | Each process at its call site. |
+
+## Open questions
+
+[Back to navigation](#navigation)
+
+All open. The human decides. This page decides none.
+
+1. Which tools are transversal (serve every stage) and which belong to one stage?
+2. What are the stage names? FE, BE, runtime and desktop are working labels.
+3. Do FE and BE stay separate stages? Today FE has no suite and BE has one.
+4. Is the installer a fifth stage or part of desktop?
+5. Where does the runtime APP suite sit: compiled bundle, SEA binary, or both ([current-state](current-state.md#open-decisions))?
+6. Where should the cross-stage contracts live: in the lib of the stage that reads them, or elsewhere?
+7. For each promotion tool, what crosses the stage boundary through it and what would the stage lack without it? Only then: does a simpler way (like installing Jest and Playwright instead of hand-made test tooling) fit, and are the requirements that mention it still right? For `test-filter` (human, 2026-11-09): the tags `@ut` and `@int` also read against REQ-TEST-01, although REQ-TEST-02 defines them, so whether they stay is open; today the translated runner arguments are not consumed, so the filter only validates.
+8. Does the gateway need `--web none|ipc` at all? Human ideas, 2026-11-09, paraphrased. The flag is an explicit declaration by the supervisor and fails loudly: a bad or missing bundle stops the start before any port opens. Deducing the mode from missing signals fails silently, and it cannot tell an APP-level Jest test (no SEA, no IPC, wants the bundle served) from development. Counter-proposal: a Nest singleton service (name under discussion, for example `RuntimeContext`) that says for certain which context the process runs in (dev Nest app, sea-runtime, and so on). `main` reads it with `app.get`, as with `HealthState` today, and the static part injects it to register the static serving or not. rxjs optional. Today the facts are scattered: `resolveBase` in `shared-core` [paths.ts](../../libs/shared-core/src/paths.ts) (sea flag), `process.send` in the gateway `main`, the asset source in sea-runtime, and `--web` in `ServerConfig`. [REQ-NET-02](../requirements/06-web-gateway-https-pwa.md) bars reading the environment and [REQ-TEST-01](../requirements/11-nx-quality-testing.md) bars mocking the app's own providers, so the test seam must be a real input; the flag could stay as one declared input of that service. Question: flag, deduction, or the service? A web-assets microservice option is in [the proposal](proposals/web-assets-service.md).

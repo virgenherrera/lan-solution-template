@@ -6,7 +6,7 @@ type: backlog
 summary: "Backlog item for the platform matrix, lockstep versioning and the macOS installer. Windows and Linux are technical debt."
 related[10]: docs/results/POC-08-Result.md,docs/architecture/adr/ADR-011-macos-installer-and-install-time-trust.md,docs/backlog/README.md,docs/backlog/poc-7-auth-roles.md,docs/backlog/poc-9-ci-cd-releases.md,docs/backlog/persistence-system.md,docs/backlog/td-windows-linux-distribution.md,docs/architecture/adr/ADR-008-tls-trust-model.md,docs/architecture/adr/ADR-009-desktop-process-model.md,docs/results/POC-05-Result.md
 status: current
-updated: 2026-11-04
+updated: 2026-11-09
 -->
 
 # POC-8: MSI credential dialog, platform matrix and lockstep versioning
@@ -40,7 +40,7 @@ updated: 2026-11-04
 
 | Item | Value |
 |---|---|
-| Status | Built on `chore/poc-08-matrix-versioning`, macOS only. The `.pkg` is built and inspected, NOT installed; the trust and uninstall scripts were NOT run as root. Windows and Linux are technical debt. Pull request pending. Result: [POC-08-Result](../results/POC-08-Result.md). Decisions: [ADR-011](../architecture/adr/ADR-011-macos-installer-and-install-time-trust.md) (proposed). |
+| Status | Built on `chore/poc-08-matrix-versioning`, macOS only. The `.pkg` is built and inspected, NOT installed; the trust and uninstall scripts were NOT run as root. Windows and Linux are technical debt. Merged in PR #22 (squash `e2c63e6`). Result: [POC-08-Result](../results/POC-08-Result.md). Decisions: [ADR-011](../architecture/adr/ADR-011-macos-installer-and-install-time-trust.md) (proposed). |
 | Appetite | 2 weeks, big batch. This delivery is a part of it. |
 | Depends on | POC-5 (merged in PR #21). POC-7 only for the first admin ([ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md), proposed). |
 | Branch | `chore/poc-08-matrix-versioning` |
@@ -146,7 +146,7 @@ The working document with routes and evidence is kept outside the repository. Ta
 
 [Back to navigation](#navigation)
 
-The `desktop:package` target now ends with `node tools/scripts/installer-build.ts` (REQ-ECO-06: no new public script). On macOS it runs `pkgbuild` and `productbuild` ([installer-macos.ts](../../tools/scripts/installer-macos.ts)) and writes `apps/desktop/src-tauri/target/release/lan-solution-desktop-<version>-<triple>.pkg`. The version is the lockstep `package.json` version and the identifier is `identifier` from `tauri.conf.json`. On any other OS it prints `installer not implemented on <os>` and exits 0, so the native package stays valid ([debt](td-windows-linux-distribution.md)). Resources live in `apps/desktop/installer/macos/`.
+The `desktop:package` target now ends with `node apps/tools-cli/dist/main.js installer-build` (REQ-ECO-06: no new public script). On macOS it runs `pkgbuild` and `productbuild` ([macos-pkg.service.ts](../../apps/tools-cli/src/services/macos-pkg.service.ts)) and writes `apps/desktop/src-tauri/target/release/lan-solution-desktop-<version>-<triple>.pkg`. The version is the lockstep `package.json` version and the identifier is `identifier` from `tauri.conf.json`. On any other OS it prints `installer not implemented on <os>` and exits 0, so the native package stays valid ([debt](td-windows-linux-distribution.md)). Resources live in `apps/desktop/installer/macos/`.
 
 Decisions of the agent (delegated):
 
@@ -235,7 +235,7 @@ Decisions of the agent (delegated):
 - The order in which the Installer runs the two components is NOT verified. If the trust script runs before the main package has a receipt or before `ca.crt` exists, it exits 1 with a clear message and trusts nothing. The human confirms the order in the recipe below.
 - The consent text (`resources/trust.html`, and the choice description in `distribution.xml`) says that the trust covers the policies `ssl` and `basic`, that removing the application does not undo it, the two commands to undo it by hand (`security remove-trusted-cert -d <path of ca.crt>` and `security delete-certificate -c <name of the CA> /Library/Keychains/System.keychain`), that the CA was generated for this installation, and that `ca.key` stays in `<install>/certs/ca.key` (mode 0600, owned by the user). The box stays unticked by default (`start_selected="false"`).
 - Residual risk: an administrator-less process of the console user can still replace `ca.crt` and `ca.key` before the installer runs; the anchor is taken from what exists at install time. The anchor binds the later trust step to that moment. Accepted.
-- `postinstall` and the trust script are shell, an exception to TypeScript (the `.pkg` runs scripts directly and the Mac has no node). The builder is TypeScript ([installer-macos.ts](../../tools/scripts/installer-macos.ts)). Hand-edited files: `scripts/postinstall`, `trust-scripts/postinstall`, `distribution.xml`, `resources/trust.html`.
+- `postinstall` and the trust script are shell, an exception to TypeScript (the `.pkg` runs scripts directly and the Mac has no node). The builder is TypeScript ([macos-pkg.service.ts](../../apps/tools-cli/src/services/macos-pkg.service.ts)). Hand-edited files: `scripts/postinstall`, `trust-scripts/postinstall`, `distribution.xml`, `resources/trust.html`.
 
 Verified on macOS 27.2 arm64 (build and simulation only):
 
@@ -291,7 +291,7 @@ sudo pkgutil --forget com.virgenherrera.lansolution.trust
 
 [Back to navigation](#navigation)
 
-The `.pkg` payload now holds `uninstall.sh` in the ROOT of the install directory, next to `app` and `sea-runtime` (mode 0755, owner root:wheel per the Bom). The human runs `sudo <install>/uninstall.sh`. Source: [apps/desktop/installer/macos/uninstall.sh](../../apps/desktop/installer/macos/uninstall.sh); [installer-macos.ts](../../tools/scripts/installer-macos.ts) copies it into the payload and replaces `@IDENTIFIER@` and `@PRODUCT@` with `identifier` and `productName` of `tauri.conf.json`. No new dependency and no new npm script.
+The `.pkg` payload now holds `uninstall.sh` in the ROOT of the install directory, next to `app` and `sea-runtime` (mode 0755, owner root:wheel per the Bom). The human runs `sudo <install>/uninstall.sh`. Source: [apps/desktop/installer/macos/uninstall.sh](../../apps/desktop/installer/macos/uninstall.sh); [macos-pkg.service.ts](../../apps/tools-cli/src/services/macos-pkg.service.ts) copies it into the payload and replaces `@IDENTIFIER@` and `@PRODUCT@` with `identifier` and `productName` of `tauri.conf.json`. No new dependency and no new npm script.
 
 What it removes and what it keeps, and who decided:
 

@@ -6,7 +6,7 @@ type: architecture
 summary: "Records Drizzle as a build-time tool only: drizzle-kit generates SQL, the SEA carries the SQL, the in-house migrator applies it."
 related[6]: docs/architecture/adr/ADR-003-config-and-db-strategy.md,docs/backlog/dbm-drizzle-migrations.md,docs/requirements/amendments-2026-11-02.md,docs/requirements/05-persistence.md,docs/requirements/02-technology-baseline.md,docs/architecture/adr/ADR-005-live-schema-validation.md
 status: current
-updated: 2026-11-03
+updated: 2026-11-09
 -->
 
 # ADR-004: Drizzle build-time migrations
@@ -120,3 +120,28 @@ Not verified:
 - The startup check of the live schema structure is [ADR-005](ADR-005-live-schema-validation.md), not this decision.
 - A downgrade guard that reads `runtime_version` is proposed. The human has not approved it. It is not part of this decision.
 - The old line "the migrator splits SQL on `;`" in ADR-003 is superseded for generated files. The marker rule above applies.
+
+## Implementation status
+
+Audit of 2026-11-09 against `main` at `cfec959`. The decision text above is kept as the record. This table says what the code does today.
+
+| Decision | Decision status | Implementation | Check | Evidence | Gap |
+|---|---|---|---|---|---|
+| drizzle-orm 0.45.4 and drizzle-kit 0.31.11 exact devDependencies | Accepted | Implemented | single source | `pnpm-workspace.yaml:38`, `pnpm-workspace.yaml:39`, `libs/db-migrations/package.json:31` | none |
+| Fallback 1.0.0-rc.5 only if spike fails | Accepted | Implemented | adjudicated | `pnpm-workspace.yaml:38`, `pnpm-workspace.yaml:39` | Conditional decision; fallback not used, exact 0.31.11 and 0.45.4 pinned |
+| drizzle-kit generate writes SQL per engine under libs/db-migrations | Accepted | Implemented | confirmed | `libs/db-migrations/package.json:10`, `libs/db-migrations/package.json:11`, `libs/db-migrations/package.json:12` | none |
+| SEA carries SQL and manifest but no Drizzle code | Accepted | Implemented | single source | `apps/tools-cli/src/sea/sea-assets.service.ts:152`, `apps/tools-cli/src/sea/sea-assets.service.ts:176-179`, `apps/tools-cli/src/sea/sea-bundler.service.ts:118-123` | none |
+| In-house migrator applies SQL; no Drizzle history table | Accepted | Implemented | single source | `libs/shared-core/src/db/migrator.ts:38`, `apps/sea-runtime/src/persistence/migrations-source.ts:13` | none |
+| Layout contract sqlite and pg dirs | Accepted | Outdated | adjudicated | `libs/db-migrations/contract/tables.ts:19`, `libs/db-migrations/sqlite/schema.ts:14`, `libs/db-migrations/pg/schema.ts:14` | ADR says pg/ not created now; code has pg/ (created by POC-6, ADR text stale) |
+| Contract ColumnsOf class implements with spread export | Accepted | Implemented | single source | `libs/db-migrations/contract/domain.ts:9`, `libs/db-migrations/sqlite/schema.ts:5`, `libs/db-migrations/sqlite/schema.ts:14` | none |
+| NoExtra type check closes extra-column gap | Accepted | Implemented | confirmed | `libs/db-migrations/contract/domain.ts:14`, `libs/db-migrations/sqlite/schema.ts:11` | none |
+| Build parity check against declarative descriptor tables.ts | Accepted | Implemented | single source | `libs/db-migrations/package.json:16`, `apps/tools-cli/src/commands/db-parity.command.ts:81-86`, `libs/db-migrations/contract/tables.ts:30` | none |
+| Statement breakpoint split else semicolon; checksum over file | Accepted | Implemented | single source | `libs/shared-core/src/db/migrator.ts:41`, `libs/shared-core/src/db/migrator.ts:51`, `libs/shared-core/src/db/migrator.ts:75` | none |
+| Pack step rejects multi-statement file without marker | Accepted | Implemented | single source | `apps/tools-cli/src/services/migration-pack.service.ts:184-186`, `apps/tools-cli/src/services/migration-pack.service.ts:194-196` | none |
+| Drift Nx target generate then git diff --exit-code | Accepted | Implemented | single source | `libs/db-migrations/package.json:13`, `libs/db-migrations/package.json:14`, `libs/db-migrations/package.json:15` | Script is a package.json target; Nx wiring not checked in nx.json |
+| app_meta table with key and value | Accepted | Implemented | confirmed | `libs/db-migrations/contract/tables.ts:19`, `libs/db-migrations/sqlite/schema.ts:14` | none |
+| Supervisor writes app_meta keys by upsert; first_installed insert if absent | Accepted | Implemented | single source | `apps/sea-runtime/src/persistence/app-meta.ts:16`, `apps/sea-runtime/src/persistence/app-meta.ts:17`, `apps/sea-runtime/src/persistence/build-info.ts:9` | none |
+| schema_migrations gains runtime_version and duration_ms | Accepted | Implemented | single source | `libs/shared-core/src/db/migrator.ts:47`, `libs/shared-core/src/db/migrator.ts:48`, `libs/shared-core/src/db/migrator.ts:118` | none |
+| Migrations run in supervisor before services; failure exits 1 | Accepted | Implemented | single source | `apps/sea-runtime/src/services/persistence.service.ts:23`, `apps/sea-runtime/src/main.ts:43` | none |
+| RxJS 7.8.2 for boot pipeline and migrator events | Accepted | Implemented | single source | `pnpm-workspace.yaml:50`, `apps/sea-runtime/src/services/persistence.service.ts:3`, `libs/shared-core/src/db/migrator.ts:2` | none |
+| Downgrade guard reading runtime_version (proposed not approved) | Accepted | Not implemented | confirmed | `apps/sea-runtime/src/services/persistence.service.ts:23` | No guard in persistence pipeline; ADR says not part of decision |

@@ -54,7 +54,7 @@ The human cut POC-8 to macOS on 2026-11-04. Quote, verbatim, in Spanish: "lo dem
 
 Every item is not verified.
 
-- [ ] Windows and Linux installer step. `tools/scripts/installer-build.ts` prints `installer not implemented on <os>` and exits 0 outside macOS; each OS needs its own builder.
+- [ ] Windows and Linux installer step. `tools-cli installer-build` prints `installer not implemented on <os>` and exits 0 outside macOS; each OS needs its own builder.
 - [ ] MSI with WiX. Includes the spike of [OQ16](../roadmap/PROPOSAL.md#open-questions): per-machine, dual or per-user, and the install folder.
 - [ ] MSI credential dialog (hidden property plus `MsiHiddenProperties`, deferred custom action). It is the fallback of decision 13 while the wizard of [ADR-010](../architecture/adr/ADR-010-first-run-admin-setup.md) is not proven on Windows.
 - [ ] `certutil` for the trust store and ACLs on the install folder (Windows).
@@ -97,5 +97,5 @@ Every item is not verified.
 
 [Back to navigation](#navigation)
 
-- Every item above. No Windows or Linux run exists.
+- Every item above. No Windows run exists. The only Linux run is the stub check of `installer-build`: On 2026-11-09 the non-macOS branch ran in a throwaway Linux container (Docker Desktop, `node:26.13`, `linux/arm64`, Linux aarch64, Node v26.13.0): `docker run --rm --platform linux/arm64 -v "$PWD/apps/tools-cli/dist:/app:ro" -w /app node:26.13 node main.js installer-build` (after `nx build tools-cli`). Result: stdout `installer not implemented on linux`, exit 0, no container left. This only proves the stub message and exit code; no `.deb`, `.rpm` or AppImage exists. A Tauri build, WebKitGTK and the platform matrix still need a real Linux host, and everything on Windows needs a real Windows host.
 - That the listed tools (WiX, `certutil`, `tauri-action`) fit this repository.

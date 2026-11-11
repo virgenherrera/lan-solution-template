@@ -11,7 +11,7 @@
  * the monorepo keeps one version.
  *
  * Wired by `release.groups.lockstep.version.versionActions` in nx.json. Check the result with
- * `node tools/scripts/version-check.ts`.
+ * `pnpm run tools version-check`.
  */
 
 import { accessSync, constants } from "node:fs";

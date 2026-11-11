@@ -38,6 +38,7 @@ catalog:
   drizzle-kit: 0.31.11
   drizzle-orm: 0.45.4
   jest: 30.5.2
+  nest-commander: 3.21.0
   nestjs-zod: 5.5.0
   nx: 24.0.2
   oxlint: 1.90.0

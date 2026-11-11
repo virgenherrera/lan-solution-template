@@ -12,5 +12,5 @@
     "allowImportingTsExtensions": true,
     "types": ["node", "@wdio/globals/types", "@wdio/mocha-framework", "@wdio/tauri-service"]
   },
-  "include": ["wdio.conf.ts", "e2e/**/*.ts", "../../tools/scripts/installer-*.ts"]
+  "include": ["wdio.conf.ts", "e2e/**/*.ts"]
 }

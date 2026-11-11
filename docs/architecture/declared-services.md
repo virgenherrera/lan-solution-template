@@ -202,7 +202,7 @@ flowchart TD
 
 | Source | Reader |
 | --- | --- |
-| tools/scripts/compile-sea.ts (`contract.serviceEntries(SERVICES)`) | Assembler. |
+| apps/tools-cli/src/sea (`compile-sea`, `contract.serviceEntries(SERVICES)`) | Assembler. |
 | apps/sea-runtime/src/supervisor/service-routes-source.ts (`serviceEntries` in dev, `servicesAssetSchema` in SEA) | Supervisor. |
 | apps/sea-runtime/src/sea-entry.ts and main.ts (`serviceEntries(SERVICES)`) | Entrypoints, on import. |
 

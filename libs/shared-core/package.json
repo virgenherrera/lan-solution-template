@@ -12,9 +12,17 @@
       "types": "./dist/db/sqlite/index.d.ts",
       "default": "./dist/db/sqlite/index.js"
     },
+    "./pg": {
+      "types": "./dist/db/pg/index.d.ts",
+      "default": "./dist/db/pg/index.js"
+    },
     "./tls": {
       "types": "./dist/tls/index.d.ts",
       "default": "./dist/tls/index.js"
+    },
+    "./tls/generate": {
+      "types": "./dist/tls/generate.d.ts",
+      "default": "./dist/tls/generate.js"
     }
   },
   "scripts": {

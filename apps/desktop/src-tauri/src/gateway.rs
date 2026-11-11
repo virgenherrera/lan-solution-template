@@ -1,4 +1,4 @@
-// The main window is a plain WebView on the gateway origin (AC-18). Tauri hosts no SPA of its own.
+// The main window is a plain WebView on the gateway origin (AC-18). Tauri hosts no SPA of its own: the only local page is the static startup splash (splash/index.html), shown until the gateway is ready.
 // The window gets no IPC: no capability file exists and no `remote` URL is declared (REQ-SEC-05).
 use tauri::webview::NewWindowResponse;
 use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder};
@@ -26,7 +26,55 @@ fn loggable(url: &Url) -> String {
   format!("{}://{host}{port}{}", url.scheme(), url.path())
 }
 
-// Shows the window, creating it first when the gateway is ready. Nothing to show before that.
+// The splash is exactly the bundled page of the host itself: tauri://localhost/index.html, or http://tauri.localhost/index.html on Windows. Any other path, port or credentials on those origins is not the splash.
+fn is_splash(url: &Url) -> bool {
+  let origin_ok = matches!((url.scheme(), url.host_str()), ("tauri", Some("localhost")) | ("http", Some("tauri.localhost")));
+  origin_ok && url.port().is_none() && url.username().is_empty() && url.password().is_none() && url.path() == "/index.html"
+}
+
+// Builds the main window on `url` and returns whether it was created. The filter allows the splash page and, once the port is known, the gateway origin (A2); the gateway origin is read at navigation time because the window outlives the splash.
+fn build(app: &AppHandle, url: WebviewUrl) -> bool {
+  let built = WebviewWindowBuilder::new(app, WINDOW, url)
+    .title("LAN Solution")
+    .inner_size(800.0, 600.0)
+    .on_navigation(|target| {
+      let ok = is_splash(target) || origin().is_some_and(|allowed| same_origin(target, &allowed));
+      if !ok {
+        log::warn!("navigation blocked url={}", loggable(target));
+      }
+      ok
+    })
+    .on_new_window(|target, _features| {
+      log::warn!("new window blocked url={}", loggable(&target));
+      NewWindowResponse::Deny
+    })
+    .build();
+  match built {
+    Ok(_) => {
+      log::info!("window created");
+      true
+    }
+    Err(e) => {
+      log::error!("window creation failed: {e}");
+      false
+    }
+  }
+}
+
+// Creates the main window on the splash at start. `open` later navigates this same window to the gateway origin.
+pub fn show_splash(app: &AppHandle) {
+  let handle = app.clone();
+  let scheduled = app.run_on_main_thread(move || {
+    if build(&handle, WebviewUrl::App("index.html".into())) {
+      log::info!("splash shown");
+    }
+  });
+  if let Err(e) = scheduled {
+    log::error!("splash not shown: {e}");
+  }
+}
+
+// Shows the window, creating it first when the gateway is ready. Before that the splash window is shown.
 pub fn show(app: &AppHandle) {
   if let Some(window) = app.get_webview_window(WINDOW) {
     let _ = window.show();
@@ -62,25 +110,8 @@ fn open(app: &AppHandle) {
       }
       return;
     }
-    let allowed = url.clone();
-    let built = WebviewWindowBuilder::new(&handle, WINDOW, WebviewUrl::External(url.clone()))
-      .title("LAN Solution")
-      .inner_size(800.0, 600.0)
-      .on_navigation(move |target| {
-        let ok = same_origin(target, &allowed);
-        if !ok {
-          log::warn!("navigation blocked url={}", loggable(target));
-        }
-        ok
-      })
-      .on_new_window(|target, _features| {
-        log::warn!("new window blocked url={}", loggable(&target));
-        NewWindowResponse::Deny
-      })
-      .build();
-    match built {
-      Ok(_) => log::info!("window created url={url}"),
-      Err(e) => log::error!("window creation failed: {e}"),
+    if build(&handle, WebviewUrl::External(url.clone())) {
+      log::info!("window created url={url}");
     }
   });
 }

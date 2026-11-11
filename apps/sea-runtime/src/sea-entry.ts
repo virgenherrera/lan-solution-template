@@ -3,7 +3,7 @@ import { provideLogger } from 'shared-core';
 import { SERVICES } from './services.js';
 
 // SEA entry: the dispatcher (libs/service-registry) picks the role. No --service starts the supervisor, --service <id> starts that one service, --generate-certs creates the TLS files next to the executable and exits, anything else exits with the reject code.
-// tools/scripts/compile-sea.ts bundles this file and aliases the specifiers below to the built bootstraps (typed in sea-modules.d.ts).
+// `tools-cli compile-sea` (apps/tools-cli/src/sea) bundles this file and aliases the specifiers below to the built bootstraps (typed in sea-modules.d.ts).
 const target = dispatch(
   process.argv.slice(2),
   serviceEntries(SERVICES).map((entry) => entry.id),

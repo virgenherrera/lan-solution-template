@@ -39,6 +39,7 @@ pub fn run() {
         )?;
       }
       tray::init(app.handle())?;
+      gateway::show_splash(app.handle());
       sidecar::init(app.handle());
       Ok(())
     })

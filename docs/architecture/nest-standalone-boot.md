@@ -264,9 +264,6 @@ The table lists 26 `process.exit` calls and one `process.exitCode` assignment, a
 | `tools/scripts/verify-platform.ts` | 161 | 1 | no |
 | `tools/scripts/trust-ca.ts` | 16 | code passthrough | no |
 | `tools/scripts/trust-ca.ts` | 53 | 2 | no |
-| `tools/scripts/branch-name.ts` | 29 | 2 | no |
-| `tools/scripts/branch-name.ts` | 37 | 2 | no |
-| `tools/scripts/branch-name.ts` | 47 | 1 | no |
 
 Six observable sites sit in `apps/`. The rest are in `tools/scripts`. The 27 rows match 26 calls plus one assignment. The mapping found no `*.spec.ts` or `*.test.ts` under `apps` or `libs` that touches these sites.
 

@@ -21,26 +21,36 @@ const health = (): Promise<{ status: number | undefined; body: string } | undefi
     req.end();
   });
 
+// The service writes the host log (stderr of the app) under <base>/wdio-logs.
+const hostLog = () => {
+  const dir = join(base, 'wdio-logs');
+  return existsSync(dir) ? readdirSync(dir).map((f) => readFileSync(join(dir, f), 'utf8')).join('\n') : '';
+};
+
 describe('desktop host', () => {
   it('spawns the sidecar and the gateway reports ready', async () => {
     await browser.waitUntil(async () => (await health())?.body.includes('ready') === true, { timeout: 60_000, interval: 500, timeoutMsg: '/api/health never reported ready' });
   });
+});
 
-  // The window is built by the host only after the supervisor reports ready (gateway.rs), so its handle proves the status event reached the host. The page itself is not asserted: the OS does not trust this run's CA, by design.
-  it('creates the main window once the sidecar is ready', async () => {
-    const handles = await browser.getWindowHandles();
-    if (!handles.includes('main')) throw new Error(`no main window handle: ${JSON.stringify(handles)}`);
+// Startup flow (REQ-TEST-08): the window opens on the splash while the sidecar boots, then the same window is sent to the app at /. The OS does not trust this run's CA, by design, so the WebView never commits the gateway page: the move to / is asserted on the host log, not on the page.
+describe('startup splash', () => {
+  it('shows the splash first and then moves the window to the app at /', async () => {
+    // Arrange: the main window exists from the start, before the gateway is ready.
+    await browser.switchToWindow('main');
+    const target = `window reloaded url=https://127.0.0.1:${port}/`;
+    // Act: wait for the host to send the window to the gateway origin.
+    await browser.waitUntil(() => hostLog().includes(target), { timeout: 60_000, interval: 500, timeoutMsg: `no "${target}" in the host log` });
+    // Assert: the host log shows the splash first and then the move to /.
+    const log = hostLog();
+    expect(log).toContain('splash shown');
+    expect(log.indexOf('splash shown')).toBeLessThan(log.indexOf(target));
   });
 });
 
 // A2: the window may only stay on https://127.0.0.1:<httpsPort>. The page is not trusted in this run (the window URL reads about:blank), so the assertions are that the URL does not change and that the host log records each block.
 describe('navigation filter', () => {
   const foreign = ['https://example.com/', `http://127.0.0.1:${port + 1}/`, `http://127.0.0.1:${port}/`, 'ftp://127.0.0.1/'];
-  const hostLog = () => {
-    const dir = join(base, 'wdio-logs');
-    return existsSync(dir) ? readdirSync(dir).map((f) => readFileSync(join(dir, f), 'utf8')).join('\n') : '';
-  };
-
   it('blocks every navigation outside the gateway origin and logs it', async () => {
     await browser.switchToWindow('main');
     const before = await browser.getUrl();

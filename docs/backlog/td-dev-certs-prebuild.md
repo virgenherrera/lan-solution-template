@@ -6,8 +6,8 @@ type: backlog
 summary: "Technical debt record TD-DEV-01: pnpm dev:certs builds shared-core but not service-registry, so a clean clone fails with TS2307."
 ids[0]:
 related[4]: docs/backlog/README.md,docs/backlog/nest-standalone-refactor.md,docs/requirements/11-nx-quality-testing.md,docs/architecture/adr/ADR-008-tls-trust-model.md
-status: proposed
-updated: 2026-11-06
+status: done
+updated: 2026-11-09
 -->
 
 # Technical debt: dev:certs prebuild gap
@@ -40,7 +40,7 @@ updated: 2026-11-06
 | Id | TD-DEV-01 |
 | Title | `pnpm dev:certs` does not build all its workspace dependencies |
 | Type | Technical debt, tooling |
-| Status | Proposed. Not scheduled. |
+| Status | Done. `dev:certs` and `dev:gateway` build through the Nx `build` target. |
 | Detected | 2026-11-06, while checking the Nest standalone refactor branch |
 | Scope | Root script `dev:certs` and the setup steps in the root `README.md` |
 
@@ -62,7 +62,7 @@ The debt: a build runs through an ad hoc `pnpm --filter` call instead of the dec
 
 [Back to navigation](#navigation)
 
-- The root `package.json` defines `dev:certs` as `pnpm --filter shared-core build && node tools/scripts/generate-certs.ts`.
+- The root `package.json` defines `dev:certs` as `pnpm --filter shared-core build && pnpm run tools generate-certs`.
 - `libs/shared-core/package.json` lists `"service-registry": "workspace:*"` under `dependencies`.
 - In a clean worktree, `pnpm dev:certs` fails with `TS2307`. `tsc` cannot find the module `service-registry`.
 - Running `pnpm --filter service-registry build` first removes the error.
@@ -99,7 +99,7 @@ The `nx.json` file sets `"dependsOn": ["^build"]` in the `build` target defaults
 Run every build through the declared Nx targets. Do not chain `pnpm --filter` calls.
 
 - Change `dev:certs` so the build step is the Nx `build` target of `shared-core`, for example `nx run shared-core:build`. The `^build` default then builds `service-registry` first.
-- Keep the second step, `node tools/scripts/generate-certs.ts`, unchanged. It is a distinguishable operation, as REQ-ECO-01 allows.
+- Keep the second step, `pnpm run tools generate-certs`, unchanged. It is a distinguishable operation, as REQ-ECO-01 allows.
 - Do not add a new script alias such as `build:certs`.
 - Review `dev:gateway` in the same change. It uses the same `pnpm --filter` form for `api-gateway`.
 
@@ -135,9 +135,11 @@ Check these in a clean worktree. Use a fresh checkout with no `dist/` folders an
 
 - [ ] Steps 1 to 3 of the README setup, then `pnpm dev:all`, work with no extra manual build.
 - [ ] The gateway answers `https://localhost:8443/api/health` with 200. Angular answers `http://localhost:4200` with 200.
-- [ ] `dev:certs` runs its build through an Nx target. No `pnpm --filter` call builds a package.
-- [ ] The generated files under `certs/` have the same content and format as before the change.
-- [ ] `pnpm dev:certs` run twice keeps the existing CA, as `generate-certs.ts` documents.
+- [x] `dev:certs` runs its build through an Nx target. No `pnpm --filter` call builds a package.
+- [x] The generated files under `certs/` have the same content and format as before the change.
+- [x] `pnpm dev:certs` run twice keeps the existing CA, as `generate-certs.ts` documents.
+
+Implemented on 2026-11-09: `dev:certs` runs `nx run shared-core:build`, and `dev:gateway` runs `nx run api-gateway:build`. In a clean worktree with no `dist/` and no `.nx` cache, `pnpm dev:certs` exited 0 and built `service-registry` first. A second run exited 0 and kept the CA. Not verified: the `pnpm dev:all` health checks and the first two checklist items.
 
 ---
 
@@ -153,7 +155,7 @@ High-risk item 5, delivery or environment. The change edits a root script that e
 
 [Back to navigation](#navigation)
 
-- Changes to `tools/scripts/generate-certs.ts` or to the certificates it creates.
+- Changes to `tools-cli generate-certs` or to the certificates it creates.
 - Changes to `nx.json` target defaults.
 - A change to the README steps, unless the Nx call needs one.
 - The other ad hoc scripts in the root `package.json`, apart from the `dev:gateway` review above.
